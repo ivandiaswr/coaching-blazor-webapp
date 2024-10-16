@@ -78,3 +78,5 @@ _ReSharper*/
 # SQLite database file - comment this out if you want to include it in your repo
 *.db
 *.sqlite
+*.db-shm
+*.db-wal
