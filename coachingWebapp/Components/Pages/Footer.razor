@@ -1,0 +1,168 @@
+
+@rendermode InteractiveServer
+
+@inject IEmailSubscriptionService EmailSubscriptionService
+@inject ILogger<Home> Logger
+
+@using BusinessLayer.Services.Interfaces
+@using ModelLayer
+@using ModelLayer.Models
+@using global::coachingWebapp.Components.Pages
+
+
+<section id="footer">
+    <div class="footer-container">
+        <div class="footer-section">
+            <h4>Let's Connect</h4>
+            <p class="footer-tagline">Join the conversation on mental health</p>
+            <div class="social-icons">
+                <a href="https://facebook.com" target="_blank" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+                <a href="https://twitter.com" target="_blank" aria-label="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
+                <a href="https://www.instagram.com/jostic__/" target="_blank" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                <a href="https://www.linkedin.com/in/italaveloso/" target="_blank" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+                <a href="https://discord.com" target="_blank" aria-label="Discord"><i class="fab fa-discord"></i></a>
+            </div>
+            <div class="contact-info">
+                <h4>Get in Touch</h4>
+                <p><i class="fas fa-envelope"></i> jostic@italaveloso.com</p>
+                <p><i class="fas fa-phone"></i> (123) 456-7890</p>
+            </div>
+        </div>
+        <div class="footer-section">
+            <h4>Newsletter</h4>
+            <p class="newsletter-tagline">Stay informed on mental health breakthroughs</p>
+                 <EditForm Model="@emailSubscription" OnValidSubmit="SubscribeToNewsLetter" FormName="emailSubscriptionForm">
+                        <DataAnnotationsValidator />
+                        
+                        @if (isSubscribing)
+                        {
+                            <div class="text-center">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p>Subscribing...</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="row g-2 align-items-center">
+                                <div class="col">
+                                    <div class="newsletter-form">
+                                        <InputText id="email" class="form-control" @bind-Value="emailSubscription.Email" placeholder="Enter your email" />
+                                        <button type="submit" class="btn btn-primary">Subscribe</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <ValidationMessage For="@(() => emailSubscription.Email)" class="text-danger" />
+                                </div>
+                            </div>
+                            <p class="privacy-notice">By signing up, you’re agreeing to receive marketing emails from Jostic. You can unsubscribe at any time. For more details, check out our <a href="/privacy-policy">Privacy Policy</a>.</p>
+                        }
+                    </EditForm>
+
+                @if (!string.IsNullOrEmpty(subscriptionMessage) && !subscriptionSuccess)
+                {
+                    <div class="alert alert-danger mt-3" role="alert">
+                        @subscriptionMessage
+                    </div>
+                }
+                
+                @if (subscriptionSuccess)
+                {
+                    <div class="alert alert-success" role="alert">
+                        @subscriptionMessage
+                    </div>
+                }
+        </div>
+        <div class="footer-section quick-links">
+            <h4>Quick Access</h4>
+            <nav aria-label="Footer navigation">
+                <ul class="footer-nav">
+                    <li><a href="#services">Services</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                    <li><a href="/privacy-policy">Privacy Policy</a></li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>&copy; @currentYear Jostic. All Rights Reserved.</p>
+    </div>
+</section>
+
+@code {
+    private string currentYear = DateTime.Now.Year.ToString();
+    private EmailSubscription emailSubscription = new EmailSubscription();
+    private string subscriptionMessage;
+    private bool subscriptionSuccess = false;
+    private bool isSubscribing = false;
+
+    private async Task SubscribeToNewsLetter()
+    {
+        Logger.LogInformation("SubscribeToNewsLetter method called");
+        if (!string.IsNullOrWhiteSpace(emailSubscription.Email))
+        {
+            await InvokeAsync(() =>
+            {
+                isSubscribing = true;
+                StateHasChanged();
+            });
+
+            try
+            {
+                Logger.LogInformation($"Attempting to subscribe with email: {emailSubscription.Email}");
+
+                var result = await EmailSubscriptionService.SubscriptionAsync(emailSubscription.Email);
+
+                await InvokeAsync(() =>
+                {
+                    subscriptionSuccess = result;
+                    subscriptionMessage = result ? "Thank you! Your submission has been received!" : "Subscription failed. Please try again or contact support.";
+
+                    if (result) 
+                    {
+                        emailSubscription = new EmailSubscription();  // Reset the form
+                    }
+
+                    StateHasChanged();
+                });
+
+                Logger.LogInformation($"Subscription result: {result}");
+            }
+            catch (Exception ex)
+            {
+                await InvokeAsync(() =>
+                {
+                    subscriptionMessage = "An error occurred. Please try again later.";
+                    StateHasChanged();
+                });
+
+                Logger.LogError(ex, "Error during subscription");
+            }
+            finally
+            {
+                await InvokeAsync(() =>
+                {
+                    isSubscribing = false;
+                    StateHasChanged();
+                });
+            }
+        }
+
+        Logger.LogInformation("SubscribeToNewsLetter method completed");
+    }
+
+    protected override void OnInitialized()
+    {
+        Console.WriteLine("Index page initialized");
+    }
+
+    protected override void OnParametersSet()
+    {
+        Console.WriteLine("Index page parameters set");
+    }
+
+}

@@ -1,0 +1,313 @@
+﻿@page "/"
+@rendermode InteractiveServer
+
+@inject IEmailSubscriptionService EmailSubscriptionService
+@inject IContactService ContactService
+
+@inject NavigationManager NavigationManager
+@inject ILogger<Home> Logger
+
+@using BusinessLayer.Services.Interfaces
+@using Microsoft.AspNetCore.Components.Forms
+@using ModelLayer.Models
+
+<PageTitle>Home</PageTitle>
+
+<section id="hero">
+    <div class="hero-container">
+        <div class="hero-text">
+            <h1>Get a coach that gets it</h1>
+            <ul class="hero-features">
+                <li><b>Free First Session</b>: Start your journey with a complimentary session to discuss your goals and pricing.</li>
+                <li><b>Flexible Sessions</b>: Pay per session based on your needs.</li>
+                <li><b>Unlimited Access</b>: Enjoy resources and tools anytime.</li>
+                <li><b>Free Guide</b>: Get expert tips to jumpstart your journey.</li>
+            </ul>
+            <p class="hero-note">Cancel anytime.</p>
+            <div class="hero-buttons">
+                <button @onclick="ShowGiftOffer" class="hero-button gift-button">
+                    <i class="fa-solid fa-gift"></i>
+                    Get Free Guide
+                </button>
+            </div>
+        </div>
+        <div class="hero-image">
+            <img src="Images/itala.webp" alt="Ítala, Life Coach" class="coach-image">
+            <div class="coach-info">
+                <h2>Ítala</h2>
+                <p>Your dedicated life coach</p>
+                <ul class="coach-credentials">
+                    <li>Religious Life Coach</li>
+                    <li>10+ years of experience</li>
+                    <li>Specializes in personal growth</li>
+                </ul>
+            </div>
+            <div class="quote">
+                <p>"Coaching is unlocking a person's potential to maximize their own performance. It is helping them to learn rather than teaching them." – <b>John Whitmore</b></p>
+            </div>
+        </div>
+    </div>
+    @if (showGiftOffer)
+    {
+        <div class="gift-modal">
+            <div class="gift-modal-content">
+                <h3>Unlock Your Free Guide!</h3>
+                <p>Get instant access to expert tips and strategies to jumpstart your journey. <b>Your success story begins here.</b></p>
+                <EditForm Model="@emailSubscription" OnValidSubmit="GetGiftBySubscribeNewsLetter" FormName="emailSubscriptionGiftForm">
+                        <DataAnnotationsValidator />
+                        
+                        @if (isSubscribing)
+                        {
+                            <div class="text-center">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p>Subscribing...</p>
+                            </div>
+                        }
+                        else
+                        {
+                           <InputText id="email" class="form-control" @bind-Value="emailSubscription.Email" placeholder="Enter your email" />
+                                        <button type="submit" class="btn btn-primary">Get My Free Guide</button>
+                            <div class="row">
+                                <div class="col">
+                                    <ValidationMessage For="@(() => emailSubscription.Email)" class="text-danger" />
+                                </div>
+                            </div>
+                            <p class="privacy-notice">By signing up, you're agreeing to receive marketing emails from Jostic. You can unsubscribe at any time. For more details, check out our <a href="/privacy-policy">Privacy Policy</a>.</p>
+                        }
+                    </EditForm>
+
+                @if (!string.IsNullOrEmpty(subscriptionMessage) && !subscriptionSuccess)
+                {
+                    <div class="alert alert-danger mt-3" role="alert">
+                        @subscriptionMessage
+                    </div>
+                }
+                
+                @if (subscriptionSuccess)
+                {
+                    <div class="alert alert-success" role="alert">
+                        @subscriptionMessage
+                    </div>
+                }
+
+                <button class="close-button" @onclick="CloseGiftOffer"><i class="fa-solid fa-circle-xmark"></i></button>
+            </div>
+        </div>
+    }
+</section> 
+
+<section id="services">
+    <div class="services-container">
+        <h1>Services</h1>
+        <p class="services-intro">Discover how we can help you achieve your goals and transform your life.</p>
+
+        <div class="services-grid">
+            <div class="service-category coaching">
+                <h2>Coaching Services</h2>
+                <div class="service-cards">
+                    <div class="service-card">
+                        <div class="service-icon"><i class="fas fa-user-graduate"></i></div>
+                        <h3>Personal Development</h3>
+                        <p>Unlock your full potential and achieve personal growth.</p>
+                        <a href="/services/personal-development" class="btn-learn-more">Learn More</a>
+                    </div>
+                    <div class="service-card">
+                        <div class="service-icon"><i class="fas fa-briefcase"></i></div>
+                        <h3>Career Coaching</h3>
+                        <p>Navigate career changes and advance your professional goals.</p>
+                        <a href="/services/career-coaching" class="btn-learn-more">Learn More</a>
+                    </div>
+                    <div class="service-card">
+                        <div class="service-icon"><i class="fas fa-heartbeat"></i></div>
+                        <h3>Health & Wellness</h3>
+                        <p>Improve your overall well-being and live a healthier life.</p>
+                        <a href="/services/health-wellness" class="btn-learn-more">Learn More</a>
+                    </div>
+                    <div class="service-card">
+                        <div class="service-icon"><i class="fas fa-users"></i></div>
+                        <h3>Relationship Coaching</h3>
+                        <p>Enhance your personal and professional relationships.</p>
+                        <a href="/services/relationship-coaching" class="btn-learn-more">Learn More</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="service-category regulatory">
+                <h2>Regulatory Services</h2>
+                <div class="service-cards">
+                    <div class="service-card">
+                        <div class="service-icon"><i class="fas fa-tags"></i></div>
+                        <h3>UK Product Labeling Compliance</h3>
+                        <p>Ensure your product labels meet UK regulatory standards.</p>
+                        <a href="/services/uk-labeling-compliance" class="btn-learn-more">Learn More</a>
+                    </div>
+                    <div class="service-card">
+                        <div class="service-icon"><i class="fas fa-file-alt"></i></div>
+                        <h3>Regulatory Documentation Review</h3>
+                        <p>Review and approve regulatory documentation for UK legal requirements.</p>
+                        <a href="/services/documentation-review" class="btn-learn-more">Learn More</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="testimonials">
+    <div class="testimonials-container">
+        <h2>What My Clients Say</h2>
+            <div class="testimonial-card">
+                <p class="testimonial-text">"The coaching sessions have truly transformed my life. I feel more confident and motivated."</p>
+                <p class="testimonial-author">- Jane Doe</p>
+            </div>
+            <div class="testimonial-card">
+                <p class="testimonial-text">"Exceptional guidance and support throughout my career transition. Highly recommend!"</p>
+                <p class="testimonial-author">- John Smith</p>
+            </div>
+            <div class="testimonial-card">
+                <p class="testimonial-text">"The personalized approach helped me achieve my health and wellness goals."</p>
+                <p class="testimonial-author">- Emily Davis</p>
+            </div>
+    </div>
+</section>
+
+<section id="contact">
+    <div class="contact-wrapper">
+        <div class="contact-container">
+            <h2>Get in Touch</h2>
+            <EditForm Model="@contact" OnValidSubmit="HandleContactSubmit" FormName="contactForm">
+                <DataAnnotationsValidator />
+
+                <div class="form-group">
+                    <InputText id="name" class="form-control" @bind-Value="contact.Name" placeholder="Your Name" />
+                    <ValidationMessage For="@(() => contact.Name)" />
+                </div>
+                <div class="form-group">
+                    <InputText id="email" class="form-control" @bind-Value="contact.Email" placeholder="Your Email" />
+                    <ValidationMessage For="@(() => contact.Email)" />
+                </div>
+                <div class="form-group">
+                    <InputTextArea id="message" class="form-control" @bind-Value="contact.Message" rows="4" placeholder="Your Message" />
+                    <ValidationMessage For="@(() => contact.Message)" />
+                </div>
+                <button type="submit">Send Message</button>
+            </EditForm>
+            <div id="formStatus" class="form-status">@contactFormStatus</div>
+        </div>
+    </div>
+</section>
+
+@code {
+    private EmailSubscription emailSubscription = new EmailSubscription();
+    private string subscriptionMessage;
+    private bool subscriptionSuccess = false;
+    private bool isSubscribing = false;
+    private Contact contact = new Contact();
+    private string contactFormStatus = string.Empty;
+    private bool showGiftOffer = false;
+
+    private async Task GetGiftBySubscribeNewsLetter()
+    {
+        Logger.LogInformation("SubscribeToNewsLetter method called");
+        if (!string.IsNullOrWhiteSpace(emailSubscription.Email))
+        {
+            await InvokeAsync(() =>
+            {
+                isSubscribing = true;
+                StateHasChanged();
+            });
+
+            try
+            {
+                Logger.LogInformation($"Attempting to subscribe with email: {emailSubscription.Email}");
+
+                var result = await EmailSubscriptionService.SubscriptionGiftAsync(emailSubscription.Email);
+
+                await InvokeAsync(() =>
+                {
+                    subscriptionSuccess = result;
+                    subscriptionMessage = result ? "Thank you! Your submission has been received!" : "Subscription failed. Please try again or contact support.";
+
+                    if (result) 
+                    {
+                        emailSubscription = new EmailSubscription();  // Reset the form
+                    }
+
+                    StateHasChanged();
+                });
+
+                Logger.LogInformation($"Subscription result: {result}");
+            }
+            catch (Exception ex)
+            {
+                await InvokeAsync(() =>
+                {
+                    subscriptionMessage = "An error occurred. Please try again later.";
+                    StateHasChanged();
+                });
+
+                Logger.LogError(ex, "Error during subscription");
+            }
+            finally
+            {
+                await InvokeAsync(() =>
+                {
+                    isSubscribing = false;
+                    StateHasChanged();
+                });
+            }
+        }
+
+        Logger.LogInformation("SubscribeToNewsLetter method completed");
+    }
+
+    private async Task HandleContactSubmit()
+    {
+        
+        Logger.LogInformation("HandleContactSubmit method called");
+
+        try
+        {
+            Logger.LogInformation("Attempting to send contact information");
+
+            var result = await ContactService.HandleContactSubmitAsync(contact);
+        
+            contactFormStatus = result ? "Thank you for your message. We'll get back to you soon!" : "Sending contact information failed. Please try again or contact support.";
+            StateHasChanged();
+        }
+        catch(Exception ex)
+        {
+            subscriptionMessage = "An error occurred. Please try again later.";
+            StateHasChanged();
+
+            Logger.LogError(ex, "Error during HandleContactSubmit");
+        }
+        
+         Logger.LogInformation("HandleContactSubmit method completed");
+    }
+
+    protected override void OnInitialized()
+    {
+        Console.WriteLine("Index page initialized");
+    }
+
+    protected override void OnParametersSet()
+    {
+        Console.WriteLine("Index page parameters set");
+    }
+
+    private void ShowGiftOffer()
+    {
+        showGiftOffer = true;
+        subscriptionMessage = string.Empty;
+        subscriptionSuccess = false;
+    }
+
+    private void CloseGiftOffer()
+    {
+        showGiftOffer = false;
+    }
+
+}
