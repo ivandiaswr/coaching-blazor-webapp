@@ -1,5 +1,6 @@
 ﻿@page "/"
 @rendermode InteractiveServer
+@inject IJSRuntime JSRuntime
 
 @inject IEmailSubscriptionService EmailSubscriptionService
 @inject IContactService ContactService
@@ -49,8 +50,8 @@
     </div>
     @if (showGiftOffer)
     {
-        <div class="gift-modal">
-            <div class="gift-modal-content">
+        <div class="gift-modal" @onclick="CloseGiftOfferIfClickedOutside">
+            <div class="gift-modal-content" @onclick:stopPropagation>
                 <h3>Unlock Your Free Guide!</h3>
                 <p>Get instant access to expert tips and strategies to jumpstart your journey. <b>Your success story begins here.</b></p>
                 <EditForm Model="@emailSubscription" OnValidSubmit="GetGiftBySubscribeNewsLetter" FormName="emailSubscriptionGiftForm">
@@ -305,9 +306,27 @@
         subscriptionSuccess = false;
     }
 
-    private void CloseGiftOffer()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("document.addEventListener", "keydown", DotNetObjectReference.Create(this), "HandleKeyDown");
+        }
+    }
+
+    [JSInvokable]
+    public void CloseGiftOffer()
     {
         showGiftOffer = false;
+        StateHasChanged();
+    }
+
+    private void CloseGiftOfferIfClickedOutside()
+    {
+        if (showGiftOffer)
+        {
+            CloseGiftOffer();
+        }
     }
 
 }
