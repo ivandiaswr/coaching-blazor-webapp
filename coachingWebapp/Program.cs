@@ -7,11 +7,20 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+if (builder.Environment.IsDevelopment())
+{
+    builder.Configuration.AddUserSecrets<Program>();
+}
+
 SQLitePCL.Batteries.Init();
 SQLitePCL.raw.SetProvider(new SQLitePCL.SQLite3Provider_e_sqlite3());  
 
 // Get the solution directory
-string solutionDirectory = Directory.GetParent(AppDomain.CurrentDomain.BaseDirectory).Parent.Parent.Parent.FullName;
+string solutionDirectory = AppDomain.CurrentDomain.BaseDirectory;
+for (int i = 0; i < 3; i++)
+{
+    solutionDirectory = Directory.GetParent(solutionDirectory)?.FullName ?? solutionDirectory;
+}
 string databaseDirectory = Path.Combine(solutionDirectory, "Database");
 
 // Ensure the Database directory exists
