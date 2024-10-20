@@ -7,6 +7,6 @@ namespace BusinessLayer.Services.Interfaces;
 
 public interface IContactService
 {
-    Task<bool> HandleContactSubmitAsync(Contact contact);
+    Task<bool> ContactSubmitAsync(Contact contact);
     Task SendEmailAsync(Contact contact);
 }

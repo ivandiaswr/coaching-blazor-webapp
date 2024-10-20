@@ -49,14 +49,23 @@ public class EmailSubscriptionService : IEmailSubscriptionService
         } 
         else 
         {
-            var subscription = new EmailSubscription(){
-                Email = email
-            };
+            try 
+            {
+                var subscription = new EmailSubscription(){
+                    Email = email
+                };
 
-            _context.EmailSubscriptions.Add(subscription);
+                _context.EmailSubscriptions.Add(subscription);
+            } 
+            catch (Exception ex){
+                _logger.LogError(ex, "Error during subscription");
+                return false;
+            }
+ 
         }
 
         await _context.SaveChangesAsync();
+        
         return true;
     }
 
@@ -73,7 +82,15 @@ public class EmailSubscriptionService : IEmailSubscriptionService
             // Already subscribed
             if (EmailSubscription.IsSubscribed) 
             {
-                await SendEmailAsync(EmailSubscription.Email);
+                try
+                {
+                    await SendEmailAsync(EmailSubscription.Email);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error during subscription gift when IsSubscribed");
+                    return false;
+                }
 
                 return true; 
             }
@@ -86,14 +103,22 @@ public class EmailSubscriptionService : IEmailSubscriptionService
         } 
         else 
         {
-            var subscription = new EmailSubscription(){
-                Email = email
+            try
+            {    
+                var subscription = new EmailSubscription(){
+                    Email = email
+                };
+                
+                _context.EmailSubscriptions.Add(subscription);
+
+                // Guardou na bd com sucesso por isso envia email com o free gift 
+                await SendEmailAsync(subscription.Email);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during subscription gift when IsSubscribed");
+                return false;
             };
-
-            _context.EmailSubscriptions.Add(subscription);
-
-            // Guardou na bd com sucesso por isso envia email com o free gift 
-            await SendEmailAsync(subscription.Email);
         }
 
         await _context.SaveChangesAsync();
@@ -115,7 +140,7 @@ public class EmailSubscriptionService : IEmailSubscriptionService
         }
 
         var message = new MimeMessage();
-        message.From.Add(new MailboxAddress("Your Name", smtpUsername));
+        message.From.Add(new MailboxAddress("Itala Veloso", smtpUsername));
         message.To.Add(new MailboxAddress("", smtpMailTo));
         message.Subject = "Gift from Jostic";
 
@@ -142,6 +167,7 @@ public class EmailSubscriptionService : IEmailSubscriptionService
         message.Body = builder.ToMessageBody();
 
         using var client = new SmtpClient();
+
         try
         {
             await client.ConnectAsync(smtpServer, smtpPort, SecureSocketOptions.StartTls);

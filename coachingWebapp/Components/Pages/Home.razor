@@ -178,7 +178,7 @@
     <div class="contact-wrapper">
         <div class="contact-container">
             <h2>Get in Touch</h2>
-            <EditForm Model="@contact" OnValidSubmit="HandleContactSubmit" FormName="contactForm">
+            <EditForm Model="@contact" OnValidSubmit="ContactSubmit" FormName="contactForm">
                 <DataAnnotationsValidator />
 
                 <div class="form-group">
@@ -264,18 +264,24 @@
         Logger.LogInformation("SubscribeToNewsLetter method completed");
     }
 
-    private async Task HandleContactSubmit()
+    private async Task ContactSubmit()
     {
         
-        Logger.LogInformation("HandleContactSubmit method called");
+        Logger.LogInformation("ContactSubmit method called");
 
         try
         {
             Logger.LogInformation("Attempting to send contact information");
 
-            var result = await ContactService.HandleContactSubmitAsync(contact);
+            var result = await ContactService.ContactSubmitAsync(contact);
         
-            contactFormStatus = result ? "Thank you for your message. We'll get back to you soon!" : "Sending contact information failed. Please try again or contact support.";
+            contactFormStatus = result ? "Thank you for your message. I'll get back to you soon!" : "Sending contact information failed. Please try again or contact support.";
+
+            if (result)
+            {
+                contact = new Contact(); // Reset the form
+            }
+
             StateHasChanged();
         }
         catch(Exception ex)
@@ -283,10 +289,10 @@
             subscriptionMessage = "An error occurred. Please try again later.";
             StateHasChanged();
 
-            Logger.LogError(ex, "Error during HandleContactSubmit");
+            Logger.LogError(ex, "Error during ContactSubmit");
         }
         
-         Logger.LogInformation("HandleContactSubmit method completed");
+         Logger.LogInformation("ContactSubmit method completed");
     }
 
     protected override void OnInitialized()
