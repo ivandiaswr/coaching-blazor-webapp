@@ -1,5 +1,4 @@
-﻿using System.Net;
-using DataAccessLayer;
+﻿using DataAccessLayer;
 using Microsoft.EntityFrameworkCore;
 using ModelLayer.Models;
 using Microsoft.Extensions.Configuration;
@@ -8,8 +7,6 @@ using Microsoft.Extensions.Logging;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
-using System.IO;
-using System.Linq;
 
 namespace BusinessLayer;
 
@@ -38,7 +35,7 @@ public class EmailSubscriptionService : IEmailSubscriptionService
         {
             if (EmailSubscription.IsSubscribed)
             {
-                return false; // Already subscribed
+                return true; // Already subscribed
             }
             else
             {
@@ -79,8 +76,7 @@ public class EmailSubscriptionService : IEmailSubscriptionService
 
         if(EmailSubscription != null)
         {
-            // Already subscribed
-            if (EmailSubscription.IsSubscribed) 
+            if (EmailSubscription.IsSubscribed) // Already subscribed
             {
                 try
                 {

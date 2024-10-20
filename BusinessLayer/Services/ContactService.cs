@@ -1,6 +1,3 @@
-using System;
-using System.Data.SqlTypes;
-using System.Net;
 using BusinessLayer.Services.Interfaces;
 using DataAccessLayer;
 using MailKit.Security;
