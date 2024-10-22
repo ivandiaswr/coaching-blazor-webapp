@@ -17,34 +17,36 @@
 <section id="hero">
     <div class="hero-container">
         <div class="hero-text">
-            <h1>Get a coach that gets it</h1>
+            <h1>Transform Your Life with Expert Coaching</h1>
+            <p class="hero-subtitle">Unlock your potential and achieve your goals with personalized guidance</p>
             <ul class="hero-features">
-                <li><b>Free First Session</b>: Start your journey with a complimentary session to discuss your goals and pricing.</li>
-                <li><b>Flexible Sessions</b>: Pay per session based on your needs.</li>
-                <li><b>Unlimited Access</b>: Enjoy resources and tools anytime.</li>
-                <li><b>Free Guide</b>: Get expert tips to jumpstart your journey.</li>
+                <li><i class="fas fa-check"></i> <span>Free Initial Consultation</span></li>
+                <li><i class="fas fa-check"></i> <span>Flexible Session Packages</span></li>
+                <li><i class="fas fa-check"></i> <span>Unlimited Resource Access</span></li>
+                <li><i class="fas fa-check"></i> <span>Complimentary Success Guide</span></li>
             </ul>
-            <p class="hero-note">Cancel anytime.</p>
+            <p class="hero-note">No long-term commitment required - cancel anytime</p>
             <div class="hero-buttons">
                 <button @onclick="ShowGiftOffer" class="hero-button gift-button">
                     <i class="fa-solid fa-gift"></i>
-                    Get Free Guide
+                    Get Your Free Success Guide
                 </button>
             </div>
         </div>
-        <div class="hero-image">
+        <div class="hero-card">
             <img src="Images/itala.webp" alt="Ítala, Life Coach" class="coach-image">
             <div class="coach-info">
                 <h2>Ítala</h2>
-                <p>Your dedicated life coach</p>
+                <p>Your Dedicated Life Coach</p>
                 <ul class="coach-credentials">
-                    <li>Religious Life Coach</li>
-                    <li>10+ years of experience</li>
-                    <li>Specializes in personal growth</li>
+                    <li><i class="fas fa-pray"></i> Certified Religious Life Coach</li>
+                    <li><i class="fas fa-star"></i> 10+ Years of Experience</li>
+                    <li><i class="fas fa-user-graduate"></i> Personal Growth Specialist</li>
                 </ul>
             </div>
             <div class="quote">
-                <p>"Coaching is unlocking a person's potential to maximize their own performance. It is helping them to learn rather than teaching them." – <b>John Whitmore</b></p>
+                <i class="fas fa-quote-left"></i>
+                <p>"Coaching is unlocking a person's potential to maximize their own performance. It is helping them to learn rather than teaching them." <span class="quote-author">– John Whitmore</span></p>
             </div>
         </div>
     </div>
@@ -55,29 +57,29 @@
                 <h3>Unlock Your Free Guide!</h3>
                 <p>Get instant access to expert tips and strategies to jumpstart your journey. <b>Your success story begins here.</b></p>
                 <EditForm Model="@emailSubscription" OnValidSubmit="GetGiftBySubscribeNewsLetter" FormName="emailSubscriptionGiftForm">
-                        <DataAnnotationsValidator />
-                        
-                        @if (isSubscribing)
-                        {
-                            <div class="text-center">
-                                <div class="spinner-border" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                                <p>Subscribing...</p>
+                    <DataAnnotationsValidator />
+                    
+                    @if (isSubscribing)
+                    {
+                        <div class="text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
                             </div>
-                        }
-                        else
-                        {
-                           <InputText id="email" class="form-control" @bind-Value="emailSubscription.Email" placeholder="Enter your email" />
-                                        <button type="submit" class="btn btn-primary">Get My Free Guide</button>
-                            <div class="row">
-                                <div class="col">
-                                    <ValidationMessage For="@(() => emailSubscription.Email)" class="text-danger" />
-                                </div>
+                            <p>Subscribing...</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <InputText id="email" class="form-control" @bind-Value="emailSubscription.Email" placeholder="Enter your email" />
+                        <button type="submit" class="btn btn-primary">Get My Free Guide</button>
+                        <div class="row">
+                            <div class="col">
+                                <ValidationMessage For="@(() => emailSubscription.Email)" class="text-danger" />
                             </div>
-                            <p class="privacy-notice">By signing up, you're agreeing to receive marketing emails from Jostic. You can unsubscribe at any time. For more details, check out our <a href="/privacy-policy">Privacy Policy</a>.</p>
-                        }
-                    </EditForm>
+                        </div>
+                        <p class="privacy-notice">By signing up, you're agreeing to receive marketing emails from Jostic. You can unsubscribe at any time. For more details, check out our <a href="/privacy-policy">Privacy Policy</a>.</p>
+                    }
+                </EditForm>
 
                 @if (!string.IsNullOrEmpty(subscriptionMessage) && !subscriptionSuccess)
                 {
@@ -101,54 +103,54 @@
 
 <section id="services">
     <div class="services-container">
-        <h1>Services</h1>
-        <p class="services-intro">Discover how we can help you achieve your goals and transform your life.</p>
+        <h1>Transformative Coaching Services</h1>
+        <p class="services-intro">Embark on a journey of personal and professional growth with our tailored coaching programs.</p>
 
         <div class="services-grid">
             <div class="service-category coaching">
-                <h2>Coaching Services</h2>
+                <h2>Core Coaching Programs</h2>
                 <div class="service-cards">
                     <div class="service-card">
-                        <div class="service-icon"><i class="fas fa-user-graduate"></i></div>
-                        <h3>Personal Development</h3>
-                        <p>Unlock your full potential and achieve personal growth.</p>
-                        <a href="/services/personal-development" class="btn-learn-more">Learn More</a>
+                        <div class="service-icon"><i class="fas fa-rocket"></i></div>
+                        <h3>Personal Growth Acceleration</h3>
+                        <p>Unlock your full potential and fast-track your personal development journey.</p>
+                        <a href="/services/personal-growth" class="btn-learn-more">Explore Program</a>
                     </div>
                     <div class="service-card">
-                        <div class="service-icon"><i class="fas fa-briefcase"></i></div>
-                        <h3>Career Coaching</h3>
-                        <p>Navigate career changes and advance your professional goals.</p>
-                        <a href="/services/career-coaching" class="btn-learn-more">Learn More</a>
+                        <div class="service-icon"><i class="fas fa-chart-line"></i></div>
+                        <h3>Career Advancement Strategy</h3>
+                        <p>Navigate career transitions and climb the professional ladder with confidence.</p>
+                        <a href="/services/career-strategy" class="btn-learn-more">Discover Path</a>
                     </div>
                     <div class="service-card">
-                        <div class="service-icon"><i class="fas fa-heartbeat"></i></div>
-                        <h3>Health & Wellness</h3>
-                        <p>Improve your overall well-being and live a healthier life.</p>
-                        <a href="/services/health-wellness" class="btn-learn-more">Learn More</a>
+                        <div class="service-icon"><i class="fas fa-balance-scale"></i></div>
+                        <h3>Life Balance Mastery</h3>
+                        <p>Achieve harmony in your personal and professional life for overall well-being.</p>
+                        <a href="/services/life-balance" class="btn-learn-more">Find Balance</a>
                     </div>
                     <div class="service-card">
-                        <div class="service-icon"><i class="fas fa-users"></i></div>
-                        <h3>Relationship Coaching</h3>
-                        <p>Enhance your personal and professional relationships.</p>
-                        <a href="/services/relationship-coaching" class="btn-learn-more">Learn More</a>
+                        <div class="service-icon"><i class="fas fa-handshake"></i></div>
+                        <h3>Relationship Enhancement</h3>
+                        <p>Strengthen personal and professional relationships for a more fulfilling life.</p>
+                        <a href="/services/relationship-coaching" class="btn-learn-more">Improve Connections</a>
                     </div>
                 </div>
             </div>
 
             <div class="service-category regulatory">
-                <h2>Regulatory Services</h2>
-                <div class="service-cards">
+                <h2>Specialized Regulatory Support</h2>
+                <div class="service-cards secondary">
                     <div class="service-card">
                         <div class="service-icon"><i class="fas fa-tags"></i></div>
-                        <h3>UK Product Labeling Compliance</h3>
-                        <p>Ensure your product labels meet UK regulatory standards.</p>
-                        <a href="/services/uk-labeling-compliance" class="btn-learn-more">Learn More</a>
+                        <h3>UK Compliance Labeling</h3>
+                        <p>Ensure your products meet UK labeling standards with expert guidance.</p>
+                        <a href="/services/uk-labeling-compliance" class="btn-learn-more">Get Compliant</a>
                     </div>
                     <div class="service-card">
                         <div class="service-icon"><i class="fas fa-file-alt"></i></div>
-                        <h3>Regulatory Documentation Review</h3>
-                        <p>Review and approve regulatory documentation for UK legal requirements.</p>
-                        <a href="/services/documentation-review" class="btn-learn-more">Learn More</a>
+                        <h3>Regulatory Document Review</h3>
+                        <p>Expert review and approval of documentation for UK legal requirements.</p>
+                        <a href="/services/documentation-review" class="btn-learn-more">Streamline Process</a>
                     </div>
                 </div>
             </div>
