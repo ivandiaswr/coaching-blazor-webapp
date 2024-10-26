@@ -155,6 +155,12 @@
                 </div>
             </div>
         </div>
+        <div>
+            <a href="#contact" class="services-button">
+                <i class="fas fa-calendar-check"></i>
+                Schedule a Free Call
+            </a>
+        </div>
     </div>
 </section>
 
@@ -174,30 +180,63 @@
                 <p class="testimonial-author">- Emily Davis</p>
             </div>
     </div>
+    <div>
+        <a href="#contact" class="testimonials-button">
+            <i class="fas fa-route"></i>
+            Start Your Journey
+        </a>
+    </div>
 </section>
 
 <section id="contact">
     <div class="contact-wrapper">
-        <div class="contact-container">
-            <h2>Get in Touch</h2>
-            <EditForm Model="@contact" OnValidSubmit="ContactSubmit" FormName="contactForm">
-                <DataAnnotationsValidator />
+        <div class="unified-container">
+            <div class="spiritual-header">
+                <i class="fas fa-pray header-icon"></i>
+                <h2>Begin Your Spiritual Journey Today</h2>
+                <p class="spiritual-subtitle">Transform your life through personalized faith-based guidance</p>
+            </div>
 
-                <div class="form-group">
-                    <InputText id="name" class="form-control" @bind-Value="contact.Name" placeholder="Your Name" />
-                    <ValidationMessage For="@(() => contact.Name)" />
+            <div class="content-grid">
+                <div class="form-section">
+                    <EditForm Model="@contact" OnValidSubmit="ContactSubmit" FormName="contactForm">
+                        <DataAnnotationsValidator />
+
+                        <div class="form-group">
+                            <InputText id="name" class="form-control" @bind-Value="contact.Name" placeholder="Your Name" />
+                            <ValidationMessage For="@(() => contact.Name)" />
+                        </div>
+                        <div class="form-group">
+                            <InputText id="email" class="form-control" @bind-Value="contact.Email" placeholder="Your Email" />
+                            <ValidationMessage For="@(() => contact.Email)" />
+                        </div>
+                        <div class="form-group">
+                            <InputTextArea id="message" class="form-control" @bind-Value="contact.Message" rows="4" placeholder="Share your spiritual journey with us..." />
+                            <ValidationMessage For="@(() => contact.Message)" />
+                        </div>
+                        <button type="submit">Schedule Your Free Spiritual Guidance Call</button>
+                    </EditForm>
+                    <div id="formStatus" class="form-status">@contactFormStatus</div>
                 </div>
-                <div class="form-group">
-                    <InputText id="email" class="form-control" @bind-Value="contact.Email" placeholder="Your Email" />
-                    <ValidationMessage For="@(() => contact.Email)" />
+
+                <div class="benefits-section">
+                    <div class="benefits-content">
+                        <h3>Your Path to Spiritual Growth</h3>
+                        <ul class="benefits-list">
+                            <li><i class="fas fa-check-circle"></i> Personalized spiritual guidance tailored to your journey</li>
+                            <li><i class="fas fa-check-circle"></i> Scripture-based wisdom for life's challenges</li>
+                            <li><i class="fas fa-check-circle"></i> Prayer support and community</li>
+                            <li><i class="fas fa-check-circle"></i> Practical steps for spiritual growth</li>
+                            <li><i class="fas fa-check-circle"></i> Confidential and judgment-free space</li>
+                        </ul>
+                        <div class="testimonial-box">
+                            <i class="fas fa-quote-left"></i>
+                            <p>"This spiritual guidance transformed my relationship with God and gave me the direction I was seeking."</p>
+                            <span class="testimonial-author">- Sarah M.</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <InputTextArea id="message" class="form-control" @bind-Value="contact.Message" rows="4" placeholder="Your Message" />
-                    <ValidationMessage For="@(() => contact.Message)" />
-                </div>
-                <button type="submit">Send Message</button>
-            </EditForm>
-            <div id="formStatus" class="form-status">@contactFormStatus</div>
+            </div>
         </div>
     </div>
 </section>
