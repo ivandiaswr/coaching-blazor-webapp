@@ -1,7 +1,9 @@
-﻿<div class="container-header">
+﻿@inject NavigationManager Navigation
+
+<div class="container-header">
     <div class="header-content">
         <div class="logo">
-            <NavLink class="nav-link" href="/" Match="NavLinkMatch.All" alt="Home">
+            <NavLink class="nav-link" href="/" @onclick="RefreshPage" Match="NavLinkMatch.All" alt="Home">
                 <img src="Images/logotipo.png">
             </NavLink>
         </div>
@@ -51,3 +53,9 @@
         </nav>
     </div>
 </div>
+
+@code {
+    private void RefreshPage(){
+        Navigation.NavigateTo("/#hero", forceLoad: true);
+    }
+}

@@ -165,20 +165,22 @@
 </section>
 
 <section id="testimonials">
+    <h1 class="section-title">Success Stories from Our Clients</h1>
     <div class="testimonials-container">
-        <h2>What My Clients Say</h2>
+        @foreach (var testimonial in testimonials)
+        {
             <div class="testimonial-card">
-                <p class="testimonial-text">"The coaching sessions have truly transformed my life. I feel more confident and motivated."</p>
-                <p class="testimonial-author">- Jane Doe</p>
+                <div class="video-container" @onclick="() => ToggleVideo(testimonial.Id)">
+                    <video id="video-@testimonial.Id" playsinline @onended="() => OnVideoEnded(testimonial.Id)">
+                        <source src="@testimonial.Path" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    <div class="play-button" style="display: @(testimonial.IsPlaying ? "none" : "flex")">▶</div>
+                </div>
+                <p class="testimonial-text">@testimonial.Text</p>
+                <p class="testimonial-author">@testimonial.Author</p>
             </div>
-            <div class="testimonial-card">
-                <p class="testimonial-text">"Exceptional guidance and support throughout my career transition. Highly recommend!"</p>
-                <p class="testimonial-author">- John Smith</p>
-            </div>
-            <div class="testimonial-card">
-                <p class="testimonial-text">"The personalized approach helped me achieve my health and wellness goals."</p>
-                <p class="testimonial-author">- Emily Davis</p>
-            </div>
+        }
     </div>
     <div>
         <a href="#contact" class="testimonials-button">
@@ -210,8 +212,16 @@
                             <InputText id="email" class="form-control" @bind-Value="contact.Email" placeholder="Your Email" />
                             <ValidationMessage For="@(() => contact.Email)" />
                         </div>
-                        <div class="form-group">
+                        <div class="form-group message-group">
                             <InputTextArea id="message" class="form-control" @bind-Value="contact.Message" rows="4" placeholder="Share your spiritual journey with us..." />
+                            <div class="message-helper">
+                                <p>Some things you might want to share:</p>
+                                <ul>
+                                    <li>Where you are in your faith journey</li>
+                                    <li>What challenges you're facing</li>
+                                    <li>What spiritual growth you're seeking</li>
+                                </ul>
+                            </div>
                             <ValidationMessage For="@(() => contact.Message)" />
                         </div>
                         <button type="submit">Schedule Your Free Spiritual Guidance Call</button>
@@ -243,13 +253,55 @@
 
 @code {
     private EmailSubscription emailSubscription = new EmailSubscription();
+    private Contact contact = new Contact();
     private string subscriptionMessage;
     private bool subscriptionSuccess = false;
     private bool isSubscribing = false;
-    private Contact contact = new Contact();
     private string contactFormStatus = string.Empty;
     private bool showGiftOffer = false;
 
+    protected override void OnInitialized()
+    {
+        Console.WriteLine("Index page initialized");
+
+        testimonials = new List<Testimonial>
+        {
+            new Testimonial
+            {
+                Id = 1,
+                Path = "/Testimonials/testimonial_1.mp4",
+                Text = "The coaching sessions have truly transformed my life. I feel more confident and motivated.",
+                Author = "- Jane Doe"
+            },
+            new Testimonial
+            {
+                Id = 2,
+                Path = "Testimonials/testimonial_2.mp4",
+                Text = "Exceptional guidance and support throughout my career transition. Highly recommend!",
+                Author = "- John Smith"
+            },
+            new Testimonial
+            {
+                Id = 3,
+                Path = "Testimonials/testimonial_3.mp4",
+                Text = "The personalized approach helped me achieve my health and wellness goals.",
+                Author = "- Emily Davis"
+            }
+        };
+    }
+    protected override void OnParametersSet()
+    {
+        Console.WriteLine("Index page parameters set");
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("document.addEventListener", "keydown", DotNetObjectReference.Create(this), "HandleKeyDown");
+        }
+    }
+
+    #region GiftModal
     private async Task GetGiftBySubscribeNewsLetter()
     {
         Logger.LogInformation("SubscribeToNewsLetter method called");
@@ -304,70 +356,17 @@
 
         Logger.LogInformation("SubscribeToNewsLetter method completed");
     }
-
-    private async Task ContactSubmit()
-    {
-        
-        Logger.LogInformation("ContactSubmit method called");
-
-        try
-        {
-            Logger.LogInformation("Attempting to send contact information");
-
-            var result = await ContactService.ContactSubmitAsync(contact);
-        
-            contactFormStatus = result ? "Thank you for your message. I'll get back to you soon!" : "Sending contact information failed. Please try again or contact support.";
-
-            if (result)
-            {
-                contact = new Contact(); // Reset the form
-            }
-
-            StateHasChanged();
-        }
-        catch(Exception ex)
-        {
-            subscriptionMessage = "An error occurred. Please try again later.";
-            StateHasChanged();
-
-            Logger.LogError(ex, "Error during ContactSubmit");
-        }
-        
-         Logger.LogInformation("ContactSubmit method completed");
-    }
-
-    protected override void OnInitialized()
-    {
-        Console.WriteLine("Index page initialized");
-    }
-
-    protected override void OnParametersSet()
-    {
-        Console.WriteLine("Index page parameters set");
-    }
-
     private void ShowGiftOffer()
     {
         showGiftOffer = true;
         subscriptionMessage = string.Empty;
         subscriptionSuccess = false;
     }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            await JSRuntime.InvokeVoidAsync("document.addEventListener", "keydown", DotNetObjectReference.Create(this), "HandleKeyDown");
-        }
-    }
-
-    [JSInvokable]
     public void CloseGiftOffer()
     {
         showGiftOffer = false;
         StateHasChanged();
     }
-
     private void CloseGiftOfferIfClickedOutside()
     {
         if (showGiftOffer)
@@ -375,5 +374,74 @@
             CloseGiftOffer();
         }
     }
+    #endregion
+    
+    #region ContactMessage
+    private async Task ContactSubmit()
+        { 
+            Logger.LogInformation("ContactSubmit method called");
 
+            try
+            {
+                Logger.LogInformation("Attempting to send contact information");
+
+                var result = await ContactService.ContactSubmitAsync(contact);
+            
+                contactFormStatus = result ? "Thank you for your message. I'll get back to you soon!" : "Sending contact information failed. Please try again or contact support.";
+
+                if (result)
+                {
+                    contact = new Contact(); // Reset the form
+                }
+
+                StateHasChanged();
+            }
+            catch(Exception ex)
+            {
+                subscriptionMessage = "An error occurred. Please try again later.";
+                StateHasChanged();
+
+                Logger.LogError(ex, "Error during ContactSubmit");
+            }
+            
+            Logger.LogInformation("ContactSubmit method completed");
+        }
+    #endregion
+    
+    #region Testimonials
+
+    private List<Testimonial> testimonials = new();
+
+    public async Task ToggleVideo(int testimonialId){
+
+        try
+        {        
+            var currentTestimonial = testimonials.First( t => t.Id == testimonialId);
+
+            foreach(var testimonial in testimonials){
+                await JSRuntime.InvokeVoidAsync("pauseVideoById", "video-" + testimonialId);
+                testimonial.IsPlaying = false;
+            }
+
+            if(!currentTestimonial.IsPlaying){
+                await JSRuntime.InvokeVoidAsync("playVideoById", "video-" + testimonialId);
+                currentTestimonial.IsPlaying = true;
+            } else {
+                await JSRuntime.InvokeVoidAsync("pauseVideoById", "video-" + testimonialId);
+                currentTestimonial.IsPlaying = false;
+            }
+        } catch(Exception ex){
+            Logger.LogInformation($"Error on ToggleVideo: {ex.Message}");
+        }
+        StateHasChanged();        
+    }
+
+    public void OnVideoEnded(int testimonialId){
+        var testimonial = testimonials.First(t => t.Id == testimonialId);
+    
+        testimonial.IsPlaying = false;
+        StateHasChanged();
+    }
+
+    #endregion
 }

@@ -31,11 +31,6 @@ a {
     display: inline-block;
 }
 
-a:hover{
-  color: black;
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
 a.active {
   color: #e7c500;
 }
@@ -168,15 +163,67 @@ nav {
     margin-left: 5px;
 }
 
-.dropdown-content {
-  display: none;
-  position: absolute;
-  background-color: #ffffff;
-  min-width: 160px;
-  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-  z-index: 1;
+.container-header {
+  background: white;
+  padding: 1rem 2rem;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-ul {
+  display: flex;
+  gap: 2rem;
+  margin: 0;
   padding: 0;
-  border-radius: 20px;
+  list-style: none;
+}
+
+.nav-li {
+  color: #333;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+}
+
+.nav-li:hover {
+  color: #0066cc;
+}
+
+.dropdown {
+  position: relative;
+}
+
+.dropdown-content {
+  display: block;
+  opacity: 0;
+  visibility: hidden;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: #ffffff;
+  min-width: 240px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  padding: 0.5rem 0;
+  transform: translateY(10px);
+  transition: all 0.3s ease;
+}
+
+.dropdown:hover .dropdown-content {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
 }
 
 .dropdown-content li {
@@ -185,43 +232,62 @@ nav {
 
 .dropdown-content a {
   color: #333;
-  padding: 12px 16px;
+  padding: 0.75rem 1.25rem;
   text-decoration: none;
   display: flex;
   align-items: center;
-  white-space: nowrap;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  gap: 0.75rem;
+  transition: all 0.2s ease;
 }
 
 .dropdown-content a i {
-  margin-right: 10px;
   width: 20px;
   text-align: center;
+  color: #666;
+  transition: color 0.2s ease;
 }
 
 .dropdown-section-title {
-  font-weight: bold;
-  padding: 8px;
-  color: #333;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #666;
+  padding: 1rem 1.25rem 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dropdown-content hr {
+  margin: 0.5rem 0;
+  border: none;
+  border-top: 1px solid #eee;
 }
 
 .dropdown-content a:hover {
-  background-color: #f0f0f0;
-  color: black;
+  background-color: #f8f9fa;
+  color: #0066cc;
 }
 
-.dropdown:hover .dropdown-content {
-  display: block;
+.dropdown-content a:hover i {
+  color: #0066cc;
+}
+
+.arrow {
+  font-size: 0.8em;
+  transition: transform 0.2s ease;
+}
+
+.dropdown:hover .arrow {
+  transform: rotate(180deg);
 }
 
 .nav-toggle {
-    display: none;
+  display: none;
 }
 
 .nav-toggle-label {
-    display: none;
-    cursor: pointer;
+  display: none;
 }
+
 
 @media screen and (max-width: 768px) {
     .container {
@@ -708,6 +774,7 @@ nav {
 
 .btn-learn-more:hover {
     background-color: #F57C00;
+    color:#ffffff;
 }
 
 .service-cards.secondary .btn-learn-more {
@@ -787,9 +854,10 @@ nav {
 /* Testimonials */
 
 #testimonials {
+  max-height: 1000px;
   background: linear-gradient(to bottom, #FFB74D, #FFF9C4);
   position: relative;
-  padding: 100px 20px;
+  padding: 140px 20px;
   text-align: center;
 }
 
@@ -819,15 +887,19 @@ nav {
 }
 
 .testimonials-container {
-  padding: 230px 20px; 
+  padding: 50px 20px; 
   position: relative;
   z-index: 1; 
 }
 
-.testimonials-container h2 {
-  font-size: 2em;
-  margin-bottom: 20px;
-  color: #333;
+#testimonials .section-title {
+  font-size: 3.5em;
+  margin-bottom: 30px;
+  color: #2C3E50;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+  font-weight: 700;
+  position: relative;
+  z-index: 1;
 }
 
 .testimonial-card {
@@ -841,19 +913,65 @@ nav {
   background-color: #fff;
   text-align: left;
   position: relative;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.video-container {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%; 
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 15px;
+  cursor: pointer;
+}
+
+.video-container video {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover; 
+  border-radius: 8px;
+}
+
+.play-button {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60px;
+  height: 60px;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #FFB74D;
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+.video-container:hover .play-button {
+  background-color: #FFB74D;
+  color: white;
 }
 
 .testimonial-text {
   font-size: 1.1em;
   color: #555;
-  margin-bottom: 20px;
+  margin: 20px 0;
   text-align: center;
+  line-height: 1.6;
 }
 
 .testimonial-author {
-  font-size: 1em;
-  color: #999;
+  font-size: 1.1em;
+  color: #666;
   text-align: right;
+  font-weight: 600;
 }
 
 .testimonial-card:hover {
@@ -1121,6 +1239,91 @@ button[type="submit"]:hover {
   font-size: 1.2rem;
 }
 
+.message-group {
+  position: relative;
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  transition: border-color 0.3s ease;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.1);
+}
+
+.message-helper {
+  position: absolute;
+  right: -310px;
+  top: 0;
+  width: 300px;
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  font-size: 0.9rem;
+  color: #666;
+  opacity: 0;
+  transform: translateX(10px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.form-control:focus + .message-helper {
+  opacity: 1;
+  transform: translateX(0);
+  visibility: visible;
+}
+
+.message-helper p {
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #333;
+}
+
+.message-helper ul {
+  list-style: none;
+  padding-left: 15px;
+  margin: 0;
+}
+
+.message-helper ul li {
+  margin-bottom: 5px;
+  position: relative;
+}
+
+.message-helper ul li:before {
+  content: "•";
+  color: #4a90e2;
+  position: absolute;
+  left: -15px;
+}
+
+.message-helper ul li:last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 1200px) {
+  .message-helper {
+      position: static;
+      margin-top: 10px;
+      width: 100%;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  .form-control:focus + .message-helper {
+      opacity: 1;
+      transform: translateY(0);
+  }
+}
 
 @media (max-width: 768px) {
   .content-grid {
