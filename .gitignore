@@ -80,3 +80,7 @@ _ReSharper*/
 *.sqlite
 *.db-shm
 *.db-wal
+coachingWebapp/wwwroot/Testimonials/testimonial_1.mp4
+coachingWebapp/wwwroot/Testimonials/testimonial_2.mp4
+coachingWebapp/wwwroot/Testimonials/testimonial_3.mp4
+ModelLayer/Models/Testimonials.cs
