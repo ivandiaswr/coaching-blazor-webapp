@@ -165,13 +165,13 @@
 </section>
 
 <section id="testimonials">
-    <h1 class="section-title">Success Stories from Our Clients</h1>
+    <h1 class="section-title">Success Stories from Clients</h1>
     <div class="testimonials-container">
         @foreach (var testimonial in testimonials)
         {
             <div class="testimonial-card">
                 <div class="video-container" @onclick="() => ToggleVideo(testimonial.Id)">
-                    <video id="video-@testimonial.Id" playsinline @onended="() => OnVideoEnded(testimonial.Id)">
+                    <video id="video-@testimonial.Id" playsinline controls volume="0.5" @onended="() => OnVideoEnded(testimonial.Id)">
                         <source src="@testimonial.Path" type="video/mp4">
                         Your browser does not support the video tag.
                     </video>
@@ -262,7 +262,7 @@
 
     protected override void OnInitialized()
     {
-        Console.WriteLine("Index page initialized");
+        //Console.WriteLine("Index page initialized");
 
         testimonials = new List<Testimonial>
         {
@@ -291,7 +291,7 @@
     }
     protected override void OnParametersSet()
     {
-        Console.WriteLine("Index page parameters set");
+        //Console.WriteLine("Index page parameters set");
     }
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -416,30 +416,33 @@
 
         try
         {        
-            var currentTestimonial = testimonials.First( t => t.Id == testimonialId);
+            var currentTestimonial = testimonials.First(t => t.Id == testimonialId);
 
             foreach(var testimonial in testimonials){
-                await JSRuntime.InvokeVoidAsync("pauseVideoById", "video-" + testimonialId);
-                testimonial.IsPlaying = false;
+                if(testimonial.Id != testimonialId){
+                    await JSRuntime.InvokeVoidAsync("pauseVideoById", "video-" + testimonial.Id);
+                    testimonial.IsPlaying = false;
+                }
             }
 
             if(!currentTestimonial.IsPlaying){
-                await JSRuntime.InvokeVoidAsync("playVideoById", "video-" + testimonialId);
+                await JSRuntime.InvokeVoidAsync("playVideoById", "video-" + currentTestimonial.Id);
                 currentTestimonial.IsPlaying = true;
             } else {
-                await JSRuntime.InvokeVoidAsync("pauseVideoById", "video-" + testimonialId);
+                await JSRuntime.InvokeVoidAsync("pauseVideoById", "video-" + currentTestimonial.Id);
                 currentTestimonial.IsPlaying = false;
             }
         } catch(Exception ex){
             Logger.LogInformation($"Error on ToggleVideo: {ex.Message}");
         }
+
         StateHasChanged();        
     }
 
     public void OnVideoEnded(int testimonialId){
         var testimonial = testimonials.First(t => t.Id == testimonialId);
-    
         testimonial.IsPlaying = false;
+
         StateHasChanged();
     }
 
