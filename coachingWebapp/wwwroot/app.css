@@ -624,8 +624,6 @@ nav {
   color: #333;
 }
 
-
-
 @media (max-width: 768px) {
     .hero-container {
         flex-direction: column;
@@ -650,9 +648,10 @@ nav {
 
 .services-container h1 {
     text-align: center;
-    font-size: 2.5rem;
+    font-size: 3rem;
     color: #333;
     margin-bottom: 20px;
+    font-weight: 600;
 }
 
 .services-intro {
@@ -678,6 +677,7 @@ nav {
     color: #333;
     margin-bottom: 30px;
     text-align: center;
+    font-weight: 600;
 }
 
 .service-cards {
@@ -726,7 +726,7 @@ nav {
 }
 
 .service-category.regulatory {
-    background-color: #f5f5f5;
+    background-color: #f5f5f53b;
     padding: 30px;
     border-radius: 10px;
     margin-top: 40px;
@@ -750,7 +750,7 @@ nav {
 
 .service-cards.secondary .service-icon {
     font-size: 1.8rem;
-    color: #81D4FA;
+    color: #5dccff;
 }
 
 .service-cards.secondary .service-card h3 {
@@ -778,11 +778,11 @@ nav {
 }
 
 .service-cards.secondary .btn-learn-more {
-    background-color: #81D4FA;
+    background-color: #5dccff;
 }
 
 .service-cards.secondary .btn-learn-more:hover {
-    background-color: #4FC3F7;
+    background-color: #34bfff;
 }
 
 .services-button {
@@ -854,10 +854,9 @@ nav {
 /* Testimonials */
 
 #testimonials {
-  min-height: 100vh;
   background: linear-gradient(to bottom, #FFB74D, #FFF9C4);
   position: relative;
-  padding: 140px 20px;
+  padding: 110px 20px;
   text-align: center;
 }
 
@@ -887,29 +886,21 @@ nav {
 }
 
 .testimonials-container {
-  padding: 22px 20px; 
+  padding: 10px 20px; 
   position: relative;
   z-index: 1; 
   max-width: 1200px;
   margin: 0 auto;
 }
 
-#testimonials .section-title {
-  font-size: 3.5em;
-  margin-bottom: 30px;
-  color: #44332D;
-  text-shadow: 
-    2px 2px 4px rgba(139, 69, 19, 0.15),
-    0 0 60px rgba(255, 255, 255, 0.5);
-  font-weight: 800;  /
-  position: relative;
-  z-index: 1;
-  background: linear-gradient(45deg, #5D4037, #8D6E63);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  @supports not (background-clip: text) {
-    color: #5D4037;
-  }
+.title-section {
+  text-align: center;
+}
+
+.title-section .section-title {
+  font-size: 3em;
+  color: #333;
+  font-weight: 600;
 }
 
 .testimonial-card {
@@ -1053,7 +1044,7 @@ nav {
     padding: 100px 15px;
   }
   
-  #testimonials .section-title {
+  .title-section .section-title {
     font-size: 2.8em;
     padding: 15px 0px;
   }
@@ -1064,7 +1055,7 @@ nav {
     padding: 80px 15px;
   }
   
-  #testimonials .section-title {
+  .title-section .section-title {
     font-size: 2.4em;
   }
   
@@ -1078,7 +1069,7 @@ nav {
     padding: 60px 10px;
   }
   
-  #testimonials .section-title {
+  .title-section .section-title {
     font-size: 2em;
     margin-bottom: 20px;
   }
