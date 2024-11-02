@@ -14,92 +14,12 @@
 
 <PageTitle>Home</PageTitle>
 
-<section id="hero">
-    <div class="hero-container">
-        <div class="hero-text">
-            <h1>Transform Your Life with Expert Coaching</h1>
-            <p class="hero-subtitle">Unlock your potential and achieve your goals with personalized guidance</p>
-            <ul class="hero-features">
-                <li><i class="fas fa-check"></i> <span>Free Initial Consultation</span></li>
-                <li><i class="fas fa-check"></i> <span>Flexible Session Packages</span></li>
-                <li><i class="fas fa-check"></i> <span>Unlimited Resource Access</span></li>
-                <li><i class="fas fa-check"></i> <span>Complimentary Success Guide</span></li>
-            </ul>
-            <p class="hero-note">No long-term commitment required - cancel anytime</p>
-            <div class="hero-buttons">
-                <button @onclick="ShowGiftOffer" class="hero-button gift-button">
-                    <i class="fa-solid fa-gift"></i>
-                    Get Your Free Success Guide
-                </button>
-            </div>
-        </div>
-        <div class="hero-card">
-            <img src="Images/itala.webp" alt="Ítala, Life Coach" class="coach-image">
-            <div class="coach-info">
-                <h2>Ítala</h2>
-                <p>Your Dedicated Life Coach</p>
-                <ul class="coach-credentials">
-                    <li><i class="fas fa-pray"></i> Certified Religious Life Coach</li>
-                    <li><i class="fas fa-star"></i> 10+ Years of Experience</li>
-                    <li><i class="fas fa-user-graduate"></i> Personal Growth Specialist</li>
-                </ul>
-            </div>
-            <div class="quote">
-                <i class="fas fa-quote-left"></i>
-                <p>"Coaching is unlocking a person's potential to maximize their own performance. It is helping them to learn rather than teaching them." <span class="quote-author">– John Whitmore</span></p>
-            </div>
-        </div>
-    </div>
-    @if (showGiftOffer)
-    {
-        <div class="gift-modal" @onclick="CloseGiftOfferIfClickedOutside">
-            <div class="gift-modal-content" @onclick:stopPropagation>
-                <h3>Unlock Your Free Guide!</h3>
-                <p>Get instant access to expert tips and strategies to jumpstart your journey. <b>Your success story begins here.</b></p>
-                <EditForm Model="@emailSubscription" OnValidSubmit="GetGiftBySubscribeNewsLetter" FormName="emailSubscriptionGiftForm">
-                    <DataAnnotationsValidator />
-                    
-                    @if (isSubscribing)
-                    {
-                        <div class="text-center">
-                            <div class="spinner-border" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                            <p>Subscribing...</p>
-                        </div>
-                    }
-                    else
-                    {
-                        <InputText id="email" class="form-control" @bind-Value="emailSubscription.Email" placeholder="Enter your email" />
-                        <button type="submit" class="btn btn-primary">Get My Free Guide</button>
-                        <div class="row">
-                            <div class="col">
-                                <ValidationMessage For="@(() => emailSubscription.Email)" class="text-danger" />
-                            </div>
-                        </div>
-                        <p class="privacy-notice">By signing up, you're agreeing to receive marketing emails from Jostic. You can unsubscribe at any time. For more details, check out our <a href="/privacy-policy">Privacy Policy</a>.</p>
-                    }
-                </EditForm>
-
-                @if (!string.IsNullOrEmpty(subscriptionMessage) && !subscriptionSuccess)
-                {
-                    <div class="alert alert-danger mt-3" role="alert">
-                        @subscriptionMessage
-                    </div>
-                }
-                
-                @if (subscriptionSuccess)
-                {
-                    <div class="alert alert-success" role="alert">
-                        @subscriptionMessage
-                    </div>
-                }
-
-                <button class="close-button" @onclick="CloseGiftOffer"><i class="fa-solid fa-circle-xmark"></i></button>
-            </div>
-        </div>
-    }
-</section> 
+<section id="video">
+    <video autoplay muted loop playsinline>
+        <source src="/Testimonials/adventure.mp4" type="video/mp4">
+        Your browser does not support the video tag mp4.
+    </video>
+</section>
 
 <section id="services">
     <div class="services-container">
@@ -242,6 +162,7 @@
                             <li><i class="fas fa-check-circle"></i> Practical steps for spiritual growth</li>
                             <li><i class="fas fa-check-circle"></i> Confidential and judgment-free space</li>
                         </ul>
+                        <p class="benefits-note">No long-term commitment required - cancel anytime</p>
                         <div class="testimonial-box">
                             <i class="fas fa-quote-left"></i>
                             <p>"This spiritual guidance transformed my relationship with God and gave me the direction I was seeking."</p>

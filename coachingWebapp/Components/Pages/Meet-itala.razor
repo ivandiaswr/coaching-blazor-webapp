@@ -1,0 +1,207 @@
+@page "/about/meet-itala"
+
+@rendermode InteractiveServer
+
+@inject IEmailSubscriptionService EmailSubscriptionService
+@inject ILogger<Meet_itala> Logger
+
+@using BusinessLayer.Services.Interfaces
+@using ModelLayer.Models
+
+<PageTitle>Meet Ítala</PageTitle>
+
+<section class="hero-container">
+    <div class="hero-left">
+        <h1>Transform Your Life with Expert Coaching</h1>
+        <p class="hero-subtitle">Unlock your potential and achieve your goals with personalized guidance</p>
+        <p class="hero-text">
+            With 1 in 6 people in the UK experiencing stress, traumas, oppression, brokenness, sense of losing their way in life, on a daily basis, there has never been a more urgent time to address your mental, emotional and spiritual wellbeing. A need to address not only causes limiting and hindering you but also how you can overcome & revamp your life, reclaiming inner peace.
+        </p>
+        <div class="hero-buttons">
+            <button @onclick="ShowGiftOffer" class="hero-button gift-button">
+                <i class="fa-solid fa-gift"></i>
+                Get Your Free Success Guide
+            </button>
+        </div>
+    </div>
+    <div class="hero-right">
+        <div class="hero-card">
+            <img src="Images/italaHero.webp" alt="Ítala, Life Coach" class="coach-image">
+            <div class="coach-info">
+                <h2>Ítala Veloso</h2>
+                <p>Your dedicated Life Liberaton and Self-Discovery Coach</p>
+                <ul class="coach-credentials">
+                    <li>Certified UPW Life Coaching - Unleash Your Power Within, Tony Robbins</li>
+                    <li>Certified CEH - Life and Emotional Coaching, Mindset Academy</li>
+                    <li>Life Christian Coaching</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    @if (showGiftOffer)
+    {
+        <div class="gift-modal" @onclick="CloseGiftOfferIfClickedOutside">
+            <div class="gift-modal-content" @onclick:stopPropagation>
+                <h3>Unlock Your Free Guide!</h3>
+                <p>Get instant access to expert tips and strategies to jumpstart your journey. <b>Your success story begins here.</b></p>
+                <EditForm Model="@emailSubscription" OnValidSubmit="GetGiftBySubscribeNewsLetter" FormName="emailSubscriptionGiftForm">
+                    <DataAnnotationsValidator />
+                    
+                    @if (isSubscribing)
+                    {
+                        <div class="text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p>Subscribing...</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <InputText id="email" class="form-control" @bind-Value="emailSubscription.Email" placeholder="Enter your email" />
+                        <button type="submit" class="btn btn-primary">Get My Free Guide</button>
+                        <div class="row">
+                            <div class="col">
+                                <ValidationMessage For="@(() => emailSubscription.Email)" class="text-danger" />
+                            </div>
+                        </div>
+                        <p class="privacy-notice">By signing up, you're agreeing to receive marketing emails from Jostic. You can unsubscribe at any time. For more details, check out our <a href="/privacy-policy">Privacy Policy</a>.</p>
+                    }
+                </EditForm>
+
+                @if (!string.IsNullOrEmpty(subscriptionMessage) && !subscriptionSuccess)
+                {
+                    <div class="alert alert-danger mt-3" role="alert">
+                        @subscriptionMessage
+                    </div>
+                }
+                
+                @if (subscriptionSuccess)
+                {
+                    <div class="alert alert-success" role="alert">
+                        @subscriptionMessage
+                    </div>
+                }
+
+                <button class="close-button" @onclick="CloseGiftOffer"><i class="fa-solid fa-circle-xmark"></i></button>
+            </div>
+        </div>
+    }
+</section>
+
+<section class="bio-container jostic-container">
+    <div class="bio-content">
+        <div class="bio-text">
+            <h3>About Ítala Veloso</h3>
+            <p>
+                Ítala Veloso is a Santomean-Portuguese Black African Woman. A child of God, currently living in the UK, Coventry and an advocate for peace, love, faith and growth.
+                Speaks both Portuguese and English, which means all her services can be delivered in each of these languages.
+            </p>
+            <p>
+                A passionate purpose-driven life coach, mentor, motivational speaker, writer, and poet whose work empowers women to break through and break free from road and mind blocks, emotional wounds, trauma, and self-limiting beliefs.
+            </p>
+            <p class="quote">"Her words and work are woven with a message of empowerment, love, freedom and transformation."</p>
+        </div>
+        <div class="bio-text">
+            <h3><span class="jostic-brand">JOSTIC</span> - Journey of Survivors Turned into Conquerors</h3>
+            <p>
+                Founded in May 2021 and revamped in October 2023, <span class="jostic-brand">JOSTIC</span> is more than just a brand - it's a movement of transformation.
+            </p>
+            <p>
+                With a BSc in Food Engineering, an MSc in Public Health, and nearly 6 years of experience in Food Regulatory Affairs, Ítala brings a unique, holistic approach to coaching.
+            </p>
+            <p>
+                Her mission is to guide individuals on a journey of self-discovery, self-love, and spiritual growth - helping them unlock inner truths, self-confidence, and healing.
+            </p>
+        </div>
+    </div>
+</section> 
+
+@code {
+    private EmailSubscription emailSubscription = new EmailSubscription();
+    private string subscriptionMessage;
+    private bool subscriptionSuccess = false;
+    private bool isSubscribing = false;
+    private bool showGiftOffer = false;
+
+    protected override void OnInitialized()
+    {
+    }
+
+    #region GiftModal
+    private async Task GetGiftBySubscribeNewsLetter()
+    {
+        Logger.LogInformation("SubscribeToNewsLetter method called");
+        if (!string.IsNullOrWhiteSpace(emailSubscription.Email))
+        {
+            await InvokeAsync(() =>
+            {
+                isSubscribing = true;
+                StateHasChanged();
+            });
+
+            try
+            {
+                Logger.LogInformation($"Attempting to subscribe with email: {emailSubscription.Email}");
+
+                var result = await EmailSubscriptionService.SubscriptionGiftAsync(emailSubscription.Email);
+
+                await InvokeAsync(() =>
+                {
+                    subscriptionSuccess = result;
+                    subscriptionMessage = result ? "Thank you! Your submission has been received!" : "Subscription failed. Please try again or contact support.";
+
+                    if (result) 
+                    {
+                        emailSubscription = new EmailSubscription();  // Reset the form
+                    }
+
+                    StateHasChanged();
+                });
+
+                Logger.LogInformation($"Subscription result: {result}");
+            }
+            catch (Exception ex)
+            {
+                await InvokeAsync(() =>
+                {
+                    subscriptionMessage = "An error occurred. Please try again later.";
+                    StateHasChanged();
+                });
+
+                Logger.LogError(ex, "Error during subscription");
+            }
+            finally
+            {
+                await InvokeAsync(() =>
+                {
+                    isSubscribing = false;
+                    StateHasChanged();
+                });
+            }
+        }
+
+        Logger.LogInformation("SubscribeToNewsLetter method completed");
+    }
+    private void ShowGiftOffer()
+    {
+        showGiftOffer = true;
+        subscriptionMessage = string.Empty;
+        subscriptionSuccess = false;
+    }
+    public void CloseGiftOffer()
+    {
+        showGiftOffer = false;
+        StateHasChanged();
+    }
+    private void CloseGiftOfferIfClickedOutside()
+    {
+        if (showGiftOffer)
+        {
+            CloseGiftOffer();
+        }
+    }
+    #endregion
+
+
+}

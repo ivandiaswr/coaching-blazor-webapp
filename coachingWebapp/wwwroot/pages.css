@@ -1,0 +1,212 @@
+/* Hero */
+.hero-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4rem 0;
+    max-width: 1300px;
+    margin: 0 auto;
+}
+
+.hero-left {
+    flex: 1;
+    padding-right: 2rem;
+}
+
+.hero-right {
+    flex: 0 0 400px;
+}
+
+.hero-text {
+    flex: 1;
+    padding-right: 2rem;
+}
+
+.hero-text h1 {
+    color: var(--primary-black);
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    font-weight: 800;
+}
+
+.hero-subtitle {
+    color: var(--accent-orange);
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.hero-buttons {
+    margin-top: 2rem;
+}
+
+.hero-button {
+    background-color: var(--accent-orange);
+    color: var(--primary-white);
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: bold;
+    transition: transform 0.3s ease;
+}
+
+.hero-button:hover {
+    transform: scale(1.05);
+    background-color: #FF8C4B;
+}
+
+.hero-card {
+    background-color: var(--primary-white);
+    border-radius: 15px;
+    transition: transform 0.3s ease;
+}
+
+.hero-card:hover {
+    transform: translateY(-10px);
+}
+
+.coach-image {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+}
+
+.coach-info {
+    padding: 1rem;
+    text-align: center;
+}
+
+.coach-info h2 {
+    color: var(--primary-black);
+    margin-bottom: 0.5rem;
+}
+
+.coach-credentials {
+    list-style-type: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 1rem;
+}
+
+.coach-credentials li {
+    margin: 0.3rem 0;
+    color: var(--text-gray);
+}
+
+.coach-credentials i {
+    margin-right: 0.5rem;
+    color: var(--accent-orange);
+}
+
+/* Gift Section */
+
+.gift-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  .gift-modal-content {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    max-width: 500px;
+    width: 90%;
+    position: relative;
+  }
+  
+  .gift-modal-content h3 {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    color: #333;
+  }
+  
+  .gift-modal-content p {
+    margin-bottom: 20px;
+    color: #555;
+  }
+  
+  .gift-modal-content .form-control {
+    margin-bottom: 15px;
+  }
+  
+  .gift-modal-content .btn-primary {
+    width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+    background-color: #FF9800;
+    border: none;
+  }
+  
+  .gift-modal-content .btn-primary:hover {
+    background-color: #F57C00;
+  }
+  
+  .gift-modal-content .privacy-notice {
+    font-size: 0.8rem;
+    color: #777;
+    margin-top: 15px;
+  }
+  
+  .gift-modal-content .close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #777;
+    cursor: pointer;
+  }
+  
+  .gift-modal-content .close-button:hover {
+    color: #333;
+  }
+  
+
+/* Bio Section */
+
+.bio-container {
+    background-color: var(--primary-white);
+    padding: 1rem 6rem 2rem;
+}
+
+.bio-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: center;
+}
+
+.bio-text {
+    padding: 0 2rem;
+}
+
+.bio-text h3 {
+    color: var(--accent-orange);
+    margin-bottom: 1rem;
+    font-size: 1.8rem;
+}
+
+.jostic-brand {
+    color: var(--accent-orange);
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.quote {
+    font-style: italic;
+    border-left: 4px solid var(--accent-orange);
+    padding-left: 1rem;
+    margin: 1.5rem 0;
+    color: var(--text-gray);
+}

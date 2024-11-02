@@ -2,46 +2,61 @@
 
 <div class="container-header">
     <div class="header-content">
-        <div class="logo">
-            <NavLink class="nav-link" href="/" @onclick="RefreshPage" Match="NavLinkMatch.All" alt="Home">
-                <img src="Images/logotipo.png">
+        <NavLink class="name-logo" href="/" Match="NavLinkMatch.All">
+            ÍTALA VELOSO
+        </NavLink>
+        <div class="social-icons">
+            <a href="https://www.facebook.com/journeystic/" target="_blank" aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
+            <a href="https://twitter.com/onJOSTIC" target="_blank" aria-label="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
+            <a href="https://www.instagram.com/jostic__/" target="_blank" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+            <a href="https://www.linkedin.com/in/italaveloso/" target="_blank" aria-label="LinkedIn"><i class="fa-brands fa-linkedin"></i></a>
+            <a href="https://twitter.com/onJOSTIC" target="_blank" aria-label="Discord"><i class="fa-brands fa-youtube"></i></a>
+            <a href="https://www.meetup.com/members/222668406/" target="_blank" aria-label="Meetup"><i class="fa-brands fa-meetup"></i></a>
+            <a href="https://www.tiktok.com/@@jostic__?lang=en" target="_blank" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+        </div>
+        <div class="center-content">
+            <NavLink class="name-logo" href="/" Match="NavLinkMatch.All">
+                @*<span class="colored-initial">J</span>ourney <span class="colored-initial">O</span>f <span class="colored-initial">S</span>urvivors <span class="colored-initial">T</span>urned <span class="colored-initial">I</span>nto <span class="colored-initial">C</span>onquerors*@
+                ÍTALA VELOSO
             </NavLink>
         </div>
-        <label for="nav-toggle" class="nav-toggle-label">
+        <button class="mobile-menu-btn" aria-label="Toggle menu">
             <span></span>
-        </label>
+        </button>
         <nav>
-            <input type="checkbox" id="nav-toggle" class="nav-toggle">
             <ul class="nav-ul">
-                <li>
-                    <NavLink class="nav-li" href="" Match="NavLinkMatch.All">
-                        Home
-                    </NavLink>
-                </li>
                 <li class="dropdown">
-                    <NavLink class="nav-li" href="services">
-                        Services <i class="fa-solid fa-chevron-down arrow"></i>
-                    </NavLink>
-                  <ul class="dropdown-content">
-                        <li class="dropdown-section-title">Coaching Services</li>
-                        <li><a href="services/life-coaching"><i class="fas fa-heart"></i> Life Coaching</a></li>
-                        <li><a href="services/career-coaching"><i class="fas fa-briefcase"></i> Career Coaching</a></li>
-                        <li><a href="services/wellness-coaching"><i class="fas fa-spa"></i> Wellness Coaching</a></li>
-                        <li><hr></li>
-                        <li class="dropdown-section-title">Regulatory Services</li>
-                        <li><a href="services/compliance"><i class="fas fa-gavel"></i> Compliance Consulting</a></li>
-                        <li><a href="services/regulatory-strategy"><i class="fas fa-cogs"></i> Regulatory Strategy</a></li>
+                    <a class="nav-li">
+                        About <i class="fa-solid fa-chevron-down arrow"></i>
+                    </a>
+                    <ul class="dropdown-content">
+                        <li><a href="/about/meet-itala">Meet Ítala</a></li>
+                        <li><a href="about/team">The Process</a></li>
+                        <li><a href="about/testimonials">FAQ</a></li>
                     </ul>
                 </li>
                 <li class="dropdown">
-                    <NavLink class="nav-li" href="about">
-                        About <i class="fa-solid fa-chevron-down arrow"></i>
-                    </NavLink>
+                    <a class="nav-li">
+                        Services <i class="fa-solid fa-chevron-down arrow"></i>
+                    </a>
                     <ul class="dropdown-content">
-                        <li><a href="about/our-story"><i class="fas fa-book-open"></i>About Jostic</a></li>
-                        <li><a href="about/our-story"><i class="fas fa-book-open"></i>Meet Ítala</a></li>
-                        <li><a href="about/team"><i class="fas fa-users"></i>Our Team</a></li>
-                        <li><a href="about/testimonials"><i class="fas fa-comments"></i>FAQ</a></li>
+                        <li class="dropdown-section-title">Coaching Services</li>
+                        <li><a href="services/life-coaching">Life Coaching</a></li>
+                        <li><a href="services/career-coaching">Career Coaching</a></li>
+                        <li><a href="services/wellness-coaching">Wellness Coaching</a></li>
+                        <li><hr></li>
+                        <li class="dropdown-section-title">Regulatory Services</li>
+                        <li><a href="services/compliance">Regulatory Consulting</a></li>
+                        <li><a href="services/regulatory-strategy">Training </a></li>
+                    </ul>
+                </li>
+                <li class="dropdown">
+                    <a class="nav-li">
+                        Free Resources
+                    </a>
+                    <ul class="dropdown-content">
+                        <li><a href="/free-resources/coming-soon">Books</a></li>
+                        <li><a href="/free-resources/coming-soon">Podcast</a></li>
                     </ul>
                 </li>
                 <li>
@@ -53,9 +68,3 @@
         </nav>
     </div>
 </div>
-
-@code {
-    private void RefreshPage(){
-        Navigation.NavigateTo("/#hero", forceLoad: true);
-    }
-}
