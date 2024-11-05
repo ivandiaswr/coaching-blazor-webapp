@@ -12,20 +12,20 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using ModelLayer.Models
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Home | Ìtala Veloso</PageTitle>
 
 <section id="video">
     <video autoplay muted loop playsinline>
-        <source src="/Testimonials/adventure.mp4" type="video/mp4">
+        <source src="/Videos/car-driving-mountain.mp4" type="video/mp4">
         Your browser does not support the video tag mp4.
     </video>
     <div class="video-overlay">
         <h1 class="main-heading">Reach your biggest goals</h1>
         <div class="sub-heading">
             Master your<br>
-            Journey<br>
+            <span class="highlight">Journey</span><br>
             Master Your<br>
-            Life
+            <span class="highlight">Life</span>
         </div>
         <a class="cta-button" href="#contact">Schedule a Free Call</a>
     </div>
@@ -33,7 +33,7 @@
 
 <section id="services" class="services-section">
     <div class="container">
-        
+
         <header class="services-header">
             <span class="section-tag">Our Services</span>
             <h1>Transformative Coaching <span class="highlight">Solutions</span></h1>
@@ -47,7 +47,7 @@
                         <div class="service-icon">
                             <i class="fas fa-balance-scale"></i>
                         </div>
-                        <span class="service-tag">Featured Program</span>
+                        <span class="service-tag">Most Popular</span>
                     </div>
                     <div class="card-content">
                         <h2>Life Balance Mastery</h2>
@@ -57,7 +57,7 @@
                             <li><i class="fas fa-check"></i> Weekly 1-on-1 Coaching Sessions</li>
                             <li><i class="fas fa-check"></i> Progress Tracking Tools</li>
                         </ul>
-                        <a href="/services/life-balance" class="btn-primary">
+                        <a href="/services/coaching/life-coaching" class="btn-primary">
                             Start Your Journey
                             <i class="fas fa-arrow-right"></i>
                         </a>
@@ -79,7 +79,7 @@
                             <li><i class="fas fa-check"></i> Leadership Skill Development</li>
                             <li><i class="fas fa-check"></i> Industry-Specific Guidance</li>
                         </ul>
-                        <a href="/services/career-strategy" class="btn-primary">
+                        <a href="/services/coaching/career-coaching" class="btn-primary">
                             Explore Program
                             <i class="fas fa-arrow-right"></i>
                         </a>
@@ -100,9 +100,9 @@
                         <i class="fas fa-tags"></i>
                     </div>
                     <div class="card-content">
-                        <h3>UK Compliance Labeling</h3>
+                        <h3>Regulatoty Consulting</h3>
                         <p>Expert guidance for meeting UK labeling standards</p>
-                        <a href="/services/uk-labeling-compliance" class="btn-secondary">Learn More</a>
+                        <a href="/services/regulatory/consulting" class="btn-secondary">Learn More</a>
                     </div>
                 </div>
 
@@ -111,9 +111,9 @@
                         <i class="fas fa-file-alt"></i>
                     </div>
                     <div class="card-content">
-                        <h3>Document Review</h3>
+                        <h3>Training</h3>
                         <p>Thorough review of regulatory documentation</p>
-                        <a href="/services/documentation-review" class="btn-secondary">Learn More</a>
+                        <a href="/services/regulatory/training" class="btn-secondary">Learn More</a>
                     </div>
                 </div>
             </div>
@@ -137,84 +137,123 @@
 </section>
 
 <section id="testimonials">
-    <div class="testimonials-container">
-        @foreach (var testimonial in testimonials)
-        {
-            <div class="testimonial-card">
-                <div class="video-container" @onclick="() => ToggleVideo(testimonial.Id)">
-                    <video id="video-@testimonial.Id" playsinline controls volume="0.5" @onended="() => OnVideoEnded(testimonial.Id)">
-                        <source src="@testimonial.Path" type="video/mp4">
-                        Your browser does not support the video tag.
-                    </video>
-                    <div class="play-button" style="display: @(testimonial.IsPlaying ? "none" : "flex")">▶</div>
-                </div>
-                <p class="testimonial-text">@testimonial.Text</p>
-                <p class="testimonial-author">@testimonial.Author</p>
-            </div>
-        }
+    <div class="testimonials-wave-top"></div>
+    <div class="title-section">
+        <h2 class="section-title">What Our <span class="highlight">Clients Say</span></h2>
+        <p class="section-subtitle">Real Stories, Real Results</p>
     </div>
-    <div>
+    
+   <div class="testimonials-container">
+        <div class="testimonials-grid">
+            @foreach (var testimonial in testimonials)
+            {
+                <div class="testimonial-card">
+                    <div class="video-wrapper">
+                        <div class="video-container" @onclick="() => ToggleVideo(testimonial.Id)">
+                            <video id="video-@testimonial.Id" playsinline controls=true volume="0.5" 
+                                  @onended="() => OnVideoEnded(testimonial.Id)">           
+                                <source src="@testimonial.Path" type="video/mp4">
+                            </video>
+                            <div class="play-overlay @(testimonial.IsPlaying ? "hidden" : "")">
+                                <div class="play-button">
+                                    <i class="@(testimonial.IsPlaying ? "fas fa-pause" : "fas fa-play")"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="testimonial-content">
+                        <div class="testimonial-quote">
+                            <i class="fas fa-quote-left quote-icon"></i>
+                            <p class="testimonial-text">@testimonial.Text</p>
+                        </div>
+                        <div class="testimonial-author-info">
+                            <div class="author-details">
+                                <p class="testimonial-author">@testimonial.Author</p>
+                                <p class="author-role">@testimonial.Role</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+    
+    <div class="cta-container">
         <a href="#contact" class="testimonials-button">
-            <i class="fas fa-route"></i>
-            Start Your Journey
+            <i class="fas fa-star"></i>
+            Begin Your Success Story
         </a>
     </div>
+
+    <div class="testimonials-wave-bottom"></div>
 </section>
 
-<section id="contact">
-    <div class="contact-wrapper">
-        <div class="unified-container">
-            <div class="spiritual-header">
-                <i class="fa-regular fa-address-book header-icon"></i>
-                <h2>Begin Your Journey Today</h2>
-                <p class="spiritual-subtitle">Transform your life through personalized guidance</p>
-            </div>
-
-            <div class="content-grid">
-                <div class="form-section">
-                    <EditForm Model="@contact" OnValidSubmit="ContactSubmit" FormName="contactForm">
-                        <DataAnnotationsValidator />
-
-                        <div class="form-group">
-                            <InputText id="name" class="form-control" @bind-Value="contact.Name" placeholder="Your Name" />
-                            <ValidationMessage For="@(() => contact.Name)" />
-                        </div>
-                        <div class="form-group">
-                            <InputText id="email" class="form-control" @bind-Value="contact.Email" placeholder="Your Email" />
-                            <ValidationMessage For="@(() => contact.Email)" />
-                        </div>
-                        <div class="form-group message-group">
-                            <InputTextArea id="message" class="form-control" @bind-Value="contact.Message" rows="4" placeholder="Share your spiritual journey with us..." />
-                            <div class="message-helper">
-                                <p>Some things you might want to share:</p>
-                                <ul>
-                                    <li>Where you are in your faith journey</li>
-                                    <li>What challenges you're facing</li>
-                                    <li>What spiritual growth you're seeking</li>
-                                </ul>
+<section>
+    <div class="contact-container">
+        <div class="contact-form-container">
+            <div class="contact-wrapper">
+                <div class="unified-container">
+                    <div class="video-header-container">
+                        <video autoplay muted loop playsinline class="video-header">
+                            <source src="/Videos/adventure.mp4" type="video/mp4">
+                            Your browser does not support the video tag mp4.
+                        </video>
+                        <div id="contact" class="contact-video-overlay">
+                            <div class="contact-header">
+                                <i class="fas fa-calendar-check header-icon"></i>
+                                <h2>Begin Your Journey Today</h2>
+                                <p class="contact-subtitle">Transform your life through personalized guidance</p>
                             </div>
-                            <ValidationMessage For="@(() => contact.Message)" />
                         </div>
-                        <button type="submit">Schedule Your Free Call</button>
-                    </EditForm>
-                    <div id="formStatus" class="form-status">@contactFormStatus</div>
-                </div>
+                    </div>
 
-                <div class="benefits-section">
-                    <div class="benefits-content">
-                        <h3>Your Path to Growth</h3>
-                        <ul class="benefits-list">
-                            <li><i class="fas fa-check-circle"></i> Personalized tailored to your journey</li>
-                            <li><i class="fas fa-check-circle"></i> Wisdom for life's challenges</li>
-                            <li><i class="fas fa-check-circle"></i> Support and community</li>
-                            <li><i class="fas fa-check-circle"></i> Practical steps for growth</li>
-                            <li><i class="fas fa-check-circle"></i> Confidential and judgment-free space</li>
-                        </ul>
-                        <p class="benefits-note">No long-term commitment required - cancel anytime</p>
-                        <div class="testimonial-box">
-                            <i class="fas fa-quote-left"></i>
-                            <p>"This spiritual guidance transformed my relationship with God and gave me the direction I was seeking."</p>
-                            <span class="testimonial-author">- Sarah M.</span>
+                    <div class="content-grid">
+                        <div class="form-section">
+                            <EditForm Model="@contact" OnValidSubmit="ContactSubmit" FormName="contactForm">
+                                <DataAnnotationsValidator />
+
+                                <div class="form-group">
+                                    <InputText id="name" class="form-control" @bind-Value="contact.Name" placeholder="Your Name" />
+                                    <ValidationMessage For="@(() => contact.Name)" />
+                                </div>
+                                <div class="form-group">
+                                    <InputText id="email" class="form-control" @bind-Value="contact.Email" placeholder="Your Email" />
+                                    <ValidationMessage For="@(() => contact.Email)" />
+                                </div>
+                                <div class="form-group message-group">
+                                    <InputTextArea id="message" class="form-control" @bind-Value="contact.Message" rows="4" placeholder="Share your spiritual journey with us..." />
+                                    <div class="message-helper">
+                                        <p>Some things you might want to share:</p>
+                                        <ul>
+                                            <li>Where you are in your faith journey</li>
+                                            <li>What challenges you're facing</li>
+                                            <li>What spiritual growth you're seeking</li>
+                                        </ul>
+                                    </div>
+                                    <ValidationMessage For="@(() => contact.Message)" />
+                                </div>
+                                <button type="submit"><i class="fas fa-calendar-check"></i> Schedule Your Free Call</button>
+                            </EditForm>
+                            <div id="formStatus" class="form-status">@contactFormStatus</div>
+                        </div>
+
+                        <div class="benefits-section">
+                            <div class="benefits-content">
+                                <h3>Your Path to Growth</h3>
+                                <ul class="benefits-list">
+                                    <li><i class="fas fa-check-circle"></i> Personalized tailored to your journey</li>
+                                    <li><i class="fas fa-check-circle"></i> Wisdom for life's challenges</li>
+                                    <li><i class="fas fa-check-circle"></i> Support and community</li>
+                                    <li><i class="fas fa-check-circle"></i> Practical steps for growth</li>
+                                    <li><i class="fas fa-check-circle"></i> Confidential and judgment-free space</li>
+                                </ul>
+                                <p class="benefits-note">No long-term commitment required - cancel anytime</p>
+                                <div class="testimonial-box">
+                                    <i class="fas fa-quote-left"></i>
+                                    <p>"This spiritual guidance transformed my relationship with God and gave me the direction I was seeking."</p>
+                                    <span class="testimonial-author">- Alguem a defenir</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -244,21 +283,24 @@
                 Id = 1,
                 Path = "/Testimonials/testimonial_1.mp4",
                 Text = "The coaching sessions have truly transformed my life. I feel more confident and motivated.",
-                Author = "- Jane Doe"
+                Author = "- Laviniah",
+                Role = "Marketing Director"
             },
             new Testimonial
             {
                 Id = 2,
                 Path = "Testimonials/testimonial_2.mp4",
                 Text = "Exceptional guidance and support throughout my career transition. Highly recommend!",
-                Author = "- John Smith"
+                Author = "- Fii quê?",
+                Role = "Developer"
             },
             new Testimonial
             {
                 Id = 3,
                 Path = "Testimonials/testimonial_3.mp4",
                 Text = "The personalized approach helped me achieve my health and wellness goals.",
-                Author = "- Emily Davis"
+                Author = "- Monica Manuel",
+                Role = "Marketing Director"
             }
         };
     }

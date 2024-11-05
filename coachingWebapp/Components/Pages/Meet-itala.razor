@@ -8,32 +8,66 @@
 @using BusinessLayer.Services.Interfaces
 @using ModelLayer.Models
 
-<PageTitle>Meet Ítala</PageTitle>
+<PageTitle>About Ítala Veloso</PageTitle>
 
 <section class="hero-container">
     <div class="hero-left">
-        <h1>Transform Your Life with Expert Coaching</h1>
-        <p class="hero-subtitle">Unlock your potential and achieve your goals with personalized guidance</p>
-        <p class="hero-text">
-            With 1 in 6 people in the UK experiencing stress, traumas, oppression, brokenness, sense of losing their way in life, on a daily basis, there has never been a more urgent time to address your mental, emotional and spiritual wellbeing. A need to address not only causes limiting and hindering you but also how you can overcome & revamp your life, reclaiming inner peace.
-        </p>
+        <h1>About Ítala Veloso</h1>
+            <p>
+                Ítala Veloso is a Santomean-Portuguese Black African Woman. A child of God, currently living in the UK, Coventry and an advocate for peace, love, faith and growth.
+                Speaks both Portuguese and English, which means all her services can be delivered in each of these languages.
+            </p>
+            <p>
+                A passionate purpose-driven life coach, mentor, motivational speaker, writer, and poet whose work empowers women to break through and break free from road and mind blocks, emotional wounds, trauma, and self-limiting beliefs.
+            </p>
+            <p class="quote">"Her words and work are woven with a message of empowerment, love, freedom and transformation."</p>
         <div class="hero-buttons">
             <button @onclick="ShowGiftOffer" class="hero-button gift-button">
-                <i class="fa-solid fa-gift"></i>
-                Get Your Free Success Guide
+                <i class="fa-solid fa-gift"></i> Get Your Free Success Guide
             </button>
         </div>
+        <section class="bio-container jostic-container">
+    <div class="bio-content">
+        <div class="bio-text">
+            <h3><span class="jostic-brand">JOSTIC</span> - Journey of Survivors Turned into Conquerors</h3>
+            <p>
+                Founded in May 2021 and revamped in October 2023, <span class="jostic-brand">JOSTIC</span> is more than just a brand - it's a movement of transformation.
+            </p>
+            <p>
+                With a BSc in Food Engineering, an MSc in Public Health, and nearly 6 years of experience in Food Regulatory Affairs, Ítala brings a unique, holistic approach to coaching.
+            </p>
+            <p>
+                Her mission is to guide individuals on a journey of self-discovery, self-love, and spiritual growth - helping them unlock inner truths, self-confidence, and healing.
+            </p>
+        </div>
     </div>
+</section> 
+    </div>
+
     <div class="hero-right">
         <div class="hero-card">
             <img src="Images/italaHero.webp" alt="Ítala, Life Coach" class="coach-image">
             <div class="coach-info">
                 <h2>Ítala Veloso</h2>
-                <p>Your dedicated Life Liberaton and Self-Discovery Coach</p>
-                <ul class="coach-credentials">
+                <p>Your dedicated Life Liberation and Self-Discovery Coach</p>
+            </div>
+        </div>
+
+        <div class="credentials-container">
+            <div class="coaching-credentials">
+                <h3>Coaching Credentials</h3>
+                <ul>
                     <li>Certified UPW Life Coaching - Unleash Your Power Within, Tony Robbins</li>
                     <li>Certified CEH - Life and Emotional Coaching, Mindset Academy</li>
                     <li>Life Christian Coaching</li>
+                </ul>
+            </div>
+            <div class="regulatory-credentials">
+                <h3>Regulatory Credentials</h3>
+                <ul>
+                    <li>BSc in Food Engineering</li>
+                    <li>MSc in Public Health</li>
+                    <li>6 years in Food Regulatory Affairs</li>
                 </ul>
             </div>
         </div>
@@ -89,33 +123,7 @@
     }
 </section>
 
-<section class="bio-container jostic-container">
-    <div class="bio-content">
-        <div class="bio-text">
-            <h3>About Ítala Veloso</h3>
-            <p>
-                Ítala Veloso is a Santomean-Portuguese Black African Woman. A child of God, currently living in the UK, Coventry and an advocate for peace, love, faith and growth.
-                Speaks both Portuguese and English, which means all her services can be delivered in each of these languages.
-            </p>
-            <p>
-                A passionate purpose-driven life coach, mentor, motivational speaker, writer, and poet whose work empowers women to break through and break free from road and mind blocks, emotional wounds, trauma, and self-limiting beliefs.
-            </p>
-            <p class="quote">"Her words and work are woven with a message of empowerment, love, freedom and transformation."</p>
-        </div>
-        <div class="bio-text">
-            <h3><span class="jostic-brand">JOSTIC</span> - Journey of Survivors Turned into Conquerors</h3>
-            <p>
-                Founded in May 2021 and revamped in October 2023, <span class="jostic-brand">JOSTIC</span> is more than just a brand - it's a movement of transformation.
-            </p>
-            <p>
-                With a BSc in Food Engineering, an MSc in Public Health, and nearly 6 years of experience in Food Regulatory Affairs, Ítala brings a unique, holistic approach to coaching.
-            </p>
-            <p>
-                Her mission is to guide individuals on a journey of self-discovery, self-love, and spiritual growth - helping them unlock inner truths, self-confidence, and healing.
-            </p>
-        </div>
-    </div>
-</section> 
+
 
 @code {
     private EmailSubscription emailSubscription = new EmailSubscription();
