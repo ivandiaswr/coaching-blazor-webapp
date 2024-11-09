@@ -1,5 +1,117 @@
 @page "/services/coaching/life-coaching"
 
+@rendermode InteractiveServer
+@inject IJSRuntime JSRuntime
+
 <PageTitle>Life Coaching | Ìtala Veloso</PageTitle>
 
-<h1>Life Coaching</h1>
+<div class="life-coaching-container">
+    <h1><span class="highlight">Life</span> Coaching</h1>
+    <p>Start living a purpose-driven life and unlock your potential with guidance tailored to you. Explore each area below:</p>
+
+    <div class="slider-container">
+        <div class="topics-grid" @ref="topicsGrid">
+            @foreach (var topic in Topics.Concat(Topics))
+            {
+                <div class="topic-card">
+                    <div class="image-wrapper">
+                        <img src="@topic.ImageUrl" alt="@topic.AltText">
+                        <div class="image-title">
+                            <h3>@topic.Title</h3>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="cta-section">
+        <div class="cta-content">
+            <h2>Ready to Transform Your Future?</h2>
+            <p>Schedule a free consultation call to discuss your goals</p>
+        </div>
+        <a href="#contact" class="services-cta-button" @onclick:preventDefault>
+            <span class="cta-icon"><i class="fas fa-calendar-check"></i></span>
+            <span class="cta-text">
+                <span class="primary-text">Book Your Free Call</span>
+                <span class="secondary-text">15 minutes, zero obligation</span>
+            </span>
+            <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
+</div>
+
+@code {
+    private ElementReference topicsGrid;
+     private List<Topic> Topics { get; set; } = new List<Topic>
+    {
+        new Topic {
+            Id = 1,
+            ImageUrl = "Images/services/life-coaching/health-wellness.jpg",
+            Title = "Enhance Your Health & Wellness",
+            AltText = "Health and Wellness"
+        },
+        new Topic {
+            Id = 2,
+            ImageUrl = "Images/services/life-coaching/clarity-direction.jpg",
+            Title = "Gain Clarity & Direction",
+            AltText = "Clarity and Direction"
+        },
+        new Topic {
+            Id = 3,
+            ImageUrl = "Images/services/life-coaching/goals.jpg",
+            Title = "Set Clear & Achievable Goals",
+            AltText = "Clear Goals"
+        },
+        new Topic {
+            Id = 4,
+            ImageUrl = "Images/services/life-coaching/remove-blocks.jpg",
+            Title = "Overcome Personal Roadblocks",
+            AltText = "Remove Roadblocks"
+        },
+        new Topic {
+            Id = 5,
+            ImageUrl = "Images/services/life-coaching/reframe-limits.jpg",
+            Title = "Reframe Limiting Beliefs",
+            AltText = "Limiting Beliefs"
+        },
+        new Topic {
+            Id = 6,
+            ImageUrl = "Images/services/life-coaching/driven-life.jpg",
+            Title = "Reconnect with Your Authentic Self",
+            AltText = "Authentic Self"
+        },
+        new Topic {
+            Id = 7,
+            ImageUrl = "Images/services/life-coaching/map-future.jpg",
+            Title = "Create Your Future Map",
+            AltText = "Future Map"
+        }
+    };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (topicsGrid.Context == null)
+            {
+                Console.WriteLine("topicsGrid reference not set.");
+            }
+            else
+            {
+                Console.WriteLine("topicsGrid reference is set.");
+                await JSRuntime.InvokeVoidAsync("initializeSlider", topicsGrid);
+            }
+        }
+    }
+
+     protected override void OnInitialized()
+    {
+        Console.WriteLine("Life-coaching OnInitialized initialized");
+    }
+
+    protected override void OnParametersSet()
+    {
+        Console.WriteLine("Life-coaching OnParametersSet initialized");
+    }
+}
