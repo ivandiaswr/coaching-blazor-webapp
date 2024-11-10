@@ -38,6 +38,7 @@ builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
 
 builder.Services.AddScoped<IEmailSubscriptionService, EmailSubscriptionService>();
 builder.Services.AddScoped<IContactService, ContactService>();
+builder.Services.AddScoped<IScrollService, ScrollService>();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()

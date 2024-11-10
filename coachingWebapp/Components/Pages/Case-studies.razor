@@ -1,5 +1,171 @@
 @page "/services/coaching/Case-studies"
 
+@rendermode InteractiveServer
+
+@inject ILogger<Case_studies> Logger
+
 <PageTitle>Case Studies | Ìtala Veloso</PageTitle>
 
-<h1>Case Studies</h1>
+<div class="case-studies-page">
+    <div class="testimonials-wave-top"></div>
+    <div class="title-section">
+        <h2>Case <span class="highlight">Studies</span></h2>
+        <p class="section-subtitle">Transformative Coaching Journeys</p>
+    </div>
+    
+    <div class="case-studies-container">
+        <div class="case-studies-grid">
+            @foreach (var testimonial in testimonials)
+            {
+                <div class="case-study-card">
+                    <div class="case-study-media">
+                        <div class="case-study-video-wrapper" @onclick="() => ToggleVideo(testimonial.Id)">
+                            <video id="video-@testimonial.Id" playsinline controls=true volume="0.5" 
+                                  @onended="() => OnVideoEnded(testimonial.Id)">           
+                                <source src="@testimonial.Path" type="video/mp4">
+                            </video>
+                            <div class="case-study-video-overlay @(testimonial.IsPlaying ? "hidden" : "")">
+                                <div class="case-study-play-btn">
+                                    <i class="@(testimonial.IsPlaying ? "fas fa-pause" : "fas fa-play")"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="case-study-author-info">
+                            <p class="case-study-author">@testimonial.Author</p>
+                            <p class="case-study-role">@testimonial.Role</p>
+                            <p class="case-study-duration">@testimonial.Duration</p>
+                        </div>
+                    </div>
+                    
+                    <div class="case-study-content">
+                        <div class="case-study-sections">
+                            <div class="case-study-section">
+                                <h4 class="case-study-section-title">
+                                    <i class="fas fa-flag-checkered"></i>
+                                    Challenge
+                                </h4>
+                                <p>@testimonial.Challenge</p>
+                            </div>
+                            <div class="case-study-section">
+                                <h4 class="case-study-section-title">
+                                    <i class="fas fa-lightbulb"></i>
+                                    Solution
+                                </h4>
+                                <p>@testimonial.Solution</p>
+                            </div>
+                            <div class="case-study-section">
+                                <h4 class="case-study-section-title">
+                                    <i class="fas fa-chart-line"></i>
+                                    Results
+                                </h4>
+                                <p>@testimonial.Results</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+    
+    <div class="cta-section">
+        <div class="cta-content">
+            <h2>Ready to Transform Your Future?</h2>
+            <p>Schedule a free consultation call to discuss your goals</p>
+        </div>
+        <a href="#contact" class="services-cta-button" @onclick:preventDefault>
+            <span class="cta-icon"><i class="fas fa-calendar-check"></i></span>
+            <span class="cta-text">
+                <span class="primary-text">Book Your Free Call</span>
+                <span class="secondary-text">15 minutes, zero obligation</span>
+            </span>
+            <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
+
+    <div class="testimonials-wave-bottom"></div>
+</div>
+
+@code {
+    private List<Testimonial> testimonials = new();
+
+    protected override void OnInitialized()
+    {
+        testimonials = new List<Testimonial>
+        {
+            new Testimonial
+            {
+                Id = 1,
+                Path = "Testimonials/testimonial_Yannick.mp4",
+                Challenge = "Struggling with work-life balance and career growth obstacles.",
+                Solution = "Implemented personalized coaching strategy focusing on time management and leadership skills.",
+                Results = "Achieved promotion to Marketing Director and established sustainable work routines.",
+                Author = "Yannick Martinez",
+                Role = "Marketing Director",
+                Duration = "6 Month Journey"
+            },
+            new Testimonial
+            {
+                Id = 2,
+                Path = "Testimonials/testimonial_Neuza.mp4",
+                Challenge = "Career transition from marketing to tech with no prior experience.",
+                Solution = "Structured learning path combined with confidence-building exercises.",
+                Results = "Successfully transitioned to junior developer role within 8 months.",
+                Author = "Neuza Silva",
+                Role = "Software Developer",
+                Duration = "8 Month Journey"
+            },
+            new Testimonial
+            {
+                Id = 3,
+                Path = "Testimonials/testimonial_Erica.mp4",
+                Challenge = "Burnout and lack of clear career direction.",
+                Solution = "Holistic wellness approach combined with career mapping.",
+                Results = "Improved work-life balance and 30% increase in productivity.",
+                Author = "Erica Thompson",
+                Role = "Marketing Director",
+                Duration = "1 Year Journey"
+            }
+        };
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await ScrollService.ScrollToTop();
+    }
+
+    private async Task ToggleVideo(int testimonialId)
+    {
+        try
+        {        
+            var currentTestimonial = testimonials.First(t => t.Id == testimonialId);
+
+            foreach(var testimonial in testimonials) {
+                if(testimonial.Id != testimonialId){
+                    await JSRuntime.InvokeVoidAsync("pauseVideoById", "video-" + testimonial.Id);
+                    testimonial.IsPlaying = false;
+                }
+            }
+
+            if(!currentTestimonial.IsPlaying){
+                await JSRuntime.InvokeVoidAsync("playVideoById", "video-" + currentTestimonial.Id);
+                currentTestimonial.IsPlaying = true;
+            } else {
+                await JSRuntime.InvokeVoidAsync("pauseVideoById", "video-" + currentTestimonial.Id);
+                currentTestimonial.IsPlaying = false;
+            }
+        } 
+        catch(Exception ex) {
+            Logger.LogError($"Error toggling video: {ex.Message}");
+        }
+
+        StateHasChanged();        
+    }
+
+    private void OnVideoEnded(int testimonialId)
+    {
+        var testimonial = testimonials.First(t => t.Id == testimonialId);
+        testimonial.IsPlaying = false;
+        StateHasChanged();
+    }
+
+}

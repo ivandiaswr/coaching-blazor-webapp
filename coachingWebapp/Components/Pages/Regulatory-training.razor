@@ -1,5 +1,94 @@
 @page "/services/regulatory/training"
 
+@rendermode InteractiveServer
+
 <PageTitle>Regulatory Training | Ìtala Veloso</PageTitle>
 
-<h1>Regulatory Training</h1>
+<div class="life-coaching-container">
+    <h1><span class="highlight">Regulatory</span> Training</h1>
+    <p>Start living a purpose-driven life and unlock your potential with guidance tailored to you. Explore the areas below:</p>
+
+    <div class="slider-container">
+        <div class="topics-grid" @ref="topicsGrid">
+            @foreach (var topic in Topics.Concat(Topics))
+            {
+                <div class="topic-card">
+                    <div class="image-wrapper">
+                        <img src="@topic.ImageUrl" alt="@topic.AltText">
+                        <div class="image-title">
+                            <h3>@topic.Title</h3>
+                        </div>
+                    </div>
+                </div>
+
+                if(Topics.Last().Id == topic.Id){
+                    Topics.Concat(Topics);
+                }
+            }
+        </div>
+    </div>
+
+    <div class="cta-section">
+        <div class="cta-content">
+            <h2>Ready to Transform Your Future?</h2>
+            <p>Schedule a free consultation call to discuss your goals</p>
+        </div>
+        <a href="#contact" class="services-cta-button" @onclick:preventDefault>
+            <span class="cta-icon"><i class="fas fa-calendar-check"></i></span>
+            <span class="cta-text">
+                <span class="primary-text">Book Your Free Call</span>
+                <span class="secondary-text">15 minutes, zero obligation</span>
+            </span>
+            <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
+</div>
+
+@code {
+    private ElementReference topicsGrid;
+     private List<Topic> Topics { get; set; } = new List<Topic>
+    {
+        new Topic {
+            Id = 1,
+            ImageUrl = "Images/services/career-coaching/goals-progression.jpg",
+            Title = "Set Goals Progression",
+            AltText = "Goals Progression"
+        },
+        new Topic {
+            Id = 2,
+            ImageUrl = "Images/services/career-coaching/cv-review.jpg",
+            Title = "CV Reviews",
+            AltText = "CV Reviews"
+        },
+        new Topic {
+            Id = 3,
+            ImageUrl = "Images/services/career-coaching/interview-preparation.jpg",
+            Title = "Get Interview Preparations and Feedback",
+            AltText = "Interview Preparations and Feedback"
+        },
+        new Topic {
+            Id = 4,
+            ImageUrl = "Images/services/career-coaching/work-life-balance.jpg",
+            Title = "Achieve Work Life Balance",
+            AltText = "Work Life Balance"
+            }
+    };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await ScrollService.ScrollToTop();
+
+        if (firstRender)
+        {
+            if (topicsGrid.Context == null)
+            {
+                Console.WriteLine("topicsGrid reference not set.");
+            }
+            else
+            {
+                Console.WriteLine("topicsGrid reference is set.");
+                await JSRuntime.InvokeVoidAsync("initializeSlider", topicsGrid);
+            }
+        }
+    }
+}

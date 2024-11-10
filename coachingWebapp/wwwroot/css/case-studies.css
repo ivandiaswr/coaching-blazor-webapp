@@ -1,0 +1,226 @@
+.case-studies-page {
+    position: relative;
+    width: 100%;
+    padding: 2rem 1.5rem 0rem;
+    background-color: var(--background-color);
+}
+
+.title-section {
+    color: var(--primary-black);
+    margin: 0rem;
+}
+
+.case-studies-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.title-section h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    text-align: center;
+}
+
+.case-studies-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+.case-study-card {
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.case-study-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+.case-study-media {
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+.case-study-video-wrapper {
+    position: relative;
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.case-study-video-wrapper video {
+    width: 100%;
+    height: 500px;
+    display: block;
+    aspect-ratio: 16/9;
+    object-fit: contain;
+}
+
+.case-study-video-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.case-study-video-overlay.hidden {
+    display: none; 
+  }
+  
+  .case-study-video-overlay.playing {
+    background: rgba(0, 0, 0, 0.2);
+  }
+
+.case-study-play-btn {
+    width: 70px;
+    height: 70px;
+    background: var(--accent-orange);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.case-study-play-btn i {
+    color: white;
+    font-size: 24px;
+    transition: transform 0.3s ease;
+}
+
+.case-study-video-overlay:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.case-study-video-overlay:hover .case-study-play-btn {
+    transform: scale(1.1);
+}
+
+.case-study-content {
+    flex: 1;
+}
+
+.case-study-author-info {
+    margin: 0.75rem 0;
+    padding: 0.75rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+}
+
+.case-study-author {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 0.25rem;
+}
+
+.case-study-role {
+    color: var(--text-color);
+    font-size: 0.875rem;
+}
+
+.case-study-duration {
+    font-size: 0.8rem;
+    color: var(--accent-color);
+    margin-top: 0.35rem;
+    font-style: italic;
+}
+
+.case-study-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.case-study-section {
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: 0.875rem;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.case-study-section:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.case-study-section-title {
+    color: var(--primary-color);
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.case-study-section-title i {
+    font-size: 0.875rem;
+    opacity: 0.9;
+}
+
+.case-study-section p {
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.cta-section {
+    max-width: 1200px;
+    margin: 3rem auto;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.cta-content {
+    margin-bottom: 1.5rem;
+}
+@media (max-width: 1200px) {
+    .case-studies-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .case-studies-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .case-studies-page {
+        padding: 2rem 1rem;
+    }
+
+    .case-study-card {
+        padding: 1rem;
+    }
+
+    .case-study-section {
+        padding: 0.875rem;
+    }
+
+    #testimonials {
+        padding: 120px 0 100px;
+      }
+    
+      #testimonials::before,
+      #testimonials::after {
+        height: 60px; 
+      }
+}

@@ -7,7 +7,7 @@ window.initializeSlider = function (element) {
             return;
         }
 
-        const scrollSpeed = 0.75; // Slightly slower for better readability
+        const scrollSpeed = 0.40; // Slightly slower for better readability
         let isPaused = false;
         let currentPosition = 0;
 

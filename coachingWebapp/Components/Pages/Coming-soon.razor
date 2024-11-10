@@ -10,3 +10,10 @@
         Your browser does not support the video tag mp4.
     </video>
 </section>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await ScrollService.ScrollToTop();
+    }
+}

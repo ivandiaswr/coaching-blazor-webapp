@@ -7,3 +7,9 @@
 
 <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Accusantium placeat quasi error ratione, corporis voluptatibus quo dolorem expedita molestiae esse dignissimos tempore, quis sed? Minus dignissimos corporis hic placeat animi earum. Rerum labore officia natus aperiam quas, et quo possimus excepturi optio ullam, velit repellat animi inventore molestiae necessitatibus, voluptates in! Animi ab quidem quam explicabo, tempora assumenda amet quos expedita nihil odio facere doloribus sit ex consequatur odit fugiat delectus possimus ut perferendis quisquam ullam nam accusamus. Ipsam quasi vero reprehenderit veritatis quis ratione dolore, aliquam debitis iure perspiciatis accusantium necessitatibus cum dolor consectetur! Error hic quidem sequi aliquid porro rerum fugiat iste cum asperiores officia, amet deleniti et cupiditate maxime, labore eos repellendus optio, facere accusantium non! Quis vero, porro incidunt aut autem commodi! Harum placeat voluptatem officiis obcaecati non facilis, accusantium iste, quo distinctio cumque, porro nostrum ad cum repellendus eos molestias eaque quam impedit fuga. Tenetur quibusdam, qui optio explicabo dolore repellat cupiditate reprehenderit, quo labore sequi voluptatum ab? Porro saepe in nostrum, est rem ratione! Ad illum quas debitis molestias culpa aut autem quaerat at sunt itaque placeat aperiam cum fugiat totam odio voluptatum perferendis, libero quibusdam reprehenderit suscipit ratione magnam in vero eius. Beatae.</p>
 
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await ScrollService.ScrollToTop();
+    }
+}

@@ -1,6 +1,5 @@
 ﻿@page "/"
 @rendermode InteractiveServer
-@inject IJSRuntime JSRuntime
 
 @inject IEmailSubscriptionService EmailSubscriptionService
 @inject IContactService ContactService
@@ -137,7 +136,6 @@
 </section>
 
 <section id="testimonials">
-    <div class="testimonials-wave-top"></div>
     <div class="title-section">
         <h2 class="section-title">What Our <span class="highlight">Clients Say</span></h2>
         <p class="section-subtitle">Real Stories, Real Results</p>
@@ -164,7 +162,7 @@
                     <div class="testimonial-content">
                         <div class="testimonial-quote">
                             <i class="fas fa-quote-left quote-icon"></i>
-                            <p class="testimonial-text">@testimonial.Text</p>
+                            <p class="testimonial-text">@testimonial.Results</p>
                         </div>
                         <div class="testimonial-author-info">
                             <div class="author-details">
@@ -184,30 +182,14 @@
             Begin Your Success Story
         </a>
     </div>
-
-    <div class="testimonials-wave-bottom"></div>
 </section>
 
-<section>
+<section id="contact">
     <div class="contact-container">
         <div class="contact-form-container">
             <div class="contact-wrapper">
                 <div class="unified-container">
-                    <div class="video-header-container">
-                        <video autoplay muted loop playsinline preload="auto" class="video-header">
-                            <source src="/Videos/adventure720p.mp4" type="video/mp4">
-                            Your browser does not support the video tag mp4.
-                        </video>
-                        <div id="contact" class="contact-video-overlay">
-                            <div class="contact-header">
-                                <i class="fas fa-calendar-check header-icon"></i>
-                                <h2>Begin Your Journey Today</h2>
-                                <p class="contact-subtitle">Transform your life through personalized guidance</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="content-grid">
+                    <div class="content-grid">         
                         <div class="form-section">
                             <EditForm Model="@contact" OnValidSubmit="ContactSubmit" FormName="contactForm">
                                 <DataAnnotationsValidator />
@@ -222,14 +204,6 @@
                                 </div>
                                 <div class="form-group message-group">
                                     <InputTextArea id="message" class="form-control" @bind-Value="contact.Message" rows="4" placeholder="Share your spiritual journey with us..." />
-                                    <div class="message-helper">
-                                        <p>Some things you might want to share:</p>
-                                        <ul>
-                                            <li>Where you are in your faith journey</li>
-                                            <li>What challenges you're facing</li>
-                                            <li>What spiritual growth you're seeking</li>
-                                        </ul>
-                                    </div>
                                     <ValidationMessage For="@(() => contact.Message)" />
                                 </div>
                                 <button type="submit"><i class="fas fa-calendar-check"></i> Schedule Your Free Call</button>
@@ -237,21 +211,29 @@
                             <div id="formStatus" class="form-status">@contactFormStatus</div>
                         </div>
 
-                        <div class="benefits-section">
-                            <div class="benefits-content">
-                                <h3>Your Path to Growth</h3>
-                                <ul class="benefits-list">
-                                    <li><i class="fas fa-check-circle"></i> Personalized tailored to your journey</li>
-                                    <li><i class="fas fa-check-circle"></i> Wisdom for life's challenges</li>
-                                    <li><i class="fas fa-check-circle"></i> Support and community</li>
-                                    <li><i class="fas fa-check-circle"></i> Practical steps for growth</li>
-                                    <li><i class="fas fa-check-circle"></i> Confidential and judgment-free space</li>
-                                </ul>
-                                <p class="benefits-note">No long-term commitment required - cancel anytime</p>
-                                <div class="testimonial-box">
-                                    <i class="fas fa-quote-left"></i>
-                                    <p>"This spiritual guidance transformed my relationship with God and gave me the direction I was seeking."</p>
-                                    <span class="testimonial-author">- Alguem a defenir</span>
+                        <div class="right-content">
+                            <div class="video-header-container">
+                                <video autoplay muted loop playsinline preload="auto" class="video-header">
+                                    <source src="/Videos/adventure720p.mp4" type="video/mp4">
+                                    Your browser does not support the video tag mp4.
+                                </video>
+                                <div class="contact-video-overlay">
+                                    <div class="contact-header">
+                                        <i class="fas fa-calendar-check header-icon"></i>
+                                        <h2>Begin Your Journey Today</h2>
+                                        <p class="contact-subtitle">Transform your life through personalized guidance</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="benefits-section">
+                                <div class="benefits-content">
+                                    <h3>Your Path to Growth</h3>
+                                    <ul class="benefits-list">
+                                        <li><i class="fas fa-check-circle"></i> Personalized guidance</li>
+                                        <li><i class="fas fa-check-circle"></i> Wisdom for life's challenges</li>
+                                        <li><i class="fas fa-check-circle"></i> Support and community</li>
+                                    </ul>
+                                    <p class="benefits-note">No long-term commitment required - cancel anytime</p>
                                 </div>
                             </div>
                         </div>
@@ -281,24 +263,24 @@
             new Testimonial
             {
                 Id = 1,
-                Path = "/Testimonials/testimonial_1.mp4",
-                Text = "The coaching sessions have truly transformed my life. I feel more confident and motivated.",
+                Path = "/Testimonials/testimonial_Laviniah.mp4",
+                Results = "The coaching sessions have truly transformed my life. I feel more confident and motivated.",
                 Author = "- Laviniah",
                 Role = "Marketing Director"
             },
             new Testimonial
             {
                 Id = 2,
-                Path = "Testimonials/testimonial_2.mp4",
-                Text = "Exceptional guidance and support throughout my career transition. Highly recommend!",
+                Path = "Testimonials/testimonial_Fi.mp4",
+                Results = "Exceptional guidance and support throughout my career transition. Highly recommend!",
                 Author = "- Fii quê?",
                 Role = "Developer"
             },
             new Testimonial
             {
                 Id = 3,
-                Path = "Testimonials/testimonial_3.mp4",
-                Text = "The personalized approach helped me achieve my health and wellness goals.",
+                Path = "Testimonials/testimonial_Monica.mp4",
+                Results = "The personalized approach helped me achieve my health and wellness goals.",
                 Author = "- Monica Manuel",
                 Role = "Marketing Director"
             }
@@ -310,6 +292,15 @@
     }
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (NavigationManager.Uri.Contains('#'))
+        {
+            await ScrollService.ScrollToFragment();
+        }
+        else
+        {
+            await ScrollService.ScrollToTop();
+        }
+
         if (firstRender)
         {
             await JSRuntime.InvokeVoidAsync("document.addEventListener", "keydown", DotNetObjectReference.Create(this), "HandleKeyDown");

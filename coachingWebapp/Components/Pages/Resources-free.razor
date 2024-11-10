@@ -1,5 +1,176 @@
 @page "/resources/free"
+@using BusinessLayer.Services.Interfaces
+@using ModelLayer.Models
+
+@rendermode InteractiveServer
+
+@inject IEmailSubscriptionService EmailSubscriptionService
+@inject ILogger<Resources_free> Logger
 
 <PageTitle>Free Resources | Ìtala Veloso</PageTitle>
 
-<h1>Free Resources</h1>
+<div class="resources-page">
+    <div class="resources-container">
+        <h1><span class="highlight">Free</span>  Resources</h1>
+
+        <div class="resources-grid">
+            <div class="resource-card">
+                <img src="Images/services/life-coaching/driven-life.jpg" alt="Self Discovery Challenge" class="card-image" />
+                <div class="card-content">
+                    <h3>Regain & Reclaim Your Inner Peace</h3>
+                    <p>Join our 30 Days Self Discovery Challenge and transform your life with daily mindfulness practices.</p>
+                    <div class="card-buttons">
+                        <button class="primary-button" @onclick="() => ShowGiftOffer()">
+                            <i class="fa-solid fa-download"></i> Get Free Guide
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="resource-card">
+                <img src="Images/services/career-coaching/work-life-balance.jpg" alt="Strong & Stress-Free Program" class="card-image" />
+                <div class="card-content">
+                    <h3>Finish 2024 Strong & Stress-Free!</h3>
+                    <p>Get your comprehensive guide to ending the year with purpose and starting fresh.</p>
+                    <div class="card-buttons">
+                        <button class="primary-button" @onclick="() => ShowGiftOffer()">
+                            <i class="fa-solid fa-download"></i> Download Now
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="video-section-wrapper">
+            <div id="video-section" class="resource-video-container">
+                <div class="video-wrapper">
+                    <iframe 
+                        src="https://www.youtube.com/embed/D521NyBCYDk?si=k43iQOgfDzgFVILa"
+                        title="30 Days Self Discovery Challenge Playlist Preview"
+                        frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen
+                        loading="lazy">
+                    </iframe>
+                </div>
+            </div>
+            
+            <div class="video-description">
+                <h2>Preview Our <span class="highlight">Challenge</span> Playlist</h2>
+                <p>Embark on a transformative journey with our carefully curated video series designed to guide you through personal growth and self-discovery. Each video offers practical insights and actionable steps to help you cultivate mindfulness, build resilience, and create lasting positive change in your life.</p>
+                <p>Whether you're new to personal development or looking to deepen your practice, our challenge playlist provides the perfect blend of inspiration and practical guidance.</p>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+@if (showGiftOffer)
+{
+    <div class="gift-modal" @onclick="CloseGiftOfferIfClickedOutside">
+        <div class="gift-modal-content" @onclick:stopPropagation>
+            <h3>Unlock Your Free Guide!</h3>
+            <p>Get instant access to expert tips and strategies to jumpstart your journey. <b>Your success story begins here.</b></p>
+            <EditForm Model="@emailSubscription" OnValidSubmit="GetGiftBySubscribeNewsLetter">
+                <DataAnnotationsValidator />
+
+                @if (isSubscribing)
+                {
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p>Subscribing...</p>
+                    </div>
+                }
+                else
+                {
+                    <InputText id="email" class="form-control" @bind-Value="emailSubscription.Email" placeholder="Enter your email" />
+                    <button type="submit" class="btn btn-primary">Get My Free Guide</button>
+                    <ValidationMessage For="@(() => emailSubscription.Email)" class="text-danger" />
+                    <p class="privacy-notice">By signing up, you're agreeing to receive marketing emails from Jostic. You can unsubscribe at any time. For more details, check out our <a href="/privacy-policy">Privacy Policy</a>.</p>
+                }
+            </EditForm>
+
+            @if (!string.IsNullOrEmpty(subscriptionMessage))
+            {
+                <div class="alert @(subscriptionSuccess ? "alert-success" : "alert-danger") mt-3" role="alert">
+                    @subscriptionMessage
+                </div>
+            }
+
+            <button class="close-button" @onclick="CloseGiftOffer"><i class="fa-solid fa-circle-xmark"></i></button>
+        </div>
+    </div>
+}
+
+@code {
+    private EmailSubscription emailSubscription = new EmailSubscription();
+    private string subscriptionMessage;
+    private bool subscriptionSuccess = false;
+    private bool isSubscribing = false;
+    private bool showGiftOffer = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await ScrollService.ScrollToTop();
+        }
+    }
+
+    private async Task GetGiftBySubscribeNewsLetter()
+    {
+        Logger.LogInformation("GetGiftBySubscribeNewsLetter method called");
+
+        if (!string.IsNullOrWhiteSpace(emailSubscription.Email))
+        {
+            isSubscribing = true;
+            StateHasChanged();
+
+            try
+            {
+                var result = await EmailSubscriptionService.SubscriptionGiftAsync(emailSubscription.Email);
+                subscriptionSuccess = result;
+                subscriptionMessage = result ? "Thank you! Your submission has been received!" : "Subscription failed. Please try again or contact support.";
+
+                if (result)
+                {
+                    emailSubscription = new EmailSubscription();  // Reset form
+                }
+            }
+            catch (Exception ex)
+            {
+                subscriptionMessage = "An error occurred. Please try again later.";
+                Logger.LogError(ex, "Error during subscription");
+            }
+            finally
+            {
+                isSubscribing = false;
+                StateHasChanged();
+            }
+        }
+    }
+
+    private void ShowGiftOffer()
+    {
+        showGiftOffer = true;
+        subscriptionMessage = string.Empty;
+        subscriptionSuccess = false;
+        StateHasChanged();
+    }
+
+    private void CloseGiftOffer()
+    {
+        showGiftOffer = false;
+        StateHasChanged();
+    }
+
+    private void CloseGiftOfferIfClickedOutside()
+    {
+        if (showGiftOffer)
+        {
+            CloseGiftOffer();
+        }
+    }
+}

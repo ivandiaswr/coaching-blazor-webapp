@@ -1,0 +1,118 @@
+.resources-page .resources-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.resources-page h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 3rem;
+    text-align: center;
+}
+
+.resources-page .video-section-wrapper {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    align-items: start;
+}
+
+.resources-page .resource-video-container {
+    width: 100%;
+}
+
+.resources-page .video-description {
+    padding: 1rem;
+}
+
+.resources-page .video-description h2 {
+    margin-bottom: 1.5rem;
+    font-size: 1.8rem;
+    color: #2c3e50;
+}
+
+.resources-page .video-description p {
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+.resources-page .resources-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    padding-bottom: 4rem;
+}
+
+.resources-page .resource-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    overflow: hidden;
+}
+
+.resources-page .resource-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+}
+
+.resources-page .card-image {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+}
+
+.resources-page .card-content {
+    padding: 2rem;
+}
+
+.resources-page .primary-button {
+    background: var(--accent-orange);
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s ease;
+}
+
+.resources-page .primary-button:hover {
+    background: var(--accent-orange-hover);
+}
+
+.resources-page .video-wrapper {
+    position: relative;
+    padding-bottom: 0%;
+    overflow: hidden;
+    width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.resources-page .video-wrapper iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+}
+
+@media (max-width: 968px) {
+    .resources-page .video-section-wrapper {
+        grid-template-columns: 1fr;
+    }
+    
+    .resources-page .resources-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .resources-page .video-description {
+        padding: 1rem 0;
+    }
+}

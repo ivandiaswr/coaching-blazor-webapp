@@ -1,13 +1,12 @@
 @page "/services/coaching/life-coaching"
 
 @rendermode InteractiveServer
-@inject IJSRuntime JSRuntime
 
 <PageTitle>Life Coaching | Ìtala Veloso</PageTitle>
 
 <div class="life-coaching-container">
     <h1><span class="highlight">Life</span> Coaching</h1>
-    <p>Start living a purpose-driven life and unlock your potential with guidance tailored to you. Explore each area below:</p>
+    <p>Start living a purpose-driven life and unlock your potential with guidance tailored to you. Explore the areas below:</p>
 
     <div class="slider-container">
         <div class="topics-grid" @ref="topicsGrid">
@@ -21,6 +20,10 @@
                         </div>
                     </div>
                 </div>
+
+                if(Topics.Last().Id == topic.Id){
+                    Topics.Concat(Topics);
+                }
             }
         </div>
     </div>
@@ -91,6 +94,8 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        await ScrollService.ScrollToTop();
+
         if (firstRender)
         {
             if (topicsGrid.Context == null)

@@ -132,6 +132,11 @@
     private bool isSubscribing = false;
     private bool showGiftOffer = false;
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await ScrollService.ScrollToTop();
+    }
+
     protected override void OnInitialized()
     {
     }
