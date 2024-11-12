@@ -66,7 +66,7 @@
             }
         </div>
     </div>
-    
+
     <div class="cta-section">
         <div class="cta-content">
             <h2>Ready to Transform Your Future?</h2>
@@ -86,26 +86,55 @@
 </div>
 
 @code {
-    private List<Testimonial> testimonials = new();
-
-    protected override void OnInitialized()
-    {
-        testimonials = new List<Testimonial>
+    private List<Testimonial> testimonials = new List<Testimonial>
         {
             new Testimonial
             {
                 Id = 1,
-                Path = "Testimonials/testimonial_Yannick.mp4",
+                Path = "Testimonials/testimonial_Laviniah.mp4",
                 Challenge = "Struggling with work-life balance and career growth obstacles.",
                 Solution = "Implemented personalized coaching strategy focusing on time management and leadership skills.",
                 Results = "Achieved promotion to Marketing Director and established sustainable work routines.",
-                Author = "Yannick Martinez",
+                Author = "Laviniah ",
                 Role = "Marketing Director",
                 Duration = "6 Month Journey"
             },
             new Testimonial
             {
                 Id = 2,
+                Path = "Testimonials/testimonial_Fi.mp4",
+                Challenge = "Career transition from marketing to tech with no prior experience.",
+                Solution = "Structured learning path combined with confidence-building exercises.",
+                Results = "Successfully transitioned to junior developer role within 8 months.",
+                Author = "Fi ",
+                Role = "Software Developer",
+                Duration = "8 Month Journey"
+            },
+            new Testimonial
+            {
+                Id = 3,
+                Path = "Testimonials/testimonial_Monica.mp4",
+                Challenge = "Burnout and lack of clear career direction.",
+                Solution = "Holistic wellness approach combined with career mapping.",
+                Results = "Improved work-life balance and 30% increase in productivity.",
+                Author = "Erica Thompson",
+                Role = "Marketing Director",
+                Duration = "1 Year Journey"
+            },
+            new Testimonial
+            {
+                Id = 4,
+                Path = "Testimonials/testimonial_Yannick.mp4",
+                Challenge = "Struggling with work-life balance and career growth obstacles.",
+                Solution = "Implemented personalized coaching strategy focusing on time management and leadership skills.",
+                Results = "Achieved promotion to Marketing Director and established sustainable work routines.",
+                Author = "Yannick Veloso",
+                Role = "Marketing Director",
+                Duration = "6 Month Journey"
+            },
+            new Testimonial
+            {
+                Id = 5,
                 Path = "Testimonials/testimonial_Neuza.mp4",
                 Challenge = "Career transition from marketing to tech with no prior experience.",
                 Solution = "Structured learning path combined with confidence-building exercises.",
@@ -116,7 +145,7 @@
             },
             new Testimonial
             {
-                Id = 3,
+                Id = 6,
                 Path = "Testimonials/testimonial_Erica.mp4",
                 Challenge = "Burnout and lack of clear career direction.",
                 Solution = "Holistic wellness approach combined with career mapping.",
@@ -126,6 +155,9 @@
                 Duration = "1 Year Journey"
             }
         };
+
+    protected override void OnInitialized()
+    {
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

@@ -28,7 +28,5 @@ public class ScrollService : IScrollService {
     public async Task ScrollToFragment()
     {
         await _jsRuntime.InvokeVoidAsync("scrollToFragment");
-
-        _lastLocation = _navigationManager.Uri;
     }
 }

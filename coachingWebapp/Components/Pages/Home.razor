@@ -68,7 +68,7 @@
                         <div class="service-icon">
                             <i class="fas fa-chart-line"></i>
                         </div>
-                        <span class="service-tag">Most Popular</span>
+                        @*<span class="service-tag">Trending</span>*@
                     </div>
                     <div class="card-content">
                         <h2>Career Advancement</h2>
@@ -193,17 +193,46 @@
                         <div class="form-section">
                             <EditForm Model="@contact" OnValidSubmit="ContactSubmit" FormName="contactForm">
                                 <DataAnnotationsValidator />
-
                                 <div class="form-group">
+                                    <label for="Name">Name</label>
                                     <InputText id="name" class="form-control" @bind-Value="contact.Name" placeholder="Your Name" />
                                     <ValidationMessage For="@(() => contact.Name)" />
                                 </div>
                                 <div class="form-group">
+                                    <label for="Email">Email</label>
                                     <InputText id="email" class="form-control" @bind-Value="contact.Email" placeholder="Your Email" />
                                     <ValidationMessage For="@(() => contact.Email)" />
                                 </div>
+                               <div class="form-group custom-select">
+                                    <label for="SessionCategory">Session Type</label>
+                                    <InputSelect id="SessionCategory" class="form-control" @bind-Value="contact.SessionCategory">
+                                        @foreach (var type in Enum.GetValues(typeof(SessionType)).Cast<SessionType>())
+                                        {
+                                            <option value="@type">
+                                                @((type.GetType().GetField(type.ToString())?.GetCustomAttributes(typeof(DisplayAttribute), false).FirstOrDefault() as DisplayAttribute)?.Name ?? type.ToString())
+                                            </option>
+                                        }
+                                    </InputSelect>
+                                    <ValidationMessage For="@(() => contact.SessionCategory)" />
+                                </div>
+                                <div class="form-group">
+                                    <label for="PreferredDateTime">Preferred Date & Time</label>
+                                    <InputDate id="PreferredDateTime" class="form-control" @bind-Value="contact.PreferredDateTime" />
+                                    <ValidationMessage For="@(() => contact.PreferredDateTime)" />
+                                </div>
+                                <div class="form-group">
+                                    <label for="TimeZone">Time Zone</label>
+                                    <InputSelect id="TimeZone" class="form-control" @bind-Value="contact.TimeZone">
+                                        <option value="UTC">UTC</option>
+                                        <option value="America/New_York">America/New_York</option>
+                                        <option value="America/Los_Angeles">America/Los_Angeles</option>
+                                        <!-- Add more time zones as needed -->
+                                    </InputSelect>
+                                    <ValidationMessage For="@(() => contact.TimeZone)" />
+                                </div>
                                 <div class="form-group message-group">
-                                    <InputTextArea id="message" class="form-control" @bind-Value="contact.Message" rows="4" placeholder="Share your spiritual journey with us..." />
+                                    <label for="Message">Message</label>
+                                    <InputTextArea id="message" class="form-control" @bind-Value="contact.Message" rows="4" placeholder="Share what's on your mind..." />
                                     <ValidationMessage For="@(() => contact.Message)" />
                                 </div>
                                 <button type="submit"><i class="fas fa-calendar-check"></i> Schedule Your Free Call</button>
@@ -247,23 +276,12 @@
 @code {
     private EmailSubscription emailSubscription = new EmailSubscription();
     private Contact contact = new Contact();
-    private List<Testimonial> testimonials = new();
-    private string subscriptionMessage;
-    private bool subscriptionSuccess = false;
-    private bool isSubscribing = false;
-    private string contactFormStatus = string.Empty;
-    private bool showGiftOffer = false;
-
-    protected override void OnInitialized()
-    {
-        //Console.WriteLine("Index page initialized");
-
-        testimonials = new List<Testimonial>
+    private List<Testimonial> testimonials = new List<Testimonial>
         {
             new Testimonial
             {
                 Id = 1,
-                Path = "/Testimonials/testimonial_Laviniah.mp4",
+                Path = "Testimonials/testimonial_Laviniah.mp4",
                 Results = "The coaching sessions have truly transformed my life. I feel more confident and motivated.",
                 Author = "- Laviniah",
                 Role = "Marketing Director"
@@ -285,6 +303,16 @@
                 Role = "Marketing Director"
             }
         };
+    private string subscriptionMessage;
+    private bool subscriptionSuccess = false;
+    private bool isSubscribing = false;
+    private string contactFormStatus = string.Empty;
+    private bool showGiftOffer = false;
+    private bool canScroll = true;
+
+    protected override void OnInitialized()
+    {
+        //Console.WriteLine("Index page initialized");
     }
     protected override void OnParametersSet()
     {
@@ -292,13 +320,16 @@
     }
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (NavigationManager.Uri.Contains('#'))
+        if(canScroll)
         {
-            await ScrollService.ScrollToFragment();
-        }
-        else
-        {
-            await ScrollService.ScrollToTop();
+            if (NavigationManager.Uri.Contains('#'))
+            {
+                await ScrollService.ScrollToFragment();
+            }
+            else
+            {
+                await ScrollService.ScrollToTop();
+            }
         }
 
         if (firstRender)
@@ -416,7 +447,9 @@
     
     #region Testimonials
 
-    public async Task ToggleVideo(int testimonialId){
+    public async Task ToggleVideo(int testimonialId)
+    {
+        canScroll = false;
 
         try
         {        
@@ -440,7 +473,8 @@
         catch(Exception ex) {
             Logger.LogInformation($"Error on ToggleVideo: {ex.Message}");
         }
-
+        
+        canScroll = false;
         StateHasChanged();        
     }
 
