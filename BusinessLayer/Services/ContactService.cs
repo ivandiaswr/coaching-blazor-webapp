@@ -13,33 +13,53 @@ public class ContactService : IContactService
     private readonly CoachingDbContext _context;
     private readonly IConfiguration _configuration;
     private readonly ILogger<ContactService> _logger;
+    private readonly IGoogleService _googleService;
 
-    public ContactService(CoachingDbContext context, IConfiguration configuration, ILogger<ContactService> logger)
+    public ContactService(CoachingDbContext context, IConfiguration configuration, ILogger<ContactService> logger, IGoogleService googleService)
     {
         this._context = context;
         this._configuration = configuration;
         this._logger = logger;
+        this._googleService = googleService;
     }
 
-    public async Task<bool> ContactSubmitAsync(Contact contact)
+    public async Task<bool> ContactSubmitAsync(Contact contact, string userAccessToken)
     {
-        if(contact is null){
-            return false; // Contact is null
-        } 
+        if(contact is null)
+            return false;
 
-        try{
-
+        try
+        {
             _context.Contacts.Add(contact);
 
-            await SendEmailAsync(contact);
+            //await SendEmailAsync(contact);
+
+            await _googleService.CreateEventAdminAsync(
+                $"Session with {contact.Name}",
+                contact.Message,
+                contact.PreferredDateTime,
+                contact.PreferredDateTime.AddMinutes(30),
+                "UTC",
+                contact.Email
+            );
+
+            await _googleService.CreateEventUserAsync(
+                userAccessToken,
+                $"Session with {contact.Name}",
+                contact.Message,
+                contact.PreferredDateTime,
+                contact.PreferredDateTime.AddMinutes(30),
+                "UTC",
+                contact.Email
+            );
+
+            await _context.SaveChangesAsync();
         } 
         catch (Exception ex)
         {
              _logger.LogError(ex, "Error during ContactSubmitAsync");
              return false;
-        }
-
-        await _context.SaveChangesAsync();
+        }  
 
         return true;
     }
@@ -80,10 +100,6 @@ public class ContactService : IContactService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during subscription");
-            _logger.LogError($"SMTP Error: {ex.Message}");
-            _logger.LogError($"SMTP Server: {smtpServer}");
-            _logger.LogError($"SMTP Port: {smtpPort}");
-            _logger.LogError($"SMTP Username: {smtpUsername}");
             throw;
         }
     }

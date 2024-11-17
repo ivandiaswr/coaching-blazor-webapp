@@ -7,6 +7,7 @@
     padding: 4rem 0;
     max-width: 1400px;
     margin: 0 auto;
+    font-size: 1rem;
 }
 
 .hero-left, .hero-right {
@@ -82,77 +83,76 @@
 /* Gift Section */
 
 .gift-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-  }
-  
-  .gift-modal-content {
-    background-color: #fff;
-    padding: 30px;
-    border-radius: 10px;
-    max-width: 500px;
-    width: 90%;
-    position: relative;
-  }
-  
-  .gift-modal-content h3 {
-    font-size: 1.5rem;
-    margin-bottom: 15px;
-    color: #333;
-  }
-  
-  .gift-modal-content p {
-    margin-bottom: 20px;
-    color: #555;
-  }
-  
-  .gift-modal-content .form-control {
-    margin-bottom: 15px;
-  }
-  
-  .gift-modal-content .btn-primary {
-    width: 50%;
-    padding: 10px;
-    font-size: 1rem;
-    background-color: var(--accent-orange);
-    border: none;
-    display: flex;
-    justify-content: center;
-  }
-  
-  .gift-modal-content .btn-primary:hover {
-    background-color: var(--accent-orange-hover);
-  }
-  
-  .gift-modal-content .privacy-notice {
-    font-size: 0.8rem;
-    color: #777;
-    margin-top: 15px;
-  }
-  
-  .gift-modal-content .close-button {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    color: #777;
-    cursor: pointer;
-  }
-  
-  .gift-modal-content .close-button:hover {
-    color: #333;
-  }
-  
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.gift-modal-content {
+  background-color: #fff;
+  padding: 30px;
+  border-radius: 10px;
+  max-width: 500px;
+  width: 90%;
+  position: relative;
+}
+
+.gift-modal-content h3 {
+  font-size: 1.5rem;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.gift-modal-content p {
+  margin-bottom: 20px;
+  color: #555;
+}
+
+.gift-modal-content .form-control {
+  margin-bottom: 15px;
+}
+
+.gift-modal-content button.btn-primary {
+  width: 100%;
+  padding: 10px;
+  font-size: 1rem;
+  background-color: var(--accent-orange);
+  border: none;
+  display: block;
+  margin: 0 auto;
+}
+
+.gift-modal-content button.btn-primary:hover {
+  background-color: var(--accent-orange-hover);
+}
+
+.gift-modal-content .privacy-notice {
+  font-size: 0.8rem;
+  color: #777;
+  margin-top: 15px;
+}
+
+.gift-modal-content .close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #777;
+  cursor: pointer;
+}
+
+.gift-modal-content .close-button:hover {
+  color: #333;
+}
 
 /* Bio Section */
 .bio-container {
@@ -183,4 +183,10 @@
     padding-left: 1rem;
     margin: 1.5rem 0;
     color: var(--text-gray);
+}
+
+.logo-extended {
+  width: 200px;
+  height: auto;
+  object-fit: cover;
 }

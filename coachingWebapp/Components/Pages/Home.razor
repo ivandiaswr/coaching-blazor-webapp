@@ -3,15 +3,19 @@
 
 @inject IEmailSubscriptionService EmailSubscriptionService
 @inject IContactService ContactService
+@inject IGoogleService GoogleService
+@inject IConfiguration Configuration
 
 @inject NavigationManager NavigationManager
 @inject ILogger<Home> Logger
 
 @using BusinessLayer.Services.Interfaces
+@using Google.Apis.Calendar.v3.Data
 @using Microsoft.AspNetCore.Components.Forms
 @using ModelLayer.Models
+@using coachingWebapp.Components.Components
 
-<PageTitle>Home | Ìtala Veloso</PageTitle>
+<PageTitle>Home | Ítala Veloso</PageTitle>
 
 <section id="video">
     <video autoplay muted loop playsinline preload="auto">
@@ -44,12 +48,12 @@
                 <div class="service-card featured">
                     <div class="card-header">
                         <div class="service-icon">
-                            <i class="fas fa-balance-scale"></i>
+                            <i class="fas fa-rocket"></i>
                         </div>
                         <span class="service-tag">Most Popular</span>
                     </div>
                     <div class="card-content">
-                        <h2>Life Balance Mastery</h2>
+                        <h2>Life Mastery</h2>
                         <p>Transform your approach to work-life integration through our comprehensive coaching program.</p>
                         <ul class="service-benefits">
                             <li><i class="fas fa-check"></i> Personalized Strategy Development</li>
@@ -99,7 +103,7 @@
                         <i class="fas fa-tags"></i>
                     </div>
                     <div class="card-content">
-                        <h3>Regulatoty Consulting</h3>
+                        <h3>Regulatoy Consulting</h3>
                         <p>Expert guidance for meeting UK labeling standards</p>
                         <a href="/services/regulatory/consulting" class="btn-secondary">Learn More</a>
                     </div>
@@ -216,26 +220,26 @@
                                     <ValidationMessage For="@(() => contact.SessionCategory)" />
                                 </div>
                                 <div class="form-group">
-                                    <label for="PreferredDateTime">Preferred Date & Time</label>
-                                    <InputDate id="PreferredDateTime" class="form-control" @bind-Value="contact.PreferredDateTime" />
-                                    <ValidationMessage For="@(() => contact.PreferredDateTime)" />
+                                    <label for="PreferredDateTime">Date & Time</label>
+                                    <div class="input-with-icon">
+                                        <InputText id="PreferredDateTime" class="form-control" @bind-Value="contact.PreferredDateTimeString" @onclick="ToggleCalendar" readonly/>
+                                        <i class="fas fa-calendar calendar-icon" @onclick="ToggleCalendar"></i>
+                                    </div>
+                                    <ValidationMessage For="@(() => contact.PreferredDateTimeString)" />
                                 </div>
-                                <div class="form-group">
-                                    <label for="TimeZone">Time Zone</label>
-                                    <InputSelect id="TimeZone" class="form-control" @bind-Value="contact.TimeZone">
-                                        <option value="UTC">UTC</option>
-                                        <option value="America/New_York">America/New_York</option>
-                                        <option value="America/Los_Angeles">America/Los_Angeles</option>
-                                        <!-- Add more time zones as needed -->
-                                    </InputSelect>
-                                    <ValidationMessage For="@(() => contact.TimeZone)" />
-                                </div>
+                                @if (showTimeSlots)
+                                {
+                                    <Calendar IsVisible="showTimeSlots" IsVisibleChanged="OnModalVisibilityChanged">
+                                        <div id="calendar"></div>
+                                    </Calendar>
+                                }
                                 <div class="form-group message-group">
                                     <label for="Message">Message</label>
-                                    <InputTextArea id="message" class="form-control" @bind-Value="contact.Message" rows="4" placeholder="Share what's on your mind..." />
+                                    <InputTextArea id="message" class="form-control" @bind-Value="contact.Message" rows="6" placeholder="Share what's on your mind..." />
                                     <ValidationMessage For="@(() => contact.Message)" />
                                 </div>
                                 <button type="submit"><i class="fas fa-calendar-check"></i> Schedule Your Free Call</button>
+                                <p class="privacy-notice">By signing up, you’re agreeing to receive marketing emails from Ítala Veloso. You can unsubscribe at any time. For more details, check out our <a href="/privacy-policy">Privacy Policy</a>.</p>
                             </EditForm>
                             <div id="formStatus" class="form-status">@contactFormStatus</div>
                         </div>
@@ -284,31 +288,33 @@
                 Path = "Testimonials/testimonial_Laviniah.mp4",
                 Results = "The coaching sessions have truly transformed my life. I feel more confident and motivated.",
                 Author = "- Laviniah",
-                Role = "Marketing Director"
+                Role = "Cyber Security Analyst"
             },
             new Testimonial
             {
                 Id = 2,
                 Path = "Testimonials/testimonial_Fi.mp4",
                 Results = "Exceptional guidance and support throughout my career transition. Highly recommend!",
-                Author = "- Fii quê?",
-                Role = "Developer"
+                Author = "- Fi",
+                Role = "Civil Servant"
             },
             new Testimonial
             {
                 Id = 3,
                 Path = "Testimonials/testimonial_Monica.mp4",
                 Results = "The personalized approach helped me achieve my health and wellness goals.",
-                Author = "- Monica Manuel",
-                Role = "Marketing Director"
+                Author = "- Mónica",
+                Role = "Oral Health"
             }
         };
     private string subscriptionMessage;
-    private bool subscriptionSuccess = false;
     private bool isSubscribing = false;
     private string contactFormStatus = string.Empty;
-    private bool showGiftOffer = false;
     private bool canScroll = true;
+    private bool showTimeSlots = false;
+    private List<DateTime> availableSlots;
+    private List<TimePeriod> busyTimes;
+    private bool calendarNeedsInitialization = false;
 
     protected override void OnInitialized()
     {
@@ -320,6 +326,18 @@
     }
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if(calendarNeedsInitialization)
+        {
+            calendarNeedsInitialization = false;
+
+            using var dotNetRef = DotNetObjectReference.Create(this);
+
+            await JSRuntime.InvokeVoidAsync("initializeCalendar",
+                DotNetObjectReference.Create(this),
+                availableSlots.Select(slot => slot.ToString("o")).ToList(), // ISO 8601 format
+                busyTimes
+            );
+        }
         if(canScroll)
         {
             if (NavigationManager.Uri.Contains('#'))
@@ -337,112 +355,117 @@
             await JSRuntime.InvokeVoidAsync("document.addEventListener", "keydown", DotNetObjectReference.Create(this), "HandleKeyDown");
         }
     }
-
-    #region GiftModal
-    private async Task GetGiftBySubscribeNewsLetter()
-    {
-        Logger.LogInformation("SubscribeToNewsLetter method called");
-        if (!string.IsNullOrWhiteSpace(emailSubscription.Email))
-        {
-            await InvokeAsync(() =>
-            {
-                isSubscribing = true;
-                StateHasChanged();
-            });
-
-            try
-            {
-                Logger.LogInformation($"Attempting to subscribe with email: {emailSubscription.Email}");
-
-                var result = await EmailSubscriptionService.SubscriptionGiftAsync(emailSubscription.Email);
-
-                await InvokeAsync(() =>
-                {
-                    subscriptionSuccess = result;
-                    subscriptionMessage = result ? "Thank you! Your submission has been received!" : "Subscription failed. Please try again or contact support.";
-
-                    if (result) 
-                    {
-                        emailSubscription = new EmailSubscription();  // Reset the form
-                    }
-
-                    StateHasChanged();
-                });
-
-                Logger.LogInformation($"Subscription result: {result}");
-            }
-            catch (Exception ex)
-            {
-                await InvokeAsync(() =>
-                {
-                    subscriptionMessage = "An error occurred. Please try again later.";
-                    StateHasChanged();
-                });
-
-                Logger.LogError(ex, "Error during subscription");
-            }
-            finally
-            {
-                await InvokeAsync(() =>
-                {
-                    isSubscribing = false;
-                    StateHasChanged();
-                });
-            }
-        }
-
-        Logger.LogInformation("SubscribeToNewsLetter method completed");
-    }
-    private void ShowGiftOffer()
-    {
-        showGiftOffer = true;
-        subscriptionMessage = string.Empty;
-        subscriptionSuccess = false;
-    }
-    public void CloseGiftOffer()
-    {
-        showGiftOffer = false;
-        StateHasChanged();
-    }
-    private void CloseGiftOfferIfClickedOutside()
-    {
-        if (showGiftOffer)
-        {
-            CloseGiftOffer();
-        }
-    }
-    #endregion
     
     #region ContactMessage
     private async Task ContactSubmit()
-        { 
-            Logger.LogInformation("ContactSubmit method called");
+    { 
+        Logger.LogInformation("ContactSubmit method called");
 
-            try
-            {
-                Logger.LogInformation("Attempting to send contact information");
+        try
+        {
+            Logger.LogInformation("Attempting to send contact information");
 
-                var result = await ContactService.ContactSubmitAsync(contact);
+            var AccessToken = await JSRuntime.InvokeAsync<string>("googleLogin", Configuration["GoogleCalendar:ClientId"]);
+
+            var result = await ContactService.ContactSubmitAsync(contact, AccessToken);
             
-                contactFormStatus = result ? "Thank you for your message. We'll get back to you soon!" : "Sending contact information failed. Please try again or contact support.";
+            contactFormStatus = result ? "Thank you for your message. We'll get back to you soon!" : "Sending contact information failed. Please try again or contact support.";
 
-                if (result)
+            if (result)
+            {
+                contact = new Contact(); // Reset the form
+            }
+
+            StateHasChanged();
+        }
+        catch(Exception ex)
+        {
+            subscriptionMessage = "An error occurred. Please try again later.";
+            StateHasChanged();
+
+            Logger.LogError(ex, "Error during ContactSubmit");
+        }
+            
+        Logger.LogInformation("ContactSubmit method completed");
+    }
+
+    private DotNetObjectReference<Home> DotNetRef;
+
+    [JSInvokable]
+    public void SelectTimeSlotFromJS(string selectedSlot)
+    {
+        var slot = DateTime.Parse(selectedSlot, null, System.Globalization.DateTimeStyles.RoundtripKind);
+        SelectTimeSlot(slot);
+    }
+    private async Task ToggleCalendar()
+    {
+        showTimeSlots = !showTimeSlots;
+
+        if (availableSlots == null || !availableSlots.Any())
+        {
+            var startDate = DateTime.UtcNow.AddDays(1);
+            var endDate = startDate.AddDays(13);
+
+            busyTimes = await GoogleService.GetBusyTimes(startDate, endDate);
+            availableSlots = GenerateAvailableSlots(startDate, endDate, busyTimes);
+        }
+
+        calendarNeedsInitialization = true;
+        StateHasChanged();
+    }
+
+    private List<DateTime> GenerateAvailableSlots(DateTime startDate, DateTime endDate, List<TimePeriod> busyTimes)
+    {
+        var slots = new List<DateTime>();
+        var workStartTime = new TimeSpan(9, 0, 0);
+        var workEndTime = new TimeSpan(17, 0, 0);
+        var slotDuration = TimeSpan.FromMinutes(30);
+
+        for (var date = startDate.Date; date <= endDate.Date; date = date.AddDays(1))
+        {
+            //if (date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday)
+            //    continue;
+
+            for (var time = workStartTime; time < workEndTime; time = time.Add(slotDuration))
+            {
+                var slotStart = date.Add(time);
+                var slotEnd = slotStart.Add(slotDuration);
+
+                bool isBusy = false;
+                foreach (var busy in busyTimes)
                 {
-                    contact = new Contact(); // Reset the form
+                    if (slotStart < busy.EndDateTimeOffset && busy.StartDateTimeOffset < slotEnd)
+                    {
+                        isBusy = true;
+                        break;
+                    }
                 }
 
-                StateHasChanged();
+                if (!isBusy)
+                {
+                    slots.Add(slotStart);
+                }
             }
-            catch(Exception ex)
-            {
-                subscriptionMessage = "An error occurred. Please try again later.";
-                StateHasChanged();
-
-                Logger.LogError(ex, "Error during ContactSubmit");
-            }
-            
-            Logger.LogInformation("ContactSubmit method completed");
         }
+
+        return slots;
+    }
+
+    private void SelectTimeSlot(DateTime selectedSlot)
+    {
+        contact.PreferredDateTime = selectedSlot;
+        contact.PreferredDateTimeString = selectedSlot.ToString("dd/MM/yyyy HH:mm");
+        showTimeSlots = false;
+        calendarNeedsInitialization = false;
+
+        StateHasChanged();
+    }
+
+    private void OnModalVisibilityChanged(bool isVisible)
+    {
+        showTimeSlots = isVisible;
+    }
+
     #endregion
     
     #region Testimonials

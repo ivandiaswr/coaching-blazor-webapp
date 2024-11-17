@@ -11,16 +11,40 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  /*outline: 1px solid red;*/
 }
 
 html, body {
     font-family: 'Montserrat', Helvetica, Arial, sans-serif;
-    font-size: small;
+    font-size: 0.84rem;
     margin: 0;
     padding: 0;
     width: 100%;
     scroll-behavior: smooth;
     overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: #888 #f1f1f1; 
+}
+
+/* WebKit browsers (Chrome, Edge, Safari) */
+::-webkit-scrollbar {
+  width: 10px; 
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1; 
+  border-radius: 10px; 
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #888; 
+  border-radius: 10px; 
+  border: 2px solid #f1f1f1; 
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
 }
 
 .page {
@@ -349,7 +373,8 @@ h1:focus {
   width: 100%;
   height: calc(100vh - 49px);
   position: relative;
-  overflow: hidden;
+  margin: 0;
+  padding: 0;
 }
 
 #video video {
@@ -357,11 +382,8 @@ h1:focus {
   height: 100%;
   object-fit: cover;
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  min-width: 100%;
-  min-height: 100%;
+  top: 0;
+  left: 0;
 }
 
 .video-overlay {
@@ -1400,6 +1422,129 @@ h1:focus {
   margin-bottom: 0;
 }
 
+#calendar {
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.calendar-modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.5);
+}
+
+.calendar-modal.show {
+  display: block;
+}
+
+.calendar-modal-content {
+  background-color: #fefefe;
+  margin: 5% auto;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%;
+}
+
+.timezone-info {
+  text-align: center;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.fc-event {
+  margin: 0 !important; 
+  border: none !important; 
+  border-radius: 0 !important; 
+  height: 100% !important; 
+  width: 100% !important;
+  box-sizing: border-box !important; 
+}
+
+.fc-event-busy {
+  background-color: #ffcccc !important;
+  opacity: 1 !important;
+  z-index: 5 !important;
+}
+
+.fc-event-available {
+  background-color: #a8d5a2 !important;
+  opacity: 1 !important;
+  z-index: 5 !important;
+}
+
+.fc-event-available:hover {
+  background-color: var(--accent-orange) !important; 
+  transform: scale(1.02); 
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.15); 
+  cursor: pointer;
+}
+
+.fc-event-title {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%; 
+  pointer-events: none; 
+}
+
+.fc-bg-event {
+  z-index: 1; 
+  pointer-events: none;
+}
+
+.fc-timegrid-bg, .fc-timegrid-slot {
+  pointer-events: none; 
+}
+
+.fc-timegrid-event {
+  pointer-events: auto; 
+  z-index: 10;
+}
+
+.fc-timegrid-slot {
+  height: 25px !important;
+}
+
+.fc-timegrid-slot:hover {
+  cursor: pointer; 
+}
+
+.fc-event, .fc-time-grid .fc-event-container {
+  inset: unset !important; 
+}
+
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.input-with-icon .form-control {
+  padding-right: 2.5rem; 
+}
+
+.input-with-icon .calendar-icon {
+  position: absolute;
+  right: 1rem; 
+  color: var(--accent-orange); 
+  cursor: pointer;
+  font-size: 1.2rem;
+}
+
+.input-with-icon:hover {
+  cursor: pointer;
+}
+
+
 @media (max-width: 1200px) {
   .message-helper {
       position: static;
@@ -1467,7 +1612,7 @@ h1:focus {
   justify-content: space-between;
   max-width: 1500px;
   margin: 0 auto;
-  padding: 50px 40px;
+  padding: 3rem 40px 1rem;
 }
 
 .footer-section {

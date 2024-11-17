@@ -7,23 +7,23 @@ window.initializeSlider = function (element) {
             return;
         }
 
-        const scrollSpeed = 0.40; // Slightly slower for better readability
+        const scrollSpeed = 0.40;
         let isPaused = false;
         let currentPosition = 0;
 
-        // Calculate the width of a single set of items
-        const items = element.children;
-        const itemCount = items.length / 2;
+        // Calculate width of items and container
+        const items = Array.from(element.children);
         const itemWidth = items[0].offsetWidth;
-        const gapWidth = 24; // 1.5rem = 24px (updated gap)
-        const singleSetWidth = (itemWidth + gapWidth) * itemCount;
+        const gapWidth = 24; // 1.5rem = 24px
+        const totalWidth = (itemWidth + gapWidth) * items.length;
 
         function animate() {
             if (!isPaused) {
                 currentPosition -= scrollSpeed;
                 
-                if (Math.abs(currentPosition) >= singleSetWidth) {
-                    currentPosition += singleSetWidth;
+                // Reset position when reaching the end
+                if (Math.abs(currentPosition) >= totalWidth / 2) {
+                    currentPosition = 0;
                 }
                 
                 element.style.transform = `translateX(${currentPosition}px)`;
@@ -31,26 +31,17 @@ window.initializeSlider = function (element) {
             requestAnimationFrame(animate);
         }
 
-        // Ensure we have enough duplicated items
-        const originalContent = element.innerHTML;
-        element.innerHTML = originalContent + originalContent;
-
-        // Start the animation
+        // Start animation loop
         requestAnimationFrame(animate);
 
-        // Pause on hover with smooth transition
-        element.addEventListener('mouseenter', () => {
-            isPaused = true;
-        });
-        element.addEventListener('mouseleave', () => {
-            isPaused = false;
-        });
+        // Pause on hover
+        element.addEventListener('mouseenter', () => { isPaused = true; });
+        element.addEventListener('mouseleave', () => { isPaused = false; });
 
-        // Handle window resize
+        // Adjust on window resize
         window.addEventListener('resize', () => {
-            const newItemWidth = items[0].offsetWidth;
-            const newSingleSetWidth = (newItemWidth + gapWidth) * itemCount;
-            if (Math.abs(currentPosition) >= newSingleSetWidth) {
+            const newTotalWidth = (itemWidth + gapWidth) * items.length;
+            if (Math.abs(currentPosition) >= newTotalWidth / 2) {
                 currentPosition = 0;
             }
         });

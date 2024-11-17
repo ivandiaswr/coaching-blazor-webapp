@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessLayer.Migrations
 {
     [DbContext(typeof(CoachingDbContext))]
-    [Migration("20240814155258_UpdateContactTableTimeStamp")]
-    partial class UpdateContactTableTimeStamp
+    [Migration("20241113083508_ContactTableAndEmailSubscriptionTableUpdate")]
+    partial class ContactTableAndEmailSubscriptionTableUpdate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -38,10 +38,20 @@ namespace DataAccessLayer.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime>("PreferredDateTime")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("SessionCategory")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime>("TimeStampInserted")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("TimeZone")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -57,6 +67,9 @@ namespace DataAccessLayer.Migrations
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("Gift")
+                        .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsSubscribed")
                         .ValueGeneratedOnAdd()

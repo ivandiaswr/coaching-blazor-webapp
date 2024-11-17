@@ -3,6 +3,8 @@ using BusinessLayer.Services;
 using BusinessLayer.Services.Interfaces;
 using coachingWebapp.Components;
 using DataAccessLayer;
+using Google.Apis.Auth.AspNetCore3;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,11 +18,7 @@ SQLitePCL.Batteries.Init();
 SQLitePCL.raw.SetProvider(new SQLitePCL.SQLite3Provider_e_sqlite3());  
 
 // Get the solution directory
-string solutionDirectory = AppDomain.CurrentDomain.BaseDirectory;
-for (int i = 0; i < 3; i++)
-{
-    solutionDirectory = Directory.GetParent(solutionDirectory)?.FullName ?? solutionDirectory;
-}
+string solutionDirectory = Directory.GetCurrentDirectory();
 string databaseDirectory = Path.Combine(solutionDirectory, "Database");
 
 // Ensure the Database directory exists
@@ -39,6 +37,7 @@ builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
 builder.Services.AddScoped<IEmailSubscriptionService, EmailSubscriptionService>();
 builder.Services.AddScoped<IContactService, ContactService>();
 builder.Services.AddScoped<IScrollService, ScrollService>();
+builder.Services.AddScoped<IGoogleService, GoogleService>();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -51,6 +50,24 @@ builder.Services.AddLogging(loggingBuilder =>
     loggingBuilder.AddConsole();
     loggingBuilder.AddDebug();
 });
+
+// Google
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = GoogleOpenIdConnectDefaults.AuthenticationScheme;
+})
+.AddCookie()
+.AddGoogleOpenIdConnect(options =>
+{
+    options.ClientId = builder.Configuration["GoogleCalendar:ClientId"];
+    options.ClientSecret = builder.Configuration["GoogleCalendar:ClientSecret"];
+    options.Scope.Add(Google.Apis.Calendar.v3.CalendarService.Scope.Calendar);
+    options.SaveTokens = true;
+});
+
+builder.Services.AddHttpClient<GoogleService>();
 
 var app = builder.Build();
 

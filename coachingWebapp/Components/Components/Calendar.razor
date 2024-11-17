@@ -1,0 +1,21 @@
+<div class="calendar-modal @(IsVisible ? "show" : "")" @onclick="Close">
+    <div class="calendar-modal-content" @onclick:stopPropagation="true">
+        <div class="timezone-info">
+            Timezone: <strong>@TimeZoneInfo.Local.DisplayName</strong>
+        </div>
+        @ChildContent
+    </div>
+</div>
+
+@code {
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback<bool> IsVisibleChanged { get; set; }
+    [Parameter] public RenderFragment ChildContent { get; set; }
+
+    private void Close()
+    {
+        IsVisible = false;
+        IsVisibleChanged.InvokeAsync(IsVisible);
+    }
+}
+5

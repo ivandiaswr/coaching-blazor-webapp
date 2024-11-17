@@ -11,16 +11,17 @@ public class Contact
     public int Id { get; set; }
     [Required(ErrorMessage = "Name is required")]
     public string Name { get; set; } = string.Empty;
-    [Required(ErrorMessage = "Email is required")]
-    [EmailAddress(ErrorMessage = "Invalid email address")]
+    [Required(ErrorMessage = "Please provide a email address.")]
+    [EmailAddress(ErrorMessage = "Please provide a valid email address.")]
     public string Email { get; set; } = string.Empty;
     [Required(ErrorMessage = "Please select a session type")]
     public SessionType SessionCategory { get; set; } 
-     [Required(ErrorMessage = "Preferred date and time are required")]
+    [Required(ErrorMessage = "Date and time are required")]
     public DateTime PreferredDateTime { get; set; }
-    [Required(ErrorMessage = "Please select a time zone")]
-    public string TimeZone { get; set; } = "UTC";
-    [Required]
+    [NotMapped]
+    [Required(ErrorMessage = "Please select a date and time for your session.")]
+    public string PreferredDateTimeString { get; set; } = string.Empty;
+    [Required(ErrorMessage = "Let us know what you'd like to discuss in the session.")]
     public string Message { get; set; } = string.Empty;
 
     public DateTime TimeStampInserted { get; set; }

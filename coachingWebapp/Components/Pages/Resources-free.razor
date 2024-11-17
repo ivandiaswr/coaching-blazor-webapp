@@ -7,7 +7,7 @@
 @inject IEmailSubscriptionService EmailSubscriptionService
 @inject ILogger<Resources_free> Logger
 
-<PageTitle>Free Resources | Ìtala Veloso</PageTitle>
+<PageTitle>Free Resources | Ítala Veloso</PageTitle>
 
 <div class="resources-page">
     <div class="resources-container">
@@ -20,8 +20,8 @@
                     <h3>Regain & Reclaim Your Inner Peace</h3>
                     <p>Join our 30 Days Self Discovery Challenge and transform your life with daily mindfulness practices.</p>
                     <div class="card-buttons">
-                        <button class="primary-button" @onclick="() => ShowGiftOffer()">
-                            <i class="fa-solid fa-download"></i> Get Free Guide
+                        <button class="primary-button" @onclick="() => ShowGiftOffer(GiftCategory.Gift1)">
+                            <i class="fa-solid fa-download"></i> Download Now
                         </button>
                     </div>
                 </div>
@@ -33,7 +33,7 @@
                     <h3>Finish 2024 Strong & Stress-Free!</h3>
                     <p>Get your comprehensive guide to ending the year with purpose and starting fresh.</p>
                     <div class="card-buttons">
-                        <button class="primary-button" @onclick="() => ShowGiftOffer()">
+                        <button class="primary-button" @onclick="() => ShowGiftOffer(GiftCategory.Gift2)">
                             <i class="fa-solid fa-download"></i> Download Now
                         </button>
                     </div>
@@ -86,7 +86,7 @@
                 else
                 {
                     <InputText id="email" class="form-control" @bind-Value="emailSubscription.Email" placeholder="Enter your email" />
-                    <button type="submit" class="btn btn-primary">Get My Free Guide</button>
+                    <button type="submit" class="btn btn-primary">Get Free Guide</button>
                     <ValidationMessage For="@(() => emailSubscription.Email)" class="text-danger" />
                     <p class="privacy-notice">By signing up, you're agreeing to receive marketing emails from Jostic. You can unsubscribe at any time. For more details, check out our <a href="/privacy-policy">Privacy Policy</a>.</p>
                 }
@@ -110,6 +110,7 @@
     private bool subscriptionSuccess = false;
     private bool isSubscribing = false;
     private bool showGiftOffer = false;
+    private GiftCategory giftCategory;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -130,7 +131,7 @@
 
             try
             {
-                var result = await EmailSubscriptionService.SubscriptionGiftAsync(emailSubscription.Email);
+                var result = await EmailSubscriptionService.SubscriptionGiftAsync(emailSubscription.Email, giftCategory);
                 subscriptionSuccess = result;
                 subscriptionMessage = result ? "Thank you! Your submission has been received!" : "Subscription failed. Please try again or contact support.";
 
@@ -152,8 +153,9 @@
         }
     }
 
-    private void ShowGiftOffer()
+    private void ShowGiftOffer(GiftCategory gift)
     {
+        giftCategory = gift;
         showGiftOffer = true;
         subscriptionMessage = string.Empty;
         subscriptionSuccess = false;

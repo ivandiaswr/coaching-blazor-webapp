@@ -8,7 +8,7 @@
 @using BusinessLayer.Services.Interfaces
 @using ModelLayer.Models
 
-<PageTitle>About Ítala Veloso</PageTitle>
+<PageTitle>About | Ítala Veloso</PageTitle>
 
 <section class="hero-container">
     <div class="hero-left">
@@ -22,26 +22,26 @@
             </p>
             <p class="quote">"Her words and work are woven with a message of empowerment, love, freedom and transformation."</p>
         <div class="hero-buttons">
-            <button @onclick="ShowGiftOffer" class="hero-button gift-button">
+            <button @onclick="() => ShowGiftOffer(GiftCategory.Gift3)" class="hero-button gift-button">
                 <i class="fa-solid fa-gift"></i> Get Your Free Success Guide
             </button>
         </div>
         <section class="bio-container jostic-container">
-    <div class="bio-content">
-        <div class="bio-text">
-            <h3><span class="jostic-brand">JOSTIC</span> - Journey of Survivors Turned into Conquerors</h3>
-            <p>
-                Founded in May 2021 and revamped in October 2023, <span class="jostic-brand">JOSTIC</span> is more than just a brand - it's a movement of transformation.
-            </p>
-            <p>
-                With a BSc in Food Engineering, an MSc in Public Health, and nearly 6 years of experience in Food Regulatory Affairs, Ítala brings a unique, holistic approach to coaching.
-            </p>
-            <p>
-                Her mission is to guide individuals on a journey of self-discovery, self-love, and spiritual growth - helping them unlock inner truths, self-confidence, and healing.
-            </p>
-        </div>
-    </div>
-</section> 
+            <div class="bio-content">
+                <div class="bio-text">
+                    <h3><span class="jostic-brand"><img src="Images/logoExtended.png" alt="JOSTIC" class="logo-extended"></span> - Journey of Survivors Turned into Conquerors</h3>
+                    <p>
+                        Founded in May 2021 and revamped in October 2023, <span class="jostic-brand">JOSTIC</span> it's a movement of transformation.
+                    </p>
+                    <p>
+                        With a BSc in Food Engineering, an MSc in Public Health, and nearly 6 years of experience in Food Regulatory Affairs, Ítala brings a unique, holistic approach to coaching.
+                    </p>
+                    <p>
+                        Her mission is to guide individuals on a journey of self-discovery, self-love, and spiritual growth - helping them unlock inner truths, self-confidence, and healing.
+                    </p>
+                </div>
+            </div>
+        </section> 
     </div>
 
     <div class="hero-right">
@@ -93,7 +93,7 @@
                     else
                     {
                         <InputText id="email" class="form-control" @bind-Value="emailSubscription.Email" placeholder="Enter your email" />
-                        <button type="submit" class="btn btn-primary">Get My Free Guide</button>
+                        <button type="submit" class="btn btn-primary">Get Free Guide</button>
                         <div class="row">
                             <div class="col">
                                 <ValidationMessage For="@(() => emailSubscription.Email)" class="text-danger" />
@@ -131,6 +131,7 @@
     private bool subscriptionSuccess = false;
     private bool isSubscribing = false;
     private bool showGiftOffer = false;
+    private GiftCategory giftCategory;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -157,7 +158,7 @@
             {
                 Logger.LogInformation($"Attempting to subscribe with email: {emailSubscription.Email}");
 
-                var result = await EmailSubscriptionService.SubscriptionGiftAsync(emailSubscription.Email);
+                var result = await EmailSubscriptionService.SubscriptionGiftAsync(emailSubscription.Email, giftCategory);
 
                 await InvokeAsync(() =>
                 {
@@ -196,8 +197,9 @@
 
         Logger.LogInformation("SubscribeToNewsLetter method completed");
     }
-    private void ShowGiftOffer()
+    private void ShowGiftOffer(GiftCategory gift)
     {
+        giftCategory = gift;
         showGiftOffer = true;
         subscriptionMessage = string.Empty;
         subscriptionSuccess = false;

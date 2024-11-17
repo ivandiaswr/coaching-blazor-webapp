@@ -66,7 +66,7 @@ public class EmailSubscriptionService : IEmailSubscriptionService
         return true;
     }
 
-    public async Task<bool> SubscriptionGiftAsync(string email)
+    public async Task<bool> SubscriptionGiftAsync(string email, GiftCategory giftCategory)
     {
         if(email is null){
             return false; // Email is null
@@ -80,7 +80,7 @@ public class EmailSubscriptionService : IEmailSubscriptionService
             {
                 try
                 {
-                    await SendEmailAsync(EmailSubscription.Email);
+                    await SendEmailAsync(EmailSubscription.Email, giftCategory);
                 }
                 catch (Exception ex)
                 {
@@ -95,6 +95,7 @@ public class EmailSubscriptionService : IEmailSubscriptionService
                 // Resubscribe
                 EmailSubscription.IsSubscribed = true;
                 EmailSubscription.SubscribedAt = DateTime.UtcNow;
+                EmailSubscription.Gift = giftCategory;
             }
         } 
         else 
@@ -102,13 +103,14 @@ public class EmailSubscriptionService : IEmailSubscriptionService
             try
             {    
                 var subscription = new EmailSubscription(){
-                    Email = email
+                    Email = email,
+                    Gift = giftCategory
                 };
                 
                 _context.EmailSubscriptions.Add(subscription);
 
                 // Guardou na bd com sucesso por isso envia email com o free gift 
-                await SendEmailAsync(subscription.Email);
+                await SendEmailAsync(subscription.Email, giftCategory);
             }
             catch (Exception ex)
             {
@@ -122,7 +124,7 @@ public class EmailSubscriptionService : IEmailSubscriptionService
         return true;
     }
 
-    public async Task SendEmailAsync(string email)
+    public async Task SendEmailAsync(string email, GiftCategory giftCategory)
     {
         var smtpServer = _configuration["SmtpSettings:Server"];
         var smtpPort = int.Parse(_configuration["SmtpSettings:Port"] ?? "");
@@ -143,13 +145,22 @@ public class EmailSubscriptionService : IEmailSubscriptionService
         var builder = new BodyBuilder();
         builder.TextBody = "Here's your free gift from Jostic!";
 
+
         // Construct the correct path to the PDF file
         string projectRoot = Directory.GetCurrentDirectory();
         while (!Directory.Exists(Path.Combine(projectRoot, "coachingWebapp")))
         {
             projectRoot = Directory.GetParent(projectRoot).FullName;
         }
-        string pdfPath = Path.Combine(projectRoot, "coachingWebapp/wwwroot", "Files", "test.pdf");
+        string pdfPath = string.Empty;
+
+        if (giftCategory == GiftCategory.Gift1)
+        {
+            pdfPath = Path.Combine(projectRoot, "coachingWebapp/wwwroot", "Files", "Reclaim & Regain Inner  Peace - Ítala Veloso.pdf");
+        } else if (giftCategory == GiftCategory.Gift2)
+        {
+            pdfPath = Path.Combine(projectRoot, "coachingWebapp/wwwroot", "Files", "Stress Free - Itala Veloso.pdf");
+        }
 
         // Check if the file exists
         if (!File.Exists(pdfPath))

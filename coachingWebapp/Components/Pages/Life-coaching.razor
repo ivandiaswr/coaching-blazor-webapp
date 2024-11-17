@@ -2,7 +2,7 @@
 
 @rendermode InteractiveServer
 
-<PageTitle>Life Coaching | Ìtala Veloso</PageTitle>
+<PageTitle>Life Coaching | Ítala Veloso</PageTitle>
 
 <div class="life-coaching-container">
     <h1><span class="highlight">Life</span> Coaching</h1>
@@ -10,7 +10,7 @@
 
     <div class="slider-container">
         <div class="topics-grid" @ref="topicsGrid">
-            @foreach (var topic in Topics.Concat(Topics))
+            @foreach (var topic in Topics)
             {
                 <div class="topic-card">
                     <div class="image-wrapper">
@@ -20,10 +20,6 @@
                         </div>
                     </div>
                 </div>
-
-                if(Topics.Last().Id == topic.Id){
-                    Topics.Concat(Topics);
-                }
             }
         </div>
     </div>
@@ -109,7 +105,6 @@
             }
         }
     }
-
      protected override void OnInitialized()
     {
         Console.WriteLine("Life-coaching OnInitialized initialized");
