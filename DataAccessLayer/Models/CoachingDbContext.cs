@@ -1,10 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ModelLayer.Models;
 
 namespace DataAccessLayer;
 
-public class CoachingDbContext : DbContext
+public class CoachingDbContext : IdentityDbContext<IdentityUser>
 {
     public DbSet<EmailSubscription> EmailSubscriptions { get; set; }
     public DbSet<Contact> Contacts { get; set; }
