@@ -5,15 +5,17 @@
 @inject IContactService ContactService
 @inject IGoogleService GoogleService
 @inject IConfiguration Configuration
+@inject IHttpClientFactory HttpClientFactory
+@inject ILogger<Home> Logger
 
 @inject NavigationManager NavigationManager
-@inject ILogger<Home> Logger
 
 @using BusinessLayer.Services.Interfaces
 @using Google.Apis.Calendar.v3.Data
 @using Microsoft.AspNetCore.Components.Forms
 @using ModelLayer.Models
 @using coachingWebapp.Components.Components
+
 
 <PageTitle>Home | Ítala Veloso</PageTitle>
 
@@ -195,7 +197,7 @@
                 <div class="unified-container">
                     <div class="content-grid">         
                         <div class="form-section">
-                            <EditForm Model="@contact" OnValidSubmit="ContactSubmit" FormName="contactForm">
+                            <EditForm Model="@contact" OnValidSubmit="ContactSubmitAsync" FormName="contactForm">
                                 <DataAnnotationsValidator />
                                 <div class="form-group">
                                     <label for="Name">Name</label>
@@ -238,10 +240,22 @@
                                     <InputTextArea id="message" class="form-control" @bind-Value="contact.Message" rows="6" placeholder="Share what's on your mind..." />
                                     <ValidationMessage For="@(() => contact.Message)" />
                                 </div>
-                                <button type="submit"><i class="fas fa-calendar-check"></i> Schedule Your Free Call</button>
+                                <button type="submit"><i class="fa-brands fa-google"></i> Schedule Your Free Call</button>
                                 <p class="privacy-notice">By signing up, you’re agreeing to receive marketing emails from Ítala Veloso. You can unsubscribe at any time. For more details, check out our <a href="/privacy-policy">Privacy Policy</a>.</p>
                             </EditForm>
-                            <div id="formStatus" class="form-status">@contactFormStatus</div>
+                            <div id="formStatus" class="form-status">
+                                @if (isLoggingIn)
+                                {
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="sr-only">Loading...</span>
+                                    </div>
+                                    <p>Logging in to Google and scheduling your session. Please wait...</p>
+                                }
+                                else
+                                {
+                                    @contactFormStatus
+                                }
+                            </div>
                         </div>
 
                         <div class="right-content">
@@ -315,15 +329,9 @@
     private List<DateTime> availableSlots;
     private List<TimePeriod> busyTimes;
     private bool calendarNeedsInitialization = false;
+    private bool isLoggingIn = false;
+    private DotNetObjectReference<Home> DotNetRef;
 
-    protected override void OnInitialized()
-    {
-        //Console.WriteLine("Index page initialized");
-    }
-    protected override void OnParametersSet()
-    {
-        //Console.WriteLine("Index page parameters set");
-    }
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if(calendarNeedsInitialization)
@@ -338,6 +346,7 @@
                 busyTimes
             );
         }
+        
         if(canScroll)
         {
             if (NavigationManager.Uri.Contains('#'))
@@ -349,68 +358,56 @@
                 await ScrollService.ScrollToTop();
             }
         }
-
-        if (firstRender)
-        {
-            await JSRuntime.InvokeVoidAsync("document.addEventListener", "keydown", DotNetObjectReference.Create(this), "HandleKeyDown");
-        }
     }
     
     #region ContactMessage
-    private async Task ContactSubmit()
+    private async Task ContactSubmitAsync()
     { 
-        Logger.LogInformation("ContactSubmit method called");
-
         try
         {
-            Logger.LogInformation("Attempting to send contact information");
+            isLoggingIn = true; 
+            StateHasChanged();
 
-            var AccessToken = await JSRuntime.InvokeAsync<string>("googleLogin", Configuration["GoogleCalendar:ClientId"]);
-
-            var result = await ContactService.ContactSubmitAsync(contact, AccessToken);
+            var result = await ContactService.ContactSubmitAsync(contact);
             
             contactFormStatus = result ? "Thank you for your message. We'll get back to you soon!" : "Sending contact information failed. Please try again or contact support.";
 
             if (result)
-            {
-                contact = new Contact(); // Reset the form
-            }
-
-            StateHasChanged();
+                contact = new Contact();
         }
         catch(Exception ex)
         {
-            subscriptionMessage = "An error occurred. Please try again later.";
-            StateHasChanged();
-
-            Logger.LogError(ex, "Error during ContactSubmit");
+            Logger.LogError(ex, "Error during ContactSubmitAsync");
+            contactFormStatus = "An error occurred. Please try again later.";
         }
-            
-        Logger.LogInformation("ContactSubmit method completed");
+        finally 
+        {
+            isLoggingIn = false; 
+            StateHasChanged();
+        }
     }
-
-    private DotNetObjectReference<Home> DotNetRef;
-
-    [JSInvokable]
-    public void SelectTimeSlotFromJS(string selectedSlot)
-    {
-        var slot = DateTime.Parse(selectedSlot, null, System.Globalization.DateTimeStyles.RoundtripKind);
-        SelectTimeSlot(slot);
-    }
+    
     private async Task ToggleCalendar()
     {
-        showTimeSlots = !showTimeSlots;
+        var startDate = DateTime.UtcNow.Date.AddDays(1);
+        var endDate = startDate.AddDays(13);
 
-        if (availableSlots == null || !availableSlots.Any())
+        try
         {
-            var startDate = DateTime.UtcNow.AddDays(1);
-            var endDate = startDate.AddDays(13);
-
             busyTimes = await GoogleService.GetBusyTimes(startDate, endDate);
+
             availableSlots = GenerateAvailableSlots(startDate, endDate, busyTimes);
         }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to refresh calendar data");
+            availableSlots = new List<DateTime>();
+            busyTimes = new List<TimePeriod>();
+        }
 
+        showTimeSlots = !showTimeSlots;
         calendarNeedsInitialization = true;
+
         StateHasChanged();
     }
 
@@ -451,6 +448,13 @@
         return slots;
     }
 
+    [JSInvokable]
+    public void SelectTimeSlotFromJS(string selectedSlot)
+    {
+        var slot = DateTime.Parse(selectedSlot, null, System.Globalization.DateTimeStyles.RoundtripKind);
+        SelectTimeSlot(slot);
+    }
+
     private void SelectTimeSlot(DateTime selectedSlot)
     {
         contact.PreferredDateTime = selectedSlot;
@@ -460,12 +464,10 @@
 
         StateHasChanged();
     }
-
     private void OnModalVisibilityChanged(bool isVisible)
     {
         showTimeSlots = isVisible;
     }
-
     #endregion
     
     #region Testimonials

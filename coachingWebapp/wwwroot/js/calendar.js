@@ -5,18 +5,10 @@ window.initializeCalendar = (dotNetHelper, slots, busyTimes) => {
         calendarEl.calendar.destroy();
     }
 
-    console.log("Busy Times:", busyTimes);
-
-    console.log("Processed Busy Events:", busyTimes.map(busy => ({
-        start: busy.StartDateTimeOffset,
-        end: busy.EndDateTimeOffset,
-        title: 'Busy'
-    })));
-
     const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'timeGridWeek', 
         initialDate: new Date(), 
-        nowIndicator: true, // Show a line for the current time
+        nowIndicator: true,
         selectable: true,
         eventOverlap: false,
         timeZone: 'local',
@@ -44,7 +36,6 @@ window.initializeCalendar = (dotNetHelper, slots, busyTimes) => {
         eventClick: function (info) {
             info.jsEvent.preventDefault();
         
-            console.log("Clicked Event:", info.event);
             if (info.event.title === "Open Slot") {
                 dotNetHelper.invokeMethodAsync("SelectTimeSlotFromJS", info.event.startStr);
             }

@@ -17,17 +17,19 @@ if (builder.Environment.IsDevelopment())
 SQLitePCL.Batteries.Init();
 SQLitePCL.raw.SetProvider(new SQLitePCL.SQLite3Provider_e_sqlite3());  
 
-// Get the solution directory
-string solutionDirectory = Directory.GetCurrentDirectory();
-string databaseDirectory = Path.Combine(solutionDirectory, "Database");
+string solutionDirectory = AppContext.BaseDirectory;
+string projectRootDirectory = Path.GetFullPath(Path.Combine(solutionDirectory, "../../../../"));
+string databaseDirectory = Path.Combine(projectRootDirectory, "Database");
 
 // Ensure the Database directory exists
 Directory.CreateDirectory(databaseDirectory);
 
+string databasePath = Path.Combine(databaseDirectory, "coaching.db");
+
 // builder.Configuration.GetConnectionString("DefaultConnection")
 builder.Services.AddDbContext<CoachingDbContext>(options =>
-    options.UseSqlite($"Data Source={Path.Combine(databaseDirectory, "coaching.db")}",
-        b => b.MigrationsAssembly("DataAccessLayer"))
+    options.UseSqlite($"Data Source={databasePath}",
+        b => b.MigrationsAssembly(typeof(CoachingDbContext).Assembly.FullName))
     .LogTo(Console.WriteLine, LogLevel.Information)
     .EnableSensitiveDataLogging()
     .EnableDetailedErrors());

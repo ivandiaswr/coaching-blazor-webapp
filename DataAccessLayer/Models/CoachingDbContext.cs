@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using ModelLayer.Models;
 
 namespace DataAccessLayer;
@@ -14,22 +15,5 @@ public class CoachingDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
-        modelBuilder.Entity<EmailSubscription>(entity =>
-        {
-            entity.ToTable("EmailSubscriptions");
-            entity.Property(e => e.SubscribedAt)
-                .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-            entity.Property(e => e.IsSubscribed)
-                .HasDefaultValue(true);
-        });
-
-        modelBuilder.Entity<Contact>(entity =>
-        {
-            entity.ToTable("Contacts");
-            entity.Property(e => e.TimeStampInserted)
-                .HasDefaultValueSql("CURRENT_TIMESTAMP");
-        });
     }
 }

@@ -11,17 +11,3 @@ window.scrollToFragment = () => {
         }
     }
 }
-
-function googleLogin(clientId, onSuccessCallback, onFailureCallback) {
-    google.accounts.oauth2.initTokenClient({
-        client_id: clientId,
-        scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events',
-        callback: (response) => {
-            if (response.error) {
-                onFailureCallback(response);
-            } else {
-                onSuccessCallback(response.access_token);
-            }
-        },
-    }).requestAccessToken();
-}

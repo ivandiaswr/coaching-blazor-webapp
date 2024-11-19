@@ -23,7 +23,7 @@ public class ContactService : IContactService
         this._googleService = googleService;
     }
 
-    public async Task<bool> ContactSubmitAsync(Contact contact, string userAccessToken)
+    public async Task<bool> ContactSubmitAsync(Contact contact)
     {
         if(contact is null)
             return false;
@@ -32,26 +32,15 @@ public class ContactService : IContactService
         {
             _context.Contacts.Add(contact);
 
-            //await SendEmailAsync(contact);
+            var CreateEventAdminAsyncResult = await _googleService.CreateEventAdminAsync(contact);
 
-            await _googleService.CreateEventAdminAsync(
-                $"Session with {contact.Name}",
-                contact.Message,
-                contact.PreferredDateTime,
-                contact.PreferredDateTime.AddMinutes(30),
-                "UTC",
-                contact.Email
-            );
+            if(!CreateEventAdminAsyncResult)
+            {
+                _logger.LogError("Failed to create admin's event.");
+                return false;
+            }
 
-            await _googleService.CreateEventUserAsync(
-                userAccessToken,
-                $"Session with {contact.Name}",
-                contact.Message,
-                contact.PreferredDateTime,
-                contact.PreferredDateTime.AddMinutes(30),
-                "UTC",
-                contact.Email
-            );
+            await SendEmailAsync(contact);
 
             await _context.SaveChangesAsync();
         } 
@@ -77,15 +66,16 @@ public class ContactService : IContactService
         }
 
         var message = new MimeMessage();
-        message.From.Add(new MailboxAddress("Contact Form - Itala Veloso", smtpUsername));
+        message.From.Add(new MailboxAddress("Meeting Scheduled", smtpUsername));
         message.To.Add(new MailboxAddress("", smtpUsername));
-        message.Subject = "Contact Form Submission - " + contact.Name;
+        message.Subject = $"Meeting Scheduled - {contact.Name}";
         message.Body = new TextPart("plain")
         {
             Text = "Name: " + contact.Name + "\n" + 
-                   "Email: " + contact.Email + "\n" + 
+                   "Email: " + contact.Email + "\n" +
+                   "Session Category: " + contact.SessionCategory + "\n" +  
                    "Message: " + contact.Message + "\n" +
-                   "TimeStamp: " + DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss")
+                   "Preferred Meeting Date: " + contact.PreferredDateTime
         };
 
        using var client = new SmtpClient();

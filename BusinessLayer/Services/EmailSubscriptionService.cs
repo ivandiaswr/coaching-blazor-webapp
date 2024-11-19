@@ -68,9 +68,8 @@ public class EmailSubscriptionService : IEmailSubscriptionService
 
     public async Task<bool> SubscriptionGiftAsync(string email, GiftCategory giftCategory)
     {
-        if(email is null){
-            return false; // Email is null
-        }
+        if(email is null)
+            return false; 
 
         var EmailSubscription = await _context.EmailSubscriptions.FirstOrDefaultAsync(e => e.Email == email);
 
@@ -104,12 +103,13 @@ public class EmailSubscriptionService : IEmailSubscriptionService
             {    
                 var subscription = new EmailSubscription(){
                     Email = email,
-                    Gift = giftCategory
+                    Gift = giftCategory,
+                    IsSubscribed = true
                 };
                 
                 _context.EmailSubscriptions.Add(subscription);
 
-                // Guardou na bd com sucesso por isso envia email com o free gift 
+                // Saved on the bd with success and sends email with a free gift 
                 await SendEmailAsync(subscription.Email, giftCategory);
             }
             catch (Exception ex)

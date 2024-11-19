@@ -1,4 +1,3 @@
-using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -24,5 +23,5 @@ public class Contact
     [Required(ErrorMessage = "Let us know what you'd like to discuss in the session.")]
     public string Message { get; set; } = string.Empty;
 
-    public DateTime TimeStampInserted { get; set; }
+    public DateTime TimeStampInserted { get; set; } = DateTime.UtcNow;
 }

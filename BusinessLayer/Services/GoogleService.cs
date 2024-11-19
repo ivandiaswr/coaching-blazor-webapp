@@ -1,52 +1,27 @@
 
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using Google.Apis.Auth.OAuth2;
-using Google.Apis.Calendar.v3;
+using System.Text;
+using System.Text.Json;
 using Google.Apis.Calendar.v3.Data;
-using Google.Apis.Services;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using ModelLayer.Models;
 
 public class GoogleService : IGoogleService
 {
-    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IHttpClientFactory _httpClientFactory;
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
     private readonly ILogger<GoogleService> _logger;
-    private CalendarService _calendarService;
 
-    public GoogleService(IHttpContextAccessor httpContextAccessor, HttpClient httpClient, IConfiguration configuration, ILogger<GoogleService> logger) 
+    public GoogleService(IHttpClientFactory httpClientFactory, HttpClient httpClient, IConfiguration configuration, ILogger<GoogleService> logger) 
     {
-        this._httpContextAccessor = httpContextAccessor;
+        this._httpClientFactory = httpClientFactory;
         this._httpClient = httpClient;
         this._configuration = configuration;
         this._logger = logger;
-    }
-
-    public async Task InitializeCalendarServiceAsync(string accessToken)
-    {
-        if (_calendarService != null)
-            return;
-        
-        try
-        {
-            //var authResult = await _httpContextAccessor.HttpContext.AuthenticateAsync();
-            //var accessToken = await _httpContextAccessor.HttpContext.GetTokenAsync("access_token");
-        
-            var initializer = new BaseClientService.Initializer 
-            {
-                HttpClientInitializer = GoogleCredential.FromAccessToken(accessToken),
-                ApplicationName = "Ítala Veloso"
-            };
-
-            _calendarService = new CalendarService(initializer);
-        }
-        catch(Exception ex)
-        {
-            _logger.LogError(ex, "Error during InitializeCalendarServiceAsync");
-        }
     }
 
     public async Task<List<TimePeriod>> GetBusyTimes(DateTime startDate, DateTime endDate)
@@ -77,63 +52,81 @@ public class GoogleService : IGoogleService
         }).ToList();
     }
 
-    public async Task CreateEventAdminAsync(string summary, string description, DateTime start, DateTime end, string timeZone, string userEmail)
+    public async Task<bool> CreateEventAdminAsync(Contact contact)
     {
-        await InitializeCalendarServiceAsync(_configuration["GoogleCalendar:ApiKey"]);
+        var refreshToken = _configuration["GoogleCalendar:RefreshToken"];
+        var accessToken = await RefreshAccessTokenAsync(refreshToken);
 
-        var newEvent = new Google.Apis.Calendar.v3.Data.Event
+        var eventData = new
         {
-            Summary = summary,
-            Description = description,
-            Start = new Google.Apis.Calendar.v3.Data.EventDateTime
+            summary = $"Meeting with {contact.Name}",
+            description = contact.Message,
+            start = new { dateTime = contact.PreferredDateTime.ToString("yyyy-MM-ddTHH:mm:ss"), timeZone = "UTC" },
+            end = new { dateTime = contact.PreferredDateTime.AddMinutes(30).ToString("yyyy-MM-ddTHH:mm:ss"), timeZone = "UTC" },
+            attendees = new[]
             {
-                DateTimeDateTimeOffset = start,
-                TimeZone = timeZone
+                //new { email = _configuration["GoogleCalendar:CalendarId"] },
+                new { email = contact?.Email }
             },
-            End = new Google.Apis.Calendar.v3.Data.EventDateTime
+            conferenceData = new
             {
-                DateTimeDateTimeOffset = end,
-                TimeZone = timeZone
-            },
-            Attendees = new List<Google.Apis.Calendar.v3.Data.EventAttendee>
-            {
-                new Google.Apis.Calendar.v3.Data.EventAttendee
+                createRequest = new
                 {
-                    Email = userEmail
+                    requestId = Guid.NewGuid().ToString(),
+                    conferenceSolutionKey = new { type = "hangoutsMeet" }
                 }
             }
         };
 
-        await _calendarService.Events.Insert(newEvent, "primary").ExecuteAsync();
+        var client = _httpClientFactory.CreateClient();
+        var request = new HttpRequestMessage(HttpMethod.Post, "https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1&sendUpdates=all")
+        {
+            Content = new StringContent(JsonSerializer.Serialize(eventData), Encoding.UTF8, "application/json")
+        };
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await client.SendAsync(request);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            _logger.LogError($"Failed to create event: {response.StatusCode}, {errorContent}");
+            throw new Exception($"Failed to create event: {response.StatusCode}, {errorContent}");
+        }
+
+        _logger.LogInformation("Event created successfully.");
+        return true;
     }
 
-    public async Task CreateEventUserAsync(string userAccessToken, string summary, string description, DateTime start, DateTime end, string timeZone, string userEmail)
+    public async Task<string> RefreshAccessTokenAsync(string refreshToken)
     {
-        await InitializeCalendarServiceAsync(userAccessToken);
+        var clientId = _configuration["GoogleCalendar:ClientId"];
+        var clientSecret = _configuration["GoogleCalendar:ClientSecret"];
 
-        var newEvent = new Google.Apis.Calendar.v3.Data.Event
+        var tokenRequest = new HttpRequestMessage(HttpMethod.Post, "https://oauth2.googleapis.com/token")
         {
-            Summary = summary,
-            Description = description,
-            Start = new Google.Apis.Calendar.v3.Data.EventDateTime
+            Content = new FormUrlEncodedContent(new Dictionary<string, string>
             {
-                DateTimeDateTimeOffset = start,
-                TimeZone = timeZone
-            },
-            End = new Google.Apis.Calendar.v3.Data.EventDateTime
-            {
-                DateTimeDateTimeOffset = end,
-                TimeZone = timeZone
-            },
-            Attendees = new List<Google.Apis.Calendar.v3.Data.EventAttendee>
-            {
-                new Google.Apis.Calendar.v3.Data.EventAttendee
-                {
-                    Email = userEmail
-                }
-            }
+                { "client_id", clientId },
+                { "client_secret", clientSecret },
+                { "refresh_token", refreshToken },
+                { "grant_type", "refresh_token" }
+            })
         };
 
-        await _calendarService.Events.Insert(newEvent, "primary").ExecuteAsync();
+        var client = _httpClientFactory.CreateClient();
+        var response = await client.SendAsync(tokenRequest);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            _logger.LogError($"Failed to refresh access token: {response.StatusCode}, {errorContent}");
+            throw new Exception($"Failed to refresh access token: {response.StatusCode}, {errorContent}");
+        }
+
+        var content = await response.Content.ReadAsStringAsync();
+        var tokenResponse = System.Text.Json.JsonSerializer.Deserialize<TokenResponse>(content);
+
+        return tokenResponse?.AccessToken ?? throw new Exception("Failed to obtain access token.");
     }
 }

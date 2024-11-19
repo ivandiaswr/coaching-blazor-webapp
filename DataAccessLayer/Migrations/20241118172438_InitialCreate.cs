@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace DataAccessLayer.Migrations
 {
     /// <inheritdoc />
-    public partial class ContactTableAndEmailSubscriptionTableUpdate : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -21,9 +21,8 @@ namespace DataAccessLayer.Migrations
                     Email = table.Column<string>(type: "TEXT", nullable: false),
                     SessionCategory = table.Column<int>(type: "INTEGER", nullable: false),
                     PreferredDateTime = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    TimeZone = table.Column<string>(type: "TEXT", nullable: false),
                     Message = table.Column<string>(type: "TEXT", nullable: false),
-                    TimeStampInserted = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
+                    TimeStampInserted = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -38,9 +37,10 @@ namespace DataAccessLayer.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     Email = table.Column<string>(type: "TEXT", nullable: false),
                     Gift = table.Column<int>(type: "INTEGER", nullable: false),
-                    SubscribedAt = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
-                    IsSubscribed = table.Column<bool>(type: "INTEGER", nullable: false, defaultValue: true),
-                    UnsubscribedAt = table.Column<DateTime>(type: "TEXT", nullable: true)
+                    SubscribedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    IsSubscribed = table.Column<bool>(type: "INTEGER", nullable: false),
+                    UnsubscribedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    TimeStampInserted = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {

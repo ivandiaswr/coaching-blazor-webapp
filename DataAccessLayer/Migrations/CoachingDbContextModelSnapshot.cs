@@ -42,17 +42,11 @@ namespace DataAccessLayer.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("TimeStampInserted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                    b.Property<string>("TimeZone")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Contacts", (string)null);
+                    b.ToTable("Contacts");
                 });
 
             modelBuilder.Entity("ModelLayer.Models.EmailSubscription", b =>
@@ -69,21 +63,20 @@ namespace DataAccessLayer.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsSubscribed")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
-                        .HasDefaultValue(true);
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("SubscribedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("TimeStampInserted")
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("UnsubscribedAt")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
-                    b.ToTable("EmailSubscriptions", (string)null);
+                    b.ToTable("EmailSubscriptions");
                 });
 #pragma warning restore 612, 618
         }

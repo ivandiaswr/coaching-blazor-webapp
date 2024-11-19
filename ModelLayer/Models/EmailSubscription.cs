@@ -16,4 +16,5 @@ public class EmailSubscription
     public DateTime SubscribedAt { get; set; }
     public bool IsSubscribed { get; set; }
     public DateTime? UnsubscribedAt { get; set; }
+    public DateTime TimeStampInserted { get; set; } = DateTime.UtcNow;
 }
