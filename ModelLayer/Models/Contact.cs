@@ -8,14 +8,13 @@ public class Contact
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
-    [Required(ErrorMessage = "Name is required")]
+    [Required(ErrorMessage = "Please provide your name.")]
     public string Name { get; set; } = string.Empty;
     [Required(ErrorMessage = "Please provide a email address.")]
     [EmailAddress(ErrorMessage = "Please provide a valid email address.")]
     public string Email { get; set; } = string.Empty;
-    [Required(ErrorMessage = "Please select a session type")]
+    [Required(ErrorMessage = "Please select a session.")]
     public SessionType SessionCategory { get; set; } 
-    [Required(ErrorMessage = "Date and time are required")]
     public DateTime PreferredDateTime { get; set; }
     [NotMapped]
     [Required(ErrorMessage = "Please select a date and time for your session.")]

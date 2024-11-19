@@ -240,22 +240,22 @@
                                     <InputTextArea id="message" class="form-control" @bind-Value="contact.Message" rows="6" placeholder="Share what's on your mind..." />
                                     <ValidationMessage For="@(() => contact.Message)" />
                                 </div>
+                                <div id="formStatus" class="form-status">
+                                    @if (isLoggingIn)
+                                    {
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="sr-only">Loading...</span>
+                                        </div>
+                                        <p>Scheduling your session. Please wait...</p>
+                                    }
+                                    else
+                                    {
+                                        @contactFormStatus
+                                    }
+                                </div>
                                 <button type="submit"><i class="fa-brands fa-google"></i> Schedule Your Free Call</button>
                                 <p class="privacy-notice">By signing up, you’re agreeing to receive marketing emails from Ítala Veloso. You can unsubscribe at any time. For more details, check out our <a href="/privacy-policy">Privacy Policy</a>.</p>
                             </EditForm>
-                            <div id="formStatus" class="form-status">
-                                @if (isLoggingIn)
-                                {
-                                    <div class="spinner-border text-primary" role="status">
-                                        <span class="sr-only">Loading...</span>
-                                    </div>
-                                    <p>Logging in to Google and scheduling your session. Please wait...</p>
-                                }
-                                else
-                                {
-                                    @contactFormStatus
-                                }
-                            </div>
                         </div>
 
                         <div class="right-content">
@@ -370,7 +370,7 @@
 
             var result = await ContactService.ContactSubmitAsync(contact);
             
-            contactFormStatus = result ? "Thank you for your message. We'll get back to you soon!" : "Sending contact information failed. Please try again or contact support.";
+            contactFormStatus = result ? "Thank you for your message. Meeting scheduled on Google. We'll get back to you soon!" : "Sending contact information failed. Please try again or contact support.";
 
             if (result)
                 contact = new Contact();
