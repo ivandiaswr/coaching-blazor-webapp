@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using MimeKit;
 using MailKit.Net.Smtp;
 using ModelLayer.Models;
+using System.CodeDom;
 namespace BusinessLayer.Services;
 
 public class ContactService : IContactService
@@ -23,6 +24,21 @@ public class ContactService : IContactService
         this._googleService = googleService;
     }
 
+    public List<Contact> GetAllContacts()
+    {
+        try
+        {
+            var contacts = _context.Contacts.OrderBy(c => c.TimeStampInserted).ToList();
+
+            return contacts;
+        }
+        catch(Exception ex)
+        {
+             _logger.LogError(ex, "Error during GetAllContacts");
+             throw;
+        }
+    }
+
     public async Task<bool> ContactSubmitAsync(Contact contact)
     {
         if(contact is null)
@@ -30,6 +46,7 @@ public class ContactService : IContactService
 
         try
         {
+            contact.TimeStampInserted = DateTime.UtcNow;
             _context.Contacts.Add(contact);
 
             var CreateEventAdminAsyncResult = await _googleService.CreateEventAdminAsync(contact);

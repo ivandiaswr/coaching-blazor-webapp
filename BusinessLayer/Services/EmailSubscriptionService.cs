@@ -22,12 +22,26 @@ public class EmailSubscriptionService : IEmailSubscriptionService
         this._configuration = configuration;
         this._logger = logger;
     }
+
+    public List<EmailSubscription> GetAllEmailSubscriptions()
+    {
+        try
+        {
+            var emailSubscription = _context.EmailSubscriptions.OrderBy(c => c.TimeStampInserted).ToList();
+
+            return emailSubscription;
+        }
+        catch(Exception ex)
+        {
+             _logger.LogError(ex, "Error during GetAllEmailSubscriptions");
+             throw;
+        }
+    }
     
     public async Task<bool> SubscriptionAsync(string email)
     {
-        if(email is null){
-            return false; // Email is null
-        }
+        if(email is null)
+            return false; 
 
         var EmailSubscription = await _context.EmailSubscriptions.FirstOrDefaultAsync(e => e.Email == email);
 
@@ -48,8 +62,12 @@ public class EmailSubscriptionService : IEmailSubscriptionService
         {
             try 
             {
-                var subscription = new EmailSubscription(){
-                    Email = email
+                var subscription = new EmailSubscription()
+                {
+                    Email = email,
+                    IsSubscribed = true,
+                    SubscribedAt = DateTime.UtcNow,
+                    TimeStampInserted = DateTime.UtcNow
                 };
 
                 _context.EmailSubscriptions.Add(subscription);
@@ -58,7 +76,6 @@ public class EmailSubscriptionService : IEmailSubscriptionService
                 _logger.LogError(ex, "Error during subscription");
                 return false;
             }
- 
         }
 
         await _context.SaveChangesAsync();
@@ -75,7 +92,7 @@ public class EmailSubscriptionService : IEmailSubscriptionService
 
         if(EmailSubscription != null)
         {
-            if (EmailSubscription.IsSubscribed) // Already subscribed
+            if (EmailSubscription.IsSubscribed)
             {
                 try
                 {
@@ -109,7 +126,7 @@ public class EmailSubscriptionService : IEmailSubscriptionService
                 
                 _context.EmailSubscriptions.Add(subscription);
 
-                // Saved on the bd with success and sends email with a free gift 
+                // Saves into db with success and sends email with a free gift 
                 await SendEmailAsync(subscription.Email, giftCategory);
             }
             catch (Exception ex)

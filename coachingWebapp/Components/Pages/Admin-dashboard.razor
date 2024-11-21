@@ -1,37 +1,137 @@
 @page "/admin-dashboard"
 @rendermode InteractiveServer
+
+@using BusinessLayer.Services.Interfaces
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using ModelLayer.Models
+
+@inject SignInManager<IdentityUser> SignInManager
 @inject NavigationManager NavigationManager
-@inject IConfiguration Configuration
-@inject ILogger<Admin_dashboard> Logger
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IContactService ContactService
+@inject IEmailSubscriptionService EmailSubscriptionService
 
-<h3>Authorize the App</h3>
-<p>To allow the app to manage your Google Calendar, please click the button below to grant authorization.</p>
+@attribute [Authorize(Roles = "Admin")]
+<PageTitle>Admin Dashboard | Ítala Veloso</PageTitle>
 
-<button @onclick="AuthorizeApp">Authorize</button>
+<MudPopoverProvider/> @*only works if its in the page of the mud component*@
+
+<section id="adminDashboard">
+    <div class="dashboard-header">
+        <div>
+            <h1><span class="highlight">Admin</span> Dashboard</h1>  
+        
+            @if (authState != null && authState.User.Identity != null && authState.User.Identity.IsAuthenticated)
+            {
+                <p>Welcome, @authState.User.Identity.Name!</p>
+            }
+            else
+            {
+                <p>Loading user information...</p>
+            }
+        </div>
+        <button class="btn btn-primary" @onclick="LogoutUser">Logout</button>
+    </div>
+
+        <MudDataGrid T="Contact" Items="@contacts" MultiSelection="true" SortMode="SortMode.Multiple" Filterable="true"
+    Hideable="true">
+        <ToolBarContent>
+            <MudText Typo="Typo.h4">Contacts</MudText>
+            <MudSpacer />
+            <MudTextField @bind-Value="searchContactsString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+            AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"></MudTextField>
+        </ToolBarContent>
+        <Columns>
+            <SelectColumn T="Contact" />
+            <PropertyColumn Property="x => x.Id" Title="Id" Sortable="true" Filterable="false" />
+            <PropertyColumn Property="x => x.Name" Title="Name" Sortable="true" Filterable="true" />
+            <PropertyColumn Property="x => x.Email" Title="Email" Sortable="false" Filterable="true" />
+            <PropertyColumn Property="x => x.SessionCategory" Title="Session" Sortable="true" Filterable="true" />
+            <PropertyColumn Property="x => x.Message" Title="Message" Sortable="false" Filterable="true" />
+            <PropertyColumn Property="x => x.TimeStampInserted" Title="TimeStampInserted" Sortable="true" Filterable="false" />
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="Contact" />
+        </PagerContent>
+    </MudDataGrid>
+
+    <MudDataGrid T="EmailSubscription" Items="@emailSubscriptions" MultiSelection="true" SortMode="SortMode.Multiple" Filterable="true"
+    Hideable="true">
+        <ToolBarContent>
+            <MudText Typo="Typo.h4">Email Subscriptions</MudText>
+            <MudSpacer />
+            <MudTextField @bind-Value="searchEmailSubscriptionsString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+            AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"></MudTextField>
+        </ToolBarContent>
+        <Columns>
+            <SelectColumn T="Contact" />
+            <PropertyColumn Property="x => x.Id" Title="Id" Sortable="true" Filterable="false" />
+            <PropertyColumn Property="x => x.Email" Title="Email" Sortable="true" Filterable="true" />
+            <PropertyColumn Property="x => x.IsSubscribed" Title="IsSubscribed" Sortable="false" Filterable="true" />
+            <PropertyColumn Property="x => x.SubscribedAt" Title="SubscribedAt" Sortable="true" Filterable="true" />
+            <PropertyColumn Property="x => x.UnsubscribedAt" Title="UnsubscribedAt" Sortable="false" Filterable="true" />
+            <PropertyColumn Property="x => x.TimeStampInserted" Title="TimeStampInserted" Sortable="true" Filterable="false" />
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="EmailSubscription" />
+        </PagerContent>
+    </MudDataGrid>
+</section>
 
 @code {
-    private void AuthorizeApp()
+    private AuthenticationState authState;
+    private List<Contact> contacts;
+    private List<EmailSubscription> emailSubscriptions;
+    private string loginError = string.Empty;
+    private string searchContactsString;
+    private string searchEmailSubscriptionsString;
+
+    private string emailFilter = string.Empty;
+    private string contactFilter = string.Empty;
+
+    private IEnumerable<EmailSubscription> filteredEmailSubscriptions =>
+        string.IsNullOrEmpty(emailFilter)
+            ? emailSubscriptions
+            : emailSubscriptions
+                .Where(e => e.Email.Contains(emailFilter, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+    private IEnumerable<Contact> filteredContacts =>
+        string.IsNullOrEmpty(contactFilter)
+            ? contacts
+            : contacts
+                .Where(c => c.Name.Contains(contactFilter, StringComparison.OrdinalIgnoreCase) ||
+                            c.Email.Contains(contactFilter, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+    protected override async Task OnInitializedAsync()
     {
-        var clientId = Configuration["GoogleCalendar:ClientId"];
-        var redirectUri = Configuration["GoogleCalendar:CallbackUrl"];
-        var scopes = "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events";
+        authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        contacts = ContactService.GetAllContacts() ?? new List<Contact>();
+        emailSubscriptions = EmailSubscriptionService.GetAllEmailSubscriptions() ?? new List<EmailSubscription>();
+    }
 
-        var authorizationUrl = $"https://accounts.google.com/o/oauth2/v2/auth?response_type=code" +
-                               $"&client_id={clientId}" +
-                               $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
-                               $"&scope={Uri.EscapeDataString(scopes)}" +
-                               $"&access_type=offline" +
-                               $"&prompt=consent";
+    private async Task LogoutUser()
+    {
+        try
+        {
+            var result = await JSRuntime.InvokeAsync<SessionResult>("logout");
 
-        Logger.LogInformation(
-            $"https://accounts.google.com/o/oauth2/v2/auth?response_type=code" +
-            $"&client_id={clientId}" +
-            $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
-            $"&scope={Uri.EscapeDataString(scopes)}" +
-            $"&access_type=offline" +
-            $"&prompt=consent"
-        );
-
-        NavigationManager.NavigateTo(authorizationUrl, true);
+            if (result.Success)
+            {
+                NavigationManager.NavigateTo("/");
+            }
+            else
+            {
+                loginError = result.Error;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during logout: {ex.Message}");
+            loginError = "An unexpected error occurred. Please try again.";
+        }
     }
 }

@@ -11,3 +11,35 @@ window.scrollToFragment = () => {
         }
     }
 }
+
+// Call login and logout APIs through JS so the cookies are set on client side and not on server side
+window.login = function (loginModel) {
+    return fetch('/api/account/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(loginModel)
+    }).then(response => {
+        if (response.ok) {
+            return { success: true };
+        } else {
+            return response.text().then(text => { return { success: false, error: text }; });
+        }
+    });
+};
+
+window.logout = function () {
+    return fetch('/api/account/logout', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }).then(response => {
+        if (response.ok) {
+            return { success: true };
+        } else {
+            return response.text().then(text => { return { success: false, error: text }; });
+        }
+    });
+};

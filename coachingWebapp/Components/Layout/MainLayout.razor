@@ -1,17 +1,22 @@
 ﻿@using coachingWebapp.Components.Pages
 @inherits LayoutComponentBase
 
-<div class="page">
-    <NavMenu />
-    <main>
-        @Body
-    </main>
+<MudThemeProvider/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
 
-    <Footer />
+<div class="page">
+    <main>
+        <NavMenu />
+        
+        @Body
+        
+        <Footer />
+    </main>  
 </div>
 
 <div id="blazor-error-ui">
     An unhandled error has occurred.
     <a href="" class="reload">Reload</a>
     <a class="dismiss">🗙</a>
-</div>
+</div>5
