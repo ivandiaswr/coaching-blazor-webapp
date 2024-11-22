@@ -4,7 +4,7 @@
 @inject IConfiguration Configuration
 @inject ILogger<Admin_auth> Logger
 
-<PageTitle>Google Auth | Ítala Veloso</PageTitle>
+<PageTitle>@pageTitle</PageTitle>
 
 <h3>Authorize the App</h3>
 <p>To allow the app to manage your Google Calendar, please click the button below to grant authorization.</p>
@@ -12,6 +12,7 @@
 <button @onclick="AuthorizeApp">Authorize</button>
 
 @code {
+    private string pageTitle = "Google Auth | Ítala Veloso";
     private void AuthorizeApp()
     {
         var clientId = Configuration["GoogleCalendar:ClientId"];

@@ -4,7 +4,7 @@
 
 @inject ILogger<Case_studies> Logger
 
-<PageTitle>Case Studies | Ítala Veloso</PageTitle>
+<PageTitle>@pageTitle</PageTitle>
 
 <div class="case-studies-page">
     <div class="testimonials-wave-top"></div>
@@ -86,6 +86,7 @@
 </div>
 
 @code {
+    private string pageTitle = "Case Studies | Ítala Veloso";
     private List<Testimonial> testimonials = new List<Testimonial>
         {
             new Testimonial

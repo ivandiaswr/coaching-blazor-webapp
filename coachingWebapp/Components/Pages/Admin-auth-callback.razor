@@ -4,11 +4,12 @@
 @inject NavigationManager NavigationManager
 @inject ILogger<Admin_auth_callback> Logger
 
-<PageTitle>Google Auth Callback | Ítala Veloso</PageTitle>
+<PageTitle>@pageTitle</PageTitle>
 
 <h3>Processing Authorization...</h3>
 
 @code {
+    private string pageTitle = "Google Auth Callback | Ítala Veloso";
     [Parameter]
     [SupplyParameterFromQuery]
     public string Code { get; set; }

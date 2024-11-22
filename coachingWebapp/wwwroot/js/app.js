@@ -43,3 +43,7 @@ window.logout = function () {
         }
     });
 };
+
+function setTitle(title) {
+    document.title = title;
+}

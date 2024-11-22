@@ -8,7 +8,7 @@
 @using BusinessLayer.Services.Interfaces
 @using ModelLayer.Models
 
-<PageTitle>About | Ítala Veloso</PageTitle>
+<PageTitle>@pageTitle</PageTitle>
 
 <section class="hero-container">
     <div class="hero-left">
@@ -126,6 +126,7 @@
 
 
 @code {
+    private string pageTitle = "About | Ítala Veloso";
     private EmailSubscription emailSubscription = new EmailSubscription();
     private string subscriptionMessage;
     private bool subscriptionSuccess = false;

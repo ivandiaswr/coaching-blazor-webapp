@@ -14,7 +14,7 @@
 @inject IEmailSubscriptionService EmailSubscriptionService
 
 @attribute [Authorize(Roles = "Admin")]
-<PageTitle>Admin Dashboard | Ítala Veloso</PageTitle>
+<PageTitle>@pageTitle</PageTitle>
 
 <MudPopoverProvider/> @*only works if its in the page of the mud component*@
 
@@ -81,6 +81,7 @@
 </section>
 
 @code {
+    private string pageTitle = "Admin Dashboard | Ítala Veloso";
     private AuthenticationState authState;
     private List<Contact> contacts;
     private List<EmailSubscription> emailSubscriptions;

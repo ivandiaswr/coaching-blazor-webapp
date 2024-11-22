@@ -2,7 +2,7 @@
 
 @rendermode InteractiveServer
 
-<PageTitle>Coming soon | Ítala Veloso</PageTitle>
+<PageTitle>@pageTitle</PageTitle>
 
 <section class="coming-soon-section" id="video">
     <video autoplay muted loop playinline>
@@ -12,6 +12,7 @@
 </section>
 
 @code {
+    private string pageTitle = "Coming soon | Ítala Veloso";
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         await ScrollService.ScrollToTop();

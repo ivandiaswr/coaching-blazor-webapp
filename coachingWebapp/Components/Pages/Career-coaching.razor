@@ -2,7 +2,7 @@
 
 @rendermode InteractiveServer
 
-<PageTitle>Career Coaching | Ítala Veloso</PageTitle>
+<PageTitle>@pageTitle</PageTitle>
 
 <div class="life-coaching-container">
     <h1><span class="highlight">Career</span> Coaching</h1>
@@ -45,6 +45,7 @@
 </div>
 
 @code {
+    private string pageTitle = "Career Coaching | Ítala Veloso";
     private ElementReference topicsGrid;
      private List<Topic> Topics { get; set; } = new List<Topic>
     {

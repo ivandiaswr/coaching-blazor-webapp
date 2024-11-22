@@ -14,10 +14,10 @@
 @using Google.Apis.Calendar.v3.Data
 @using Microsoft.AspNetCore.Components.Forms
 @using ModelLayer.Models
-@using coachingWebapp.Components.Components
+@using coachingWebapp.Components
 
 
-<PageTitle>Home | Ítala Veloso</PageTitle>
+<PageTitle>@pageTitle</PageTitle>
 
 <section id="video">
     <video autoplay muted loop playsinline preload="auto">
@@ -292,6 +292,7 @@
 </section>
 
 @code {
+    private string pageTitle = "Home | Ítala Veloso";
     private EmailSubscription emailSubscription = new EmailSubscription();
     private Contact contact = new Contact();
     private List<Testimonial> testimonials = new List<Testimonial>
@@ -331,6 +332,11 @@
     private bool calendarNeedsInitialization = false;
     private bool isLoggingIn = false;
     private DotNetObjectReference<Home> DotNetRef;
+
+    protected override void OnInitialized()
+    {
+        JSRuntime.InvokeVoidAsync("setTitle", pageTitle);
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

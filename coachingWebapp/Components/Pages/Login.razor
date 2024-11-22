@@ -8,6 +8,8 @@
 @inject NavigationManager NavigationManager
 @inject UserManager<IdentityUser> UserManager
 
+<PageTitle>@pageTitle</PageTitle>
+
 <section id="login">
     <EditForm Model="@loginModel" OnValidSubmit="LoginUser" FormName="loginForm">
         <DataAnnotationsValidator />
@@ -37,6 +39,7 @@
 </section>   
 
 @code {
+    private string pageTitle = "Login | Ítala Veloso";
     private LoginModel loginModel = new();
     private string loginError = string.Empty;
     
