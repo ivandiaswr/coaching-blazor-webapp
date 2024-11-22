@@ -21,6 +21,5 @@ public class Contact
     public string PreferredDateTimeString { get; set; } = string.Empty;
     [Required(ErrorMessage = "Let us know what you'd like to discuss in the session.")]
     public string Message { get; set; } = string.Empty;
-
-    public DateTime TimeStampInserted { get; set; } 
+    public DateTime CreatedAt { get; set; } 
 }

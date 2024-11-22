@@ -1,0 +1,45 @@
+@using BusinessLayer.Services.Interfaces
+@inject IEmailSubscriptionService EmailSubscriptionService
+
+<MudDialog>
+    <TitleContent>
+        Compose Email
+    </TitleContent>
+    <DialogContent>
+        <MudTextField Label="Subject" @bind-Value="EmailSubject" Required="true" />
+        <MudTextField Label="Body" @bind-Value="EmailBody" Required="true" Lines="25" TextArea="true" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="SendEmails" Color="Color.Primary" Variant="Variant.Filled" Disabled="@IsSending">Send</MudButton>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">Cancel</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    [Parameter] public List<string> RecipientEmails { get; set; }
+    private string EmailSubject { get; set; }
+    private string EmailBody { get; set; }
+    private bool IsSending { get; set; } = false;
+
+    private async Task SendEmails()
+    {
+        IsSending = true;
+
+        try
+        {
+            await EmailSubscriptionService.SendCustomEmailAsync(RecipientEmails, EmailSubject, EmailBody);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+           
+        }
+        finally
+        {
+            IsSending = false;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}

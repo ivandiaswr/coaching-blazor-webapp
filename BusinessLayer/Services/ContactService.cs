@@ -28,7 +28,7 @@ public class ContactService : IContactService
     {
         try
         {
-            var contacts = _context.Contacts.OrderBy(c => c.TimeStampInserted).ToList();
+            var contacts = _context.Contacts.ToList();
 
             return contacts;
         }
@@ -46,7 +46,7 @@ public class ContactService : IContactService
 
         try
         {
-            contact.TimeStampInserted = DateTime.UtcNow;
+            contact.CreatedAt = DateTime.UtcNow;
             _context.Contacts.Add(contact);
 
             var CreateEventAdminAsyncResult = await _googleService.CreateEventAdminAsync(contact);

@@ -278,35 +278,8 @@ h1:focus {
 
   .mobile-menu-btn {
     display: block;
-    position: relative;
-    width: 30px;
-    height: 30px;
+    font-size: 2rem;
     margin: 1rem 2rem;
-  }
-
-  .mobile-menu-btn span,
-  .mobile-menu-btn span::before,
-  .mobile-menu-btn span::after {
-    position: absolute;
-    width: 100%;
-    height: 2px;
-    background-color: #333;
-    transition: all 0.3s;
-  }
-
-  .mobile-menu-btn span {
-    top: 50%;
-    transform: translateY(-50%);
-  }
-
-  .mobile-menu-btn span::before {
-    content: '';
-    top: -8px;
-  }
-
-  .mobile-menu-btn span::after {
-    content: '';
-    bottom: -8px;
   }
 
   .nav-ul {
@@ -371,7 +344,7 @@ h1:focus {
 
 #video {
   width: 100%;
-  height: calc(100vh - 49px);
+  height: 100vh;
   position: relative;
   margin: 0;
   padding: 0;
@@ -388,23 +361,21 @@ h1:focus {
 
 .video-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 50%;
+  left: 4rem; 
+  transform: translateY(-50%);
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start; 
   color: white;
-  text-align: center;
+  text-align: left;
   z-index: 1;
-  background: rgba(0, 0, 0, 0.3);
   padding: 1rem;
 }
 
 .main-heading {
-  font-size: clamp(2rem, 5vw, 3.3rem);
+  font-size: clamp(2rem, 5vw, 2.8rem);
   font-weight: bold;
   margin-bottom: clamp(1rem, 3vw, 2rem);
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
@@ -412,11 +383,12 @@ h1:focus {
 }
 
 .sub-heading {
-  font-size: clamp(3rem, 8vw, 7rem);
+  font-size: clamp(3rem, 8vw, 6rem);
   font-weight: bold;
   line-height: 1.2;
   margin-bottom: clamp(2rem, 4vw, 6rem);
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  text-align: right;
 }
 
 .cta-button {
@@ -435,7 +407,7 @@ h1:focus {
   white-space: nowrap;
   min-height: 44px;
   min-width: 44px;
-  max-width: 90vw;
+  max-width: 95vw;
 }
 
 .cta-button:hover {
@@ -448,60 +420,58 @@ h1:focus {
   transform: translateY(0);
 }
 
-@media (hover: none) {
-  .cta-button {
-    padding: clamp(1rem, 3vw, 1.4rem) clamp(2rem, 5vw, 3rem);
+.bottom-right-image {
+  position: absolute;
+  bottom: 2rem;
+  right: 2rem;
+  width: 350px;
+  border-radius: 50%;
+  z-index: 1;
+  opacity: 0.9;
+  animation: fadeIn 2s ease-in-out, pulseGlow 3s infinite;
+}
+
+.bottom-right-image:hover {
+  opacity: 1; 
+  transform: scale(1.05); 
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
   }
-  
-  .cta-button:hover {
-    transform: none;
+  to {
+    opacity: 0.9;
   }
 }
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(255, 140, 0, 0.1); 
+  }
+  50% {
+    box-shadow: 0 0 7px rgba(255, 140, 0, 0.2);
+  }
+}
+
 
 @media screen and (max-width: 768px) {
   .video-overlay {
-    padding: 2rem;
-  }
-}
-
-@media screen and (max-width: 480px) {
-  #video {
-    height: calc(100vh - 40px);
-  }
-  
-  .main-heading {
-    margin-bottom: 1rem;
-  }
-  
-  .sub-heading {
-    margin-bottom: 1.5rem;
-  }
-
-  .cta-button {
-    width: 90%; 
-    max-width: 300px; 
-    margin: 0 auto;
-  }
-}
-
-@media screen and (max-height: 500px) and (orientation: landscape) {
-  .video-overlay {
+    left: 1rem; 
     padding: 1rem;
   }
-  
-  .main-heading {
-    margin-bottom: 0.5rem;
-  }
-  
-  .sub-heading {
-    margin-bottom: 1rem;
+
+  .bottom-right-image {
+    bottom: 1rem;
+    right: 1rem;
+    max-width: 100px; 
   }
 }
 
 /* Services */
 
 .services-section {
-  padding: 8rem 0;
+  padding: 3rem 0;
   background-color: var(--primary-white);
 }
 
@@ -1197,6 +1167,13 @@ h1:focus {
 .form-section {
   padding-right: 20px;
 }
+.form-section h1{
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 1rem;
+  text-align: center;
+}
 
 .form-group {
   margin-bottom: 25px;
@@ -1525,25 +1502,34 @@ h1:focus {
   position: relative;
   display: flex;
   align-items: center;
-  cursor: pointer;
 }
 
 .input-with-icon .form-control {
-  padding-right: 2.5rem; 
+  padding-right: 2.5rem;
 }
 
 .input-with-icon .calendar-icon {
   position: absolute;
-  right: 1rem; 
-  color: var(--accent-orange); 
+  right: 1rem;
+  color: var(--accent-orange);
   cursor: pointer;
   font-size: 1.2rem;
 }
 
-.input-with-icon:hover {
+.hoverable-input {
+  background-color: initial;
+  opacity: 1;
+  color: inherit;
+}
+
+.hoverable-input:hover {
   cursor: pointer;
 }
 
+input.form-control[readonly] {
+    background-color: transparent !important;
+    opacity: 1 !important;
+}
 
 @media (max-width: 1200px) {
   .message-helper {
@@ -1558,6 +1544,16 @@ h1:focus {
   .form-control:focus + .message-helper {
       opacity: 1;
       transform: translateY(0);
+  }
+
+  .contact-header h2 {
+    font-size: 1.5rem;
+    margin-bottom: 5px;
+  }
+
+  .header-icon {
+    font-size: 2rem;
+    margin-bottom: 0;
   }
 }
 
@@ -1590,7 +1586,7 @@ h1:focus {
 
   .video-container {
     order: -1;
-  }
+  }  
 }
 
 /* Footer */
@@ -1671,12 +1667,6 @@ h1:focus {
 .footer-tagline {
   font-size: 1rem;
   margin-bottom: 10px;
-}
-
-.social-icons {
-  display: flex;
-  justify-content: center;
-  gap: 5px;
 }
 
 .social-icons a {

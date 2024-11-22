@@ -16,8 +16,9 @@
 @attribute [Authorize(Roles = "Admin")]
 <PageTitle>@pageTitle</PageTitle>
 
+@inject IDialogService DialogService
 <MudPopoverProvider/> @*only works if its in the page of the mud component*@
-
+<MudDialogProvider/>
 <section id="adminDashboard">
     <div class="dashboard-header">
         <div>
@@ -35,49 +36,67 @@
         <button class="btn btn-primary" @onclick="LogoutUser">Logout</button>
     </div>
 
+    <div class="mud-grids-container">
         <MudDataGrid T="Contact" Items="@contacts" MultiSelection="true" SortMode="SortMode.Multiple" Filterable="true"
-    Hideable="true">
-        <ToolBarContent>
-            <MudText Typo="Typo.h4">Contacts</MudText>
-            <MudSpacer />
-            <MudTextField @bind-Value="searchContactsString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-            AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"></MudTextField>
-        </ToolBarContent>
-        <Columns>
-            <SelectColumn T="Contact" />
-            <PropertyColumn Property="x => x.Id" Title="Id" Sortable="true" Filterable="false" />
-            <PropertyColumn Property="x => x.Name" Title="Name" Sortable="true" Filterable="true" />
-            <PropertyColumn Property="x => x.Email" Title="Email" Sortable="false" Filterable="true" />
-            <PropertyColumn Property="x => x.SessionCategory" Title="Session" Sortable="true" Filterable="true" />
-            <PropertyColumn Property="x => x.Message" Title="Message" Sortable="false" Filterable="true" />
-            <PropertyColumn Property="x => x.TimeStampInserted" Title="TimeStampInserted" Sortable="true" Filterable="false" />
-        </Columns>
-        <PagerContent>
-            <MudDataGridPager T="Contact" />
-        </PagerContent>
-    </MudDataGrid>
+        Hideable="true" QuickFilter="@quickFilterContacts">
+            <ToolBarContent>
+                <MudText Typo="Typo.h4">Contacts</MudText>
+                <MudSpacer />
+                <MudTextField @bind-Value="searchContactsString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"></MudTextField>
+            </ToolBarContent>
+            <Columns>
+                <SelectColumn T="Contact" />
+                <PropertyColumn Property="x => x.Id" Title="Id" Sortable="true" Filterable="false" />
+                <PropertyColumn Property="x => x.Name" Title="Name" Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.Email" Title="Email" Sortable="false" Filterable="true" />
+                <PropertyColumn Property="x => x.SessionCategory" Title="Session" Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.Message" Title="Message" Sortable="false" Filterable="true" CellClass="mud-data-grid-cell-wrap"/>
+                <PropertyColumn Property="x => x.CreatedAt" Title="CreatedAt" Sortable="true" Filterable="false" >
+                    <CellTemplate>
+                        @context.Item.CreatedAt.ToString("dd-MM-yyyy HH:mm:ss")
+                    </CellTemplate>
+                </PropertyColumn>
+            </Columns>
+            <PagerContent>
+                <MudDataGridPager T="Contact" />
+            </PagerContent>
+        </MudDataGrid>
 
-    <MudDataGrid T="EmailSubscription" Items="@emailSubscriptions" MultiSelection="true" SortMode="SortMode.Multiple" Filterable="true"
-    Hideable="true">
-        <ToolBarContent>
-            <MudText Typo="Typo.h4">Email Subscriptions</MudText>
-            <MudSpacer />
-            <MudTextField @bind-Value="searchEmailSubscriptionsString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-            AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"></MudTextField>
-        </ToolBarContent>
-        <Columns>
-            <SelectColumn T="Contact" />
-            <PropertyColumn Property="x => x.Id" Title="Id" Sortable="true" Filterable="false" />
-            <PropertyColumn Property="x => x.Email" Title="Email" Sortable="true" Filterable="true" />
-            <PropertyColumn Property="x => x.IsSubscribed" Title="IsSubscribed" Sortable="false" Filterable="true" />
-            <PropertyColumn Property="x => x.SubscribedAt" Title="SubscribedAt" Sortable="true" Filterable="true" />
-            <PropertyColumn Property="x => x.UnsubscribedAt" Title="UnsubscribedAt" Sortable="false" Filterable="true" />
-            <PropertyColumn Property="x => x.TimeStampInserted" Title="TimeStampInserted" Sortable="true" Filterable="false" />
-        </Columns>
-        <PagerContent>
-            <MudDataGridPager T="EmailSubscription" />
-        </PagerContent>
-    </MudDataGrid>
+        <MudDataGrid T="EmailSubscription" Items="@emailSubscriptions" MultiSelection="true" SortMode="SortMode.Multiple" Filterable="true"
+        Hideable="true" QuickFilter="@quickFilterEmailSubscriptions" @ref="emailSubscriptionGrid">
+            <ToolBarContent>
+                <MudText Typo="Typo.h4">Email Subscriptions</MudText>
+                <MudSpacer />
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!emailSubscriptionGrid.SelectedItems.Any())" OnClick="OpenEmailDialogAsync">
+                Send Email
+                </MudButton>
+                <MudSpacer />
+                <MudTextField @bind-Value="searchEmailSubscriptionsString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"></MudTextField>
+            </ToolBarContent>
+            <Columns>
+                <SelectColumn T="EmailSubscription" />
+                <PropertyColumn Property="x => x.Id" Title="Id" Sortable="true" Filterable="false" />
+                <PropertyColumn Property="x => x.Email" Title="Email" Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.IsSubscribed" Title="IsSubscribed" Sortable="false" Filterable="true" />
+                <PropertyColumn Property="x => x.SubscribedAt" Title="SubscribedAt" Sortable="true" Filterable="true" >
+                    <CellTemplate>
+                        @context.Item.SubscribedAt.ToString("dd-MM-yyyy HH:mm:ss")
+                    </CellTemplate>
+                </PropertyColumn>
+                <PropertyColumn Property="x => x.UnsubscribedAt" Title="UnsubscribedAt" Sortable="false" Filterable="true" />
+                <PropertyColumn Property="x => x.CreatedAt" Title="CreatedAt" Sortable="true" Filterable="false" >
+                    <CellTemplate>
+                        @context.Item.CreatedAt.ToString("dd-MM-yyyy HH:mm:ss")
+                    </CellTemplate>
+                </PropertyColumn>
+            </Columns>
+            <PagerContent>
+                <MudDataGridPager T="EmailSubscription" />
+            </PagerContent>
+        </MudDataGrid>
+    </div>
 </section>
 
 @code {
@@ -85,33 +104,39 @@
     private AuthenticationState authState;
     private List<Contact> contacts;
     private List<EmailSubscription> emailSubscriptions;
+    private MudDataGrid<EmailSubscription> emailSubscriptionGrid;
+
     private string loginError = string.Empty;
-    private string searchContactsString;
-    private string searchEmailSubscriptionsString;
+    private string searchContactsString {get; set;}
+    private string searchEmailSubscriptionsString {get; set;}
 
-    private string emailFilter = string.Empty;
-    private string contactFilter = string.Empty;
+    private Func<Contact, bool> quickFilterContacts => c =>
+        string.IsNullOrEmpty(searchContactsString) ||
+        c.Name.Contains(searchContactsString, StringComparison.OrdinalIgnoreCase) ||
+        c.Email.Contains(searchContactsString, StringComparison.OrdinalIgnoreCase) ||
+        c.Message.Contains(searchContactsString, StringComparison.OrdinalIgnoreCase);
 
-    private IEnumerable<EmailSubscription> filteredEmailSubscriptions =>
-        string.IsNullOrEmpty(emailFilter)
-            ? emailSubscriptions
-            : emailSubscriptions
-                .Where(e => e.Email.Contains(emailFilter, StringComparison.OrdinalIgnoreCase))
-                .ToList();
-
-    private IEnumerable<Contact> filteredContacts =>
-        string.IsNullOrEmpty(contactFilter)
-            ? contacts
-            : contacts
-                .Where(c => c.Name.Contains(contactFilter, StringComparison.OrdinalIgnoreCase) ||
-                            c.Email.Contains(contactFilter, StringComparison.OrdinalIgnoreCase))
-                .ToList();
+    private Func<EmailSubscription, bool> quickFilterEmailSubscriptions => e =>
+        string.IsNullOrEmpty(searchEmailSubscriptionsString) ||
+        e.Email.Contains(searchEmailSubscriptionsString, StringComparison.OrdinalIgnoreCase);
 
     protected override async Task OnInitializedAsync()
     {
         authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         contacts = ContactService.GetAllContacts() ?? new List<Contact>();
         emailSubscriptions = EmailSubscriptionService.GetAllEmailSubscriptions() ?? new List<EmailSubscription>();
+    }
+
+    private Task OpenEmailDialogAsync()
+    {
+        var parameters = new DialogParameters
+        {
+            { "RecipientEmails", emailSubscriptionGrid.SelectedItems.Select(e => e.Email).ToList() }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, FullWidth = true };
+
+        return DialogService.ShowAsync<SendEmailDialog>("Compose Email", parameters, options);
     }
 
     private async Task LogoutUser()

@@ -1,0 +1,32 @@
+@inject NavigationManager NavigationManager
+
+@if (IsHomePage)
+{
+    <section id="video">
+        <video autoplay muted loop playsinline preload="auto">
+            <source src="/Videos/car-driving-mountain.mp4" type="video/mp4">
+            Your browser does not support the video tag mp4.
+        </video>
+        <div class="video-overlay">
+            <h1 class="main-heading">Reach your biggest goals</h1>
+            <div class="sub-heading">
+                Master your<br>
+                <span class="highlight">Journey</span><br>
+                Master Your<br>
+                <span class="highlight">Life</span>
+            </div>
+            <a class="cta-button" href="#contact">Schedule a Free Call</a>
+        </div>
+        <img src="Images/italaHeroTransparent.png" alt="Decorative" class="bottom-right-image">
+    </section>
+}
+
+@code {
+    private bool IsHomePage => string.IsNullOrEmpty(NavigationManager.ToBaseRelativePath(NavigationManager.Uri).Trim('/'));
+
+    protected override bool ShouldRender()
+    {
+        // Prevent re-rendering when not on the home page
+        return IsHomePage;
+    }
+}

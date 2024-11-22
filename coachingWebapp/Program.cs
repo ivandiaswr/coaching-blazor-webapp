@@ -121,7 +121,7 @@ app.UseAntiforgery();
 app.UseAuthentication(); // Verifies user credentials and sets the users identity for the current request
 app.UseAuthorization(); // Checks the users permissions to give access to resources
 
-app.MapControllers(); // Use controllers
+app.MapControllers(); // Use controllers for the api
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

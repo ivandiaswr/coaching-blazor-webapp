@@ -27,7 +27,7 @@ public class EmailSubscriptionService : IEmailSubscriptionService
     {
         try
         {
-            var emailSubscription = _context.EmailSubscriptions.OrderBy(c => c.TimeStampInserted).ToList();
+            var emailSubscription = _context.EmailSubscriptions.ToList();
 
             return emailSubscription;
         }
@@ -67,7 +67,7 @@ public class EmailSubscriptionService : IEmailSubscriptionService
                     Email = email,
                     IsSubscribed = true,
                     SubscribedAt = DateTime.UtcNow,
-                    TimeStampInserted = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow
                 };
 
                 _context.EmailSubscriptions.Add(subscription);
@@ -155,7 +155,7 @@ public class EmailSubscriptionService : IEmailSubscriptionService
         }
 
         var message = new MimeMessage();
-        message.From.Add(new MailboxAddress("Itala Veloso", smtpUsername));
+        message.From.Add(new MailboxAddress("Ítala Veloso", smtpUsername));
         message.To.Add(new MailboxAddress("", smtpMailTo));
         message.Subject = "Gift from Jostic";
 
@@ -206,6 +206,56 @@ public class EmailSubscriptionService : IEmailSubscriptionService
             _logger.LogError($"SMTP Server: {smtpServer}");
             _logger.LogError($"SMTP Port: {smtpPort}");
             _logger.LogError($"SMTP Username: {smtpUsername}");
+            throw;
+        }
+    }
+
+    public async Task<bool> SendCustomEmailAsync(List<string> recipientEmails, string subject, string body)
+    {
+        if (recipientEmails == null || !recipientEmails.Any())
+            throw new ArgumentException("Recipient list is empty.");
+        if (string.IsNullOrWhiteSpace(subject))
+            throw new ArgumentException("Email subject is required.");
+        if (string.IsNullOrWhiteSpace(body))
+            throw new ArgumentException("Email body is required.");
+
+        var smtpServer = _configuration["SmtpSettings:Server"];
+        var smtpPort = int.Parse(_configuration["SmtpSettings:Port"] ?? "");
+        var smtpUsername = _configuration["SmtpSettings:Username"];
+        var smtpPassword = _configuration["SmtpSettings:Password"];
+
+        var message = new MimeMessage();
+        message.From.Add(new MailboxAddress("Ítala Veloso", smtpUsername));
+        message.Subject = subject;
+
+        var builder = new BodyBuilder
+        {
+            HtmlBody = body
+        };
+
+        message.Body = builder.ToMessageBody();
+
+        using var client = new SmtpClient();
+
+        try
+        {
+            await client.ConnectAsync(smtpServer, smtpPort, SecureSocketOptions.StartTls);
+            await client.AuthenticateAsync(smtpUsername, smtpPassword);
+
+            foreach (var email in recipientEmails)
+            {
+                message.To.Clear();
+                message.To.Add(MailboxAddress.Parse(email));
+                await client.SendAsync(message);
+            }
+
+            await client.DisconnectAsync(true);
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending custom emails");
             throw;
         }
     }

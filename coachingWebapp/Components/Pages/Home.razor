@@ -19,23 +19,6 @@
 
 <PageTitle>@pageTitle</PageTitle>
 
-<section id="video">
-    <video autoplay muted loop playsinline preload="auto">
-        <source src="/Videos/car-driving-mountain.mp4" type="video/mp4">
-        Your browser does not support the video tag mp4.
-    </video>
-    <div class="video-overlay">
-        <h1 class="main-heading">Reach your biggest goals</h1>
-        <div class="sub-heading">
-            Master your<br>
-            <span class="highlight">Journey</span><br>
-            Master Your<br>
-            <span class="highlight">Life</span>
-        </div>
-        <a class="cta-button" href="#contact">Schedule a Free Call</a>
-    </div>
-</section>
-
 <section id="services" class="services-section">
     <div class="container">
 
@@ -197,6 +180,7 @@
                 <div class="unified-container">
                     <div class="content-grid">         
                         <div class="form-section">
+                            <h1>Google <span class="highlight">Calendar</span></h1>
                             <EditForm Model="@contact" OnValidSubmit="ContactSubmitAsync" FormName="contactForm">
                                 <DataAnnotationsValidator />
                                 <div class="form-group">
@@ -211,7 +195,7 @@
                                 </div>
                                <div class="form-group custom-select">
                                     <label for="SessionCategory">Session Type</label>
-                                    <InputSelect id="SessionCategory" class="form-control" @bind-Value="contact.SessionCategory">
+                                    <InputSelect id="SessionCategory" class="form-control hoverable-input" @bind-Value="contact.SessionCategory">
                                         @foreach (var type in Enum.GetValues(typeof(SessionType)).Cast<SessionType>())
                                         {
                                             <option value="@type">
@@ -224,7 +208,7 @@
                                 <div class="form-group">
                                     <label for="PreferredDateTime">Date & Time</label>
                                     <div class="input-with-icon">
-                                        <InputText id="PreferredDateTime" class="form-control" @bind-Value="contact.PreferredDateTimeString" @onclick="ToggleCalendar" readonly/>
+                                        <InputText id="PreferredDateTime" class="form-control hoverable-input" @bind-Value="contact.PreferredDateTimeString" @onclick="ToggleCalendar" readonly/>
                                         <i class="fas fa-calendar calendar-icon" @onclick="ToggleCalendar"></i>
                                     </div>
                                     <ValidationMessage For="@(() => contact.PreferredDateTimeString)" />

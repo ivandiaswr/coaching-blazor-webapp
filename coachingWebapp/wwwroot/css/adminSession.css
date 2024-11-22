@@ -33,9 +33,16 @@
     margin: 0 auto 3rem auto;
 }
 
-.truncate {
+.mud-data-grid-cell-wrap  {
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 200px;
+    white-space: normal; 
     word-wrap: break-word;
+    max-width: 200px;
+}
+
+.mud-grids-container {
+    display: flex;
+    flex-direction: column;
+    gap: 5rem;
 }
