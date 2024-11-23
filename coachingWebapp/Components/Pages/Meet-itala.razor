@@ -22,8 +22,8 @@
             </p>
             <p class="quote">"Her words and work are woven with a message of empowerment, love, freedom and transformation."</p>
         <div class="hero-buttons">
-            <button @onclick="() => ShowGiftOffer(GiftCategory.Gift3)" class="hero-button gift-button">
-                <i class="fa-solid fa-gift"></i> Get Your Free Success Guide
+            <button @onclick="() => ShowGiftOffer(GiftCategory.Gift3)" class="hero-button">
+                <i class="fa-solid fa-gift"></i> Get a Free Guide
             </button>
         </div>
         <section class="bio-container jostic-container">
@@ -93,12 +93,12 @@
                     else
                     {
                         <InputText id="email" class="form-control" @bind-Value="emailSubscription.Email" placeholder="Enter your email" />
-                        <button type="submit" class="btn btn-primary">Get Free Guide</button>
                         <div class="row">
                             <div class="col">
                                 <ValidationMessage For="@(() => emailSubscription.Email)" class="text-danger" />
                             </div>
                         </div>
+                        <button type="submit" class="btn btn-primary">Get Free Guide</button>
                         <p class="privacy-notice">By signing up, you're agreeing to receive marketing emails from Jostic. You can unsubscribe at any time. For more details, check out our <a href="/privacy-policy">Privacy Policy</a>.</p>
                     }
                 </EditForm>

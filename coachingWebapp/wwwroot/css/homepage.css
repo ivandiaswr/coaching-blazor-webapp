@@ -348,6 +348,7 @@ h1:focus {
   position: relative;
   margin: 0;
   padding: 0;
+  overflow: hidden;
 }
 
 #video video {
@@ -361,79 +362,99 @@ h1:focus {
 
 .video-overlay {
   position: absolute;
-  top: 50%;
-  left: 4rem; 
-  transform: translateY(-50%);
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg,rgba(0, 0, 0, 0.4) 0%,rgba(0, 0, 0, 0.2) 50%,rgba(0, 0, 0, 0) 100%);
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: flex-start; 
+  padding-left: max(5rem, 8vw);
   color: white;
-  text-align: left;
   z-index: 1;
-  padding: 1rem;
 }
 
 .main-heading {
-  font-size: clamp(2rem, 5vw, 2.8rem);
-  font-weight: bold;
-  margin-bottom: clamp(1rem, 3vw, 2rem);
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  font-size: clamp(2.5rem, 6vw, 3.5rem);
+  font-weight: 700;
+  margin-bottom: 1rem;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
   font-style: italic;
+  opacity: 0;
+  animation: slideInLeft 1s ease-out forwards;
 }
 
-.sub-heading {
-  font-size: clamp(3rem, 8vw, 6rem);
-  font-weight: bold;
-  line-height: 1.2;
-  margin-bottom: clamp(2rem, 4vw, 6rem);
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-  text-align: right;
+.journey-text,
+.life-text {
+  font-size: clamp(4rem, 10vw, 7rem);
+  font-weight: 800;
+  line-height: 1.1;
+  margin: 0;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+}
+
+.journey-text {
+  color: var(--primary-white);
+  animation: slideInLeft 1s ease-out 0.3s forwards;
+}
+
+.life-text {
+  color: var(--accent-orange-hover); 
+  animation: slideInLeft 1s ease-out 0.6s forwards;
 }
 
 .cta-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: clamp(0.8rem, 2vw, 1.2rem) clamp(1.5rem, 4vw, 2.5rem);
-  font-size: clamp(1rem, 1.5vw, 1.2rem);
+  margin-top: 3rem;
+  padding: 1rem 2.5rem;
+  font-size: 1.2rem;
   font-weight: 600;
-  color: var(--primary-white);
-  background-color: transparent;
-  border: 2px solid var(--primary-white);
-  border-radius: 4px;
+  color: white;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 2px solid white;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  white-space: nowrap;
-  min-height: 44px;
-  min-width: 44px;
-  max-width: 95vw;
+  transition: all 0.4s ease;
+  backdrop-filter: blur(1px);
+  opacity: 0;
+  animation: fadeIn 1s ease-out 0.9s forwards;
 }
 
 .cta-button:hover {
-  background-color: var(--primary-white);
-  color: var(--primary-black);
-  transform: translateY(-2px);
-}
-
-.cta-button:active {
-  transform: translateY(0);
+  background-color: white;
+  color: black;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
 }
 
 .bottom-right-image {
   position: absolute;
   bottom: 2rem;
-  right: 2rem;
-  width: 350px;
+  right: 4rem;
+  width: clamp(250px, 25vw, 350px);
   border-radius: 50%;
-  z-index: 1;
-  opacity: 0.9;
-  animation: fadeIn 2s ease-in-out, pulseGlow 3s infinite;
+  z-index: 2;
+  opacity: 0;
+  animation: fadeIn 1s ease-out 1.2s forwards,
+             float 3s ease-in-out infinite;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease;
 }
 
 .bottom-right-image:hover {
-  opacity: 1; 
-  transform: scale(1.05); 
+  transform: scale(1.05) translateY(-5px);
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 @keyframes fadeIn {
@@ -441,35 +462,37 @@ h1:focus {
     opacity: 0;
   }
   to {
-    opacity: 0.9;
+    opacity: 1;
   }
 }
 
-@keyframes pulseGlow {
+@keyframes float {
   0%, 100% {
-    box-shadow: 0 0 5px rgba(255, 140, 0, 0.1); 
+    transform: translateY(0);
   }
   50% {
-    box-shadow: 0 0 7px rgba(255, 140, 0, 0.2);
+    transform: translateY(-10px);
   }
 }
-
 
 @media screen and (max-width: 768px) {
   .video-overlay {
-    left: 1rem; 
-    padding: 1rem;
+    padding-left: 2rem;
+    padding-right: 2rem;
   }
 
   .bottom-right-image {
-    bottom: 1rem;
-    right: 1rem;
-    max-width: 100px; 
+    bottom: 1.5rem;
+    right: 1.5rem;
+    width: clamp(150px, 30vw, 200px);
+  }
+
+  .cta-button {
+    padding: 0.8rem 2rem;
+    font-size: 1rem;
   }
 }
-
 /* Services */
-
 .services-section {
   padding: 3rem 0;
   background-color: var(--primary-white);
@@ -481,7 +504,6 @@ h1:focus {
   padding: 0 1.5rem;
 }
 
-/* Header Styles */
 .services-header {
   text-align: center;
   margin-bottom: 6rem;
@@ -519,7 +541,6 @@ h1:focus {
   line-height: 1.6;
 }
 
-/* Primary Services */
 .services-grid.featured {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -794,7 +815,7 @@ h1:focus {
 /* Testimonials */
 
 #testimonials {
-  background: linear-gradient(135deg, #6f6f6f 0%, #1a1a1a65 100%);
+  background: linear-gradient(135deg, #c9c9c9 0%, #00000065 100%);
   padding: 60px 0 60px;
   position: relative;
   overflow: hidden;
@@ -838,7 +859,7 @@ h1:focus {
 }
 
 .testimonial-card {
-  background: rgba(100, 100, 100, 0.805); 
+  background: white; 
   backdrop-filter: blur(12px);
   border-radius: 24px; 
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -941,7 +962,7 @@ h1:focus {
 }
 
 .testimonial-text {
-  color: rgba(255, 255, 255, 0.9);
+  color:black;
   font-size: 1.1rem;
   line-height: 1.6;
   margin: 0;
@@ -952,7 +973,7 @@ h1:focus {
   align-items: center;
   margin-top: 25px;
   padding-top: 25px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(17, 17, 17, 0.2);
 }
 
 .author-details {
@@ -967,7 +988,7 @@ h1:focus {
 }
 
 .author-role {
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(0, 0, 0, 0.7);
   font-size: 0.9rem;
   margin: 5px 0 0;
 }
@@ -1007,6 +1028,10 @@ h1:focus {
   font-size: 1.2rem;
 }
 
+#testimonials .cta-section {
+  background-color: white;
+}
+
 @media (max-width: 768px) {
   #testimonials {
       padding: 80px 0;
@@ -1044,8 +1069,7 @@ h1:focus {
 /* Contact */
 
 #contact {
-  padding-top: 100px;
-  margin-top: -100px;
+  padding: 5rem 0;
 }
 
 .contact-container {
@@ -1054,7 +1078,6 @@ h1:focus {
   position: relative;
   margin: auto;
 }
-
 
 .contact-video-container {
   width: 100%;
@@ -1520,6 +1543,7 @@ h1:focus {
   background-color: initial;
   opacity: 1;
   color: inherit;
+  background-color: #f8f9fa;
 }
 
 .hoverable-input:hover {
@@ -1529,6 +1553,7 @@ h1:focus {
 input.form-control[readonly] {
     background-color: transparent !important;
     opacity: 1 !important;
+    background-color: #f8f9fa !important;
 }
 
 @media (max-width: 1200px) {
@@ -1681,6 +1706,10 @@ input.form-control[readonly] {
 
 .contact-info {
   margin-top: 15px;
+}
+
+.contact-info p {
+  font-size: 1rem;
 }
 
 .newsletter-section {

@@ -2,23 +2,40 @@
 
 @if (IsHomePage)
 {
-    <section id="video">
-        <video autoplay muted loop playsinline preload="auto">
-            <source src="/Videos/car-driving-mountain.mp4" type="video/mp4">
-            Your browser does not support the video tag mp4.
-        </video>
-        <div class="video-overlay">
+<section id="video">
+    <video autoplay muted loop playsinline preload="auto">
+        <source src="/Videos/car-driving-mountain.mp4" type="video/mp4">
+        Your browser does not support the video tag mp4.
+    </video>
+    <div class="video-overlay">
+        <div class="content-wrapper">
             <h1 class="main-heading">Reach your biggest goals</h1>
-            <div class="sub-heading">
-                Master your<br>
-                <span class="highlight">Journey</span><br>
-                Master Your<br>
-                <span class="highlight">Life</span>
+            
+            <div class="title-container">
+                <div class="text-block">
+                    <h2 class="journey-text">Master your</h2>
+                    <h2 class="journey-text highlight">Journey</h2>
+                </div>
+                <div class="text-block">
+                    <h2 class="life-text">Master Your</h2>
+                    <h2 class="life-text highlight">Life</h2>
+                </div>
             </div>
-            <a class="cta-button" href="#contact">Schedule a Free Call</a>
+
+            <a href="#contact" class="cta-button">
+                Schedule a Free Call
+                <span class="button-hover-effect"></span>
+            </a>
         </div>
-        <img src="Images/italaHeroTransparent.png" alt="Decorative" class="bottom-right-image">
-    </section>
+    </div>
+    
+    <img 
+        src="Images/italaHeroTransparent.png" 
+        alt="Itala Veloso" 
+        class="bottom-right-image" 
+        loading="lazy"
+    >
+</section>
 }
 
 @code {
