@@ -69,6 +69,7 @@ builder.Services.AddScoped<IEmailSubscriptionService, EmailSubscriptionService>(
 builder.Services.AddScoped<IContactService, ContactService>();
 builder.Services.AddScoped<IScrollService, ScrollService>();
 builder.Services.AddScoped<IGoogleService, GoogleService>();
+builder.Services.AddScoped<ISecurityService, SecurityService>();
 
 // Add services to the container
 builder.Services.AddRazorComponents()

@@ -20,10 +20,6 @@
                         </div>
                     </div>
                 </div>
-
-                if(Topics.Last().Id == topic.Id){
-                    Topics.Concat(Topics);
-                }
             }
         </div>
     </div>
@@ -47,32 +43,56 @@
 @code {
     private string pageTitle = "Regulatory Consulting | Ítala Veloso";
     private ElementReference topicsGrid;
-     private List<Topic> Topics { get; set; } = new List<Topic>
+    private List<Topic> Topics { get; set; } = new List<Topic>
     {
         new Topic {
             Id = 1,
-            ImageUrl = "Images/services/career-coaching/goals-progression.jpg",
-            Title = "Set Goals Progression",
-            AltText = "Goals Progression"
+            ImageUrl = "Images/services/regulatory-consulting/formulation-check.jpg",
+            Title = "Comprehensive Formulation Compliance Check",
+            AltText = "Expert reviewing product formulation documents"
         },
         new Topic {
             Id = 2,
-            ImageUrl = "Images/services/career-coaching/cv-review.jpg",
-            Title = "CV Reviews",
-            AltText = "CV Reviews"
+            ImageUrl = "Images/services/regulatory-consulting/pack-copy-labeling.jpg",
+            Title = "Accurate Pack Copy Labeling Services",
+            AltText = "Detailed pack copy labeling analysis"
         },
         new Topic {
             Id = 3,
-            ImageUrl = "Images/services/career-coaching/interview-preparation.jpg",
-            Title = "Get Interview Preparations and Feedback",
-            AltText = "Interview Preparations and Feedback"
+            ImageUrl = "Images/services/regulatory-consulting/artwork-label-check.jpg",
+            Title = "Artwork and Label Compliance Verification",
+            AltText = "Professional examining product artwork and labels"
         },
         new Topic {
             Id = 4,
-            ImageUrl = "Images/services/career-coaching/work-life-balance.jpg",
-            Title = "Achieve Work Life Balance",
-            AltText = "Work Life Balance"
-            }
+            ImageUrl = "Images/services/regulatory-consulting/regulation-interpretation.jpg",
+            Title = "Regulation Interpretation and Expert Advice",
+            AltText = "Consultant providing regulatory guidance"
+        },
+        new Topic {
+            Id = 5,
+            ImageUrl = "Images/services/regulatory-consulting/hfss-compliance.jpg",
+            Title = "HFSS Compliance Solutions",
+            AltText = "Specialist advising on HFSS regulations"
+        },
+        new Topic {
+            Id = 6,
+            ImageUrl = "Images/services/regulatory-consulting/import-export-compliance.jpg",
+            Title = "Import and Export Regulatory Compliance",
+            AltText = "Expert consulting on international trade regulations"
+        },
+        new Topic {
+            Id = 7,
+            ImageUrl = "Images/services/regulatory-consulting/marketing-material-compliance.jpg",
+            Title = "Marketing Material Compliance Audit (Print & Digital)",
+            AltText = "Reviewing marketing content for regulatory adherence"
+        },
+        new Topic {
+            Id = 8,
+            ImageUrl = "Images/services/regulatory-consulting/label-translation.jpg",
+            Title = "Regulatory Label Translation Services (EN-PT)",
+            AltText = "Translating labels from English to Portuguese"
+        }
     };
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

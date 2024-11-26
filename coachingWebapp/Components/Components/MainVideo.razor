@@ -3,7 +3,7 @@
 @if (IsHomePage)
 {
 <section id="video">
-    <video autoplay muted loop playsinline preload="auto">
+    <video autoplay muted loop playsinline preload="auto" class="main-video">
         <source src="/Videos/car-driving-mountain.mp4" type="video/mp4">
         Your browser does not support the video tag mp4.
     </video>
@@ -29,12 +29,18 @@
         </div>
     </div>
     
-    <img 
+    @* <img 
         src="Images/italaHeroTransparent.png" 
         alt="Itala Veloso" 
         class="bottom-right-image" 
-        loading="lazy"
-    >
+        loading="lazy" > *@
+    
+    <div class="secondary-video-container">
+        <video autoplay muted loop playsinline preload="auto" class="secondary-video">
+            <source src="/Videos/itala-baptism.mp4" type="video/mp4">
+            Your browser does not support the video tag mp4.
+        </video>
+    </div>
 </section>
 }
 

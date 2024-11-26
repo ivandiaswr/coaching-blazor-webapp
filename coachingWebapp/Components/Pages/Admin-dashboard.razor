@@ -13,12 +13,13 @@
 @inject IContactService ContactService
 @inject IEmailSubscriptionService EmailSubscriptionService
 
-@attribute [Authorize(Roles = "Admin")]
-<PageTitle>@pageTitle</PageTitle>
-
 @inject IDialogService DialogService
 <MudPopoverProvider/> @*only works if its in the page of the mud component*@
 <MudDialogProvider/>
+
+@attribute [Authorize(Roles = "Admin")]
+<PageTitle>@pageTitle</PageTitle>
+
 <section id="adminDashboard">
     <div class="dashboard-header">
         <div>
@@ -33,11 +34,14 @@
                 <p>Loading user information...</p>
             }
         </div>
-        <button class="btn btn-primary" @onclick="LogoutUser">Logout</button>
+        <div>
+            <button class="btn btn-primary" href="/admin-auth">Google Auth</button>
+            <button class="btn btn-primary" @onclick="LogoutUser">Logout</button>
+        </div> 
     </div>
 
     <div class="mud-grids-container">
-        <MudDataGrid T="Contact" Items="@contacts" MultiSelection="true" SortMode="SortMode.Multiple" Filterable="true"
+        <MudDataGrid T="Contact" Items="@contacts" Breakpoint="Breakpoint.Sm" MultiSelection="true" SortMode="SortMode.Multiple" Filterable="true"
         Hideable="true" QuickFilter="@quickFilterContacts">
             <ToolBarContent>
                 <MudText Typo="Typo.h4">Contacts</MudText>
@@ -51,7 +55,13 @@
                 <PropertyColumn Property="x => x.Name" Title="Name" Sortable="true" Filterable="true" />
                 <PropertyColumn Property="x => x.Email" Title="Email" Sortable="false" Filterable="true" />
                 <PropertyColumn Property="x => x.SessionCategory" Title="Session" Sortable="true" Filterable="true" />
-                <PropertyColumn Property="x => x.Message" Title="Message" Sortable="false" Filterable="true" CellClass="mud-data-grid-cell-wrap"/>
+                <PropertyColumn Property="x => x.Message" Title="Message" Sortable="false" Filterable="true">
+                    <CellTemplate>
+                        <div style="overflow-y: auto; max-height: 60px; max-width: 450px; white-space: normal; word-wrap: break-word; padding: 0; margin: 0;">
+                            @context.Item.Message
+                        </div>
+                    </CellTemplate>
+                </PropertyColumn>
                 <PropertyColumn Property="x => x.CreatedAt" Title="CreatedAt" Sortable="true" Filterable="false" >
                     <CellTemplate>
                         @context.Item.CreatedAt.ToString("dd-MM-yyyy HH:mm:ss")

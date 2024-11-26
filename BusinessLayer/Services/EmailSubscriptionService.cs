@@ -15,12 +15,14 @@ public class EmailSubscriptionService : IEmailSubscriptionService
     private readonly CoachingDbContext _context;
     private readonly IConfiguration _configuration;
     private readonly ILogger<EmailSubscriptionService> _logger;
+    private readonly ISecurityService _securityService;
 
-    public EmailSubscriptionService(CoachingDbContext context, IConfiguration configuration, ILogger<EmailSubscriptionService> logger)
+    public EmailSubscriptionService(CoachingDbContext context, IConfiguration configuration, ILogger<EmailSubscriptionService> logger, ISecurityService securityService)
     {
         this._context = context;
         this._configuration = configuration;
         this._logger = logger;
+        this._securityService = securityService;
     }
 
     public List<EmailSubscription> GetAllEmailSubscriptions()
@@ -81,6 +83,39 @@ public class EmailSubscriptionService : IEmailSubscriptionService
         await _context.SaveChangesAsync();
         
         return true;
+    }
+
+    public async Task<bool> UnsubscribeAsync(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            _logger.LogWarning("UnsubscribeAsync called with a null or empty email.");
+            return false;
+        }
+
+        try
+        {
+            var emailSubscription = await _context.EmailSubscriptions.FirstOrDefaultAsync(e => e.Email == email);
+
+            if(emailSubscription is null)
+            {
+                _logger.LogError($"Error during UnsubscribeAsync: No subscription found for email {email}");
+                return false;
+            }
+
+            emailSubscription.IsSubscribed = false;
+            emailSubscription.UnsubscribedAt = DateTime.UtcNow;
+
+            // Dont need to call Update method cause EF tracks the changes
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during UnsubscribeAsync");
+            return false;
+        }
     }
 
     public async Task<bool> SubscriptionGiftAsync(string email, GiftCategory giftCategory)
@@ -228,13 +263,6 @@ public class EmailSubscriptionService : IEmailSubscriptionService
         message.From.Add(new MailboxAddress("Ítala Veloso", smtpUsername));
         message.Subject = subject;
 
-        var builder = new BodyBuilder
-        {
-            HtmlBody = body
-        };
-
-        message.Body = builder.ToMessageBody();
-
         using var client = new SmtpClient();
 
         try
@@ -244,8 +272,21 @@ public class EmailSubscriptionService : IEmailSubscriptionService
 
             foreach (var email in recipientEmails)
             {
+                // Generate Unsubscribe Token
+                var token = _securityService.GenerateUnsubscribeToken(email);
+                string unsubscribeUrl = $"{_configuration["AppSettings:BaseUrl"]}/unsubscribe?email={Uri.EscapeDataString(email)}&token={Uri.EscapeDataString(token)}";
+
+                var builder = new BodyBuilder
+                {
+                    HtmlBody = $"{body}<br><p>If you wish to unsubscribe, click <a href='{unsubscribeUrl}'>here</a>.</p>"
+
+                };
+
+                message.Body = builder.ToMessageBody();
+
                 message.To.Clear();
                 message.To.Add(MailboxAddress.Parse(email));
+                
                 await client.SendAsync(message);
             }
 

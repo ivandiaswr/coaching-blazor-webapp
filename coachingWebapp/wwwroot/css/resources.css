@@ -32,10 +32,12 @@
     margin-bottom: 1.5rem;
     font-size: 1.8rem;
     color: #2c3e50;
+    font-weight: 600;
 }
 
 .resources-page .video-description p {
     color: #666;
+    font-size: 1.3rem;
     line-height: 1.6;
     margin-bottom: 1rem;
 }

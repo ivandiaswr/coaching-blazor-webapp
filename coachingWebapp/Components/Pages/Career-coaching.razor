@@ -20,10 +20,6 @@
                         </div>
                     </div>
                 </div>
-
-                if(Topics.Last().Id == topic.Id){
-                    Topics.Concat(Topics);
-                }
             }
         </div>
     </div>
@@ -64,15 +60,21 @@
         new Topic {
             Id = 3,
             ImageUrl = "Images/services/career-coaching/interview-preparation.jpg",
-            Title = "Get Interview Preparations and Feedback",
-            AltText = "Interview Preparations and Feedback"
+            Title = "Get Interview Preparations",
+            AltText = "Interview Preparations"
         },
         new Topic {
             Id = 4,
             ImageUrl = "Images/services/career-coaching/work-life-balance.jpg",
             Title = "Achieve Work Life Balance",
             AltText = "Work Life Balance"
-            }
+        },
+        new Topic {
+            Id = 5,
+            ImageUrl = "Images/services/career-coaching/cv-review.jpg",
+            Title = "Constructive Feedback",
+            AltText = "Constructive Feedback"
+        }
     };
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

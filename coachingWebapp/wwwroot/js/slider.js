@@ -14,17 +14,21 @@ window.initializeSlider = function (element) {
 
         // Calculate width of items and container
         const items = Array.from(element.children);
-        const itemWidth = items[0].offsetWidth;
-        const gapWidth = 24; // 1.5rem = 24px
+
+        // Get precise item width including margins
+        const itemStyle = getComputedStyle(items[0]);
+        const itemWidth = items[0].offsetWidth + parseFloat(itemStyle.marginLeft) + parseFloat(itemStyle.marginRight);
+
         const totalItems = items.length;
-        const totalWidth = (itemWidth + gapWidth) * totalItems;
-        const containerWidth = element.parentElement.offsetWidth;
+        const gapWidth = 0; // Already included in itemWidth
+        let totalWidth = itemWidth * totalItems;
+        let containerWidth = element.parentElement.offsetWidth;
 
         function animate() {
             if (!isPaused) {
                 currentPosition += scrollSpeed * direction;
 
-                // Reverse direction when reaching the ends
+                // Reverse direction when the last item is fully visible
                 if (currentPosition <= containerWidth - totalWidth) {
                     direction = 1; // Change direction to right
                     currentPosition = containerWidth - totalWidth; // Correct position
@@ -48,20 +52,13 @@ window.initializeSlider = function (element) {
         // Adjust on window resize
         window.addEventListener('resize', () => {
             // Recalculate widths on resize
-            const newItemWidth = items[0].offsetWidth;
-            const newTotalWidth = (newItemWidth + gapWidth) * totalItems;
-            const newContainerWidth = element.parentElement.offsetWidth;
-
-            // Update positions
-            currentPosition = (currentPosition / totalWidth) * newTotalWidth;
-            totalWidth = newTotalWidth;
-            containerWidth = newContainerWidth;
+            containerWidth = element.parentElement.offsetWidth;
 
             // Ensure currentPosition is within bounds
-            if (currentPosition < containerWidth - totalWidth) {
+            if (currentPosition <= containerWidth - totalWidth) {
                 currentPosition = containerWidth - totalWidth;
                 direction = 1;
-            } else if (currentPosition > 0) {
+            } else if (currentPosition >= 0) {
                 currentPosition = 0;
                 direction = -1;
             }

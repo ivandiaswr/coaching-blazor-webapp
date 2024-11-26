@@ -1,0 +1,46 @@
+@page "/unsubscribe"
+@rendermode InteractiveServer
+
+@inject NavigationManager NavigationManager
+@inject ISecurityService SecurityService
+@inject IEmailSubscriptionService EmailSubscriptionService
+
+<div>
+    <span>@Message</span>
+</div>
+
+@code {
+    public string Email { get; set; }
+    public string Token { get; set; }
+    private string Message { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+
+        var queryParams = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+
+        Email = queryParams.ContainsKey("email") ? queryParams["email"].ToString() : null;
+        Token = queryParams.ContainsKey("token") ? queryParams["token"].ToString() : null;
+
+        if(!string.IsNullOrEmpty(Email) && !string.IsNullOrEmpty(Token))
+        {
+
+            if(SecurityService.ValidateUnsubscribeToken(Email, Token))
+            {
+                await EmailSubscriptionService.UnsubscribeAsync(Email);
+                Message = "Unsubscribed Successfully!!";
+            }
+            else 
+            {
+                Message = "Invalid token or email.";
+            }
+        }
+        else
+        {
+            Message = "Values can't be empty.";
+        }
+
+        StateHasChanged();
+    }
+}

@@ -30,7 +30,7 @@
 
         <div class="primary-services">
             <div class="services-grid featured">
-                <div class="service-card featured">
+                <div class="service-card featured animate-on-scroll">
                     <div class="card-header">
                         <div class="service-icon">
                             <i class="fas fa-rocket"></i>
@@ -52,7 +52,7 @@
                     </div>
                 </div>
 
-                <div class="service-card featured">
+                <div class="service-card featured animate-on-scroll">
                     <div class="card-header">
                         <div class="service-icon">
                             <i class="fas fa-chart-line"></i>
@@ -184,7 +184,7 @@
                 <div class="unified-container">
                     <div class="content-grid">         
                         <div class="form-section">
-                            <h1>Google <span class="highlight">Calendar</span></h1>
+                            <h1><span class="highlight">Google</span> Calendar</h1>
                             <EditForm Model="@contact" OnValidSubmit="ContactSubmitAsync" FormName="contactForm">
                                 <DataAnnotationsValidator />
                                 <div class="form-group">
@@ -212,7 +212,7 @@
                                 <div class="form-group">
                                     <label for="PreferredDateTime">Date & Time</label>
                                     <div class="input-with-icon">
-                                        <InputText id="PreferredDateTime" class="form-control hoverable-input" @bind-Value="contact.PreferredDateTimeString" @onclick="ToggleCalendar" readonly/>
+                                        <InputText id="PreferredDateTime" class="form-control hoverable-input" @bind-Value="contact.PreferredDateTimeString" @onclick="ToggleCalendar" placeholder="Preffered time for the session" readonly/>
                                         <i class="fas fa-calendar calendar-icon" @onclick="ToggleCalendar"></i>
                                     </div>
                                     <ValidationMessage For="@(() => contact.PreferredDateTimeString)" />

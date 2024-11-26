@@ -33,6 +33,12 @@
     flex-shrink: 0;
 }
 
+.noslider {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
 .topics-grid {
     display: flex;
     flex-wrap: nowrap;
@@ -44,7 +50,7 @@
 }
 
 .topic-card {
-    flex: 0 0 400px;
+    width: auto;
     height: 500px;
     background: white;
     border-radius: 12px;
