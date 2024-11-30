@@ -70,6 +70,7 @@ builder.Services.AddScoped<IContactService, ContactService>();
 builder.Services.AddScoped<IScrollService, ScrollService>();
 builder.Services.AddScoped<IGoogleService, GoogleService>();
 builder.Services.AddScoped<ISecurityService, SecurityService>();
+builder.Services.AddScoped<IUserRefreshTokenService, UserRefreshTokenService>();
 
 // Add services to the container
 builder.Services.AddRazorComponents()

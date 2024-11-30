@@ -1,0 +1,84 @@
+@page "/terms-and-conditions"
+@rendermode InteractiveServer
+
+<PageTitle>@pageTitle</PageTitle>
+
+<div class="terms-and-conditions-container">
+    <h3>Terms & Conditions</h3>
+
+    <h2>1. Engagement</h2>
+    <p>Ítala Veloso (“we” or “us”) is a company registered in Ireland, providing products and services from 35 Thackhall Street, CV2 4GW Coventry, United Kingdom. We may work with joint venture partners (“Partners”) to deliver services on a consultancy basis.</p>
+    <p>These terms (“Terms”) apply to all products and services we or our Partners provide. Additional terms from our Partners may also apply.</p>
+    <p>By signing the Order Form, you agree to these Terms, forming a binding contract between you and us.</p>
+
+    <h2>2. Contact Information</h2>
+    <p>For faster responses, contact us via email at <a href="mailto:jostic@italaveloso.com">jostic@italaveloso.com</a>. You can also write to us at 35 Thackhall Street, CV2 4GW Coventry, United Kingdom.</p>
+
+    <h2>3. Contract Formation</h2>
+    <p>Your contract with us starts when we accept your signed Order Form. If we cannot accept it, we will inform you without any charges.</p>
+
+    <h2>4. Your Conduct</h2>
+    <p>We ask that you maintain a positive attitude and stay focused on solutions. Do not contact clients outside approved groups set up by Ítala Veloso.</p>
+
+    <h2>5. Confidentiality</h2>
+    <p>All materials, notes, and sessions are strictly confidential. Sharing any materials without consent may result in immediate termination of the contract and legal action. Additionally, no unauthorized audio, video, or photo recordings are allowed.</p>
+    <p>For promotional purposes, we may take photos or recordings of our events. By joining, you consent to this use without compensation.</p>
+
+    <h2>6. Service Provision</h2>
+    <p>We will provide products and services as scheduled unless unforeseen events cause delays. If delays occur, we will contact you and work to minimize the impact.</p>
+    <p>You may need to provide us with specific information for service delivery. Failure to provide such information may result in delays or additional charges.</p>
+
+    <h2>7. Excluded Services</h2>
+    <p>Partners may offer additional services (“Excluded Services”) independently from us. We are not liable for these services, and you accept them at your own risk.</p>
+
+    <h2>8. Payment Terms</h2>
+    <p>You must pay the agreed amount in full or in installments as specified in the Order Form. Payments should be made as instructed, and if payments are late, we may charge interest or revoke access to services.</p>
+
+    <h2>9. Ending the Contract (Consumers)</h2>
+    <p>You may end the contract if:</p>
+    <ul>
+        <li>You change your mind within 14 days (cooling-off period).</li>
+        <li>You are legally entitled to do so due to our changes or errors.</li>
+    </ul>
+    <p>Certain products, like digital downloads, cannot be refunded once accessed. To cancel, contact us by email or mail with your details. Refunds will be processed within 14 days.</p>
+
+    <h2>10. Ending the Contract (Businesses)</h2>
+    <p>If you are a business, you must notify us within 7 days if you wish to end the contract. Refunds may be given for services not yet provided, minus any processing costs.</p>
+    <p>We may end the contract if you fail to make payments or if your actions breach these Terms.</p>
+
+    <h2>11. Withdrawal of Clients</h2>
+    <p>We reserve the right to remove any client from a program if deemed unsuitable. Refunds for any unused services will be processed within 30 days.</p>
+
+    <h2>12. Liability</h2>
+    <p>For consumers, we are not liable for commercial or business losses. For businesses, our liability is limited to the amount paid in the previous year. We are not liable for indirect or consequential losses.</p>
+
+    <h2>13. Force Majeure</h2>
+    <p>We are not liable for delays or cancellations caused by events beyond our control, such as natural disasters, strikes, or technical issues.</p>
+
+    <h2>14. General Terms</h2>
+    <ul>
+        <li>Any changes to these Terms must be made in writing.</li>
+        <li>We may transfer our rights and obligations to another organization, ensuring it does not affect your rights.</li>
+        <li>The contract is solely between you and us.</li>
+    </ul>
+
+    <h2>15. Indemnification</h2>
+    <p>Our courses and training are for informational purposes only. We do not provide financial, legal, or accounting advice. You accept full responsibility for your decisions made after participating in our events.</p>
+
+    <h2>16. Downloads</h2>
+    <p>No refunds are available for digital downloads once accessed. Sharing or reproducing content without our permission is prohibited.</p>
+
+    <h2>12. Contact Us</h2>
+    <p>For questions about this Privacy Policy, please contact us at:</p>
+    <ul>
+        <li>Email: <a href="mailto:jostic@italaveloso.com">jostic@italaveloso.com</a></li>
+        <li>Address: 35 Thackhall Street, CV2 4GW Coventry, United Kingdom</li>
+    </ul>
+</div>
+@code {
+    private string pageTitle = "Terms Policy | Ítala Veloso";
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await ScrollService.ScrollToTop();
+    }
+}

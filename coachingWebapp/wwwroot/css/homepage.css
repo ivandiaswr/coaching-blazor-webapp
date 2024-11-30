@@ -464,6 +464,7 @@ h1:focus {
 
 .secondary-video:hover {
   transform: scale(1.05) translateY(-5px); 
+  cursor: pointer;
 }
 
 @keyframes slideInLeft {
@@ -989,7 +990,7 @@ h1:focus {
 
 .testimonial-text {
   color:black;
-  font-size: 1.1rem;
+  font-size: 0.9rem;
   line-height: 1.6;
   margin: 0;
 }
@@ -1659,7 +1660,7 @@ input.form-control[readonly] {
   justify-content: space-between;
   max-width: 1500px;
   margin: 0 auto;
-  padding: 3rem 40px 1rem;
+  padding: 3rem 3rem 1rem;
 }
 
 .footer-section {
@@ -1707,10 +1708,6 @@ input.form-control[readonly] {
   padding: 0;
 }
 
-.footer-section ul li {
-  margin-bottom: 12px;
-}
-
 .input-group button {
   border-radius: 12px;
 }
@@ -1731,7 +1728,7 @@ input.form-control[readonly] {
 }
 
 .contact-info {
-  margin-top: 15px;
+  margin-top: 20px;
 }
 
 .contact-info p {
@@ -1780,10 +1777,22 @@ input.form-control[readonly] {
   background-color: var(--accent-orange-hover);
 }
 
+.disclaimer-info {
+  margin-top: 15px;
+  font-size: 0.65rem;
+}
+
 .quick-links {
-  width: 30%;
   text-align: center;
-  font-size: 1rem;
+}
+
+.footer-nav {
+  display: flex;
+  flex-direction: column;
+}
+
+.footer-nav li {
+  padding: 0;
 }
 
 .footer-nav a:hover{
@@ -1803,7 +1812,6 @@ input.form-control[readonly] {
 }
 
 .footer-bottom {
-  padding: 5px 0;
   text-align: center;
   font-weight: 600;
 }

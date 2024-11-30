@@ -49,6 +49,10 @@
     padding-bottom: 4rem;
 }
 
+.resources-page .card-buttons button i {
+    padding-right: 1rem;
+}
+
 .resources-page .resource-card {
     background: white;
     border-radius: 12px;

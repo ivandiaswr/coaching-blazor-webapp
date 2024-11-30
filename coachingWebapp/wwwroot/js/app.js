@@ -47,3 +47,7 @@ window.logout = function () {
 function setTitle(title) {
     document.title = title;
 }
+
+function navigateToAbout() {
+    window.location.href = "/about/meet-itala";
+}

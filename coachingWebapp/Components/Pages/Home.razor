@@ -38,15 +38,16 @@
                         <span class="service-tag">Most Popular</span>
                     </div>
                     <div class="card-content">
-                        <h2>Life Mastery</h2>
-                        <p>Transform your approach to work-life integration through our comprehensive coaching program.</p>
+                        <h2>Life Liberation Mastery</h2>
+                        <p>Unleash your true power with lasting tools and strategies to transform all areas of your life. Get the support you need with Life Coaching. Do more, Serve more and Become your authentic self more.</p>
                         <ul class="service-benefits">
-                            <li><i class="fas fa-check"></i> Personalized Strategy Development</li>
-                            <li><i class="fas fa-check"></i> Weekly 1-on-1 Coaching Sessions</li>
-                            <li><i class="fas fa-check"></i> Progress Tracking Tools</li>
+                            <li><i class="fas fa-check"></i> Master your relationships, wellness, and finances</li>
+                            <li><i class="fas fa-check"></i> Break free from feeling stuck and gain clarity</li>
+                            <li><i class="fas fa-check"></i> Reclaim your inner peace and authentic self</li>
+                            <li><i class="fas fa-check"></i> Create a roadmap to ignite your future</li>
                         </ul>
                         <a href="/services/coaching/life-coaching" class="btn-primary">
-                            Start Your Journey
+                            Book Your Free Discovery Call
                             <i class="fas fa-arrow-right"></i>
                         </a>
                     </div>
@@ -60,15 +61,16 @@
                         @*<span class="service-tag">Trending</span>*@
                     </div>
                     <div class="card-content">
-                        <h2>Career Advancement</h2>
-                        <p>Accelerate your professional growth with strategic career development coaching.</p>
+                        <h2>Career Accelerator</h2>
+                        <p>Accelerate your professional growth with strategic career results coaching.</p>
                         <ul class="service-benefits">
                             <li><i class="fas fa-check"></i> Career Path Mapping</li>
-                            <li><i class="fas fa-check"></i> Leadership Skill Development</li>
-                            <li><i class="fas fa-check"></i> Industry-Specific Guidance</li>
+                            <li><i class="fas fa-check"></i> Interviews Preparation and CV Re-assessment</li>
+                            <li><i class="fas fa-check"></i> Self and Skills Actualization</li>
+                            <li><i class="fas fa-check"></i> Mentoring and Career Clarity</li>
                         </ul>
                         <a href="/services/coaching/career-coaching" class="btn-primary">
-                            Explore Program
+                            Book Your Free Discovery Call
                             <i class="fas fa-arrow-right"></i>
                         </a>
                     </div>
@@ -89,7 +91,7 @@
                     </div>
                     <div class="card-content">
                         <h3>Regulatoy Consulting</h3>
-                        <p>Expert guidance for meeting UK labeling standards</p>
+                        <p>Independent and Expert Food Regulatory Affairs to ensure compliance with UK, IE/ROI and EU-harmonised food law standards.</p>
                         <a href="/services/regulatory/consulting" class="btn-secondary">Learn More</a>
                     </div>
                 </div>
@@ -100,7 +102,7 @@
                     </div>
                     <div class="card-content">
                         <h3>Training</h3>
-                        <p>Thorough review of regulatory documentation</p>
+                        <p>Online and In Person Food Regulatory Affairs Training sessions available.</p>
                         <a href="/services/regulatory/training" class="btn-secondary">Learn More</a>
                     </div>
                 </div>
@@ -115,7 +117,7 @@
             <a href="#contact" class="services-cta-button">
                 <span class="cta-icon"><i class="fas fa-calendar-check"></i></span>
                 <span class="cta-text">
-                    <span class="primary-text">Book Your Free Call</span>
+                    <span class="primary-text">Book Your Free Discovery Call</span>
                     <span class="secondary-text">30 minutes, zero obligation</span>
                 </span>
                 <i class="fas fa-arrow-right"></i>
@@ -169,7 +171,7 @@
             <a href="#contact" class="services-cta-button">
                 <span class="cta-icon"><i class="fas fa-calendar-check"></i></span>
                 <span class="cta-text">
-                    <span class="primary-text">Begin Your Success Story</span>
+                    <span class="primary-text">Book Your Free Discovery Call</span>
                     <span class="secondary-text">30 minutes, zero obligation</span>
                 </span>
                 <i class="fas fa-arrow-right"></i>
@@ -188,9 +190,14 @@
                             <EditForm Model="@contact" OnValidSubmit="ContactSubmitAsync" FormName="contactForm">
                                 <DataAnnotationsValidator />
                                 <div class="form-group">
-                                    <label for="Name">Name</label>
-                                    <InputText id="name" class="form-control" @bind-Value="contact.Name" placeholder="Your Name" />
-                                    <ValidationMessage For="@(() => contact.Name)" />
+                                    <label for="FirstName">First Name</label>
+                                    <InputText id="firstName" class="form-control" @bind-Value="contact.FirstName" placeholder="First Name" />
+                                    <ValidationMessage For="@(() => contact.FirstName)" />
+                                </div>
+                                <div class="form-group">
+                                    <label for="LastName">Last Name</label>
+                                    <InputText id="lastName" class="form-control" @bind-Value="contact.LastName" placeholder="Last Name" />
+                                    <ValidationMessage For="@(() => contact.LastName)" />
                                 </div>
                                 <div class="form-group">
                                     <label for="Email">Email</label>
@@ -198,7 +205,7 @@
                                     <ValidationMessage For="@(() => contact.Email)" />
                                 </div>
                                <div class="form-group custom-select">
-                                    <label for="SessionCategory">Session Type</label>
+                                    <label for="SessionCategory">Session</label>
                                     <InputSelect id="SessionCategory" class="form-control hoverable-input" @bind-Value="contact.SessionCategory">
                                         @foreach (var type in Enum.GetValues(typeof(SessionType)).Cast<SessionType>())
                                         {
@@ -241,8 +248,8 @@
                                         @contactFormStatus
                                     }
                                 </div>
-                                <button type="submit"><i class="fa-brands fa-google"></i> Schedule Your Free Call</button>
-                                <p class="privacy-notice">By signing up, you’re agreeing to receive marketing emails from Ítala Veloso. You can unsubscribe at any time. For more details, check out our <a href="/privacy-policy">Privacy Policy</a>.</p>
+                                <button type="submit"><i class="fa-brands fa-google"></i> Book Your Free Discovery Call</button>
+                                <p class="privacy-notice">By signing up, you’re agreeing to receive marketing emails from Ítala Veloso. You can unsubscribe at any time. For more details, check out our <a href="/privacy-policy">Privacy Policy</a> and <a href="/terms-and-conditions">Terms & Conditions</a>.</p>
                             </EditForm>
                         </div>
 
@@ -255,8 +262,8 @@
                                 <div class="contact-video-overlay">
                                     <div class="contact-header">
                                         <i class="fas fa-calendar-check header-icon"></i>
-                                        <h2>Begin Your Journey Today</h2>
-                                        <p class="contact-subtitle">Transform your life through personalized guidance</p>
+                                        <h2>Begin Your Self-Discovery Journey Today</h2>
+                                        <p class="contact-subtitle">Transform your life, your profession, your destiny</p>
                                     </div>
                                 </div>
                             </div>
@@ -264,11 +271,12 @@
                                 <div class="benefits-content">
                                     <h3>Your Path to Growth</h3>
                                     <ul class="benefits-list">
-                                        <li><i class="fas fa-check-circle"></i> Personalized guidance</li>
-                                        <li><i class="fas fa-check-circle"></i> Wisdom for life's challenges</li>
-                                        <li><i class="fas fa-check-circle"></i> Support and community</li>
+                                        <li><i class="fas fa-check-circle"></i> Live a Purpose-Driven Life</li>
+                                        <li><i class="fas fa-check-circle"></i> Get Clear and Focused Goals</li>
+                                        <li><i class="fas fa-check-circle"></i> Change every area of your Life</li>
+                                        <li><i class="fas fa-check-circle"></i> 1:1 and Group Life Coaching Sessions</li>
                                     </ul>
-                                    <p class="benefits-note">No long-term commitment required - cancel anytime</p>
+                                    <p class="benefits-note">A confidential commitment to yourself, for self-development, growth and expansion</p>
                                 </div>
                             </div>
                         </div>
@@ -289,7 +297,7 @@
             {
                 Id = 1,
                 Path = "Testimonials/testimonial_Laviniah.mp4",
-                Results = "The coaching sessions have truly transformed my life. I feel more confident and motivated.",
+                Results = "Coaching helped me discover myself and build confidence in who I am. I’m incredibly grateful for the opportunity to release past experiences that were holding me back and preventing my growth. The greatest lesson I’ve learned from this journey is that I am far more capable than I ever imagined. I’ve become a stronger, more empowered person, and I highly recommend coaching to anyone seeking transformation!",
                 Author = "Laviniah",
                 Role = "- Cyber Security Analyst"
             },
@@ -297,7 +305,7 @@
             {
                 Id = 2,
                 Path = "Testimonials/testimonial_Fi.mp4",
-                Results = "Exceptional guidance and support throughout my career transition. Highly recommend!",
+                Results = "Ítala guided me to embrace my feelings without rushing the process. She helped me realize it’s okay to feel love, even if it feels unfamiliar or overwhelming. For someone who struggled with receiving love, her support created a safe space to process it all. I’m eternally grateful for the time and patience she gave me during this transformative journey.",
                 Author = "Fi",
                 Role = "- Civil Servant"
             },
@@ -305,9 +313,9 @@
             {
                 Id = 3,
                 Path = "Testimonials/testimonial_Monica.mp4",
-                Results = "The personalized approach helped me achieve my health and wellness goals.",
+                Results = "Coaching helped me deeply understand myself and believe in my abilities. I’m truly grateful for letting go of past experiences that held me back and prevented me from growing. The most powerful realization from this journey is that I am capable of so much more than I ever believed. I’ve become a stronger, more confident person, and I highly recommend coaching to anyone seeking transformation!",
                 Author = "Mónica",
-                Role = "- Oral Health"
+                Role = "- Oral Health Backoffice Assistant"
             }
         };
     private string subscriptionMessage;

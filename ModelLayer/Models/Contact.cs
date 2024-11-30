@@ -8,8 +8,14 @@ public class Contact
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
-    [Required(ErrorMessage = "Please provide your name.")]
-    public string Name { get; set; } = string.Empty;
+    [NotMapped]
+    [Required(ErrorMessage = "Please provide your first name.")]
+    public string FirstName { get; set; } = string.Empty;
+    [NotMapped]
+    [Required(ErrorMessage = "Please provide your last name.")]
+    public string LastName { get; set; } = string.Empty;
+    [Required]
+    public string FullName { get; set; } = string.Empty;
     [Required(ErrorMessage = "Please provide a email address.")]
     [EmailAddress(ErrorMessage = "Please provide a valid email address.")]
     public string Email { get; set; } = string.Empty;
@@ -22,4 +28,12 @@ public class Contact
     [Required(ErrorMessage = "Let us know what you'd like to discuss in the session.")]
     public string Message { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } 
+
+    /// <summary>
+    /// Updates the full name property
+    /// </summary>
+    public void UpdateFullName()
+    {
+        FullName = $"{FirstName} {LastName}".Trim();
+    }
 }

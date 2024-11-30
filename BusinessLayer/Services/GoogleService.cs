@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using Google.Apis.Calendar.v3.Data;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -15,13 +16,22 @@ public class GoogleService : IGoogleService
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
     private readonly ILogger<GoogleService> _logger;
+    private readonly IUserRefreshTokenService _userRefreshTokenService;
+    private readonly AuthenticationStateProvider _authenticationStateProvider;
 
-    public GoogleService(IHttpClientFactory httpClientFactory, HttpClient httpClient, IConfiguration configuration, ILogger<GoogleService> logger) 
+    public GoogleService(IHttpClientFactory httpClientFactory, 
+        HttpClient httpClient, 
+        IConfiguration configuration, 
+        ILogger<GoogleService> logger, 
+        IUserRefreshTokenService userRefreshTokenService,
+        AuthenticationStateProvider authenticationStateProvider) 
     {
         this._httpClientFactory = httpClientFactory;
         this._httpClient = httpClient;
         this._configuration = configuration;
         this._logger = logger;
+        this._userRefreshTokenService = userRefreshTokenService;
+        this._authenticationStateProvider = authenticationStateProvider;
     }
 
     public async Task<List<TimePeriod>> GetBusyTimes(DateTime startDate, DateTime endDate)
@@ -54,12 +64,14 @@ public class GoogleService : IGoogleService
 
     public async Task<bool> CreateEventAdminAsync(Contact contact)
     {
-        var refreshToken = _configuration["GoogleCalendar:RefreshToken"];
-        var accessToken = await RefreshAccessTokenAsync(refreshToken);
+        // var refreshToken = _configuration["GoogleCalendar:RefreshToken"];
+        AuthenticationState authState = await _authenticationStateProvider.GetAuthenticationStateAsync();
+        var userRefreshToken = await _userRefreshTokenService.GetRefreshTokenByUserId(authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
+        var accessToken = await RefreshAccessTokenAsync(userRefreshToken);
 
         var eventData = new
         {
-            summary = $"Meeting with {contact.Name}",
+            summary = $"Meeting with {contact.FullName}",
             description = contact.Message,
             start = new { dateTime = contact.PreferredDateTime.ToString("yyyy-MM-ddTHH:mm:ss"), timeZone = "UTC" },
             end = new { dateTime = contact.PreferredDateTime.AddMinutes(30).ToString("yyyy-MM-ddTHH:mm:ss"), timeZone = "UTC" },

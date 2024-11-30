@@ -12,55 +12,58 @@
     <hr>
     <div class="footer-container">
         <div class="footer-section">
-            <h4>Let's Connect</h4>
-            <p class="footer-tagline">Join the conversation on mental health</p>
-            <div class="social-icons">
-                <a href="https://www.facebook.com/journeystic/" target="_blank" aria-label="Facebook"><i class="fa-brands  fa-facebook"></i></a>
-                <a href="https://twitter.com/onJOSTIC" target="_blank" aria-label="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
-                <a href="https://www.instagram.com/jostic__/" target="_blank" aria-label="Instagram"><i class="fa-brands  fa-instagram"></i></a>
-                <a href="https://www.linkedin.com/in/italaveloso/" target="_blank" aria-label="LinkedIn"><i class="fa-brands  fa-linkedin"></i></a>
-                <a href="https://twitter.com/onJOSTIC" target="_blank" aria-label="Discord"><i class="fa-brands  fa-youtube"></i></a>
-                <a href="https://www.meetup.com/members/222668406/" target="_blank" aria-label="Meetup"><i class="fa-brands fa-meetup"></i></a>
-                <a href="https://www.tiktok.com/@@jostic__?lang=en" target="_blank" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+            <div>
+                <h4>Let's Connect</h4>
+                <p class="footer-tagline">Follow us for daily self-discovery tips, overcoming trauma, and nurturing mental health, peace, and self-love</p>
+                <div class="social-icons">
+                    <a href="https://www.facebook.com/italaveloso.coaching/" target="_blank" aria-label="Facebook"><i class="fa-brands  fa-facebook"></i></a>
+                    <a href="https://twitter.com/itala_veloso" target="_blank" aria-label="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
+                    <a href="https://www.instagram.com/italaveloso.coaching/" target="_blank" aria-label="Instagram"><i class="fa-brands  fa-instagram"></i></a>
+                    <a href="https://www.linkedin.com/in/italaveloso/" target="_blank" aria-label="LinkedIn"><i class="fa-brands  fa-linkedin"></i></a>
+                    <a href="https://www.youtube.com/@@italaveloso.coaching" target="_blank" aria-label="Discord"><i class="fa-brands  fa-youtube"></i></a>
+                    <a href="https://www.meetup.com/members/222668406/" target="_blank" aria-label="Meetup"><i class="fa-brands fa-meetup"></i></a>
+                    <a href="https://www.tiktok.com/@@italaveloso.coaching" target="_blank" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+                </div>
             </div>
-            <div class="contact-info">
-                <h4>Get in Touch</h4>
-                <p><i class="fas fa-envelope"></i> jostic@italaveloso.com</p>
+            <div class="disclaimer-info">
+                <h4>Disclaimer</h4>
+                <p> Results vary for each individual and are not guaranteed. Our coaching and resources are designed for educational and informational purposes only and are not a "quick fix" solution. Success depends on your effort, commitment, accountability, and ability to follow guidance. Testimonials shared on this site reflect individual experiences and may not be typical. While our tools and strategies aim to support growth and transformation, outcomes depend on personal determination and action.</p>
             </div>
         </div>
         <div class="footer-section newsletter-section">
-            <h4>Newsletter</h4>
-            <p class="newsletter-tagline">Stay informed on mental health breakthroughs</p>
-                 <EditForm Model="@emailSubscription" OnValidSubmit="SubscribeToNewsLetter" FormName="emailSubscriptionForm">
-                        <DataAnnotationsValidator />
-                        
-                        @if (isSubscribing)
-                        {
-                            <div class="text-center">
-                                <div class="spinner-border" role="status">
-                                    <span class="visually-hidden">Loading...</span>
+            <div>
+                <h4>Newsletter</h4>
+                <p class="newsletter-tagline">Stay tuned and join our break through, break free newsletter</p>
+                    <EditForm Model="@emailSubscription" OnValidSubmit="SubscribeToNewsLetter" FormName="emailSubscriptionForm">
+                            <DataAnnotationsValidator />
+                            
+                            @if (isSubscribing)
+                            {
+                                <div class="text-center">
+                                    <div class="spinner-border" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p>Subscribing...</p>
                                 </div>
-                                <p>Subscribing...</p>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="row g-2 align-items-center">
-                                <div class="col">
-                                    <div class="newsletter-form">
-                                        <InputText id="email" class="form-control" @bind-Value="emailSubscription.Email" placeholder="Enter your email" />
-                                        <button type="submit" class="btn btn-primary">Subscribe</button>
+                            }
+                            else
+                            {
+                                <div class="row g-2 align-items-center">
+                                    <div class="col">
+                                        <div class="newsletter-form">
+                                            <InputText id="email" class="form-control" @bind-Value="emailSubscription.Email" placeholder="Enter your email" />
+                                            <button type="submit" class="btn btn-primary">Subscribe</button>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="row">
-                                <div class="col">
-                                    <ValidationMessage For="@(() => emailSubscription.Email)" class="text-danger" />
+                                <div class="row">
+                                    <div class="col">
+                                        <ValidationMessage For="@(() => emailSubscription.Email)" class="text-danger" />
+                                    </div>
                                 </div>
-                            </div>
-                            <p class="privacy-notice">By signing up, you’re agreeing to receive marketing emails from Ítala Veloso. You can unsubscribe at any time. For more details, check out our <a href="/privacy-policy">Privacy Policy</a>.</p>
-                        }
-                    </EditForm>
+                                <p class="privacy-notice">By subscring, you’re agreeing to receive marketing emails from Ítala Veloso. You can unsubscribe at any time. For more details, check out our <a href="/privacy-policy">Privacy Policy</a>.</p>
+                            }
+                        </EditForm>
 
                 @if (!string.IsNullOrEmpty(subscriptionMessage) && !subscriptionSuccess)
                 {
@@ -68,25 +71,33 @@
                         @subscriptionMessage
                     </div>
                 }
-                
+                    
                 @if (subscriptionSuccess)
                 {
                     <div class="alert alert-success" role="alert">
                         @subscriptionMessage
                     </div>
                 }
+            </div>
         </div>
-        <div class="footer-section quick-links">
-            <h4>Quick Access</h4>
-            <nav aria-label="Footer navigation">
-                <ul class="footer-nav">
-                    <li><a href="/about/meet-itala">About</a></li>
-                    <li><a href="/services/coaching/life-coaching">Life Coaching</a></li>
-                    <li><a href="/services/coaching/career-coaching">Career Coaching</a></li>
-                    <li><a href="#contact">Contact</a></li>
-                    <li><a href="/privacy-policy">Privacy Policy</a></li>
-                </ul>
-            </nav>
+        <div class="footer-section">
+            <div class="quick-links">
+                <h4>Quick Access</h4>
+                <nav aria-label="Footer navigation">
+                    <ul class="footer-nav">
+                        <li><a href="/about/meet-itala">About</a></li>
+                        <li><a href="/services/coaching/life-coaching">Life Coaching</a></li>
+                        <li><a href="/services/coaching/career-coaching">Career Coaching</a></li>
+                        <li><a href="#contact">Contact</a></li>
+                        <li><a href="/privacy-policy">Privacy Policy</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="contact-info">
+                <h4>Get in Touch</h4>
+                @* <p class="footer-tagline">Have a question?</p> *@
+                <p><i class="fas fa-envelope"></i> jostic@italaveloso.com</p>
+            </div> 
         </div>
     </div>
     <div class="footer-bottom">

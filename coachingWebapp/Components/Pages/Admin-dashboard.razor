@@ -35,9 +35,9 @@
             }
         </div>
         <div>
-            <button class="btn btn-primary" href="/admin-auth">Google Auth</button>
+            <a class="btn btn-primary" href="/admin-auth">Google Auth</a>
             <button class="btn btn-primary" @onclick="LogoutUser">Logout</button>
-        </div> 
+        </div>
     </div>
 
     <div class="mud-grids-container">
@@ -52,7 +52,7 @@
             <Columns>
                 <SelectColumn T="Contact" />
                 <PropertyColumn Property="x => x.Id" Title="Id" Sortable="true" Filterable="false" />
-                <PropertyColumn Property="x => x.Name" Title="Name" Sortable="true" Filterable="true" />
+                <PropertyColumn Property="x => x.FullName" Title="Name" Sortable="true" Filterable="true" />
                 <PropertyColumn Property="x => x.Email" Title="Email" Sortable="false" Filterable="true" />
                 <PropertyColumn Property="x => x.SessionCategory" Title="Session" Sortable="true" Filterable="true" />
                 <PropertyColumn Property="x => x.Message" Title="Message" Sortable="false" Filterable="true">
@@ -122,7 +122,7 @@
 
     private Func<Contact, bool> quickFilterContacts => c =>
         string.IsNullOrEmpty(searchContactsString) ||
-        c.Name.Contains(searchContactsString, StringComparison.OrdinalIgnoreCase) ||
+        c.FullName.Contains(searchContactsString, StringComparison.OrdinalIgnoreCase) ||
         c.Email.Contains(searchContactsString, StringComparison.OrdinalIgnoreCase) ||
         c.Message.Contains(searchContactsString, StringComparison.OrdinalIgnoreCase);
 

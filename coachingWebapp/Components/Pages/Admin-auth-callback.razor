@@ -1,7 +1,12 @@
 @page "/auth/callback"
+@using Microsoft.AspNetCore.Components.Authorization
+@using ModelLayer.Models
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IConfiguration Configuration
 @inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager NavigationManager
+@inject IUserRefreshTokenService UserRefreshTokenService
 @inject ILogger<Admin_auth_callback> Logger
 
 <PageTitle>@pageTitle</PageTitle>
@@ -13,6 +18,7 @@
     [Parameter]
     [SupplyParameterFromQuery]
     public string Code { get; set; }
+    private AuthenticationState authState;
 
     protected override async Task OnInitializedAsync()
     {
@@ -20,14 +26,15 @@
         {
             try
             {
+                authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+
                 // Exchange authorization code for tokens
-                var tokens = await ExchangeCodeForTokensAsync(Code);
+                var token = await ExchangeCodeForTokensAsync(Code);
 
-                // Log tokens for debugging (DO NOT use in production)
-                Logger.LogInformation($"Access Token: {tokens.AccessToken}");
-                Logger.LogInformation($"Refresh Token: {tokens.RefreshToken}");
+                // Save refresh token to db
+                await SaveRefreshToken(token);
 
-                // Redirect to a success page or save tokens securely
+                NavigationManager.NavigateTo("/admin-dashboard", true);
             }
             catch (Exception ex)
             {
@@ -68,11 +75,9 @@
             throw new Exception($"Token exchange failed: {response.StatusCode}, {errorContent}");
         }
 
-        // Safely read and log the content
         var content = await response.Content.ReadAsStringAsync();
         Logger.LogInformation($"Raw Token Response: {content}");
 
-        // Deserialize from the string
         var tokenResponse = System.Text.Json.JsonSerializer.Deserialize<TokenResponse>(content, new System.Text.Json.JsonSerializerOptions
         {
             PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
@@ -81,10 +86,24 @@
         return tokenResponse;
     }
 
-    private void SaveRefreshToken(string refreshToken)
+    private async Task SaveRefreshToken(TokenResponse token)
     {
-        // Example: Save the refresh token securely in your database or configuration
-        Logger.LogInformation($"Refresh Token: {refreshToken}");
-        // Save to database or secure storage
+        Logger.LogInformation($"Refresh Token: {token.RefreshToken}");
+        
+        if (string.IsNullOrEmpty(token.RefreshToken))
+        {
+            Logger.LogError("Refresh token is null or empty. Cannot save.");
+            return;
+        }
+
+        UserRefreshToken userRefreshToken = new UserRefreshToken {
+            UserId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value,
+            RefreshToken = token.RefreshToken,
+            CreatedAt = DateTime.UtcNow,
+            ExpiresAt = DateTime.UtcNow.AddSeconds(token.ExpiresIn)
+        };
+
+        bool result = await UserRefreshTokenService.UpdateGoogleRefreshToken(userRefreshToken);
+
     }
 }

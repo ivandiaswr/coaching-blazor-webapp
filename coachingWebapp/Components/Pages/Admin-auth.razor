@@ -6,10 +6,12 @@
 
 <PageTitle>@pageTitle</PageTitle>
 
-<h3>Authorize the App</h3>
-<p>To allow the app to manage your Google Calendar, please click the button below to grant authorization.</p>
+<div id="admin-auth">
+    <h3>Authorize the App</h3>
+    <p>To allow the app to manage your Google Calendar, please click the button below to grant authorization.</p>
 
-<button @onclick="AuthorizeApp">Authorize</button>
+    <button class="btn btn-primary" @onclick="AuthorizeApp">Authorize</button>
+</div>
 
 @code {
     private string pageTitle = "Google Auth | Ítala Veloso";

@@ -2,46 +2,46 @@
 
 @if (IsHomePage)
 {
-<section id="video">
-    <video autoplay muted loop playsinline preload="auto" class="main-video">
-        <source src="/Videos/car-driving-mountain.mp4" type="video/mp4">
-        Your browser does not support the video tag mp4.
-    </video>
-    <div class="video-overlay">
-        <div class="content-wrapper">
-            <h1 class="main-heading">Reach your biggest goals</h1>
-            
-            <div class="title-container">
-                <div class="text-block">
-                    <h2 class="journey-text">Master your</h2>
-                    <h2 class="journey-text highlight">Journey</h2>
-                </div>
-                <div class="text-block">
-                    <h2 class="life-text">Master Your</h2>
-                    <h2 class="life-text highlight">Life</h2>
-                </div>
-            </div>
-
-            <a href="#contact" class="cta-button">
-                Schedule a Free Call
-                <span class="button-hover-effect"></span>
-            </a>
-        </div>
-    </div>
-    
-    @* <img 
-        src="Images/italaHeroTransparent.png" 
-        alt="Itala Veloso" 
-        class="bottom-right-image" 
-        loading="lazy" > *@
-    
-    <div class="secondary-video-container">
-        <video autoplay muted loop playsinline preload="auto" class="secondary-video">
-            <source src="/Videos/itala-baptism.mp4" type="video/mp4">
+    <section id="video">
+        <video autoplay muted loop playsinline preload="auto" class="main-video">
+            <source src="/Videos/car-driving-mountain.mp4" type="video/mp4">
             Your browser does not support the video tag mp4.
         </video>
-    </div>
-</section>
+        <div class="video-overlay">
+            <div class="content-wrapper">
+                <h1 class="main-heading">Reach your biggest goals</h1>
+                
+                <div class="title-container">
+                    <div class="text-block">
+                        <h2 class="journey-text">Master your</h2>
+                        <h2 class="journey-text highlight">Journey</h2>
+                    </div>
+                    <div class="text-block">
+                        <h2 class="life-text">Master Your</h2>
+                        <h2 class="life-text highlight">Life</h2>
+                    </div>
+                </div>
+
+                <a href="#contact" class="cta-button">
+                    Book Your Free Discovery Call
+                    <span class="button-hover-effect"></span>
+                </a>
+            </div>
+        </div>
+        
+        @* <img 
+            src="Images/italaHeroTransparent.png" 
+            alt="Itala Veloso" 
+            class="bottom-right-image" 
+            loading="lazy" > *@
+        
+        <div class="secondary-video-container" onclick="navigateToAbout()">
+            <video autoplay muted loop playsinline preload="auto" class="secondary-video">
+                <source src="/Videos/itala-baptism.mp4" type="video/mp4">
+                Your browser does not support the video tag mp4.
+            </video>
+        </div>
+    </section>
 }
 
 @code {
@@ -49,7 +49,6 @@
 
     protected override bool ShouldRender()
     {
-        // Prevent re-rendering when not on the home page
         return IsHomePage;
     }
 }

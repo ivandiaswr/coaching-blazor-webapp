@@ -1,5 +1,6 @@
 public class TokenResponse
 {
+    public string Email { get; set; }
     public string RefreshToken { get; set; }
     [System.Text.Json.Serialization.JsonPropertyName("access_token")]
     public string AccessToken { get; set; }

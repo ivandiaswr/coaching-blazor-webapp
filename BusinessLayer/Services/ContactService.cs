@@ -47,6 +47,8 @@ public class ContactService : IContactService
         try
         {
             contact.CreatedAt = DateTime.UtcNow;
+            contact.UpdateFullName();
+            
             _context.Contacts.Add(contact);
 
             var CreateEventAdminAsyncResult = await _googleService.CreateEventAdminAsync(contact);
@@ -85,10 +87,10 @@ public class ContactService : IContactService
         var message = new MimeMessage();
         message.From.Add(new MailboxAddress("Meeting Scheduled", smtpUsername));
         message.To.Add(new MailboxAddress("", smtpUsername));
-        message.Subject = $"Meeting Scheduled - {contact.Name}";
+        message.Subject = $"Meeting Scheduled - {contact.FullName}";
         message.Body = new TextPart("plain")
         {
-            Text = "Name: " + contact.Name + "\n" + 
+            Text = $"Name: {contact.FullName}\n" + 
                    "Email: " + contact.Email + "\n" +
                    "Session Category: " + contact.SessionCategory + "\n" +  
                    "Message: " + contact.Message + "\n" +
