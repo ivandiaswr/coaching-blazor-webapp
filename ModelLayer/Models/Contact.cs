@@ -14,7 +14,6 @@ public class Contact
     [NotMapped]
     [Required(ErrorMessage = "Please provide your last name.")]
     public string LastName { get; set; } = string.Empty;
-    [Required]
     public string FullName { get; set; } = string.Empty;
     [Required(ErrorMessage = "Please provide a email address.")]
     [EmailAddress(ErrorMessage = "Please provide a valid email address.")]

@@ -627,6 +627,7 @@ h1:focus {
   color: var(--text-gray);
   margin-bottom: 1.5rem;
   line-height: 1.6;
+  min-height: 4.5rem;
 }
 
 .service-benefits {

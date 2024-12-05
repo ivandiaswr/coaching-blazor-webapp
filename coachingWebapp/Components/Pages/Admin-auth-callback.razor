@@ -13,16 +13,24 @@
 
 <h3>Processing Authorization...</h3>
 
+@if(saveResult == true)
+{
+    <a href="/admin-dashboard" class="btn btn-primary">Dashboard</a>
+} else {
+    <p>Error saving token in database.</p>
+}
+
 @code {
     private string pageTitle = "Google Auth Callback | Ítala Veloso";
     [Parameter]
     [SupplyParameterFromQuery]
     public string Code { get; set; }
     private AuthenticationState authState;
+    private bool? saveResult = null;
 
     protected override async Task OnInitializedAsync()
     {
-         if (!string.IsNullOrEmpty(Code))
+        if (!string.IsNullOrEmpty(Code))
         {
             try
             {
@@ -32,9 +40,7 @@
                 var token = await ExchangeCodeForTokensAsync(Code);
 
                 // Save refresh token to db
-                await SaveRefreshToken(token);
-
-                NavigationManager.NavigateTo("/admin-dashboard", true);
+                saveResult = await SaveRefreshToken(token);
             }
             catch (Exception ex)
             {
@@ -86,14 +92,14 @@
         return tokenResponse;
     }
 
-    private async Task SaveRefreshToken(TokenResponse token)
+    private async Task<bool> SaveRefreshToken(TokenResponse token)
     {
         Logger.LogInformation($"Refresh Token: {token.RefreshToken}");
         
         if (string.IsNullOrEmpty(token.RefreshToken))
         {
             Logger.LogError("Refresh token is null or empty. Cannot save.");
-            return;
+            return false; 
         }
 
         UserRefreshToken userRefreshToken = new UserRefreshToken {
@@ -105,5 +111,6 @@
 
         bool result = await UserRefreshTokenService.UpdateGoogleRefreshToken(userRefreshToken);
 
+        return result;
     }
 }

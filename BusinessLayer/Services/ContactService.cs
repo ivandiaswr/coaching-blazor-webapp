@@ -48,12 +48,20 @@ public class ContactService : IContactService
         {
             contact.CreatedAt = DateTime.UtcNow;
             contact.UpdateFullName();
-            
+
             _context.Contacts.Add(contact);
 
             var CreateEventAdminAsyncResult = await _googleService.CreateEventAdminAsync(contact);
 
             if(!CreateEventAdminAsyncResult)
+            {
+                _logger.LogError("Failed to create admin's event.");
+                return false;
+            }
+
+            var CreateEventIntervalAsyncResult = await _googleService.CreateEventIntervalAsync(contact);
+
+            if(!CreateEventIntervalAsyncResult)
             {
                 _logger.LogError("Failed to create admin's event.");
                 return false;

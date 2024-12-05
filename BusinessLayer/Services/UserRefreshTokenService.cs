@@ -15,9 +15,29 @@ public class UserRefreshTokenService : IUserRefreshTokenService
     {
         try
         {
-            var userToken = await _context.UserRefreshTokens.FirstOrDefaultAsync(e => e.UserId == userId);
+            var userToken = await _context.UserRefreshTokens
+            .Where(e => e.UserId == userId)
+            .OrderByDescending(e => e.CreatedAt)
+            .FirstOrDefaultAsync();
 
-            return userToken.RefreshToken;
+            return userToken?.RefreshToken ?? string.Empty;
+        }
+        catch (Exception ex)
+        {
+
+            return string.Empty;
+        }
+    }
+
+    public async Task<string> GetRefreshTokenByLatest()
+    {
+        try
+        {
+            var userToken = await _context.UserRefreshTokens
+            .OrderByDescending(e => e.CreatedAt)
+            .FirstOrDefaultAsync();
+
+            return userToken?.RefreshToken ?? string.Empty;
         }
         catch (Exception ex)
         {

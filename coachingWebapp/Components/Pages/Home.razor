@@ -47,7 +47,7 @@
                             <li><i class="fas fa-check"></i> Create a roadmap to ignite your future</li>
                         </ul>
                         <a href="/services/coaching/life-coaching" class="btn-primary">
-                            Book Your Free Discovery Call
+                            Explore This Journey
                             <i class="fas fa-arrow-right"></i>
                         </a>
                     </div>
@@ -70,7 +70,7 @@
                             <li><i class="fas fa-check"></i> Mentoring and Career Clarity</li>
                         </ul>
                         <a href="/services/coaching/career-coaching" class="btn-primary">
-                            Book Your Free Discovery Call
+                            Explore This Journey
                             <i class="fas fa-arrow-right"></i>
                         </a>
                     </div>
@@ -189,6 +189,7 @@
                             <h1><span class="highlight">Google</span> Calendar</h1>
                             <EditForm Model="@contact" OnValidSubmit="ContactSubmitAsync" FormName="contactForm">
                                 <DataAnnotationsValidator />
+
                                 <div class="form-group">
                                     <label for="FirstName">First Name</label>
                                     <InputText id="firstName" class="form-control" @bind-Value="contact.FirstName" placeholder="First Name" />
@@ -364,18 +365,21 @@
     
     #region ContactMessage
     private async Task ContactSubmitAsync()
-    { 
+    {
         try
         {
             isLoggingIn = true; 
             StateHasChanged();
-
+ 
             var result = await ContactService.ContactSubmitAsync(contact);
             
             contactFormStatus = result ? "Thank you for your message. Meeting scheduled on Google. We'll get back to you soon!" : "Sending contact information failed. Please try again or contact support.";
 
-            if (result)
+            if (result) 
+            {
+                result = await EmailSubscriptionService.SubscriptionAsync(contact.Email);
                 contact = new Contact();
+            }            
         }
         catch(Exception ex)
         {
@@ -416,18 +420,18 @@
     private List<DateTime> GenerateAvailableSlots(DateTime startDate, DateTime endDate, List<TimePeriod> busyTimes)
     {
         var slots = new List<DateTime>();
-        var workStartTime = new TimeSpan(9, 0, 0);
-        var workEndTime = new TimeSpan(17, 0, 0);
+        var workStartTime = new TimeSpan(10, 0, 0);
+        var workEndTime = new TimeSpan(21, 0, 0);
         var slotDuration = TimeSpan.FromMinutes(30);
 
-        for (var date = startDate.Date; date <= endDate.Date; date = date.AddDays(1))
+        for (var date = startDate; date <= endDate; date = date.AddDays(1))
         {
-            //if (date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday)
-            //    continue;
+             if (@*date.DayOfWeek == DayOfWeek.Saturday ||*@ date.DayOfWeek == DayOfWeek.Sunday) 
+                continue;
 
             for (var time = workStartTime; time < workEndTime; time = time.Add(slotDuration))
             {
-                var slotStart = date.Add(time);
+                var slotStart = date.Date.Add(time);
                 var slotEnd = slotStart.Add(slotDuration);
 
                 bool isBusy = false;

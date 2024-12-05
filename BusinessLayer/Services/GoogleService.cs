@@ -17,21 +17,18 @@ public class GoogleService : IGoogleService
     private readonly IConfiguration _configuration;
     private readonly ILogger<GoogleService> _logger;
     private readonly IUserRefreshTokenService _userRefreshTokenService;
-    private readonly AuthenticationStateProvider _authenticationStateProvider;
 
     public GoogleService(IHttpClientFactory httpClientFactory, 
         HttpClient httpClient, 
         IConfiguration configuration, 
         ILogger<GoogleService> logger, 
-        IUserRefreshTokenService userRefreshTokenService,
-        AuthenticationStateProvider authenticationStateProvider) 
+        IUserRefreshTokenService userRefreshTokenService) 
     {
         this._httpClientFactory = httpClientFactory;
         this._httpClient = httpClient;
         this._configuration = configuration;
         this._logger = logger;
         this._userRefreshTokenService = userRefreshTokenService;
-        this._authenticationStateProvider = authenticationStateProvider;
     }
 
     public async Task<List<TimePeriod>> GetBusyTimes(DateTime startDate, DateTime endDate)
@@ -62,35 +59,9 @@ public class GoogleService : IGoogleService
         }).ToList();
     }
 
-    public async Task<bool> CreateEventAdminAsync(Contact contact)
+    public async Task<bool> CreateGoogleCalendarEventAsync(object eventData, string accessToken)
     {
-        // var refreshToken = _configuration["GoogleCalendar:RefreshToken"];
-        AuthenticationState authState = await _authenticationStateProvider.GetAuthenticationStateAsync();
-        var userRefreshToken = await _userRefreshTokenService.GetRefreshTokenByUserId(authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value);
-        var accessToken = await RefreshAccessTokenAsync(userRefreshToken);
-
-        var eventData = new
-        {
-            summary = $"Meeting with {contact.FullName}",
-            description = contact.Message,
-            start = new { dateTime = contact.PreferredDateTime.ToString("yyyy-MM-ddTHH:mm:ss"), timeZone = "UTC" },
-            end = new { dateTime = contact.PreferredDateTime.AddMinutes(30).ToString("yyyy-MM-ddTHH:mm:ss"), timeZone = "UTC" },
-            attendees = new[]
-            {
-                //new { email = _configuration["GoogleCalendar:CalendarId"] },
-                new { email = contact?.Email }
-            },
-            conferenceData = new
-            {
-                createRequest = new
-                {
-                    requestId = Guid.NewGuid().ToString(),
-                    conferenceSolutionKey = new { type = "hangoutsMeet" }
-                }
-            }
-        };
-
-        var client = _httpClientFactory.CreateClient();
+          var client = _httpClientFactory.CreateClient();
         var request = new HttpRequestMessage(HttpMethod.Post, "https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1&sendUpdates=all")
         {
             Content = new StringContent(JsonSerializer.Serialize(eventData), Encoding.UTF8, "application/json")
@@ -110,7 +81,52 @@ public class GoogleService : IGoogleService
         return true;
     }
 
-    public async Task<string> RefreshAccessTokenAsync(string refreshToken)
+    public async Task<bool> CreateEventAdminAsync(Contact contact)
+    {
+        var refreshToken = await _userRefreshTokenService.GetRefreshTokenByLatest();
+
+        var accessToken = await GetAccessTokenAsync(refreshToken);
+
+        var eventData = new
+        {
+            summary = $"Meeting with {contact.FullName}",
+            description = contact.Message,
+            start = new { dateTime = contact.PreferredDateTime.ToString("yyyy-MM-ddTHH:mm:ss"), timeZone = "UTC" },
+            end = new { dateTime = contact.PreferredDateTime.AddMinutes(30).ToString("yyyy-MM-ddTHH:mm:ss"), timeZone = "UTC" },
+            attendees = new[] { new { email = contact?.Email } },
+            conferenceData = new
+            {
+                createRequest = new
+                {
+                    requestId = Guid.NewGuid().ToString(),
+                    conferenceSolutionKey = new { type = "hangoutsMeet" }
+                }
+            }
+        };
+
+        return await CreateGoogleCalendarEventAsync(eventData, accessToken);
+    }
+
+
+   public async Task<bool> CreateEventIntervalAsync(Contact contact)
+    {
+        var refreshToken = await _userRefreshTokenService.GetRefreshTokenByLatest();
+
+        var accessToken = await GetAccessTokenAsync(refreshToken);
+
+        var eventData = new
+        {
+            summary = $"Meeting Interval after {contact.FullName}",
+            description = "Interval",
+            start = new { dateTime = contact.PreferredDateTime.AddMinutes(30).ToString("yyyy-MM-ddTHH:mm:ss"), timeZone = "UTC" },
+            end = new { dateTime = contact.PreferredDateTime.AddMinutes(45).ToString("yyyy-MM-ddTHH:mm:ss"), timeZone = "UTC" }
+        };
+
+        return await CreateGoogleCalendarEventAsync(eventData, accessToken);
+    }
+
+
+    public async Task<string> GetAccessTokenAsync(string refreshToken)
     {
         var clientId = _configuration["GoogleCalendar:ClientId"];
         var clientSecret = _configuration["GoogleCalendar:ClientSecret"];
@@ -141,4 +157,6 @@ public class GoogleService : IGoogleService
 
         return tokenResponse?.AccessToken ?? throw new Exception("Failed to obtain access token.");
     }
+
+
 }
