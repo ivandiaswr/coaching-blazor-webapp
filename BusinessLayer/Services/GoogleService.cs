@@ -5,7 +5,6 @@ using System.Text;
 using System.Text.Json;
 using Google.Apis.Calendar.v3.Data;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using ModelLayer.Models;
 
@@ -106,7 +105,6 @@ public class GoogleService : IGoogleService
         return await CreateGoogleCalendarEventAsync(eventData, accessToken);
     }
 
-
    public async Task<bool> CreateEventIntervalAsync(Contact contact)
     {
         var refreshToken = await _userRefreshTokenService.GetRefreshTokenByLatest();
@@ -123,7 +121,6 @@ public class GoogleService : IGoogleService
 
         return await CreateGoogleCalendarEventAsync(eventData, accessToken);
     }
-
 
     public async Task<string> GetAccessTokenAsync(string refreshToken)
     {
@@ -156,6 +153,4 @@ public class GoogleService : IGoogleService
 
         return tokenResponse?.AccessToken ?? throw new Exception("Failed to obtain access token.");
     }
-
-
 }

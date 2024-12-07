@@ -16,7 +16,10 @@ public class ContactService : IContactService
     private readonly ILogger<ContactService> _logger;
     private readonly IGoogleService _googleService;
 
-    public ContactService(CoachingDbContext context, IHelperService helperService, ILogger<ContactService> logger, IGoogleService googleService)
+    public ContactService(CoachingDbContext context, 
+        IHelperService helperService,
+        ILogger<ContactService> logger,
+        IGoogleService googleService)
     {
         this._context = context;
         this._helperService = helperService;

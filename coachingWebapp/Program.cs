@@ -19,14 +19,32 @@ if (builder.Environment.IsDevelopment())
 SQLitePCL.Batteries.Init();
 SQLitePCL.raw.SetProvider(new SQLitePCL.SQLite3Provider_e_sqlite3());  
 
-string solutionDirectory = AppContext.BaseDirectory;
-string projectRootDirectory = Path.GetFullPath(Path.Combine(solutionDirectory, "../../../../"));
-string databaseDirectory = Path.Combine(projectRootDirectory, "Database");
+// string solutionDirectory = AppContext.BaseDirectory;
+// string projectRootDirectory = Path.GetFullPath(Path.Combine(solutionDirectory, "../../../../"));
+// string databaseDirectory = Path.Combine(projectRootDirectory, "Database");
 
-// Ensure the Database directory exists
-Directory.CreateDirectory(databaseDirectory);
+// // Ensure the Database directory exists
+// Directory.CreateDirectory(databaseDirectory);
 
-string databasePath = Path.Combine(databaseDirectory, "coaching.db");
+// string databasePath = Path.Combine(databaseDirectory, "coaching.db");
+
+string databasePath;
+if (builder.Environment.IsDevelopment())
+{
+    // Local development path
+    string solutionDirectory = AppContext.BaseDirectory;
+    string projectRootDirectory = Path.GetFullPath(Path.Combine(solutionDirectory, "../../../../"));
+    string databaseDirectory = Path.Combine(projectRootDirectory, "Database");
+    Directory.CreateDirectory(databaseDirectory);
+    databasePath = Path.Combine(databaseDirectory, "coaching.db");
+}
+else
+{
+    // Production path for SmarterASP.NET
+    string dbFolder = Path.Combine(AppContext.BaseDirectory, "../db"); 
+    Directory.CreateDirectory(dbFolder); // Ensure folder exists
+    databasePath = Path.Combine(dbFolder, "coaching.db");
+}
 
 // builder.Configuration.GetConnectionString("DefaultConnection")
 builder.Services.AddDbContext<CoachingDbContext>(options =>

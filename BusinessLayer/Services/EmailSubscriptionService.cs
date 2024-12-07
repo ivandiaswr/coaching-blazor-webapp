@@ -16,7 +16,10 @@ public class EmailSubscriptionService : IEmailSubscriptionService
     private readonly ILogger<EmailSubscriptionService> _logger;
     private readonly ISecurityService _securityService;
 
-    public EmailSubscriptionService(CoachingDbContext context, IHelperService helperService, ILogger<EmailSubscriptionService> logger, ISecurityService securityService)
+    public EmailSubscriptionService(CoachingDbContext context,
+        IHelperService helperService,
+        ILogger<EmailSubscriptionService> logger,
+        ISecurityService securityService)
     {
         this._context = context;
         this._helperService = helperService;
