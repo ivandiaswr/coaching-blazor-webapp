@@ -63,14 +63,15 @@ builder.Services.AddAuthorization(options =>
     }
 );
 
-builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation(); // Is it needed?
-
 builder.Services.AddScoped<IEmailSubscriptionService, EmailSubscriptionService>();
 builder.Services.AddScoped<IContactService, ContactService>();
 builder.Services.AddScoped<IScrollService, ScrollService>();
 builder.Services.AddScoped<IGoogleService, GoogleService>();
 builder.Services.AddScoped<ISecurityService, SecurityService>();
 builder.Services.AddScoped<IUserRefreshTokenService, UserRefreshTokenService>();
+builder.Services.AddScoped<IHelperService, HelperService>();
+
+builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation(); 
 
 // Add services to the container
 builder.Services.AddRazorComponents()

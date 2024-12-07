@@ -51,3 +51,12 @@ function setTitle(title) {
 function navigateToAbout() {
     window.location.href = "/about/meet-itala";
 }
+
+function saveAsFile(fileName, contentBase64) {
+    const link = document.createElement('a');
+    link.download = fileName;
+    link.href = "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64," + contentBase64;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}

@@ -9,6 +9,7 @@ public class EmailSubscription
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
     [Required(ErrorMessage = "Please provide a email address.")]
     [EmailAddress(ErrorMessage = "Please provide a valid email address.")]
     public string Email { get; set; } = string.Empty;

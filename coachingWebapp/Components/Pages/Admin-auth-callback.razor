@@ -3,7 +3,7 @@
 @using ModelLayer.Models
 
 @inject AuthenticationStateProvider AuthenticationStateProvider
-@inject IConfiguration Configuration
+@inject IHelperService HelperService
 @inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager NavigationManager
 @inject IUserRefreshTokenService UserRefreshTokenService
@@ -55,9 +55,9 @@
 
     private async Task<TokenResponse> ExchangeCodeForTokensAsync(string code)
     {
-        var clientId = Configuration["GoogleCalendar:ClientId"];
-        var clientSecret = Configuration["GoogleCalendar:ClientSecret"];
-        var redirectUri = Configuration["GoogleCalendar:CallbackUrl"];
+        var clientId = HelperService.GetConfigValue("GoogleCalendar:ClientId");
+        var clientSecret = HelperService.GetConfigValue("GoogleCalendar:ClientSecret");
+        var redirectUri = HelperService.GetConfigValue("GoogleCalendar:CallbackUrl");
 
         var tokenRequest = new HttpRequestMessage(HttpMethod.Post, "https://oauth2.googleapis.com/token")
         {

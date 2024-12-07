@@ -4,7 +4,6 @@
 @inject IEmailSubscriptionService EmailSubscriptionService
 @inject IContactService ContactService
 @inject IGoogleService GoogleService
-@inject IConfiguration Configuration
 @inject IHttpClientFactory HttpClientFactory
 @inject ILogger<Home> Logger
 
@@ -328,6 +327,7 @@
     private List<TimePeriod> busyTimes;
     private bool calendarNeedsInitialization = false;
     private bool isLoggingIn = false;
+    private bool isCalendarLoading = false;
     private DotNetObjectReference<Home> DotNetRef;
 
     protected override void OnInitialized()
@@ -377,7 +377,8 @@
 
             if (result) 
             {
-                result = await EmailSubscriptionService.SubscriptionAsync(contact.Email);
+                contact.UpdateFullName();
+                result = await EmailSubscriptionService.SubscriptionAsync(new EmailSubscription { Name = contact.FullName, Email = contact.Email });
                 contact = new Contact();
             }            
         }
@@ -395,6 +396,10 @@
     
     private async Task ToggleCalendar()
     {
+        if (isCalendarLoading) return;
+
+        isCalendarLoading = true;
+
         var startDate = DateTime.UtcNow.Date.AddDays(1);
         var endDate = startDate.AddDays(13);
 
@@ -409,6 +414,10 @@
             Logger.LogError(ex, "Failed to refresh calendar data");
             availableSlots = new List<DateTime>();
             busyTimes = new List<TimePeriod>();
+        }
+        finally
+        {
+            isCalendarLoading = false; 
         }
 
         showTimeSlots = !showTimeSlots;

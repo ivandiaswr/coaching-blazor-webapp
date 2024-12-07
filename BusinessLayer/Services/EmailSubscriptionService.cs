@@ -1,7 +1,6 @@
 ﻿using DataAccessLayer;
 using Microsoft.EntityFrameworkCore;
 using ModelLayer.Models;
-using Microsoft.Extensions.Configuration;
 using BusinessLayer.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 using MailKit.Net.Smtp;
@@ -13,14 +12,14 @@ namespace BusinessLayer;
 public class EmailSubscriptionService : IEmailSubscriptionService
 {
     private readonly CoachingDbContext _context;
-    private readonly IConfiguration _configuration;
+    private readonly IHelperService _helperService;
     private readonly ILogger<EmailSubscriptionService> _logger;
     private readonly ISecurityService _securityService;
 
-    public EmailSubscriptionService(CoachingDbContext context, IConfiguration configuration, ILogger<EmailSubscriptionService> logger, ISecurityService securityService)
+    public EmailSubscriptionService(CoachingDbContext context, IHelperService helperService, ILogger<EmailSubscriptionService> logger, ISecurityService securityService)
     {
         this._context = context;
-        this._configuration = configuration;
+        this._helperService = helperService;
         this._logger = logger;
         this._securityService = securityService;
     }
@@ -40,12 +39,12 @@ public class EmailSubscriptionService : IEmailSubscriptionService
         }
     }
     
-    public async Task<bool> SubscriptionAsync(string email)
+    public async Task<bool> SubscriptionAsync(EmailSubscription emailSubscription)
     {
-        if(email is null)
+        if(emailSubscription is null)
             return false; 
 
-        var EmailSubscription = await _context.EmailSubscriptions.FirstOrDefaultAsync(e => e.Email == email);
+        var EmailSubscription = await _context.EmailSubscriptions.FirstOrDefaultAsync(e => e.Email == emailSubscription.Email);
 
         if(EmailSubscription != null)
         {
@@ -66,7 +65,8 @@ public class EmailSubscriptionService : IEmailSubscriptionService
             {
                 var subscription = new EmailSubscription()
                 {
-                    Email = email,
+                    Name = emailSubscription.Name,
+                    Email = emailSubscription.Email,
                     IsSubscribed = true,
                     SubscribedAt = DateTime.UtcNow,
                     CreatedAt = DateTime.UtcNow
@@ -118,12 +118,12 @@ public class EmailSubscriptionService : IEmailSubscriptionService
         }
     }
 
-    public async Task<bool> SubscriptionGiftAsync(string email, GiftCategory giftCategory)
+    public async Task<bool> SubscriptionGiftAsync(EmailSubscription emailSubscription)
     {
-        if(email is null)
+        if(emailSubscription is null)
             return false; 
 
-        var EmailSubscription = await _context.EmailSubscriptions.FirstOrDefaultAsync(e => e.Email == email);
+        var EmailSubscription = await _context.EmailSubscriptions.FirstOrDefaultAsync(e => e.Email == emailSubscription.Email);
 
         if(EmailSubscription != null)
         {
@@ -131,7 +131,7 @@ public class EmailSubscriptionService : IEmailSubscriptionService
             {
                 try
                 {
-                    await SendEmailAsync(EmailSubscription.Email, giftCategory);
+                    await SendEmailAsync(EmailSubscription.Email, emailSubscription.Gift);
                 }
                 catch (Exception ex)
                 {
@@ -146,7 +146,7 @@ public class EmailSubscriptionService : IEmailSubscriptionService
                 // Resubscribe
                 EmailSubscription.IsSubscribed = true;
                 EmailSubscription.SubscribedAt = DateTime.UtcNow;
-                EmailSubscription.Gift = giftCategory;
+                EmailSubscription.Gift = emailSubscription.Gift;
             }
         } 
         else 
@@ -154,15 +154,16 @@ public class EmailSubscriptionService : IEmailSubscriptionService
             try
             {    
                 var subscription = new EmailSubscription(){
-                    Email = email,
-                    Gift = giftCategory,
+                    Name = emailSubscription.Name,
+                    Email = emailSubscription.Email,
+                    Gift = emailSubscription.Gift,
                     IsSubscribed = true
                 };
                 
                 _context.EmailSubscriptions.Add(subscription);
 
                 // Saves into db with success and sends email with a free gift 
-                await SendEmailAsync(subscription.Email, giftCategory);
+                await SendEmailAsync(subscription.Email, emailSubscription.Gift);
             }
             catch (Exception ex)
             {
@@ -178,10 +179,10 @@ public class EmailSubscriptionService : IEmailSubscriptionService
 
     public async Task SendEmailAsync(string email, GiftCategory giftCategory)
     {
-        var smtpServer = _configuration["SmtpSettings:Server"];
-        var smtpPort = int.Parse(_configuration["SmtpSettings:Port"] ?? "");
-        var smtpUsername = _configuration["SmtpSettings:Username"];
-        var smtpPassword = _configuration["SmtpSettings:Password"];
+        var smtpServer = _helperService.GetConfigValue("SmtpSettings:Server");
+        var smtpPort = int.Parse(_helperService.GetConfigValue("SmtpSettings:Port") ?? "");
+        var smtpUsername = _helperService.GetConfigValue("SmtpSettings:Username");
+        var smtpPassword = _helperService.GetConfigValue("SmtpSettings:Password");
         var smtpMailTo = email;
 
         if (string.IsNullOrWhiteSpace(smtpServer) || string.IsNullOrWhiteSpace(smtpUsername) || string.IsNullOrWhiteSpace(smtpPassword))
@@ -254,10 +255,10 @@ public class EmailSubscriptionService : IEmailSubscriptionService
         if (string.IsNullOrWhiteSpace(body))
             throw new ArgumentException("Email body is required.");
 
-        var smtpServer = _configuration["SmtpSettings:Server"];
-        var smtpPort = int.Parse(_configuration["SmtpSettings:Port"] ?? "");
-        var smtpUsername = _configuration["SmtpSettings:Username"];
-        var smtpPassword = _configuration["SmtpSettings:Password"];
+        var smtpServer = _helperService.GetConfigValue("SmtpSettings:Server");
+        var smtpPort = int.Parse(_helperService.GetConfigValue("SmtpSettings:Port") ?? "");
+        var smtpUsername = _helperService.GetConfigValue("SmtpSettings:Username");
+        var smtpPassword = _helperService.GetConfigValue("SmtpSettings:Password");
 
         var message = new MimeMessage();
         message.From.Add(new MailboxAddress("Ítala Veloso", smtpUsername));
@@ -274,12 +275,25 @@ public class EmailSubscriptionService : IEmailSubscriptionService
             {
                 // Generate Unsubscribe Token
                 var token = _securityService.GenerateUnsubscribeToken(email);
-                string unsubscribeUrl = $"{_configuration["AppSettings:BaseUrl"]}/unsubscribe?email={Uri.EscapeDataString(email)}&token={Uri.EscapeDataString(token)}";
+                string unsubscribeUrl = $"{_helperService.GetConfigValue("AppSettings:BaseUrl")}/unsubscribe?email={Uri.EscapeDataString(email)}&token={Uri.EscapeDataString(token)}";
+
+                var emailSubscription = await _context.EmailSubscriptions.FirstOrDefaultAsync(e => e.Email == email);
 
                 var builder = new BodyBuilder
                 {
-                    HtmlBody = $"{body}<br><p>If you wish to unsubscribe, click <a href='{unsubscribeUrl}'>here</a>.</p>"
+                    HtmlBody = $@"
+                        <div style='font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #333;'>
+                            <p>Dear {(string.IsNullOrWhiteSpace(emailSubscription?.Name) ? "Subscriber" : emailSubscription?.Name)},</p>
 
+                            <p>{body.Replace("\n", "<br>")}</p>
+
+                            <hr style='border: none; border-top: 1px solid #ccc; margin: 20px 0;' />
+
+                            <p style='font-size: 8px; color: #666;'>
+                                You are receiving this email because you subscribed to our updates. 
+                                If you wish to unsubscribe, please click <a href='{unsubscribeUrl}' style='color: #0066cc; text-decoration: none;'>unsubscribe</a>.
+                            </p>
+                        </div>"
                 };
 
                 message.Body = builder.ToMessageBody();

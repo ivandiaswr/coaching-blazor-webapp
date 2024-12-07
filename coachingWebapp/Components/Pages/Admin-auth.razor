@@ -1,7 +1,7 @@
 @page "/admin-auth"
 @rendermode InteractiveServer
 @inject NavigationManager NavigationManager
-@inject IConfiguration Configuration
+@inject IHelperService HelperService
 @inject ILogger<Admin_auth> Logger
 
 <PageTitle>@pageTitle</PageTitle>
@@ -17,8 +17,8 @@
     private string pageTitle = "Google Auth | Ítala Veloso";
     private void AuthorizeApp()
     {
-        var clientId = Configuration["GoogleCalendar:ClientId"];
-        var redirectUri = Configuration["GoogleCalendar:CallbackUrl"];
+        var clientId = HelperService.GetConfigValue("GoogleCalendar:ClientId");
+        var redirectUri = HelperService.GetConfigValue("GoogleCalendar:CallbackUrl");
         var scopes = "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events";
 
         var authorizationUrl = $"https://accounts.google.com/o/oauth2/v2/auth?response_type=code" +

@@ -12,14 +12,14 @@ namespace BusinessLayer.Services;
 public class ContactService : IContactService
 {
     private readonly CoachingDbContext _context;
-    private readonly IConfiguration _configuration;
+    private readonly IHelperService _helperService;
     private readonly ILogger<ContactService> _logger;
     private readonly IGoogleService _googleService;
 
-    public ContactService(CoachingDbContext context, IConfiguration configuration, ILogger<ContactService> logger, IGoogleService googleService)
+    public ContactService(CoachingDbContext context, IHelperService helperService, ILogger<ContactService> logger, IGoogleService googleService)
     {
         this._context = context;
-        this._configuration = configuration;
+        this._helperService = helperService;
         this._logger = logger;
         this._googleService = googleService;
     }
@@ -82,10 +82,10 @@ public class ContactService : IContactService
 
     public async Task SendEmailAsync(Contact contact)
     {
-        var smtpServer = _configuration["SmtpSettings:Server"];
-        var smtpPort = int.Parse(_configuration["SmtpSettings:Port"] ?? "");
-        var smtpUsername = _configuration["SmtpSettings:Username"];
-        var smtpPassword = _configuration["SmtpSettings:Password"];
+        var smtpServer = _helperService.GetConfigValue("SmtpSettings:Server");
+        var smtpPort = int.Parse(_helperService.GetConfigValue("SmtpSettings:Port") ?? "");
+        var smtpUsername = _helperService.GetConfigValue("SmtpSettings:Username");
+        var smtpPassword = _helperService.GetConfigValue("SmtpSettings:Password");
 
         if (string.IsNullOrWhiteSpace(smtpServer) || string.IsNullOrWhiteSpace(smtpUsername) || string.IsNullOrWhiteSpace(smtpPassword))
         {

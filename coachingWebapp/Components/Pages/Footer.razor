@@ -131,7 +131,7 @@
             {
                 Logger.LogInformation($"Attempting to subscribe with email: {emailSubscription.Email}");
 
-                var result = await EmailSubscriptionService.SubscriptionAsync(emailSubscription.Email);
+                var result = await EmailSubscriptionService.SubscriptionAsync(emailSubscription);
 
                 await InvokeAsync(() =>
                 {

@@ -17,6 +17,7 @@ public class Contact
     public string FullName { get; set; } = string.Empty;
     [Required(ErrorMessage = "Please provide a email address.")]
     [EmailAddress(ErrorMessage = "Please provide a valid email address.")]
+    [RegularExpression(@"^[a-zA-Z0-9._%+-]+@gmail\.com$", ErrorMessage = "Only Gmail email addresses are allowed.")]
     public string Email { get; set; } = string.Empty;
     [Required(ErrorMessage = "Please select a session.")]
     public SessionType SessionCategory { get; set; } 

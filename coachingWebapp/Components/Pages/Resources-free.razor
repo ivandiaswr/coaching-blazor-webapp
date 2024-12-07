@@ -132,7 +132,8 @@
 
             try
             {
-                var result = await EmailSubscriptionService.SubscriptionGiftAsync(emailSubscription.Email, giftCategory);
+                emailSubscription.Gift = giftCategory;
+                var result = await EmailSubscriptionService.SubscriptionGiftAsync(emailSubscription);
                 subscriptionSuccess = result;
                 subscriptionMessage = result ? "Thank you! Your submission has been received!" : "Subscription failed. Please try again or contact support.";
 

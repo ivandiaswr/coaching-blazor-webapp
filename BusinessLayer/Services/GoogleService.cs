@@ -4,7 +4,6 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using Google.Apis.Calendar.v3.Data;
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -14,26 +13,26 @@ public class GoogleService : IGoogleService
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly HttpClient _httpClient;
-    private readonly IConfiguration _configuration;
+    private readonly IHelperService _helperService;
     private readonly ILogger<GoogleService> _logger;
     private readonly IUserRefreshTokenService _userRefreshTokenService;
 
     public GoogleService(IHttpClientFactory httpClientFactory, 
         HttpClient httpClient, 
-        IConfiguration configuration, 
+        IHelperService configuration, 
         ILogger<GoogleService> logger, 
         IUserRefreshTokenService userRefreshTokenService) 
     {
         this._httpClientFactory = httpClientFactory;
         this._httpClient = httpClient;
-        this._configuration = configuration;
+        this._helperService = configuration;
         this._logger = logger;
         this._userRefreshTokenService = userRefreshTokenService;
     }
 
     public async Task<List<TimePeriod>> GetBusyTimes(DateTime startDate, DateTime endDate)
     {
-        string url = $"https://www.googleapis.com/calendar/v3/freeBusy?key={_configuration["GoogleCalendar:ApiKey"]}";
+        string url = $"https://www.googleapis.com/calendar/v3/freeBusy?key={_helperService.GetConfigValue("GoogleCalendar:ApiKey")}";
 
         var requestData = new
         {
@@ -41,7 +40,7 @@ public class GoogleService : IGoogleService
             timeMax = endDate.ToString("yyyy-MM-dd'T'HH:mm:ssZ"),
             items = new[]
             {
-                new { id = _configuration["GoogleCalendar:CalendarId"] }
+                new { id = _helperService.GetConfigValue("GoogleCalendar:CalendarId")}
             }
         };
 
@@ -50,7 +49,7 @@ public class GoogleService : IGoogleService
 
         var freeBusyResponse = await response.Content.ReadFromJsonAsync<FreeBusyResponse>();
 
-        var busyPeriods = freeBusyResponse.Calendars[_configuration["GoogleCalendar:CalendarId"]].Busy;
+        var busyPeriods = freeBusyResponse.Calendars[_helperService.GetConfigValue("GoogleCalendar:CalendarId")].Busy;
 
         return busyPeriods.Select(b => new TimePeriod
         {
@@ -128,8 +127,8 @@ public class GoogleService : IGoogleService
 
     public async Task<string> GetAccessTokenAsync(string refreshToken)
     {
-        var clientId = _configuration["GoogleCalendar:ClientId"];
-        var clientSecret = _configuration["GoogleCalendar:ClientSecret"];
+        var clientId = _helperService.GetConfigValue("GoogleCalendar:ClientId");
+        var clientSecret = _helperService.GetConfigValue("GoogleCalendar:ClientSecret");
 
         var tokenRequest = new HttpRequestMessage(HttpMethod.Post, "https://oauth2.googleapis.com/token")
         {

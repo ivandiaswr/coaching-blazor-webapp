@@ -1,18 +1,17 @@
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.Extensions.Configuration;
 
 public class SecurityService : ISecurityService
 {
-    private readonly IConfiguration _configuration;
-    public SecurityService(IConfiguration configuration)
+    private readonly IHelperService _helperService;
+    public SecurityService(IHelperService helperService)
     {
-        this._configuration = configuration;
+        this._helperService = helperService;
     }
 
     public string GenerateUnsubscribeToken(string email)
     {
-        byte[] key = Encoding.ASCII.GetBytes(_configuration["AppSettings:SecretKey"]);
+        byte[] key = Encoding.ASCII.GetBytes(_helperService.GetConfigValue("AppSettings:SecretKey"));
 
         // HMACSHA256 is a hashing algorithm that provides data integrity and authentication
         // Combines the secret key with the user's email to produce a hash that is secure against tampering

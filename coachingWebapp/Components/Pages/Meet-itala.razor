@@ -158,8 +158,10 @@
             try
             {
                 Logger.LogInformation($"Attempting to subscribe with email: {emailSubscription.Email}");
+                
+                emailSubscription.Gift = giftCategory;
 
-                var result = await EmailSubscriptionService.SubscriptionGiftAsync(emailSubscription.Email, giftCategory);
+                var result = await EmailSubscriptionService.SubscriptionGiftAsync(emailSubscription);
 
                 await InvokeAsync(() =>
                 {

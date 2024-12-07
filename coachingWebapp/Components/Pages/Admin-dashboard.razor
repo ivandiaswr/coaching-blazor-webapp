@@ -48,6 +48,11 @@
                 <MudSpacer />
                 <MudTextField @bind-Value="searchContactsString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
                 AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"></MudTextField>
+                <MudTooltip Text="Export to Excel">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ExportContactsToExcel">
+                        <i class="fa-solid fa-file-csv"></i>
+                    </MudButton>
+                </MudTooltip>
             </ToolBarContent>
             <Columns>
                 <SelectColumn T="Contact" />
@@ -84,10 +89,16 @@
                 <MudSpacer />
                 <MudTextField @bind-Value="searchEmailSubscriptionsString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
                 AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"></MudTextField>
+                <MudTooltip Text="Export to Excel">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ExportEmailSubscriptionsToExcel">
+                        <i class="fa-solid fa-file-csv"></i>
+                    </MudButton>
+                </MudTooltip>
             </ToolBarContent>
             <Columns>
                 <SelectColumn T="EmailSubscription" />
                 <PropertyColumn Property="x => x.Id" Title="Id" Sortable="true" Filterable="false" />
+                <PropertyColumn Property="x => x.Name" Title="Name" Sortable="true" Filterable="true" />
                 <PropertyColumn Property="x => x.Email" Title="Email" Sortable="true" Filterable="true" />
                 <PropertyColumn Property="x => x.IsSubscribed" Title="IsSubscribed" Sortable="false" Filterable="true" />
                 <PropertyColumn Property="x => x.SubscribedAt" Title="SubscribedAt" Sortable="true" Filterable="true" >
@@ -128,6 +139,7 @@
 
     private Func<EmailSubscription, bool> quickFilterEmailSubscriptions => e =>
         string.IsNullOrEmpty(searchEmailSubscriptionsString) ||
+        e.Name.Contains(searchEmailSubscriptionsString, StringComparison.OrdinalIgnoreCase) ||
         e.Email.Contains(searchEmailSubscriptionsString, StringComparison.OrdinalIgnoreCase);
 
     protected override async Task OnInitializedAsync()
@@ -147,6 +159,74 @@
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, FullWidth = true };
 
         return DialogService.ShowAsync<SendEmailDialog>("Compose Email", parameters, options);
+    }
+
+    private async Task ExportContactsToExcel()
+    {
+        using var workbook = new ClosedXML.Excel.XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("Contacts");
+
+        worksheet.Cell(1, 1).Value = "Id";
+        worksheet.Cell(1, 2).Value = "FullName";
+        worksheet.Cell(1, 3).Value = "Email";
+        worksheet.Cell(1, 4).Value = "Session";
+        worksheet.Cell(1, 5).Value = "Message";
+        worksheet.Cell(1, 6).Value = "CreatedAt";
+
+        var filteredContacts = contacts.Where(quickFilterContacts).ToList();
+
+        for (int i = 0; i < filteredContacts.Count; i++)
+        {
+            var contact = filteredContacts[i];
+            worksheet.Cell(i + 2, 1).Value = contact.Id;
+            worksheet.Cell(i + 2, 2).Value = contact.FullName;
+            worksheet.Cell(i + 2, 3).Value = contact.Email;
+            worksheet.Cell(i + 2, 4).Value = contact.SessionCategory.ToString();
+            worksheet.Cell(i + 2, 5).Value = contact.Message;
+            worksheet.Cell(i + 2, 6).Value = contact.CreatedAt.ToString("dd-MM-yyyy HH:mm:ss");
+        }
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        stream.Seek(0, SeekOrigin.Begin);
+
+        var fileName = $"Contacts_{DateTime.Now:yyyyMMddHHmmss}.xlsx";
+        await JSRuntime.InvokeVoidAsync("saveAsFile", fileName, Convert.ToBase64String(stream.ToArray()));
+    }
+
+    private async Task ExportEmailSubscriptionsToExcel()
+    {
+        using var workbook = new ClosedXML.Excel.XLWorkbook();
+        var worksheet = workbook.Worksheets.Add("EmailSubscriptions");
+
+        worksheet.Cell(1, 1).Value = "Id";
+        worksheet.Cell(1, 2).Value = "Name";
+        worksheet.Cell(1, 3).Value = "Email";
+        worksheet.Cell(1, 4).Value = "IsSubscribed";
+        worksheet.Cell(1, 5).Value = "SubscribedAt";
+        worksheet.Cell(1, 6).Value = "UnsubscribedAt";
+        worksheet.Cell(1, 7).Value = "CreatedAt";
+
+        var filteredEmailSubscriptions = emailSubscriptions.Where(quickFilterEmailSubscriptions).ToList();
+
+        for (int i = 0; i < filteredEmailSubscriptions.Count; i++)
+        {
+            var subscription = filteredEmailSubscriptions[i];
+            worksheet.Cell(i + 2, 1).Value = subscription.Id;
+            worksheet.Cell(i + 2, 2).Value = subscription.Name;
+            worksheet.Cell(i + 2, 3).Value = subscription.Email;
+            worksheet.Cell(i + 2, 4).Value = subscription.IsSubscribed ? "Yes" : "No";
+            worksheet.Cell(i + 2, 5).Value = subscription.SubscribedAt.ToString("dd-MM-yyyy HH:mm:ss") ?? "N/A";
+            worksheet.Cell(i + 2, 6).Value = subscription.UnsubscribedAt?.ToString("dd-MM-yyyy HH:mm:ss") ?? "N/A";
+            worksheet.Cell(i + 2, 7).Value = subscription.CreatedAt.ToString("dd-MM-yyyy HH:mm:ss");
+        }
+
+        using var stream = new MemoryStream();
+        workbook.SaveAs(stream);
+        stream.Seek(0, SeekOrigin.Begin);
+
+        var fileName = $"EmailSubscriptions_{DateTime.Now:yyyyMMddHHmmss}.xlsx";
+        await JSRuntime.InvokeVoidAsync("saveAsFile", fileName, Convert.ToBase64String(stream.ToArray()));
     }
 
     private async Task LogoutUser()
