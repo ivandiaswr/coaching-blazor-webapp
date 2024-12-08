@@ -1,7 +1,13 @@
 <div class="calendar-modal @(IsVisible ? "show" : "")" @onclick="Close">
     <div class="calendar-modal-content" @onclick:stopPropagation="true">
         <div class="timezone-info">
-            Timezone: <strong>@TimeZoneInfo.Local.DisplayName</strong>
+            @{
+                var englandTimeZone = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
+                var isDST = englandTimeZone.IsDaylightSavingTime(DateTime.UtcNow);
+                var currentOffset = englandTimeZone.BaseUtcOffset + (isDST ? TimeSpan.FromHours(1) : TimeSpan.Zero);
+                var displayName = $"UTC{(currentOffset.Hours >= 0 ? "+" : "")}{currentOffset.Hours} - Dublin, Edinburgh, Lisbon, London";
+            }
+            Timezone: <strong>@displayName</strong>
         </div>
         @ChildContent
     </div>

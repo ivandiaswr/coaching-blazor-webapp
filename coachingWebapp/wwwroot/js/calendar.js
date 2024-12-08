@@ -6,7 +6,7 @@ window.initializeCalendar = (dotNetHelper, slots, busyTimes) => {
     }
 
     const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'timeGridWeek', 
+        initialView: window.innerWidth <= 1024 ? 'listWeek' : 'timeGridWeek',
         initialDate: new Date(), 
         nowIndicator: true,
         selectable: true,
@@ -16,7 +16,9 @@ window.initializeCalendar = (dotNetHelper, slots, busyTimes) => {
             start: new Date().toISOString(),
             end: new Date(new Date().setDate(new Date().getDate() + 13)).toISOString()
         },
-        selectAllow: null,
+        scrollTime: '10:00:00',
+        slotDuration: '00:30:00',
+        slotLabelInterval: '00:30:00',
         events: [
             ...busyTimes.map(busy => ({
                 start: busy.startDateTimeOffset,

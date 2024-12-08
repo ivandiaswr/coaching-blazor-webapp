@@ -75,6 +75,10 @@ a {
   display: inline-block;
 }
 
+a:hover {
+  color: white;
+}
+
 .btn-primary {
   color: #fff;
   background-color: var(--accent-orange);
@@ -363,6 +367,25 @@ h1:focus {
   left: 0;
 }
 
+#coming-soon-video {
+  width: 100%;
+  height: 100vh;
+  position: relative;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.coming-soon-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
 .video-overlay {
   position: absolute;
   top: 0;
@@ -497,26 +520,44 @@ h1:focus {
 }
 
 @media screen and (max-width: 768px) {
+  #coming-soon-video {
+    height: 60vh;
+  }
+
+  #video .coming-soon-video {
+    object-fit: contain;
+  }
+
   .video-overlay {
     padding-left: 2rem;
     padding-right: 2rem;
   }
 
-  .bottom-right-image {
-    bottom: 1.5rem;
-    right: 1.5rem;
-    width: clamp(150px, 30vw, 200px);
-  }
-
   .secondary-video {
-    bottom: 1.5rem;
-    right: 1.5rem; 
-    width: clamp(150px, 30vw, 200px); 
+    display: flex;
+    justify-content: center;
+    width: 40%;
   }
 
   .cta-button {
     padding: 0.8rem 2rem;
     font-size: 1rem;
+  }
+  
+}
+
+@media screen and (max-width: 480px) {
+  #coming-soon-video {
+    height: 40vh;
+  }
+
+  #video .coming-soon-video {
+    object-fit: contain;
+  }
+
+  .main-heading {
+    font-size: clamp(1.5rem, 6vw, 2.5rem);
+    font-weight: 600;
   }
 }
 
@@ -536,8 +577,7 @@ h1:focus {
   text-align: center;
   margin-bottom: 6rem;
   max-width: 800px;
-  margin-left: auto;
-  margin-right: auto;
+  margin-inline: auto;
 }
 
 .section-tag {
@@ -569,14 +609,17 @@ h1:focus {
   line-height: 1.6;
 }
 
-.services-grid.featured {
+.services-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: 2.5rem;
   margin-bottom: 6rem;
 }
 
-.service-card.featured {
+.services-grid.featured {
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+}
+
+.service-card {
   background-color: var(--primary-white);
   border-radius: 1.5rem;
   overflow: hidden;
@@ -584,9 +627,21 @@ h1:focus {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.service-card.featured:hover {
+.service-card:hover {
   transform: translateY(-8px);
   box-shadow: 0 8px 32px rgba(26, 26, 26, 0.15);
+  cursor: pointer;
+}
+
+.card-link {
+  display: block; 
+  text-decoration: none; 
+  margin: 0; 
+  padding: 0; 
+}
+
+.card-content {
+  padding: 2rem;
 }
 
 .card-header {
@@ -596,19 +651,6 @@ h1:focus {
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.service-tag {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--accent-orange);
-  padding: 0.5rem 1rem;
-  background-color: rgba(255, 107, 53, 0.1);
-  border-radius: 1rem;
-}
-
-.card-content {
-  padding: 2rem;
 }
 
 .service-icon {
@@ -628,6 +670,7 @@ h1:focus {
   margin-bottom: 1.5rem;
   line-height: 1.6;
   min-height: 4.5rem;
+  font-weight: 400;
 }
 
 .service-benefits {
@@ -673,17 +716,13 @@ h1:focus {
 }
 
 .services-grid.compact {
-  display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 2rem;
 }
 
 .service-card.compact {
-  background-color: var(--primary-white);
   padding: 2rem;
   border-radius: 1rem;
   text-align: center;
-  transition: transform 0.3s ease;
 }
 
 .service-card.compact:hover {
@@ -702,8 +741,8 @@ h1:focus {
   gap: 0.75rem;
   padding: 1rem 1.5rem;
   border-radius: 0.75rem;
-  text-decoration: none;
   font-weight: 600;
+  text-decoration: none;
   transition: all 0.3s ease;
 }
 
@@ -728,13 +767,9 @@ h1:focus {
 
 .cta-section {
   text-align: center;
-  background: linear-gradient(135deg, rgba(255, 107, 53, 0.05) 0%, rgba(255, 107, 53, 0.1) 100%);
+  background: linear-gradient(135deg, rgba(255, 107, 53, 0.05), rgba(255, 107, 53, 0.1));
   padding: 4rem;
   border-radius: 2rem;
-}
-
-.cta-content {
-  margin-bottom: 2rem;
 }
 
 .cta-content h2 {
@@ -745,7 +780,6 @@ h1:focus {
 }
 
 .cta-content p {
-  color: var(--text-gray);
   font-size: 1.125rem;
 }
 
@@ -757,33 +791,20 @@ h1:focus {
   color: var(--primary-white);
   padding: 1rem 2rem;
   border-radius: 1rem;
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
   text-decoration: none;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
 }
 
 .services-cta-button:hover {
   background-color: var(--accent-orange-hover);
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
-  color:white;
-}
-
-.cta-icon {
-  background-color: rgba(255, 255, 255, 0.2);
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 0.75rem;
 }
 
 .cta-text {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  text-align: left;
 }
 
 .cta-text .primary-text {
@@ -827,11 +848,6 @@ h1:focus {
       flex-direction: column;
       align-items: flex-start;
       gap: 1rem;
-  }
-
-  .services-cta-button {
-      flex-direction: column;
-      width: 100%;
   }
 
   .cta-text {
@@ -990,8 +1006,8 @@ h1:focus {
 }
 
 .testimonial-text {
-  color:black;
-  font-size: 0.9rem;
+  color:var(--text-gray);
+  font-size: 0.85rem;
   line-height: 1.6;
   margin: 0;
 }
@@ -1072,15 +1088,6 @@ h1:focus {
   .testimonials-grid {
       grid-template-columns: 1fr;
       gap: 25px;
-  }
-
-  .play-button {
-      width: 55px;
-      height: 55px;
-  }
-
-  .play-button i {
-      font-size: 20px;
   }
 }
 
@@ -1640,6 +1647,25 @@ input.form-control[readonly] {
   .video-container {
     order: -1;
   }  
+}
+
+@media (max-width: 480px) {
+  .contact-header i {
+    font-size: 1rem;
+  }
+  .contact-header h2 {
+      font-size: 1rem;
+  }
+  .contact-header p {
+    font-size: 0.8rem;
+  }
+
+  .fc-timegrid-event {
+    font-size: 0.8rem !important;
+  }
+  .fc-timegrid-slot {
+    min-width: 2rem !important;
+  }
 }
 
 /* Footer */
