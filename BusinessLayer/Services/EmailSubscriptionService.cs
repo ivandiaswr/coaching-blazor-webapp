@@ -205,64 +205,65 @@ public class EmailSubscriptionService : IEmailSubscriptionService
             throw new InvalidOperationException($"SMTP settings are not properly configured. Server: {smtpServer}, Username: {smtpUsername}, Password: {(smtpPassword != null ? "****" : null)}");
         }
 
-        var message = new MimeMessage();
-        message.From.Add(new MailboxAddress("Ítala Veloso", smtpUsername));
-        message.To.Add(new MailboxAddress("", smtpMailTo));
-        message.Subject = "Gift from Jostic";
-
-        // Generate Unsubscribe Token
-        var token = _securityService.GenerateUnsubscribeToken(email);
-        string unsubscribeUrl = $"{_helperService.GetConfigValue("AppSettings:BaseUrl")}/unsubscribe?email={Uri.EscapeDataString(email)}&token={Uri.EscapeDataString(token)}";
-
-        var builder = new BodyBuilder
-                {
-                    HtmlBody = $@"
-                        <div style='font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #333;'>
-                            <p>Dear {email}</p>
-
-                            <p>Here's your free gift from Ítala!</p>
-
-                            <hr style='border: none; border-top: 1px solid #ccc; margin: 20px 0;' />
-
-                            <p style='font-size: 8px; color: #666;'>
-                                You are receiving this email because you subscribed to our updates. 
-                                If you wish to unsubscribe, please click <a href='{unsubscribeUrl}' style='color: #0066cc; text-decoration: none;'>unsubscribe</a>.
-                            </p>
-                        </div>"
-                };
-
-        // Construct the correct path to the PDF file
-        string projectRoot = Directory.GetCurrentDirectory();
-        while (!Directory.Exists(Path.Combine(projectRoot, "coachingWebapp")))
-        {
-            projectRoot = Directory.GetParent(projectRoot).FullName;
-        }
-        string pdfPath = string.Empty;
-
-        if (giftCategory == GiftCategory.Gift1)
-        {
-            pdfPath = Path.Combine(projectRoot, "coachingWebapp/wwwroot", "Files", "Reclaim & Regain Inner  Peace - Ítala Veloso.pdf");
-        } else if (giftCategory == GiftCategory.Gift2)
-        {
-            pdfPath = Path.Combine(projectRoot, "coachingWebapp/wwwroot", "Files", "Stress Free - Itala Veloso.pdf");
-        }
-
-        // Check if the file exists
-        if (!File.Exists(pdfPath))
-        {
-            _logService.LogError("SendEmailAsync", $"pdfPath doesnt exist: {pdfPath}");
-            throw new FileNotFoundException($"The PDF file was not found at path: {pdfPath}");
-        }
-
-        // Add the PDF file to the email
-        builder.Attachments.Add(pdfPath);
-
-        message.Body = builder.ToMessageBody();
-
-        using var client = new SmtpClient();
-
         try
         {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress("Ítala Veloso", smtpUsername));
+            message.To.Add(new MailboxAddress("", smtpMailTo));
+            message.Subject = "Gift from Jostic";
+
+            // Generate Unsubscribe Token
+            var token = _securityService.GenerateUnsubscribeToken(email);
+            string unsubscribeUrl = $"{_helperService.GetConfigValue("AppSettings:BaseUrl")}/unsubscribe?email={Uri.EscapeDataString(email)}&token={Uri.EscapeDataString(token)}";
+
+            var builder = new BodyBuilder
+                    {
+                        HtmlBody = $@"
+                            <div style='font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #333;'>
+                                <p>Dear {email}</p>
+
+                                <p>Here's your free gift from Ítala!</p>
+
+                                <hr style='border: none; border-top: 1px solid #ccc; margin: 20px 0;' />
+
+                                <p style='font-size: 8px; color: #666;'>
+                                    You are receiving this email because you subscribed to our updates. 
+                                    If you wish to unsubscribe, please click <a href='{unsubscribeUrl}' style='color: #0066cc; text-decoration: none;'>unsubscribe</a>.
+                                </p>
+                            </div>"
+                    };
+
+            // Construct the correct path to the PDF file
+            string projectRoot = Directory.GetCurrentDirectory();
+            while (!Directory.Exists(Path.Combine(projectRoot, "coachingWebapp")))
+            {
+                projectRoot = Directory.GetParent(projectRoot).FullName;
+            }
+            string pdfPath = string.Empty;
+
+            if (giftCategory == GiftCategory.Gift1)
+            {
+                pdfPath = Path.Combine(projectRoot, "coachingWebapp/wwwroot", "Files", "Reclaim & Regain Inner  Peace - Ítala Veloso.pdf");
+            } else if (giftCategory == GiftCategory.Gift2)
+            {
+                pdfPath = Path.Combine(projectRoot, "coachingWebapp/wwwroot", "Files", "Stress Free - Itala Veloso.pdf");
+            }
+
+            // Check if the file exists
+            if (!File.Exists(pdfPath))
+            {
+                _logService.LogError("SendEmailAsync", $"pdfPath doesnt exist: {pdfPath}");
+                throw new FileNotFoundException($"The PDF file was not found at path: {pdfPath}");
+            }
+
+            // Add the PDF file to the email
+            builder.Attachments.Add(pdfPath);
+
+            message.Body = builder.ToMessageBody();
+
+            using var client = new SmtpClient();
+
+ 
             await client.ConnectAsync(smtpServer, smtpPort, SecureSocketOptions.StartTls);
             await client.AuthenticateAsync(smtpUsername, smtpPassword);
             await client.SendAsync(message);
