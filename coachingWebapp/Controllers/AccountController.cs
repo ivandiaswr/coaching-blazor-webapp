@@ -6,41 +6,55 @@ using Microsoft.AspNetCore.Mvc;
 public class AccountController : ControllerBase
 {
     private readonly SignInManager<IdentityUser> _signInManager;
+    private readonly ILogService _logService;
 
-    public AccountController(SignInManager<IdentityUser> signInManager)
+    public AccountController(SignInManager<IdentityUser> signInManager, ILogService logService)
     {
         _signInManager = signInManager;
+        this._logService = logService;
     }
 
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginModel loginModel)
     {
-        var result = await _signInManager.PasswordSignInAsync(
-            loginModel.Email,
-            loginModel.Password,
-            loginModel.RememberMe,
-            lockoutOnFailure: false
-        );
+        try
+        {
+            var result = await _signInManager.PasswordSignInAsync(
+                loginModel.Email,
+                loginModel.Password,
+                loginModel.RememberMe,
+                lockoutOnFailure: false
+            );
 
-        if (result.Succeeded)
+            if (result.Succeeded)
+            {
+                return Ok();
+            }
+            else if (result.IsLockedOut)
+            {
+                _logService.LogError("Login", "IsLockedOut");
+                return BadRequest("Your account is locked. Please try again later.");
+            }
+            else if (result.IsNotAllowed)
+            {
+                _logService.LogError("Login", "IsNotAllowed");
+                return BadRequest("Login is not allowed. Please confirm your email.");
+            }
+            else if (result.RequiresTwoFactor)
+            {
+                _logService.LogError("Login", "RequiresTwoFactor");
+                return BadRequest("Two-factor authentication required. Please complete the process.");
+            }
+            else
+            {
+                _logService.LogError("Login", $"Global error invalid login attempt");
+                return BadRequest("Invalid login attempt.");
+            }
+        } 
+        catch(Exception ex)
         {
-            return Ok();
-        }
-        else if (result.IsLockedOut)
-        {
-            return BadRequest("Your account is locked. Please try again later.");
-        }
-        else if (result.IsNotAllowed)
-        {
-            return BadRequest("Login is not allowed. Please confirm your email.");
-        }
-        else if (result.RequiresTwoFactor)
-        {
-            return BadRequest("Two-factor authentication required. Please complete the process.");
-        }
-        else
-        {
-            return BadRequest("Invalid login attempt.");
+            _logService.LogError("Login", ex.Message);
+            return BadRequest(ex);
         }
     }
 
@@ -55,6 +69,7 @@ public class AccountController : ControllerBase
         } 
         catch(Exception ex)
         {
+            _logService.LogError("Logout", ex.Message);
             return BadRequest(ex);
         }
     }

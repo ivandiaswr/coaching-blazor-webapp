@@ -262,7 +262,6 @@ public class EmailSubscriptionService : IEmailSubscriptionService
                 throw new FileNotFoundException($"The PDF file was not found at path: {pdfPath}");
             }
 
-
             // Add the PDF file to the email
             builder.Attachments.Add(pdfPath);
 

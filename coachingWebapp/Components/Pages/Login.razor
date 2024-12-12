@@ -45,7 +45,6 @@
     
     private async Task LoginUser()
     {
-       
         try
         {
             var result = await JSRuntime.InvokeAsync<SessionResult>("login", loginModel);
@@ -67,32 +66,4 @@
 
         StateHasChanged();
     }
-
-    protected override async Task OnInitializedAsync()
-    {
-        @* var hasher = new PasswordHasher<IdentityUser>();
-        var hashedPassword = hasher.HashPassword(null, "Scorpionforlife13?");
-        Console.WriteLine($"Hashed Password: {hashedPassword}"); *@
-
-        @* var hasher = new PasswordHasher<IdentityUser>();
-        var isPasswordValid = hasher.VerifyHashedPassword(null, 
-            "AQAAAAIAAYagAAAAEHQETUbR1K+7UTUp2MQ78/BdLbXLAtX146f8f7yU8/v0uepkSh/d7SvlM8EGqZ8JXw==", 
-            "Scorpionforlife13?");
-        Console.WriteLine($"Password is valid: {isPasswordValid}"); *@
-
-        @* var users = await UserManager.Users.ToListAsync();
-        foreach (var user in users)
-        {
-            Console.WriteLine($"User: {user.Email}, NormalizedEmail: {user.NormalizedEmail}");
-        } *@
-
-        @* var user = new IdentityUser
-        {
-            UserName = "ivansacfofu@gmail.com",
-            Email = "ivansacfofu@gmail.com",
-            EmailConfirmed = true
-        };
-
-        var result = await UserManager.CreateAsync(user, "Scorpionforlife13?!"); *@
-    }
-}
+}5
