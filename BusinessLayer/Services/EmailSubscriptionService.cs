@@ -142,7 +142,7 @@ public class EmailSubscriptionService : IEmailSubscriptionService
             {
                 try
                 {
-                    await SendEmailAsync(EmailSubscription.Email, emailSubscription.Gift);
+                    await SendEmailAsync(emailSubscription.Email, emailSubscription.Gift);
                 }
                 catch (Exception ex)
                 {
