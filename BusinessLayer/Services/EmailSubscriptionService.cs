@@ -199,6 +199,8 @@ public class EmailSubscriptionService : IEmailSubscriptionService
         var smtpPassword = _helperService.GetConfigValue("SmtpSettings:Password");
         var smtpMailTo = email;
 
+        _logService.LogInfo($"SMTP Config - Server: {smtpServer}, Port: {smtpPort}, Username: {smtpUsername}");
+
         if (string.IsNullOrWhiteSpace(smtpServer) || string.IsNullOrWhiteSpace(smtpUsername) || string.IsNullOrWhiteSpace(smtpPassword))
         {
             _logService.LogError("SendEmailAsync", $"SMTP settings are not properly configured. Server: {smtpServer}, Username: {smtpUsername}, Password: {(smtpPassword != null ? smtpPassword : null)}");
@@ -214,6 +216,13 @@ public class EmailSubscriptionService : IEmailSubscriptionService
 
             // Generate Unsubscribe Token
             var token = _securityService.GenerateUnsubscribeToken(email);
+
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                _logService.LogError("SendEmailAsync", "Unsubscribe token generation failed.");
+                throw new InvalidOperationException("Unsubscribe token generation failed.");
+            }
+
             string unsubscribeUrl = $"{_helperService.GetConfigValue("AppSettings:BaseUrl")}/unsubscribe?email={Uri.EscapeDataString(email)}&token={Uri.EscapeDataString(token)}";
 
             var builder = new BodyBuilder
@@ -235,26 +244,24 @@ public class EmailSubscriptionService : IEmailSubscriptionService
 
             // Construct the correct path to the PDF file
             string projectRoot = Directory.GetCurrentDirectory();
-            while (!Directory.Exists(Path.Combine(projectRoot, "coachingWebapp")))
-            {
-                projectRoot = Directory.GetParent(projectRoot).FullName;
-            }
             string pdfPath = string.Empty;
 
             if (giftCategory == GiftCategory.Gift1)
             {
-                pdfPath = Path.Combine(projectRoot, "coachingWebapp/wwwroot", "Files", "Reclaim & Regain Inner  Peace - Ítala Veloso.pdf");
-            } else if (giftCategory == GiftCategory.Gift2)
+                pdfPath = Path.Combine(projectRoot, "wwwroot", "Files", "Reclaim & Regain Inner  Peace - Ítala Veloso.pdf");
+            }
+            else if (giftCategory == GiftCategory.Gift2)
             {
-                pdfPath = Path.Combine(projectRoot, "coachingWebapp/wwwroot", "Files", "Stress Free - Itala Veloso.pdf");
+                pdfPath = Path.Combine(projectRoot, "wwwroot", "Files", "Stress Free - Itala Veloso.pdf");
             }
 
             // Check if the file exists
             if (!File.Exists(pdfPath))
             {
-                _logService.LogError("SendEmailAsync", $"pdfPath doesnt exist: {pdfPath}");
+                _logService.LogError("SendEmailAsync", $"pdfPath doesn't exist: {pdfPath}");
                 throw new FileNotFoundException($"The PDF file was not found at path: {pdfPath}");
             }
+
 
             // Add the PDF file to the email
             builder.Attachments.Add(pdfPath);
