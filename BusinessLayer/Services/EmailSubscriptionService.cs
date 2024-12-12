@@ -15,16 +15,19 @@ public class EmailSubscriptionService : IEmailSubscriptionService
     private readonly IHelperService _helperService;
     private readonly ILogger<EmailSubscriptionService> _logger;
     private readonly ISecurityService _securityService;
+    private readonly ILogService _logService;
 
     public EmailSubscriptionService(CoachingDbContext context,
         IHelperService helperService,
         ILogger<EmailSubscriptionService> logger,
-        ISecurityService securityService)
+        ISecurityService securityService,
+        ILogService logService)
     {
         this._context = context;
         this._helperService = helperService;
         this._logger = logger;
         this._securityService = securityService;
+        this._logService = logService;
     }
 
     public List<EmailSubscription> GetAllEmailSubscriptions()
@@ -37,7 +40,8 @@ public class EmailSubscriptionService : IEmailSubscriptionService
         }
         catch(Exception ex)
         {
-             _logger.LogError(ex, "Error during GetAllEmailSubscriptions");
+            _logger.LogError(ex, "Error during GetAllEmailSubscriptions");
+            _logService.LogError("GetAllEmailSubscriptions", ex.Message);
              throw;
         }
     }
@@ -78,7 +82,8 @@ public class EmailSubscriptionService : IEmailSubscriptionService
                 _context.EmailSubscriptions.Add(subscription);
             } 
             catch (Exception ex){
-                _logger.LogError(ex, "Error during subscription");
+                _logger.LogError(ex, "Error during SubscriptionAsync");
+                _logService.LogError("SubscriptionAsync", ex.Message);
                 return false;
             }
         }
@@ -92,7 +97,8 @@ public class EmailSubscriptionService : IEmailSubscriptionService
     {
         if (string.IsNullOrWhiteSpace(email))
         {
-            _logger.LogWarning("UnsubscribeAsync called with a null or empty email.");
+            _logger.LogError("UnsubscribeAsync called with a null or empty email.");
+            _logService.LogError("UnsubscribeAsync", "Email is null or empty");
             return false;
         }
 
@@ -103,6 +109,7 @@ public class EmailSubscriptionService : IEmailSubscriptionService
             if(emailSubscription is null)
             {
                 _logger.LogError($"Error during UnsubscribeAsync: No subscription found for email {email}");
+                _logService.LogError("UnsubscribeAsync", $"No subscription found for email {email}");
                 return false;
             }
 
@@ -117,6 +124,7 @@ public class EmailSubscriptionService : IEmailSubscriptionService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during UnsubscribeAsync");
+            _logService.LogError("UnsubscribeAsync", ex.Message);
             return false;
         }
     }
@@ -138,7 +146,8 @@ public class EmailSubscriptionService : IEmailSubscriptionService
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error during subscription gift when IsSubscribed");
+                    _logger.LogError(ex, "Error during SubscriptionGiftAsync when IsSubscribed");
+                    _logService.LogError("SubscriptionGiftAsync when IsSubscribed", ex.Message);
                     return false;
                 }
 
@@ -160,6 +169,7 @@ public class EmailSubscriptionService : IEmailSubscriptionService
                     Name = emailSubscription.Name,
                     Email = emailSubscription.Email,
                     Gift = emailSubscription.Gift,
+                    SubscribedAt = DateTime.UtcNow,
                     IsSubscribed = true
                 };
                 
@@ -170,7 +180,8 @@ public class EmailSubscriptionService : IEmailSubscriptionService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during subscription gift when IsSubscribed");
+                _logger.LogError(ex, "Error during SubscriptionGiftAsync when IsSubscribed");
+                _logService.LogError("SubscriptionGiftAsync when IsSubscribed", ex.Message);
                 return false;
             };
         }
@@ -190,6 +201,7 @@ public class EmailSubscriptionService : IEmailSubscriptionService
 
         if (string.IsNullOrWhiteSpace(smtpServer) || string.IsNullOrWhiteSpace(smtpUsername) || string.IsNullOrWhiteSpace(smtpPassword))
         {
+            _logService.LogError("SendEmailAsync", $"SMTP settings are not properly configured. Server: {smtpServer}, Username: {smtpUsername}, Password: {(smtpPassword != null ? smtpPassword : null)}");
             throw new InvalidOperationException($"SMTP settings are not properly configured. Server: {smtpServer}, Username: {smtpUsername}, Password: {(smtpPassword != null ? "****" : null)}");
         }
 
@@ -198,9 +210,26 @@ public class EmailSubscriptionService : IEmailSubscriptionService
         message.To.Add(new MailboxAddress("", smtpMailTo));
         message.Subject = "Gift from Jostic";
 
-        var builder = new BodyBuilder();
-        builder.TextBody = "Here's your free gift from Jostic!";
+        // Generate Unsubscribe Token
+        var token = _securityService.GenerateUnsubscribeToken(email);
+        string unsubscribeUrl = $"{_helperService.GetConfigValue("AppSettings:BaseUrl")}/unsubscribe?email={Uri.EscapeDataString(email)}&token={Uri.EscapeDataString(token)}";
 
+        var builder = new BodyBuilder
+                {
+                    HtmlBody = $@"
+                        <div style='font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #333;'>
+                            <p>Dear {email}</p>
+
+                            <p>Here's your free gift from Ítala!</p>
+
+                            <hr style='border: none; border-top: 1px solid #ccc; margin: 20px 0;' />
+
+                            <p style='font-size: 8px; color: #666;'>
+                                You are receiving this email because you subscribed to our updates. 
+                                If you wish to unsubscribe, please click <a href='{unsubscribeUrl}' style='color: #0066cc; text-decoration: none;'>unsubscribe</a>.
+                            </p>
+                        </div>"
+                };
 
         // Construct the correct path to the PDF file
         string projectRoot = Directory.GetCurrentDirectory();
@@ -221,6 +250,7 @@ public class EmailSubscriptionService : IEmailSubscriptionService
         // Check if the file exists
         if (!File.Exists(pdfPath))
         {
+            _logService.LogError("SendEmailAsync", $"pdfPath doesnt exist: {pdfPath}");
             throw new FileNotFoundException($"The PDF file was not found at path: {pdfPath}");
         }
 
@@ -245,6 +275,7 @@ public class EmailSubscriptionService : IEmailSubscriptionService
             _logger.LogError($"SMTP Server: {smtpServer}");
             _logger.LogError($"SMTP Port: {smtpPort}");
             _logger.LogError($"SMTP Username: {smtpUsername}");
+            _logService.LogError("SendEmailAsync", $"ConnectAsync: {ex.Message}");
             throw;
         }
     }
@@ -262,6 +293,12 @@ public class EmailSubscriptionService : IEmailSubscriptionService
         var smtpPort = int.Parse(_helperService.GetConfigValue("SmtpSettings:Port") ?? "");
         var smtpUsername = _helperService.GetConfigValue("SmtpSettings:Username");
         var smtpPassword = _helperService.GetConfigValue("SmtpSettings:Password");
+
+        if (string.IsNullOrWhiteSpace(smtpServer) || string.IsNullOrWhiteSpace(smtpUsername) || string.IsNullOrWhiteSpace(smtpPassword))
+        {
+            _logService.LogError("SendCustomEmailAsync", $"SMTP settings are not properly configured. Server: {smtpServer}, Username: {smtpUsername}, Password: {(smtpPassword != null ? smtpPassword : null)}");
+            throw new InvalidOperationException($"SMTP settings are not properly configured. Server: {smtpServer}, Username: {smtpUsername}, Password: {(smtpPassword != null ? "****" : null)}");
+        }
 
         var message = new MimeMessage();
         message.From.Add(new MailboxAddress("Ítala Veloso", smtpUsername));
@@ -313,7 +350,8 @@ public class EmailSubscriptionService : IEmailSubscriptionService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error sending custom emails");
+            _logger.LogError(ex, "Error sending SendCustomEmailAsync");
+            _logService.LogError("SendCustomEmailAsync", ex.Message);
             throw;
         }
     }

@@ -15,18 +15,21 @@ public class GoogleService : IGoogleService
     private readonly IHelperService _helperService;
     private readonly ILogger<GoogleService> _logger;
     private readonly IUserRefreshTokenService _userRefreshTokenService;
+    private readonly ILogService _logService;
 
     public GoogleService(IHttpClientFactory httpClientFactory, 
         HttpClient httpClient, 
         IHelperService configuration, 
         ILogger<GoogleService> logger, 
-        IUserRefreshTokenService userRefreshTokenService) 
+        IUserRefreshTokenService userRefreshTokenService,
+        ILogService logService) 
     {
         this._httpClientFactory = httpClientFactory;
         this._httpClient = httpClient;
         this._helperService = configuration;
         this._logger = logger;
         this._userRefreshTokenService = userRefreshTokenService;
+        this._logService = logService;
     }
 
     public async Task<List<TimePeriod>> GetBusyTimes(DateTime startDate, DateTime endDate)
@@ -72,10 +75,10 @@ public class GoogleService : IGoogleService
         {
             var errorContent = await response.Content.ReadAsStringAsync();
             _logger.LogError($"Failed to create event: {response.StatusCode}, {errorContent}");
+            _logService.LogError("Error during CreateGoogleCalendarEventAsync", $"Failed to create event: {response.StatusCode}, {errorContent}");
             throw new Exception($"Failed to create event: {response.StatusCode}, {errorContent}");
         }
 
-        _logger.LogInformation("Event created successfully.");
         return true;
     }
 
@@ -145,6 +148,7 @@ public class GoogleService : IGoogleService
         {
             var errorContent = await response.Content.ReadAsStringAsync();
             _logger.LogError($"Failed to refresh access token: {response.StatusCode}, {errorContent}");
+            _logService.LogError("Error during GetAccessTokenAsync", $"Failed to create event: {response.StatusCode}, {errorContent}");
             throw new Exception($"Failed to refresh access token: {response.StatusCode}, {errorContent}");
         }
 

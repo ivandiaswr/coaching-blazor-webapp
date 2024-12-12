@@ -1,12 +1,10 @@
 using BusinessLayer.Services.Interfaces;
 using DataAccessLayer;
 using MailKit.Security;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MimeKit;
 using MailKit.Net.Smtp;
 using ModelLayer.Models;
-using System.CodeDom;
 namespace BusinessLayer.Services;
 
 public class ContactService : IContactService
@@ -15,16 +13,19 @@ public class ContactService : IContactService
     private readonly IHelperService _helperService;
     private readonly ILogger<ContactService> _logger;
     private readonly IGoogleService _googleService;
+    private readonly ILogService _logService;
 
     public ContactService(CoachingDbContext context, 
         IHelperService helperService,
         ILogger<ContactService> logger,
-        IGoogleService googleService)
+        IGoogleService googleService,
+        ILogService logService)
     {
         this._context = context;
         this._helperService = helperService;
         this._logger = logger;
         this._googleService = googleService;
+        this._logService = logService;
     }
 
     public List<Contact> GetAllContacts()
@@ -37,7 +38,8 @@ public class ContactService : IContactService
         }
         catch(Exception ex)
         {
-             _logger.LogError(ex, "Error during GetAllContacts");
+            _logger.LogError(ex, "Error during GetAllContacts");
+            _logService.LogError("GetAllContacts", ex.Message);
              throw;
         }
     }
@@ -58,7 +60,8 @@ public class ContactService : IContactService
 
             if(!CreateEventAdminAsyncResult)
             {
-                _logger.LogError("Failed to create admin's event.");
+                _logger.LogError("Failed to create admins event.");
+                _logService.LogError("ContactSubmitAsync", "CreateEventAdminAsyncResult");
                 return false;
             }
 
@@ -66,7 +69,8 @@ public class ContactService : IContactService
 
             if(!CreateEventIntervalAsyncResult)
             {
-                _logger.LogError("Failed to create admin's event.");
+                _logger.LogError("Failed to create users event.");
+                _logService.LogError("ContactSubmitAsync", "CreateEventIntervalAsyncResult");
                 return false;
             }
 
@@ -76,7 +80,8 @@ public class ContactService : IContactService
         } 
         catch (Exception ex)
         {
-             _logger.LogError(ex, "Error during ContactSubmitAsync");
+            _logger.LogError(ex, "Error during ContactSubmitAsync");
+            _logService.LogError("ContactSubmitAsync", ex.Message);
              return false;
         }  
 
@@ -92,6 +97,7 @@ public class ContactService : IContactService
 
         if (string.IsNullOrWhiteSpace(smtpServer) || string.IsNullOrWhiteSpace(smtpUsername) || string.IsNullOrWhiteSpace(smtpPassword))
         {
+            _logService.LogError("SendEmailAsync", $"SMTP settings are not properly configured. Server: {smtpServer}, Username: {smtpUsername}, Password: {(smtpPassword != null ? smtpPassword : null)}");
             throw new InvalidOperationException($"SMTP settings are not properly configured. Server: {smtpServer}, Username: {smtpUsername}, Password: {(smtpPassword != null ? "****" : null)}");
         }
 
@@ -120,6 +126,7 @@ public class ContactService : IContactService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during subscription");
+            _logService.LogError("SendCustomEmailAsync", ex.Message);
             throw;
         }
     }

@@ -88,6 +88,7 @@ builder.Services.AddScoped<IGoogleService, GoogleService>();
 builder.Services.AddScoped<ISecurityService, SecurityService>();
 builder.Services.AddScoped<IUserRefreshTokenService, UserRefreshTokenService>();
 builder.Services.AddScoped<IHelperService, HelperService>();
+builder.Services.AddScoped<ILogService, LogService>();
 
 builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation(); 
 

@@ -5,10 +5,12 @@ using Microsoft.EntityFrameworkCore;
 public class UserRefreshTokenService : IUserRefreshTokenService
 {
     private readonly CoachingDbContext _context;
+    private readonly ILogService _logService;
 
-    public UserRefreshTokenService(CoachingDbContext context)
+    public UserRefreshTokenService(CoachingDbContext context, ILogService logService)
     {
         this._context = context;
+        this._logService = logService;
     }
 
     public async Task<string> GetRefreshTokenByUserId(string userId)
@@ -24,7 +26,7 @@ public class UserRefreshTokenService : IUserRefreshTokenService
         }
         catch (Exception ex)
         {
-
+            _logService.LogError("GetRefreshTokenByUserId", ex.Message);
             return string.Empty;
         }
     }
@@ -41,7 +43,7 @@ public class UserRefreshTokenService : IUserRefreshTokenService
         }
         catch (Exception ex)
         {
-
+            _logService.LogError("GetRefreshTokenByLatest", ex.Message);
             return string.Empty;
         }
     }
@@ -58,7 +60,7 @@ public class UserRefreshTokenService : IUserRefreshTokenService
         }
         catch (Exception ex)
         {
-
+            _logService.LogError("UpdateGoogleRefreshToken", ex.Message);
             return false;
         }
     }
