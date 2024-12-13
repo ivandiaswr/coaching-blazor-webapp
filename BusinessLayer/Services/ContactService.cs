@@ -13,18 +13,21 @@ public class ContactService : IContactService
     private readonly IHelperService _helperService;
     private readonly ILogger<ContactService> _logger;
     private readonly IGoogleService _googleService;
+    private readonly IEmailSubscriptionService _emailSubscriptionService;
     private readonly ILogService _logService;
 
     public ContactService(CoachingDbContext context, 
         IHelperService helperService,
         ILogger<ContactService> logger,
         IGoogleService googleService,
+        IEmailSubscriptionService emailSubscriptionService,
         ILogService logService)
     {
         this._context = context;
         this._helperService = helperService;
         this._logger = logger;
         this._googleService = googleService;
+        this._emailSubscriptionService = emailSubscriptionService;
         this._logService = logService;
     }
 
@@ -56,9 +59,9 @@ public class ContactService : IContactService
 
             _context.Contacts.Add(contact);
 
-            var CreateEventAdminAsyncResult = await _googleService.CreateEventAdminAsync(contact);
+            var CreateEventAdminAsyncGoogleMeetLink = await _googleService.CreateEventAdminAsync(contact);
 
-            if(!CreateEventAdminAsyncResult)
+            if(string.IsNullOrEmpty(CreateEventAdminAsyncGoogleMeetLink))
             {
                 _logger.LogError("Failed to create admins event.");
                 _logService.LogError("ContactSubmitAsync", "CreateEventAdminAsyncResult");
@@ -70,22 +73,42 @@ public class ContactService : IContactService
             if(!CreateEventIntervalAsyncResult)
             {
                 _logger.LogError("Failed to create users event.");
-                _logService.LogError("ContactSubmitAsync", "CreateEventIntervalAsyncResult");
+                 _logService.LogError("ContactSubmitAsync", "CreateEventIntervalAsyncResult");
                 return false;
             }
 
-            await SendEmailAsync(contact);
+            // if(!contact.Email.EndsWith("@gmail.com", StringComparison.OrdinalIgnoreCase))
+            // {
+            //     await SendNonGmailEmailSync(contact, CreateEventAdminAsyncGoogleMeetLink); // send email to the user
+            // } 
+
+            await SendEmailAsync(contact); // send email to the admin
 
             await _context.SaveChangesAsync();
-        } 
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during ContactSubmitAsync");
             _logService.LogError("ContactSubmitAsync", ex.Message);
-             return false;
+            return false;
         }  
 
         return true;
+    }
+
+    public async Task SendNonGmailEmailSync(Contact contact, string googleMeetLink)
+    {
+        string subject = $"Meeting Invitation with {contact.FullName}";
+        string message = $@"            
+            Thank you for scheduling a meeting with us. Below are the meeting details:
+            
+            Date and Time: {contact.PreferredDateTime.ToString("f")} (UTC)
+            Google Meet Link: {googleMeetLink}
+            
+            Best regards,
+            Ítala Veloso";
+
+        await _emailSubscriptionService.SendCustomEmailAsync(new List<string> { contact.Email }, subject, message);
     }
 
     public async Task SendEmailAsync(Contact contact)

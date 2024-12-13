@@ -60,9 +60,9 @@ public class GoogleService : IGoogleService
         }).ToList();
     }
 
-    public async Task<bool> CreateGoogleCalendarEventAsync(object eventData, string accessToken)
+    public async Task<string> CreateGoogleCalendarEventAsync(object eventData, string accessToken)
     {
-          var client = _httpClientFactory.CreateClient();
+        var client = _httpClientFactory.CreateClient();
         var request = new HttpRequestMessage(HttpMethod.Post, "https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1&sendUpdates=all")
         {
             Content = new StringContent(JsonSerializer.Serialize(eventData), Encoding.UTF8, "application/json")
@@ -79,10 +79,14 @@ public class GoogleService : IGoogleService
             throw new Exception($"Failed to create event: {response.StatusCode}, {errorContent}");
         }
 
-        return true;
+        var content = await response.Content.ReadAsStringAsync();
+
+        var calendarEvent = Newtonsoft.Json.JsonConvert.DeserializeObject<Event>(content);
+
+        return calendarEvent?.ConferenceData?.EntryPoints?.FirstOrDefault(ep => ep.EntryPointType == "video")?.Uri ?? string.Empty;
     }
 
-    public async Task<bool> CreateEventAdminAsync(Contact contact)
+    public async Task<string> CreateEventAdminAsync(Contact contact)
     {
         var refreshToken = await _userRefreshTokenService.GetRefreshTokenByLatest();
 
@@ -92,15 +96,43 @@ public class GoogleService : IGoogleService
         {
             summary = $"Meeting with {contact.FullName}",
             description = contact.Message,
-            start = new { dateTime = contact.PreferredDateTime.ToString("yyyy-MM-ddTHH:mm:ss"), timeZone = "UTC" },
-            end = new { dateTime = contact.PreferredDateTime.AddMinutes(30).ToString("yyyy-MM-ddTHH:mm:ss"), timeZone = "UTC" },
-            attendees = new[] { new { email = contact?.Email } },
+            start = new
+            {
+                dateTime = contact.PreferredDateTime.ToString("yyyy-MM-ddTHH:mm:ss"), 
+                timeZone = "UTC"
+            },
+            end = new 
+            {
+                dateTime = contact.PreferredDateTime.AddMinutes(30).ToString("yyyy-MM-ddTHH:mm:ss"), 
+                timeZone = "UTC" 
+            },
+            attendees = new[] 
+            { 
+                new { email = contact?.Email } 
+            },
             conferenceData = new
             {
                 createRequest = new
                 {
                     requestId = Guid.NewGuid().ToString(),
                     conferenceSolutionKey = new { type = "hangoutsMeet" }
+                }
+            },
+            Reminders = new 
+            {
+                UseDefault = false,
+                Overrides = new List<EventReminder>
+                {
+                    new EventReminder
+                    {
+                        Method = "popup",
+                        Minutes = 10
+                    },
+                    new EventReminder
+                    {
+                        Method = "email",
+                        Minutes = 30
+                    }
                 }
             }
         };
@@ -118,11 +150,21 @@ public class GoogleService : IGoogleService
         {
             summary = $"Meeting Interval after {contact.FullName}",
             description = "Interval",
-            start = new { dateTime = contact.PreferredDateTime.AddMinutes(30).ToString("yyyy-MM-ddTHH:mm:ss"), timeZone = "UTC" },
-            end = new { dateTime = contact.PreferredDateTime.AddMinutes(45).ToString("yyyy-MM-ddTHH:mm:ss"), timeZone = "UTC" }
+            start = new 
+            { 
+                dateTime = contact.PreferredDateTime.AddMinutes(30).ToString("yyyy-MM-ddTHH:mm:ss"), 
+                timeZone = "UTC" 
+            },
+            end = new 
+            { 
+                dateTime = contact.PreferredDateTime.AddMinutes(45).ToString("yyyy-MM-ddTHH:mm:ss"), 
+                timeZone = "UTC" 
+            }
         };
 
-        return await CreateGoogleCalendarEventAsync(eventData, accessToken);
+        var googleMeetLink = await CreateGoogleCalendarEventAsync(eventData, accessToken);
+
+        return true;
     }
 
     public async Task<string> GetAccessTokenAsync(string refreshToken)

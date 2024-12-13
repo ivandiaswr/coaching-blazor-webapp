@@ -335,7 +335,6 @@ public class EmailSubscriptionService : IEmailSubscriptionService
                             <p>{body.Replace("\n", "<br>")}</p>
 
                             <hr style='border: none; border-top: 1px solid #ccc; margin: 20px 0;' />
-
                             <p style='font-size: 8px; color: #666;'>
                                 You are receiving this email because you subscribed to our updates. 
                                 If you wish to unsubscribe, please click <a href='{unsubscribeUrl}' style='color: #0066cc; text-decoration: none;'>unsubscribe</a>.
