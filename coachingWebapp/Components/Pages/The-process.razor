@@ -1,0 +1,86 @@
+@page "/about/process"
+
+@rendermode InteractiveServer
+
+<PageTitle>@pageTitle</PageTitle>
+
+<div class="process-page">
+    <h1 class="process-title">The <span class="highlight">Process</span></h1>
+
+    <div class="process-intro">
+        <p>
+            Have you ever felt lost? Stuck? So broken inside that no matter how many therapies you tried or where you turned to, nothing seemed to work? 
+            It’s as if you’d reached the end of the road, shattered by circumstances or by what others did to you or those you love.
+        </p>
+        <p class="bold-text">You’re not alone. I’ve been there too.</p>
+        <p>
+            But here’s where everything can change: This is where you <strong>stop merely existing</strong> and <strong>start truly living</strong>.
+        </p>
+    </div>
+
+    <div class="methodology-section">
+        <h2>Introducing JOSTIC</h2>
+        <p>
+            I retrained as a Life Coach and Mentor and developed <strong>JOSTIC</strong>, a lived and proven 
+            <em>Life Liberation Methodology™</em>. It’s designed to empower and give a voice to the suppressed, confused, and trapped emotions we all carry inside, 
+            while guiding people to break free and start thriving in every area of life.
+        </p>
+        <p><strong>What does this mean for you?</strong></p>
+        <p>
+            This methodology isn’t just about healing or self-discovery—it’s about mastering your journey and empowering every aspect of your life.
+        </p>
+    </div>
+
+    <div class="outcomes-section">
+        <h2>What Can You Achieve?</h2>
+        <p>Start the Most Popular 10-session Life Coaching Programme with Ítala Veloso now, and discover how you can:</p>
+        <ul class="outcomes-list">
+            <li>Move from feeling stuck to truly thriving</li>
+            <li>Reclaim your inner peace and reignite your passion for life</li>
+            <li>Find clarity and break free from limiting beliefs and patterns</li>
+            <li>Design and roadmap your future with confidence and purpose</li>
+            <li>Build healthier, stronger, more fulfilling relationships</li>
+            <li>Balance work-life pressures while enhancing wellness and nurturing mental health</li>
+            <li>Achieve career clarity, including career path mapping, CV re-assessment, and interview preparation</li>
+            <li>Align your self-awareness and skills with your dreams and goals</li>
+        </ul>
+        <p>Whether it’s your work-life, relationships, wellness, or finances—this journey is about transformation. It’s about helping you reclaim inner peace and start living fully and freely.</p>
+    </div>
+
+    <div class="who-section">
+        <h2>Who is This For?</h2>
+        <p>
+            This isn’t just for one type of person or one type of struggle. My services are available in both <strong>English</strong> and <strong>Portuguese</strong>, 
+            for both <strong>Female</strong> and <strong>Male</strong>, making them accessible to a diverse community. 
+            Wherever you are on your journey, I’m here to guide you—whether you need coaching, mentoring, or clarity in life and career.
+        </p>
+    </div>
+
+    <div class="cta-section">
+        <div class="cta-content">
+            <h2>Are You Ready to Transform Your Life?</h2>
+            <p>
+                Unleash your life—it’s not over yet. No matter what it feels like right now. Mine wasn’t, and neither is yours. 
+                This can be the beginning of your transformation. Let’s uncover the best version of you that is fearless, alive, strong, 
+                and more powerful than you’ve ever imagined.
+            </p>
+            <p class="bold-text">Because You are More Than A Conqueror™</p>
+        </div>
+        <a href="#contact" class="services-cta-button">
+            <span class="cta-icon"><i class="fas fa-calendar-check"></i></span>
+            <span class="cta-text">
+                <span class="primary-text">Book Your Free Discovery Call</span>
+                <span class="secondary-text">30 minutes, zero obligation</span>
+            </span>
+            <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
+</div>
+
+@code {
+    private string pageTitle = "The Process | Ítala Veloso";
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await ScrollService.ScrollToTop();
+    }
+}

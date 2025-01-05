@@ -1,0 +1,54 @@
+.process-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    line-height: 1.8;
+}
+
+.process-title {
+    text-align: center;
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 2rem;
+    color: #2c3e50;
+}
+
+.process-intro, .methodology-section, .outcomes-section, .who-section {
+    margin-bottom: 2rem;
+    background: #f9f9f9;
+    padding: 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.process-intro p, .methodology-section p, .outcomes-section p, .who-section p {
+    font-size: 1rem;
+    color: #555;
+}
+
+.process-intro .bold-text {
+    font-weight: bold;
+    color: #1a1a1a;
+}
+
+.outcomes-section ul {
+    list-style: disc;
+    margin-top: 1rem;
+    padding-left: 2rem;
+}
+
+.outcomes-section ul li {
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+    color: #444;
+}
+
+@media (max-width: 768px) {
+    .process-page {
+        padding: 1rem;
+    }
+
+    .process-title {
+        font-size: 2rem;
+    }
+}

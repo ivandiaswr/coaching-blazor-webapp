@@ -15,26 +15,26 @@
 
         <div class="resources-grid">
             <div class="resource-card">
-                <img src="Images/services/life-coaching/driven-life.jpg" alt="Self Discovery Challenge" class="card-image" />
+                <img src="Images/services/free-resources/resource1.png" alt="Shape Your Power: A 30-Day Inner Peace Challenge" class="card-image" />
                 <div class="card-content">
-                    <h3>Regain & Reclaim Your Inner Peace</h3>
-                    <p>Join our 30 Days Self Discovery Challenge and transform your life with daily mindfulness practices.</p>
+                    <h3>Find Your Calm, Shape Your Power: A 30-Day Inner Peace Challenge</h3>
+                    <p>Unlock clarity, purpose, and resilience through daily mindfulness and transformational practices. Let’s make 2025 your year of peace and empowerment.</p>
                     <div class="card-buttons">
                         <button class="primary-button" @onclick="() => ShowGiftOffer(GiftCategory.Gift1)">
-                            <i class="fa-solid fa-download"></i> Download Now
+                            <i class="fa-solid fa-download"></i> Get Resource
                         </button>
                     </div>
                 </div>
             </div>
 
             <div class="resource-card">
-                <img src="Images/services/career-coaching/work-life-balance.jpg" alt="Strong & Stress-Free Program" class="card-image" />
+                <img src="Images/services/free-resources/resource2.jpg" alt="Focused, Fresh, and Fearless" class="card-image" />
                 <div class="card-content">
-                    <h3>Finish 2024 Strong & Stress-Free!</h3>
-                    <p>Get your comprehensive guide to ending the year with purpose and starting fresh.</p>
+                    <h3>Master Your 2025: Focused, Fresh, and Fearless</h3>
+                    <p>Unlock your guide to a purposeful, stress-free, successful year — Be Unstoppable.</p>
                     <div class="card-buttons">
                         <button class="primary-button" @onclick="() => ShowGiftOffer(GiftCategory.Gift2)">
-                            <i class="fa-solid fa-download"></i> Download Now
+                            <i class="fa-solid fa-download"></i> Get Resource
                         </button>
                     </div>
                 </div>
@@ -135,7 +135,7 @@
                 emailSubscription.Gift = giftCategory;
                 var result = await EmailSubscriptionService.SubscriptionGiftAsync(emailSubscription);
                 subscriptionSuccess = result;
-                subscriptionMessage = result ? "Thank you! Your submission has been received!" : "Subscription failed. Please try again or contact support.";
+                subscriptionMessage = result ? "Thank you! The resource will be sent to your email shortly!" : "Something went wrong. Please try again or contact support.";
 
                 if (result)
                 {

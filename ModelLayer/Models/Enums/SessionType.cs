@@ -7,8 +7,8 @@ public enum SessionType {
     lifeCoaching,
     [Display(Name = "Career Coaching")]
     careerCoaching,
-    [Display(Name = "Regulatory Consulting")]
+    [Display(Name = "Food Regulatory Consulting")]
     regulatoryConsulting,
-    [Display(Name = "Regulatory Training")]
+    [Display(Name = "Food Regulatory Training")]
     regulatoryTraining
 }

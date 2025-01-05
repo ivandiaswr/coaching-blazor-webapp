@@ -1,0 +1,133 @@
+@page "/about/faqs"
+
+@rendermode InteractiveServer
+
+<PageTitle>@pageTitle</PageTitle>
+
+
+<div class="faq-page">
+    <h1 class="faq-title">Frequently Asked <span class="highlight">Questions</span></h1>
+
+    <div class="faq-section">
+        <div class="faq-item">
+            <h2>1. Will life coaching work for me?</h2>
+            <p>
+                Yes, life coaching can work for you—but the results depend on your commitment and intention.
+                Success is 97% dependent on how ready you are to show up, do the hard work, follow guidances and trust the process entirely.
+                Self-sabotage and hesitation can hold you back, but with guidance and effort, transformation is achievable.
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h2>2. Who is life coaching for?</h2>
+            <p>
+                Coaching is for both women and men, 18 years of age or above. Services are available in English and Portuguese, making them accessible to a diverse audience. 
+                It's for individuals ready to move forward in life, whether you're:
+            </p>
+            <ul>
+                <li>Feeling stuck or lost</li>
+                <li>Seeking clarity in your life, career, relationships, or purpose</li>
+                <li>Struggling with emotional wounds or limiting beliefs</li>
+                <li>Wanting to balance work-life pressures or improve overall wellness</li>
+                <li>Preparing for interviews, reassessing your CV, or mapping a new career path</li>
+            </ul>
+        </div>
+
+        <div class="faq-item">
+            <h2>3. What is the structure of the coaching sessions?</h2>
+            <p>
+                Coaching sessions are tailored to your needs with 5 different packages available. Each session lasts on average 60 minutes and follows a structured yet flexible approach:
+            </p>
+            <ul>
+                <li><strong>Awareness:</strong> Uncovering challenges and defining goals</li>
+                <li><strong>Exploration:</strong> Delving deeper into thoughts, emotions, strengths, and patterns of behaviour</li>
+                <li><strong>Action:</strong> Creating actionable plans, steps, and accountability</li>
+            </ul>
+            <p>Sessions can be held online or in person, depending on availability and preference.</p>
+        </div>
+
+        <div class="faq-item">
+            <h2>4. How many sessions will I need?</h2>
+            <p>
+                Most clients see results within 6-10 sessions. We can discuss a personalised plan during your free discovery call.
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h2>5. Is life coaching the same as therapy?</h2>
+            <p>
+                No. Life Coaching is not therapy. While therapy often focuses on healing past wounds and managing mental health conditions, life coaching is future-focused.
+                It’s about setting goals, breaking barriers, and creating actionable strategies to achieve the life you want. Life Coaching complements therapy but does not replace it.
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h2>6. What areas of life does coaching cover?</h2>
+            <ul>
+                <li><strong>Personal Growth:</strong> Self-discovery, breaking limiting patterns, and building confidence</li>
+                <li><strong>Social Life and Relationships:</strong> Improving communication, building stronger connections, and setting boundaries</li>
+                <li><strong>Career:</strong> SWOT, career path mapping, interview preparation, and CV re-assessment</li>
+                <li><strong>Wellness:</strong> Reclaiming inner peace, reducing stress, and enhancing overall well-being</li>
+                <li><strong>Work-Life Balance:</strong> Strategies to manage stress, prioritize, and thrive in personal and professional life</li>
+            </ul>
+        </div>
+
+        <div class="faq-item">
+            <h2>7. How can I schedule a session/call?</h2>
+            <p>
+                It’s easy! Click the “Book Your Free Discovery Call” button on the website, choose a time that works for you, and start your transformation journey.
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h2>8. What if I’m not ready to commit yet?</h2>
+            <p>
+                That’s okay! Starting your journey is a big decision. Explore the free resources on the website and feel free to reach out with any questions. 
+                Remember, the first step is simply showing up.
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h2>9. What if I fail or can’t make lasting changes?</h2>
+            <p>
+                It’s natural to fear failure—it’s part of being human. But here’s the truth: You either win, or you learn. 
+                Transformation is a journey, not a one-time quick fix. Every step, even the small ones, moves you closer to the life you want. 
+                Life Coaching provides you with tools, strategies, and support to navigate challenges and stay on track.
+            </p>
+        </div>
+
+        <div class="faq-item">
+            <h2>10. Why should I choose Ítala Veloso as my Life Coach?</h2>
+            <p>
+                Ítala Veloso's Life Coaching isn’t just another program — it’s a lived methodology born from real-life experiences. 
+                With a compassionate, purpose-driven approach and a focus on tangible results, Ítala empowers you to not just survive but thrive. 
+                You deserve to live the life of More Than A Conqueror™.
+            </p>
+        </div>
+    </div>
+</div>
+
+<div>
+    <div class="cta-section">
+        <div class="cta-content">
+            <h2>Ready to Transform Your Future?</h2>
+            <p>Schedule a free consultation call to discuss your goals</p>
+        </div>
+        <a href="#contact" class="services-cta-button">
+            <span class="cta-icon"><i class="fas fa-calendar-check"></i></span>
+            <span class="cta-text">
+                <span class="primary-text">Book Your Free Discovery Call</span>
+                <span class="secondary-text">30 minutes, zero obligation</span>
+            </span>
+            <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
+</div>
+
+@code {
+    private string pageTitle = "FAQs | Ítala Veloso";
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await ScrollService.ScrollToTop();
+    }
+}
