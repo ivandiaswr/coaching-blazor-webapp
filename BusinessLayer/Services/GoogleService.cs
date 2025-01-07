@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using BusinessLayer.Services.Interfaces;
 using Google.Apis.Calendar.v3.Data;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -15,6 +16,7 @@ public class GoogleService : IGoogleService
     private readonly IHelperService _helperService;
     private readonly ILogger<GoogleService> _logger;
     private readonly IUserRefreshTokenService _userRefreshTokenService;
+    private readonly IEmailSubscriptionService _emailSubscriptionService;
     private readonly ILogService _logService;
 
     public GoogleService(IHttpClientFactory httpClientFactory, 
@@ -22,6 +24,7 @@ public class GoogleService : IGoogleService
         IHelperService configuration, 
         ILogger<GoogleService> logger, 
         IUserRefreshTokenService userRefreshTokenService,
+        IEmailSubscriptionService emailSubscriptionService,
         ILogService logService) 
     {
         this._httpClientFactory = httpClientFactory;
@@ -29,6 +32,7 @@ public class GoogleService : IGoogleService
         this._helperService = configuration;
         this._logger = logger;
         this._userRefreshTokenService = userRefreshTokenService;
+        this._emailSubscriptionService = emailSubscriptionService;
         this._logService = logService;
     }
 
@@ -191,6 +195,13 @@ public class GoogleService : IGoogleService
             var errorContent = await response.Content.ReadAsStringAsync();
             _logger.LogError($"Failed to refresh access token: {response.StatusCode}, {errorContent}");
             _logService.LogError("Error during GetAccessTokenAsync", $"Failed to create event: {response.StatusCode}, {errorContent}");
+
+            await _emailSubscriptionService.SendCustomEmailAsync(new List<string> { _helperService.GetConfigValue("AdminEmail:Primary"), _helperService.GetConfigValue("AdminEmail:Secondary")},
+                                                                    "Schedule Error", 
+                                                                    @$"StatusCode: {response.StatusCode}
+                                                                    <br>ErrorContent: {errorContent}
+                                                                    <br>Response: {response}");
+
             throw new Exception($"Failed to refresh access token: {response.StatusCode}, {errorContent}");
         }
 

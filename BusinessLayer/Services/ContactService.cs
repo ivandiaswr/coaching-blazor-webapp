@@ -96,21 +96,6 @@ public class ContactService : IContactService
         return true;
     }
 
-    public async Task SendNonGmailEmailSync(Contact contact, string googleMeetLink)
-    {
-        string subject = $"Meeting Invitation with {contact.FullName}";
-        string message = $@"            
-            Thank you for scheduling a meeting with us. Below are the meeting details:
-            
-            Date and Time: {contact.PreferredDateTime.ToString("f")} (UTC)
-            Google Meet Link: {googleMeetLink}
-            
-            Best regards,
-            Ítala Veloso";
-
-        await _emailSubscriptionService.SendCustomEmailAsync(new List<string> { contact.Email }, subject, message);
-    }
-
     public async Task SendEmailAsync(Contact contact)
     {
         var smtpServer = _helperService.GetConfigValue("SmtpSettings:Server");
