@@ -139,7 +139,10 @@
 
                 if (result)
                 {
-                    emailSubscription = new EmailSubscription();  // Reset form
+                    var giftFileUrl = GetGiftFileUrl(giftCategory);
+                    await JSRuntime.InvokeVoidAsync("downloadGift", giftFileUrl);
+
+                     emailSubscription = new EmailSubscription();  // Reset form
                 }
             }
             catch (Exception ex)
@@ -153,6 +156,16 @@
                 StateHasChanged();
             }
         }
+    }
+
+    private string GetGiftFileUrl(GiftCategory giftCategory)
+    {
+        return giftCategory switch
+        {
+            GiftCategory.Gift1 => "/Files/Reclaim & Regain Inner Peace - Itala Veloso.pdf",
+            GiftCategory.Gift2 => "/Files/Master Your 2025: Be Fearless - Itala Veloso.pdf",
+            _ => ""
+        };
     }
 
     private void ShowGiftOffer(GiftCategory gift)

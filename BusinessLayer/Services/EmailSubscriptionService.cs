@@ -248,11 +248,11 @@ public class EmailSubscriptionService : IEmailSubscriptionService
 
             if (giftCategory == GiftCategory.Gift1)
             {
-                pdfPath = Path.Combine(projectRoot, "wwwroot", "Files", "Reclaim & Regain Inner  Peace - Ítala Veloso.pdf");
+                pdfPath = Path.Combine(projectRoot, "wwwroot", "Files", "Reclaim & Regain Inner  Peace - Itala Veloso.pdf");
             }
             else if (giftCategory == GiftCategory.Gift2)
             {
-                pdfPath = Path.Combine(projectRoot, "wwwroot", "Files", "Stress Free - Itala Veloso.pdf");
+                pdfPath = Path.Combine(projectRoot, "wwwroot", "Files", "Master Your 2025: Be Fearless - Itala Veloso.pdf");
             }
 
             // Check if the file exists
