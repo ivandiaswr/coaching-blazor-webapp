@@ -241,29 +241,38 @@ public class EmailSubscriptionService : IEmailSubscriptionService
                                 </p>
                             </div>"
                     };
+            
+            var fileMapping = new Dictionary<GiftCategory, (string internalName, string displayName)>
+            {
+                { GiftCategory.Gift1, ("file1.pdf", "Reclaim & Regain Inner Peace - Ítala Veloso.pdf") },
+                { GiftCategory.Gift2, ("file2.pdf", "Master Your 2025: Be Fearless - Ítala Veloso.pdf") }
+            };
 
-            // Construct the correct path to the PDF file
+            if (!fileMapping.TryGetValue(giftCategory, out var fileDetails))
+            {
+                _logService.LogError("SendEmailAsync", "Invalid gift category.");
+                throw new InvalidOperationException("Invalid gift category.");
+            }
+
             string projectRoot = Directory.GetCurrentDirectory();
-            string pdfPath = string.Empty;
+            string pdfPath = Path.Combine(projectRoot, "wwwroot", "Files", fileDetails.internalName);
 
-            if (giftCategory == GiftCategory.Gift1)
-            {
-                pdfPath = Path.Combine(projectRoot, "wwwroot", "Files", "Reclaim & Regain Inner  Peace - Itala Veloso.pdf");
-            }
-            else if (giftCategory == GiftCategory.Gift2)
-            {
-                pdfPath = Path.Combine(projectRoot, "wwwroot", "Files", "Master Your 2025: Be Fearless - Itala Veloso.pdf");
-            }
-
-            // Check if the file exists
             if (!File.Exists(pdfPath))
             {
-                _logService.LogError("SendEmailAsync", $"pdfPath doesn't exist: {pdfPath}");
+                _logService.LogError("SendEmailAsync", $"PDF file not found: {pdfPath}");
                 throw new FileNotFoundException($"The PDF file was not found at path: {pdfPath}");
             }
 
-            // Add the PDF file to the email
-            builder.Attachments.Add(pdfPath);
+            var attachment = new MimePart("application", "pdf")
+            {
+                Content = new MimeContent(File.OpenRead(pdfPath)),
+                ContentDisposition = new ContentDisposition(ContentDisposition.Attachment),
+                ContentTransferEncoding = ContentEncoding.Base64,
+                FileName = fileDetails.displayName
+            };
+
+            builder.Attachments.Add(attachment);
+
 
             message.Body = builder.ToMessageBody();
 
@@ -277,11 +286,6 @@ public class EmailSubscriptionService : IEmailSubscriptionService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during subscription");
-            _logger.LogError($"SMTP Error: {ex.Message}");
-            _logger.LogError($"SMTP Server: {smtpServer}");
-            _logger.LogError($"SMTP Port: {smtpPort}");
-            _logger.LogError($"SMTP Username: {smtpUsername}");
             _logService.LogError("SendEmailAsync", $"ConnectAsync: {ex.Message}");
             throw;
         }

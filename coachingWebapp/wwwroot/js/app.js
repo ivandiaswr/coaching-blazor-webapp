@@ -63,8 +63,10 @@ function saveAsFile(fileName, contentBase64) {
 
 function downloadGift(url) {
     const link = document.createElement('a');
-    link.href = url;
-    link.download = url.split('/').pop();
+    const urlObject = new URL(url, window.location.origin);
+    const downloadName = urlObject.searchParams.get('downloadName');
+    link.href = urlObject.origin + urlObject.pathname;
+    link.download = downloadName || url.split('/').pop(); 
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
