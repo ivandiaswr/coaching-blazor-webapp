@@ -121,7 +121,14 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddHttpClient<GoogleService>();
 
-builder.Services.AddServerSideBlazor();
+builder.Services.AddServerSideBlazor()
+    .AddHubOptions(options =>
+    {
+        options.ClientTimeoutInterval = TimeSpan.FromMinutes(5);
+        options.KeepAliveInterval = TimeSpan.FromMinutes(1);
+        options.EnableDetailedErrors = true; // for debugging
+    });
+
 builder.Services.AddMudServices();
 
 var app = builder.Build();

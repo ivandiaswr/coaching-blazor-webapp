@@ -196,11 +196,11 @@ public class GoogleService : IGoogleService
             _logger.LogError($"Failed to refresh access token: {response.StatusCode}, {errorContent}");
             _logService.LogError("Error during GetAccessTokenAsync", $"Failed to create event: {response.StatusCode}, {errorContent}");
 
-            await _emailSubscriptionService.SendCustomEmailAsync(new List<string> { _helperService.GetConfigValue("AdminEmail:Primary"), _helperService.GetConfigValue("AdminEmail:Secondary")},
-                                                                    "Schedule Error", 
-                                                                    @$"StatusCode: {response.StatusCode}
-                                                                    <br>ErrorContent: {errorContent}
-                                                                    <br>Response: {response}");
+            // await _emailSubscriptionService.SendCustomEmailAsync(new List<string> { _helperService.GetConfigValue("AdminEmail:Primary"), _helperService.GetConfigValue("AdminEmail:Secondary")},
+            //                                                         "Schedule Error", 
+            //                                                         @$"StatusCode: {response.StatusCode}
+            //                                                         <br>ErrorContent: {errorContent}
+            //                                                         <br>Response: {response}");
 
             throw new Exception($"Failed to refresh access token: {response.StatusCode}, {errorContent}");
         }

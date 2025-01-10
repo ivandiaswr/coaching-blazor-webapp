@@ -88,8 +88,11 @@ public class ContactService : IContactService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during ContactSubmitAsync");
-            _logService.LogError("ContactSubmitAsync", ex.Message);
+            _logService.LogError("Error during ContactSubmitAsync", ex.Message);
+            await _emailSubscriptionService.SendCustomEmailAsync(new List<string> { _helperService.GetConfigValue("AdminEmail:Primary"), _helperService.GetConfigValue("AdminEmail:Secondary")},
+                                                                    "Schedule Error", 
+                                                                    @$"Exception: {ex}
+                                                                    <br>Message: {ex.Message}");
             return false;
         }  
 
