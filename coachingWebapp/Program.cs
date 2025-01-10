@@ -124,8 +124,8 @@ builder.Services.AddHttpClient<GoogleService>();
 builder.Services.AddServerSideBlazor()
     .AddHubOptions(options =>
     {
-        options.ClientTimeoutInterval = TimeSpan.FromMinutes(5);
-        options.KeepAliveInterval = TimeSpan.FromMinutes(1);
+        options.ClientTimeoutInterval = TimeSpan.FromMinutes(2);
+        options.KeepAliveInterval = TimeSpan.FromSeconds(10);
         options.EnableDetailedErrors = true; // for debugging
     });
 
