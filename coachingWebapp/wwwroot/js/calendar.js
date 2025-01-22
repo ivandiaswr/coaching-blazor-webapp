@@ -14,7 +14,7 @@ window.initializeCalendar = (dotNetHelper, slots, busyTimes) => {
         timeZone: 'local',
         validRange: {
             start: new Date().toISOString(),
-            end: new Date(new Date().setDate(new Date().getDate() + 13)).toISOString()
+            end: new Date(new Date().setDate(new Date().getDate() + 25)).toISOString()
         },
         scrollTime: '10:00:00',
         slotDuration: '00:30:00',

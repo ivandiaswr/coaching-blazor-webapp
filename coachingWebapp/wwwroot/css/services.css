@@ -1,5 +1,6 @@
 .life-coaching-container {
-    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
     padding: 2rem 0;
     display: flex;
     flex-direction: column;
@@ -24,33 +25,22 @@
 }
 
 .slider-container {
-    overflow: hidden;
-    white-space: nowrap;
-    position: relative;
     margin-top: 2rem;
     width: 100%;
     padding: 0.5rem 0 3rem;
-    flex-shrink: 0;
-}
-
-.noslider {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
 }
 
 .topics-grid {
-    display: flex;
-    flex-wrap: nowrap;
-    gap: 1.5rem;
-    width: max-content;
-    transform: translateX(0);
-    transition: transform 0.05s linear;
-    will-change: transform;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    justify-content: center; 
+    gap: 2rem;
+    width: 100%;
+    padding: 0 1rem;
 }
 
 .topic-card {
-    width: auto;
+    width: 100%; 
     height: 500px;
     background: white;
     border-radius: 12px;
@@ -72,41 +62,39 @@
 
 .image-wrapper img {
     width: 100%;
-    height: 70%;
+    height: 80%;
     object-fit: cover;
     transition: transform 0.3s ease;
 }
 
 .topic-card:hover .image-wrapper img {
     transform: scale(1.05);
+    cursor: pointer;
 }
 
 .image-title {
     position: absolute;
     bottom: 0;
     width: 100%;
-    height: 30%;
+    height: 20%; 
     background: rgba(255, 255, 255, 0.95);
-    color: #1a1a1a;
-    padding: 1.5rem;
+    padding: 0.5rem 1rem; 
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: center; 
     border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .image-title h3 {
-    font-size: 1.25rem;
+    font-size: 1.1rem; 
     font-weight: 600;
-    text-align: center;
-    line-height: 1.4;
+    line-height: 1.3;
     margin: 0;
-    white-space: normal;
-    overflow: hidden;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
-    line-clamp: inherit;
+    -webkit-line-clamp: 2; 
     -webkit-box-orient: vertical;
+    overflow: hidden;
+    padding: 0 0.5rem; 
 }
 
 .cta-section {
@@ -122,6 +110,9 @@
     .cta-section {
         min-width: auto;
     }
+    .topics-grid {
+        grid-template-columns: repeat(2, 1fr); 
+    }
 }
 
 @media (max-width: 768px) {
@@ -132,6 +123,10 @@
     .life-coaching-container > p {
         font-size: 1.1rem;
         padding: 0 1rem;
+    }
+
+    .topics-grid {
+        grid-template-columns: 1fr;
     }
     
     .topic-card {

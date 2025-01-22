@@ -81,12 +81,12 @@
             Title = "Reconnect with Your Authentic Self",
             AltText = "Authentic Self"
         },
-        @* new Topic {
+        new Topic {
             Id = 7,
             ImageUrl = "Images/services/life-coaching/map-future.jpg",
             Title = "Create Your Future Map",
             AltText = "Future Map"
-        }, *@
+        },
         new Topic {
             Id = 8,
             ImageUrl = "Images/services/life-coaching/inner-peace.jpg",
@@ -94,31 +94,4 @@
             AltText = "Inner Peace"
         }
     };
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        await ScrollService.ScrollToTop();
-
-        if (firstRender)
-        {
-            if (topicsGrid.Context == null)
-            {
-                Console.WriteLine("topicsGrid reference not set.");
-            }
-            else
-            {
-                Console.WriteLine("topicsGrid reference is set.");
-                await JSRuntime.InvokeVoidAsync("initializeSlider", topicsGrid);
-            }
-        }
-    }
-     protected override void OnInitialized()
-    {
-        Console.WriteLine("Life-coaching OnInitialized initialized");
-    }
-
-    protected override void OnParametersSet()
-    {
-        Console.WriteLine("Life-coaching OnParametersSet initialized");
-    }
 }

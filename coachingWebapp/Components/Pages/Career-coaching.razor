@@ -76,22 +76,4 @@
             AltText = "Feedback"
         }
     };
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        await ScrollService.ScrollToTop();
-
-        if (firstRender)
-        {
-            if (topicsGrid.Context == null)
-            {
-                Console.WriteLine("topicsGrid reference not set.");
-            }
-            else
-            {
-                Console.WriteLine("topicsGrid reference is set.");
-                await JSRuntime.InvokeVoidAsync("initializeSlider", topicsGrid);
-            }
-        }
-    }
 }
