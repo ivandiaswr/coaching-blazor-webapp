@@ -16,7 +16,6 @@ public class GoogleService : IGoogleService
     private readonly IHelperService _helperService;
     private readonly ILogger<GoogleService> _logger;
     private readonly IUserRefreshTokenService _userRefreshTokenService;
-    private readonly IEmailSubscriptionService _emailSubscriptionService;
     private readonly ILogService _logService;
 
     public GoogleService(IHttpClientFactory httpClientFactory, 
@@ -24,7 +23,6 @@ public class GoogleService : IGoogleService
         IHelperService configuration, 
         ILogger<GoogleService> logger, 
         IUserRefreshTokenService userRefreshTokenService,
-        IEmailSubscriptionService emailSubscriptionService,
         ILogService logService) 
     {
         this._httpClientFactory = httpClientFactory;
@@ -32,7 +30,6 @@ public class GoogleService : IGoogleService
         this._helperService = configuration;
         this._logger = logger;
         this._userRefreshTokenService = userRefreshTokenService;
-        this._emailSubscriptionService = emailSubscriptionService;
         this._logService = logService;
     }
 

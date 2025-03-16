@@ -1,36 +1,27 @@
 using BusinessLayer;
 using BusinessLayer.Services;
 using BusinessLayer.Services.Interfaces;
-using coachingWebapp.Components;
 using DataAccessLayer;
 using Google.Apis.Auth.AspNetCore3;
+using coachingWebapp.Components;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
-
-if (builder.Environment.IsDevelopment())
-{
-    builder.Configuration.AddUserSecrets<Program>();
-}
 
 SQLitePCL.Batteries.Init();
 SQLitePCL.raw.SetProvider(new SQLitePCL.SQLite3Provider_e_sqlite3());  
 
-// string solutionDirectory = AppContext.BaseDirectory;
-// string projectRootDirectory = Path.GetFullPath(Path.Combine(solutionDirectory, "../../../../"));
-// string databaseDirectory = Path.Combine(projectRootDirectory, "Database");
-
-// // Ensure the Database directory exists
-// Directory.CreateDirectory(databaseDirectory);
-
-// string databasePath = Path.Combine(databaseDirectory, "coaching.db");
-
 string databasePath;
 if (builder.Environment.IsDevelopment())
 {
+    builder.Configuration.AddUserSecrets<Program>();
+
     // Local development path
     string solutionDirectory = AppContext.BaseDirectory;
     string projectRootDirectory = Path.GetFullPath(Path.Combine(solutionDirectory, "../../../../"));
@@ -90,6 +81,8 @@ builder.Services.AddScoped<IUserRefreshTokenService, UserRefreshTokenService>();
 builder.Services.AddScoped<IHelperService, HelperService>();
 builder.Services.AddScoped<ILogService, LogService>();
 
+builder.Services.AddHttpClient<GoogleService>();
+
 builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation(); 
 
 // Add services to the container
@@ -119,7 +112,36 @@ builder.Services.AddAuthentication(options =>
     options.SaveTokens = true;
 });
 
-builder.Services.AddHttpClient<GoogleService>();
+// Open Telemetry
+// builder.Services.AddOpenTelemetry().WithTracing(
+//     tracerProviderBuilder => {
+//         tracerProviderBuilder
+//             .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("ItalaVeloso"))
+//             .AddAspNetCoreInstrumentation() // Tracks http requests
+//             .AddHttpClientInstrumentation(); // Tracks http client calls
+//     })
+//     .WithMetrics(metricProviderBuilder => {
+//         metricProviderBuilder
+//         .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("ItalaVeloso"))
+//         .AddAspNetCoreInstrumentation(); // Collects metrics
+//     });
+
+// builder.Services.AddSingleton<LogProcessor>();
+
+// builder.Logging.ClearProviders();
+// builder.Logging.AddOpenTelemetry(options =>
+// {
+//     options.IncludeScopes = false;
+//     options.ParseStateValues = false;
+//     options.IncludeFormattedMessage = true;
+//     options.AddProcessor(provider => provider.GetRequiredService<LogProcessor>());
+// });
+
+builder.Logging.AddSimpleConsole(options =>
+{
+    options.IncludeScopes = false;
+    options.SingleLine = true;
+});
 
 builder.Services.AddServerSideBlazor()
     .AddHubOptions(options =>
