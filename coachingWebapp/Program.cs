@@ -133,8 +133,8 @@ builder.Services.AddOpenTelemetry()
 
 // OpenTelemetry Logging
 builder.Logging
-    .SetMinimumLevel(LogLevel.Information)
-    .AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Warning)
+    .SetMinimumLevel(LogLevel.Error)
+    .AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Error)
     .AddOpenTelemetry(options =>
     {
         options.IncludeFormattedMessage = true;
