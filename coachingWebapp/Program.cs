@@ -137,11 +137,11 @@ builder.Services.AddAuthentication(options =>
 //     options.AddProcessor(provider => provider.GetRequiredService<LogProcessor>());
 // });
 
-builder.Logging.AddSimpleConsole(options =>
-{
-    options.IncludeScopes = false;
-    options.SingleLine = true;
-});
+// builder.Logging.AddSimpleConsole(options =>
+// {
+//     options.IncludeScopes = false;
+//     options.SingleLine = true;
+// });
 
 builder.Services.AddServerSideBlazor()
     .AddHubOptions(options =>
