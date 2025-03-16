@@ -11,21 +11,18 @@ public class ContactService : IContactService
 {
     private readonly CoachingDbContext _context;
     private readonly IHelperService _helperService;
-    private readonly ILogger<ContactService> _logger;
     private readonly IGoogleService _googleService;
     private readonly IEmailSubscriptionService _emailSubscriptionService;
     private readonly ILogService _logService;
 
     public ContactService(CoachingDbContext context, 
         IHelperService helperService,
-        ILogger<ContactService> logger,
         IGoogleService googleService,
         IEmailSubscriptionService emailSubscriptionService,
         ILogService logService)
     {
         this._context = context;
         this._helperService = helperService;
-        this._logger = logger;
         this._googleService = googleService;
         this._emailSubscriptionService = emailSubscriptionService;
         this._logService = logService;
@@ -38,10 +35,9 @@ public class ContactService : IContactService
             var contacts = _context.Contacts.ToList();
 
             return contacts;
-        }
+        } 
         catch(Exception ex)
         {
-            _logger.LogError(ex, "Error during GetAllContacts");
             _logService.LogError("GetAllContacts", ex.Message);
              throw;
         }
@@ -63,8 +59,7 @@ public class ContactService : IContactService
 
             if(string.IsNullOrEmpty(CreateEventAdminAsyncGoogleMeetLink))
             {
-                _logger.LogError("Failed to create admins event.");
-                _logService.LogError("ContactSubmitAsync", "CreateEventAdminAsyncResult");
+                await _logService.LogError("ContactSubmitAsync", "CreateEventAdminAsyncResult");
                 return false;
             }
 
@@ -72,8 +67,7 @@ public class ContactService : IContactService
 
             if(!CreateEventIntervalAsyncResult)
             {
-                _logger.LogError("Failed to create users event.");
-                 _logService.LogError("ContactSubmitAsync", "CreateEventIntervalAsyncResult");
+                 await _logService.LogError("ContactSubmitAsync", "CreateEventIntervalAsyncResult");
                 return false;
             }
 
@@ -88,7 +82,7 @@ public class ContactService : IContactService
         }
         catch (Exception ex)
         {
-            _logService.LogError("Error during ContactSubmitAsync", ex.Message);
+            await _logService.LogError("Error during ContactSubmitAsync", ex.Message);
             await _emailSubscriptionService.SendCustomEmailAsync(new List<string> { _helperService.GetConfigValue("AdminEmail:Primary"), _helperService.GetConfigValue("AdminEmail:Secondary")},
                                                                     "Schedule Error", 
                                                                     @$"Exception: {ex}
@@ -108,7 +102,7 @@ public class ContactService : IContactService
 
         if (string.IsNullOrWhiteSpace(smtpServer) || string.IsNullOrWhiteSpace(smtpUsername) || string.IsNullOrWhiteSpace(smtpPassword))
         {
-            _logService.LogError("SendEmailAsync", $"SMTP settings are not properly configured. Server: {smtpServer}, Username: {smtpUsername}, Password: {(smtpPassword != null ? smtpPassword : null)}");
+            await _logService.LogError("SendEmailAsync", $"SMTP settings are not properly configured. Server: {smtpServer}, Username: {smtpUsername}, Password: {(smtpPassword != null ? smtpPassword : null)}");
             throw new InvalidOperationException($"SMTP settings are not properly configured. Server: {smtpServer}, Username: {smtpUsername}, Password: {(smtpPassword != null ? "****" : null)}");
         }
 
@@ -136,8 +130,7 @@ public class ContactService : IContactService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during subscription");
-            _logService.LogError("SendCustomEmailAsync", ex.Message);
+            await _logService.LogError("SendCustomEmailAsync", ex.Message);
             throw;
         }
     }

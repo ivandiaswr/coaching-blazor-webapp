@@ -32,28 +32,28 @@ public class AccountController : ControllerBase
             }
             else if (result.IsLockedOut)
             {
-                _logService.LogError("Login", "IsLockedOut");
+                await _logService.LogError("Login", "IsLockedOut");
                 return BadRequest("Your account is locked. Please try again later.");
             }
             else if (result.IsNotAllowed)
             {
-                _logService.LogError("Login", "IsNotAllowed");
+                await _logService.LogError("Login", "IsNotAllowed");
                 return BadRequest("Login is not allowed. Please confirm your email.");
             }
             else if (result.RequiresTwoFactor)
             {
-                _logService.LogError("Login", "RequiresTwoFactor");
+                await _logService.LogError("Login", "RequiresTwoFactor");
                 return BadRequest("Two-factor authentication required. Please complete the process.");
             }
             else
             {
-                _logService.LogError("Login", $"Global error invalid login attempt");
+                await _logService.LogError("Login", $"Global error invalid login attempt");
                 return BadRequest("Invalid login attempt.");
             }
         } 
         catch(Exception ex)
         {
-            _logService.LogError("Login", ex.Message);
+            await _logService.LogError("Login", ex.Message);
             return BadRequest(ex);
         }
     }
@@ -69,7 +69,7 @@ public class AccountController : ControllerBase
         } 
         catch(Exception ex)
         {
-            _logService.LogError("Logout", ex.Message);
+            await _logService.LogError("Logout", ex.Message);
             return BadRequest(ex);
         }
     }

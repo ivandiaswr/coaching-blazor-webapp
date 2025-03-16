@@ -5,7 +5,7 @@
 @inject IContactService ContactService
 @inject IGoogleService GoogleService
 @inject IHttpClientFactory HttpClientFactory
-@inject ILogger<Home> Logger
+@inject ILogService LogService
 
 @inject NavigationManager NavigationManager
 
@@ -365,7 +365,7 @@
                 busyTimes
             );
         }
-        
+
         if(canScroll)
         {
             if (NavigationManager.Uri.Contains('#'))
@@ -400,7 +400,7 @@
         }
         catch(Exception ex)
         {
-            Logger.LogError(ex, "Error during ContactSubmitAsync");
+            await LogService.LogError("Error during ContactSubmitAsync", ex.Message);
             contactFormStatus = "An error occurred. Please try again later.";
         }
         finally 
@@ -427,7 +427,7 @@
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Failed to refresh calendar data");
+            await LogService.LogError("Failed to refresh calendar data", ex.Message);
             availableSlots = new List<DateTime>();
             busyTimes = new List<TimePeriod>();
         }
@@ -527,7 +527,7 @@
             }
         } 
         catch(Exception ex) {
-            Logger.LogInformation($"Error on ToggleVideo: {ex.Message}");
+            await LogService.LogError("Error on ToggleVideo", ex.Message);
         }
         
         canScroll = false;

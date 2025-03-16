@@ -3,7 +3,6 @@ using ModelLayer.Models;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry;
 using OpenTelemetry.Logs;
-using System;
 
 public class LogProcessor : BaseProcessor<LogRecord>
 {
@@ -17,25 +16,27 @@ public class LogProcessor : BaseProcessor<LogRecord>
     public override void OnEnd(LogRecord logRecord)
     {
         
-        try
+        Task.Run(async () =>
         {
-            using var scope = _serviceProvider.CreateScope();
-            var context = scope.ServiceProvider.GetRequiredService<CoachingDbContext>();
-
-            var log = new Log
+            try
             {
-                LogLevel = logRecord.LogLevel.ToString(),
-                Message = logRecord.FormattedMessage,
-                Exception = logRecord.Exception?.ToString(),
-                CreatedAt = DateTime.UtcNow
-            };
-
-            context.Logs.Add(log);
-            context.SaveChanges();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[LogProcessor] Failed to log to database: {ex}");
-        }
+                using var scope = _serviceProvider.CreateScope();
+                var context = scope.ServiceProvider.GetRequiredService<CoachingDbContext>();
+                var log = new Log
+                {
+                    LogLevel = logRecord.LogLevel.ToString(),
+                    Message = logRecord.FormattedMessage ?? logRecord.Body,
+                    Exception = logRecord.Exception?.ToString(),
+                    CreatedAt = DateTime.UtcNow
+                };
+                context.Logs.Add(log);
+                await context.SaveChangesAsync();
+                Console.WriteLine($"[LogProcessor] Saved: {log.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[LogProcessor] Error: {ex.Message}");
+            }
+        });
     }
 }

@@ -9,22 +9,22 @@ public class LogService : ILogService
         this._context = context;
     }
 
-    public void LogInfo(string message)
+    public async Task LogInfo(string message)
     {
-        SaveLog("Information", message);
+        await SaveLog("Information", message);
     }
 
-    public void LogWarning(string message)
+    public async Task LogWarning(string message)
     {
-        SaveLog("Warning", message);
+        await SaveLog("Warning", message);
     }
 
-    public void LogError(string message, string exception)
+    public async Task LogError(string message, string exception)
     {
-        SaveLog("Error", message, exception);
+        await SaveLog("Error", message, exception);
     }
 
-    private void SaveLog(string logLevel, string message, string? exception = null)
+    private async Task SaveLog(string logLevel, string message, string? exception = null)
     {
         var log = new ModelLayer.Models.Log
         {
@@ -35,6 +35,6 @@ public class LogService : ILogService
         };
 
         _context.Logs.Add(log);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
     }
 }

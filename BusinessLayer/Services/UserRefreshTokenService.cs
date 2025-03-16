@@ -26,7 +26,7 @@ public class UserRefreshTokenService : IUserRefreshTokenService
         }
         catch (Exception ex)
         {
-            _logService.LogError("GetRefreshTokenByUserId", ex.Message);
+            await _logService.LogError("GetRefreshTokenByUserId", ex.Message);
             return string.Empty;
         }
     }
@@ -43,7 +43,7 @@ public class UserRefreshTokenService : IUserRefreshTokenService
         }
         catch (Exception ex)
         {
-            _logService.LogError("GetRefreshTokenByLatest", ex.Message);
+            await _logService.LogError("GetRefreshTokenByLatest", ex.Message);
             return string.Empty;
         }
     }
@@ -60,7 +60,7 @@ public class UserRefreshTokenService : IUserRefreshTokenService
         }
         catch (Exception ex)
         {
-            _logService.LogError("UpdateGoogleRefreshToken", ex.Message);
+            await _logService.LogError("UpdateGoogleRefreshToken", ex.Message);
             return false;
         }
     }

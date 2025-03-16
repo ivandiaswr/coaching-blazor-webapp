@@ -14,21 +14,18 @@ public class GoogleService : IGoogleService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly HttpClient _httpClient;
     private readonly IHelperService _helperService;
-    private readonly ILogger<GoogleService> _logger;
     private readonly IUserRefreshTokenService _userRefreshTokenService;
     private readonly ILogService _logService;
 
     public GoogleService(IHttpClientFactory httpClientFactory, 
         HttpClient httpClient, 
-        IHelperService configuration, 
-        ILogger<GoogleService> logger, 
+        IHelperService configuration,  
         IUserRefreshTokenService userRefreshTokenService,
         ILogService logService) 
     {
         this._httpClientFactory = httpClientFactory;
         this._httpClient = httpClient;
         this._helperService = configuration;
-        this._logger = logger;
         this._userRefreshTokenService = userRefreshTokenService;
         this._logService = logService;
     }
@@ -75,8 +72,7 @@ public class GoogleService : IGoogleService
         if (!response.IsSuccessStatusCode)
         {
             var errorContent = await response.Content.ReadAsStringAsync();
-            _logger.LogError($"Failed to create event: {response.StatusCode}, {errorContent}");
-            _logService.LogError("Error during CreateGoogleCalendarEventAsync", $"Failed to create event: {response.StatusCode}, {errorContent}");
+            await _logService.LogError("Error during CreateGoogleCalendarEventAsync", $"Failed to create event: {response.StatusCode}, {errorContent}");
             throw new Exception($"Failed to create event: {response.StatusCode}, {errorContent}");
         }
 
@@ -190,8 +186,7 @@ public class GoogleService : IGoogleService
         if (!response.IsSuccessStatusCode)
         {
             var errorContent = await response.Content.ReadAsStringAsync();
-            _logger.LogError($"Failed to refresh access token: {response.StatusCode}, {errorContent}");
-            _logService.LogError("Error during GetAccessTokenAsync", $"Failed to create event: {response.StatusCode}, {errorContent}");
+            await _logService.LogError("Error during GetAccessTokenAsync", $"Failed to create event: {response.StatusCode}, {errorContent}");
 
             // await _emailSubscriptionService.SendCustomEmailAsync(new List<string> { _helperService.GetConfigValue("AdminEmail:Primary"), _helperService.GetConfigValue("AdminEmail:Secondary")},
             //                                                         "Schedule Error", 

@@ -11,6 +11,7 @@ using MudBlazor.Services;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Logs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,10 +41,16 @@ else
 // builder.Configuration.GetConnectionString("DefaultConnection")
 builder.Services.AddDbContext<CoachingDbContext>(options =>
     options.UseSqlite($"Data Source={databasePath}",
-        b => b.MigrationsAssembly(typeof(CoachingDbContext).Assembly.FullName))
-    .LogTo(Console.WriteLine, LogLevel.Information)
-    .EnableSensitiveDataLogging() // Only use in development
-    .EnableDetailedErrors());
+        b => b.MigrationsAssembly(typeof(CoachingDbContext).Assembly.FullName)));
+// .LogTo(message =>
+//            {
+//                if (!message.Contains("An 'IServiceProvider' was created for internal use by Entity Framework."))
+//                {
+//                    Console.WriteLine(message);
+//                }
+//            }, LogLevel.Information));
+    // .EnableSensitiveDataLogging() // Only use in development
+    // .EnableDetailedErrors());
 
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
     {
@@ -79,7 +86,9 @@ builder.Services.AddScoped<IGoogleService, GoogleService>();
 builder.Services.AddScoped<ISecurityService, SecurityService>();
 builder.Services.AddScoped<IUserRefreshTokenService, UserRefreshTokenService>();
 builder.Services.AddScoped<IHelperService, HelperService>();
+
 builder.Services.AddScoped<ILogService, LogService>();
+builder.Services.AddSingleton<LogProcessor>();
 
 builder.Services.AddHttpClient<GoogleService>();
 
@@ -113,44 +122,28 @@ builder.Services.AddAuthentication(options =>
 });
 
 // Open Telemetry
-// builder.Services.AddOpenTelemetry().WithTracing(
-//     tracerProviderBuilder => {
-//         tracerProviderBuilder
-//             .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("ItalaVeloso"))
-//             .AddAspNetCoreInstrumentation() // Tracks http requests
-//             .AddHttpClientInstrumentation(); // Tracks http client calls
-//     })
-//     .WithMetrics(metricProviderBuilder => {
-//         metricProviderBuilder
-//         .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("ItalaVeloso"))
-//         .AddAspNetCoreInstrumentation(); // Collects metrics
-//     });
-
-// builder.Services.AddSingleton<LogProcessor>();
-
-// builder.Logging.ClearProviders();
-// builder.Logging.AddOpenTelemetry(options =>
-// {
-//     options.IncludeScopes = false;
-//     options.ParseStateValues = false;
-//     options.IncludeFormattedMessage = true;
-//     options.AddProcessor(provider => provider.GetRequiredService<LogProcessor>());
-// });
-
-// builder.Logging.AddSimpleConsole(options =>
-// {
-//     options.IncludeScopes = false;
-//     options.SingleLine = true;
-// });
-
-builder.Services.AddServerSideBlazor()
-    .AddHubOptions(options =>
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracerProviderBuilder =>
     {
-        options.ClientTimeoutInterval = TimeSpan.FromMinutes(2);
-        options.KeepAliveInterval = TimeSpan.FromSeconds(10);
-        options.EnableDetailedErrors = true; // for debugging
+        tracerProviderBuilder
+            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("CoachingApp"))
+            .AddAspNetCoreInstrumentation()
+            .AddConsoleExporter();
     });
 
+// OpenTelemetry Logging
+builder.Logging
+    .SetMinimumLevel(LogLevel.Information)
+    .AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Warning)
+    .AddOpenTelemetry(options =>
+    {
+        options.IncludeFormattedMessage = true;
+        options.AddProcessor(provider => provider.GetRequiredService<LogProcessor>());
+        options.AddConsoleExporter();
+    })
+    .AddConsole();
+
+// Mudblazor framework
 builder.Services.AddMudServices();
 
 var app = builder.Build();
