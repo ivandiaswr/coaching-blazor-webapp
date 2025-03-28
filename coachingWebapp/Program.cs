@@ -129,7 +129,15 @@ builder.Services.AddOpenTelemetry()
             .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("CoachingApp"))
             .AddAspNetCoreInstrumentation()
             .AddConsoleExporter();
-    });
+    })
+    .WithMetrics(metricsProviderBuilder =>
+    {
+        metricsProviderBuilder
+            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("CoachingApp"))
+            .AddAspNetCoreInstrumentation()
+            .AddMeter("CoachingMetrics")
+            .AddConsoleExporter();
+    });;
 
 // OpenTelemetry Logging
 builder.Logging

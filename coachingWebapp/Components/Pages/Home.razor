@@ -393,6 +393,7 @@
 
             if (result) 
             {
+                @* UserMetrics.RecordSessionBooking("booked", userId); *@
                 contact.UpdateFullName();
                 result = await EmailSubscriptionService.SubscriptionAsync(new EmailSubscription { Name = contact.FullName, Email = contact.Email });
                 contact = new Contact();
