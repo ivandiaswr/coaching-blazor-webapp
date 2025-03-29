@@ -11,19 +11,16 @@ public class ContactService : IContactService
 {
     private readonly CoachingDbContext _context;
     private readonly IHelperService _helperService;
-    private readonly IGoogleService _googleService;
     private readonly IEmailSubscriptionService _emailSubscriptionService;
     private readonly ILogService _logService;
 
     public ContactService(CoachingDbContext context, 
         IHelperService helperService,
-        IGoogleService googleService,
         IEmailSubscriptionService emailSubscriptionService,
         ILogService logService)
     {
         this._context = context;
         this._helperService = helperService;
-        this._googleService = googleService;
         this._emailSubscriptionService = emailSubscriptionService;
         this._logService = logService;
     }
@@ -55,27 +52,6 @@ public class ContactService : IContactService
 
             _context.Contacts.Add(contact);
 
-            var CreateEventAdminAsyncGoogleMeetLink = await _googleService.CreateEventAdminAsync(contact);
-
-            if(string.IsNullOrEmpty(CreateEventAdminAsyncGoogleMeetLink))
-            {
-                await _logService.LogError("ContactSubmitAsync", "CreateEventAdminAsyncResult");
-                return false;
-            }
-
-            var CreateEventIntervalAsyncResult = await _googleService.CreateEventIntervalAsync(contact);
-
-            if(!CreateEventIntervalAsyncResult)
-            {
-                 await _logService.LogError("ContactSubmitAsync", "CreateEventIntervalAsyncResult");
-                return false;
-            }
-
-            // if(!contact.Email.EndsWith("@gmail.com", StringComparison.OrdinalIgnoreCase))
-            // {
-            //     await SendNonGmailEmailSync(contact, CreateEventAdminAsyncGoogleMeetLink); // send email to the user
-            // } 
-
             await SendEmailAsync(contact); // send email to the admin
 
             await _context.SaveChangesAsync();
@@ -83,10 +59,17 @@ public class ContactService : IContactService
         catch (Exception ex)
         {
             await _logService.LogError("Error during ContactSubmitAsync", ex.Message);
-            await _emailSubscriptionService.SendCustomEmailAsync(new List<string> { _helperService.GetConfigValue("AdminEmail:Primary"), _helperService.GetConfigValue("AdminEmail:Secondary")},
-                                                                    "Schedule Error", 
-                                                                    @$"Exception: {ex}
-                                                                    <br>Message: {ex.Message}");
+
+            await _emailSubscriptionService.SendCustomEmailAsync(
+                new List<string>
+                {
+                    _helperService.GetConfigValue("AdminEmail:Primary"),
+                    _helperService.GetConfigValue("AdminEmail:Secondary")
+                },
+                "Schedule Error",
+                @$"Exception: {ex}<br>Message: {ex.Message}"
+            );
+
             return false;
         }  
 

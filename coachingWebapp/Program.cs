@@ -2,7 +2,6 @@ using BusinessLayer;
 using BusinessLayer.Services;
 using BusinessLayer.Services.Interfaces;
 using DataAccessLayer;
-using Google.Apis.Auth.AspNetCore3;
 using coachingWebapp.Components;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
@@ -73,15 +72,11 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddScoped<IEmailSubscriptionService, EmailSubscriptionService>();
 builder.Services.AddScoped<IContactService, ContactService>();
 builder.Services.AddScoped<IScrollService, ScrollService>();
-builder.Services.AddScoped<IGoogleService, GoogleService>();
 builder.Services.AddScoped<ISecurityService, SecurityService>();
-builder.Services.AddScoped<IUserRefreshTokenService, UserRefreshTokenService>();
 builder.Services.AddScoped<IHelperService, HelperService>();
-
 builder.Services.AddScoped<ILogService, LogService>();
 builder.Services.AddSingleton<LogProcessor>();
 
-builder.Services.AddHttpClient<GoogleService>();
 
 builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation(); 
 
@@ -96,21 +91,6 @@ builder.Services.AddLogging(loggingBuilder =>
     loggingBuilder.AddConsole();
     loggingBuilder.AddDebug();
 });
-
-// Google
-// builder.Services.AddAuthentication(options =>
-// {
-//     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-//     options.DefaultChallengeScheme = GoogleOpenIdConnectDefaults.AuthenticationScheme;
-// })
-// .AddCookie()
-// .AddGoogleOpenIdConnect(options =>
-// {
-//     options.ClientId = builder.Configuration["GoogleCalendar:ClientId"];
-//     options.ClientSecret = builder.Configuration["GoogleCalendar:ClientSecret"];
-//     options.Scope.Add(Google.Apis.Calendar.v3.CalendarService.Scope.Calendar);
-//     options.SaveTokens = true;
-// });
 
 builder.Services.AddHttpClient();
 builder.Services.AddAuthentication(options =>

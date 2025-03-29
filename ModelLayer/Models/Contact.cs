@@ -28,6 +28,8 @@ public class Contact
     [Required(ErrorMessage = "Let us know what you'd like to discuss in the session.")]
     public string Message { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } 
+    public bool IsSessionBooking { get; set; } = true;
+
 
     /// <summary>
     /// Updates the full name property

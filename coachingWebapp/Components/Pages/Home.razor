@@ -3,14 +3,12 @@
 
 @inject IEmailSubscriptionService EmailSubscriptionService
 @inject IContactService ContactService
-@inject IGoogleService GoogleService
 @inject IHttpClientFactory HttpClientFactory
 @inject ILogService LogService
 
 @inject NavigationManager NavigationManager
 
 @using BusinessLayer.Services.Interfaces
-@using Google.Apis.Calendar.v3.Data
 @using Microsoft.AspNetCore.Components.Forms
 @using ModelLayer.Models
 @using coachingWebapp.Components
@@ -422,7 +420,7 @@
 
         try
         {
-            busyTimes = await GoogleService.GetBusyTimes(startDate, endDate);
+            busyTimes = ConvertContactsToBusyTimes(ContactService.GetAllContacts());
 
             availableSlots = GenerateAvailableSlots(startDate, endDate, busyTimes);
         }
@@ -441,6 +439,18 @@
         calendarNeedsInitialization = true;
 
         StateHasChanged();
+    }
+
+    private List<TimePeriod> ConvertContactsToBusyTimes(List<Contact> contacts)
+    {
+        return contacts
+            .Where(c => c.PreferredDateTime != default)
+            .Select(c => new TimePeriod
+            {
+                StartDateTimeOffset = c.PreferredDateTime,
+                EndDateTimeOffset = c.PreferredDateTime.AddMinutes(30)
+            })
+            .ToList();
     }
 
     private List<DateTime> GenerateAvailableSlots(DateTime startDate, DateTime endDate, List<TimePeriod> busyTimes)

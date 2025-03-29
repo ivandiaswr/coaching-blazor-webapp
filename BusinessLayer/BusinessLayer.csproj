@@ -6,8 +6,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Google.Apis.Auth.AspNetCore3" Version="1.68.0" />
-    <PackageReference Include="Google.Apis.Calendar.v3" Version="1.68.0.3592" />
     <PackageReference Include="MailKit" Version="4.8.0" />
     <PackageReference Include="OpenTelemetry" Version="1.11.1" />
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.11.1" />
