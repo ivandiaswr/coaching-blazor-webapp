@@ -63,15 +63,6 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
     .AddEntityFrameworkStores<CoachingDbContext>() // Links Identity to context for storing users and roles in the database
     .AddDefaultTokenProviders(); // Enables features like email confirmation, password reset, and two-factor authentication.
 
-// Configures cookie authentication for the application
-builder.Services.ConfigureApplicationCookie(options =>
-    {
-        options.LoginPath = "/login";
-        options.LogoutPath = "/logout";
-        options.AccessDeniedPath = "/access-denied";
-    }
-);
-
 // Defines policy for Admin role to restrict access to specific parts of the application
 builder.Services.AddAuthorization(options =>
     {
@@ -107,18 +98,36 @@ builder.Services.AddLogging(loggingBuilder =>
 });
 
 // Google
+// builder.Services.AddAuthentication(options =>
+// {
+//     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+//     options.DefaultChallengeScheme = GoogleOpenIdConnectDefaults.AuthenticationScheme;
+// })
+// .AddCookie()
+// .AddGoogleOpenIdConnect(options =>
+// {
+//     options.ClientId = builder.Configuration["GoogleCalendar:ClientId"];
+//     options.ClientSecret = builder.Configuration["GoogleCalendar:ClientSecret"];
+//     options.Scope.Add(Google.Apis.Calendar.v3.CalendarService.Scope.Calendar);
+//     options.SaveTokens = true;
+// });
+
+builder.Services.AddHttpClient();
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = GoogleOpenIdConnectDefaults.AuthenticationScheme;
+    options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 })
-.AddCookie()
-.AddGoogleOpenIdConnect(options =>
+.AddCookie(options =>
 {
-    options.ClientId = builder.Configuration["GoogleCalendar:ClientId"];
-    options.ClientSecret = builder.Configuration["GoogleCalendar:ClientSecret"];
-    options.Scope.Add(Google.Apis.Calendar.v3.CalendarService.Scope.Calendar);
-    options.SaveTokens = true;
+    options.Cookie.Name = ".AspNetCore.Identity.Application";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.LoginPath = "/login";
+    options.LogoutPath = "/logout";
+    options.AccessDeniedPath = "/access-denied";
 });
 
 // Open Telemetry
@@ -167,6 +176,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseStaticFiles();
+
 app.UseAntiforgery();
 
 // When the user logins it created a cookie that UseAuthentication uses to validate

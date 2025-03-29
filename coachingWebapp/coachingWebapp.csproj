@@ -26,6 +26,7 @@
     <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.11.0" />
     <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.11.0" />
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" Version="2.1.9" />
+    <PackageReference Include="System.Net.Http.Json" Version="9.0.3" />
   </ItemGroup>
 
   <ItemGroup>

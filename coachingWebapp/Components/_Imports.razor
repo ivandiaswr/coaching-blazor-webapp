@@ -16,5 +16,10 @@
 @using System.ComponentModel.DataAnnotations
 @using MudBlazor
 
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
 @inject IJSRuntime JSRuntime
 @inject IScrollService ScrollService
+@inject HttpClient HttpClient
+

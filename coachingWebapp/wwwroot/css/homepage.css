@@ -202,6 +202,41 @@ h1:focus {
   color: #636363;
 }
 
+.nav-ul .login-btn {
+  background: var(--accent-orange);
+  color: white;
+  padding: 8px 16px; 
+  border-radius: 5px;
+  text-decoration: none;
+  transition: background 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+}
+
+.nav-ul .login-btn i {
+  margin-right: 6px;
+}
+
+.nav-ul .login-btn:hover {
+  background: var(--accent-orange-hover);
+}
+
+.signup-btn {
+  color: #555;
+  text-decoration: none;
+  padding: 8px 16px;
+}
+
+.signup-btn:hover {
+  color: var(--accent-orange-hover);
+}
+
+.nav-ul .auth-item:first-of-type {
+  border-left: 1px solid #161212;
+  padding-left: 16px;
+  margin-left: 8px;
+}
+
 /* Dropdown */
 .dropdown {
   position: relative;

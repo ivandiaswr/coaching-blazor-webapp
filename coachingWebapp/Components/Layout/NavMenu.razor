@@ -1,4 +1,5 @@
-﻿@inject NavigationManager Navigation
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager Navigation
 
 <div class="container-header">
     <div class="header-content">
@@ -70,6 +71,30 @@
                         Contact
                     </NavLink>
                 </li>
+                <AuthorizeView>
+                    <NotAuthorized>
+                        <li class="auth-item">
+                            <NavLink class="nav-li signup-btn" href="/register">
+                            Register
+                            </NavLink>
+                        </li>
+                        <li class="auth-item">
+                            <NavLink class="nav-li login-btn" href="/login">
+                            <i class="fa-solid fa-user"></i> Login
+                            </NavLink>
+                        </li>
+                    </NotAuthorized>
+                    <Authorized>
+                        <li class="auth-item">
+                            <span class="nav-li user-greeting">Welcome, @context.User.Identity.Name</span>
+                        </li>
+                        <li class="auth-item">
+                            <NavLink class="nav-li logout-btn" href="/logout">
+                            <i class="fa-solid fa-sign-out-alt"></i> Logout
+                            </NavLink>
+                        </li>
+                    </Authorized>
+                </AuthorizeView>
             </ul>
         </nav>
     </div>

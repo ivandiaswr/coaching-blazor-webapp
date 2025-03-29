@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -28,6 +30,18 @@ public class AccountController : ControllerBase
 
             if (result.Succeeded)
             {
+                var user = await _signInManager.UserManager.FindByEmailAsync(loginModel.Email);
+                var principal = await _signInManager.CreateUserPrincipalAsync(user);
+
+                await HttpContext.SignInAsync(
+                    CookieAuthenticationDefaults.AuthenticationScheme,
+                    principal,
+                    new AuthenticationProperties
+                    {
+                        IsPersistent = loginModel.RememberMe,
+                        ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
+                    });
+
                 return Ok();
             }
             else if (result.IsLockedOut)
