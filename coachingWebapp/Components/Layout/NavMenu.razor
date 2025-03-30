@@ -1,5 +1,5 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
-@inject NavigationManager Navigation
+@inject NavigationManager NavigationManager
 
 <div class="container-header">
     <div class="header-content">
@@ -86,7 +86,9 @@
                     </NotAuthorized>
                     <Authorized>
                         <li class="auth-item">
-                            <span class="nav-li user-greeting">Welcome, @context.User.Identity.Name</span>
+                            <NavLink class="nav-li account-btn" href="/account">
+                                <i class="fa-solid fa-user-circle"></i> Account
+                            </NavLink>
                         </li>
                         <li class="auth-item">
                             <NavLink class="nav-li logout-btn" href="/logout">

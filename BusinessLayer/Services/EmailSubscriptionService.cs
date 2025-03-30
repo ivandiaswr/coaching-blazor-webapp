@@ -2,7 +2,6 @@
 using Microsoft.EntityFrameworkCore;
 using ModelLayer.Models;
 using BusinessLayer.Services.Interfaces;
-using Microsoft.Extensions.Logging;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;

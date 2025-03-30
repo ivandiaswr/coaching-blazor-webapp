@@ -1,17 +1,11 @@
 @page "/admin-dashboard"
 @rendermode InteractiveServer
 
-@using BusinessLayer.Services.Interfaces
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Identity
-@using ModelLayer.Models
 
 @inject SignInManager<IdentityUser> SignInManager
-@inject NavigationManager NavigationManager
-@inject AuthenticationStateProvider AuthenticationStateProvider
-@inject IContactService ContactService
-@inject IEmailSubscriptionService EmailSubscriptionService
 
 @inject IDialogService DialogService
 <MudPopoverProvider/> @*only works if its in the page of the mud component*@
@@ -34,104 +28,123 @@
                 <p>Loading user information...</p>
             }
         </div>
-        <div>
-            <a class="btn btn-primary" href="/">remmoved G Auth</a>
-            <button class="btn btn-primary" @onclick="LogoutUser">Logout</button>
-        </div>
     </div>
 
-    <div class="mud-grids-container">
-        <MudDataGrid T="Contact" Items="@contacts" Breakpoint="Breakpoint.Sm" MultiSelection="true" SortMode="SortMode.Multiple" Filterable="true"
-        Hideable="true" QuickFilter="@quickFilterContacts">
-            <ToolBarContent>
-                <MudText Typo="Typo.h4">Contacts</MudText>
-                <MudSpacer />
-                <MudTextField @bind-Value="searchContactsString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"></MudTextField>
-                <MudTooltip Text="Export to Excel">
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ExportContactsToExcel">
-                        <i class="fa-solid fa-file-csv"></i>
-                    </MudButton>
-                </MudTooltip>
-            </ToolBarContent>
-            <Columns>
-                <SelectColumn T="Contact" />
-                <PropertyColumn Property="x => x.Id" Title="Id" Sortable="true" Filterable="false" />
-                <PropertyColumn Property="x => x.FullName" Title="Name" Sortable="true" Filterable="true" />
-                <PropertyColumn Property="x => x.Email" Title="Email" Sortable="false" Filterable="true" />
-                <PropertyColumn Property="x => x.SessionCategory" Title="Session" Sortable="true" Filterable="true" />
-                <PropertyColumn Property="x => x.Message" Title="Message" Sortable="false" Filterable="true">
-                    <CellTemplate>
-                        <div style="overflow-y: auto; max-height: 60px; max-width: 450px; white-space: normal; word-wrap: break-word; padding: 0; margin: 0;">
-                            @context.Item.Message
-                        </div>
-                    </CellTemplate>
-                </PropertyColumn>
-                <PropertyColumn Property="x => x.CreatedAt" Title="CreatedAt" Sortable="true" Filterable="false" >
-                    <CellTemplate>
-                        @context.Item.CreatedAt.ToString("dd-MM-yyyy HH:mm:ss")
-                    </CellTemplate>
-                </PropertyColumn>
-            </Columns>
-            <PagerContent>
-                <MudDataGridPager T="Contact" />
-            </PagerContent>
-        </MudDataGrid>
+    <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
+        <MudTabPanel Text="Calendar">
+            <MudText Typo="Typo.h4">Scheduled Sessions</MudText>
+            <MudCalendar @ref="calendar" Items="@calendarItems" OnCellClick="OnCellClicked" />
+            <!-- Add a dialog or details section for session info if needed -->
+        </MudTabPanel>
 
-        <MudDataGrid T="EmailSubscription" Items="@emailSubscriptions" MultiSelection="true" SortMode="SortMode.Multiple" Filterable="true"
-        Hideable="true" QuickFilter="@quickFilterEmailSubscriptions" @ref="emailSubscriptionGrid">
-            <ToolBarContent>
-                <MudText Typo="Typo.h4">Email Subscriptions</MudText>
-                <MudSpacer />
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!emailSubscriptionGrid.SelectedItems.Any())" OnClick="OpenEmailDialogAsync">
-                Send Email
-                </MudButton>
-                <MudSpacer />
-                <MudTextField @bind-Value="searchEmailSubscriptionsString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"></MudTextField>
-                <MudTooltip Text="Export to Excel">
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ExportEmailSubscriptionsToExcel">
-                        <i class="fa-solid fa-file-csv"></i>
+        <MudTabPanel Text="Sessions">
+            <MudDataGrid T="Session" Items="@sessions" Breakpoint="Breakpoint.Sm" MultiSelection="true" SortMode="SortMode.Multiple" Filterable="true"
+                         Hideable="true" QuickFilter="@quickFilterSessions">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h4">Contacts</MudText>
+                    <MudSpacer />
+                    <MudTextField @bind-Value="searchContactsString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"></MudTextField>
+                    <MudTooltip Text="Export to Excel">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ExportContactsToExcel">
+                            <i class="fa-solid fa-file-csv"></i>
+                        </MudButton>
+                    </MudTooltip>
+                </ToolBarContent>
+                <Columns>
+                    <SelectColumn T="Session" />
+                    <PropertyColumn Property="x => x.Id" Title="Id" Sortable="true" Filterable="false" />
+                    <PropertyColumn Property="x => x.FullName" Title="Name" Sortable="true" Filterable="true" />
+                    <PropertyColumn Property="x => x.Email" Title="Email" Sortable="false" Filterable="true" />
+                    <PropertyColumn Property="x => x.SessionCategory" Title="Session" Sortable="true" Filterable="true" />
+                    <PropertyColumn Property="x => x.Message" Title="Message" Sortable="false" Filterable="true">
+                        <CellTemplate>
+                            <div style="overflow-y: auto; max-height: 60px; max-width: 450px; white-space: normal; word-wrap: break-word; padding: 0; margin: 0;">
+                                @context.Item.Message
+                            </div>
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.CreatedAt" Title="CreatedAt" Sortable="true" Filterable="false">
+                        <CellTemplate>
+                            @context.Item.CreatedAt.ToString("dd-MM-yyyy HH:mm:ss")
+                        </CellTemplate>
+                    </PropertyColumn>
+                </Columns>
+                <PagerContent>
+                    <MudDataGridPager T="Session" />
+                </PagerContent>
+            </MudDataGrid>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Email Subscriptions">
+            <MudDataGrid T="EmailSubscription" Items="@emailSubscriptions" MultiSelection="true" SortMode="SortMode.Multiple" Filterable="true"
+                         Hideable="true" QuickFilter="@quickFilterEmailSubscriptions" @ref="emailSubscriptionGrid">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h4">Email Subscriptions</MudText>
+                    <MudSpacer />
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!emailSubscriptionGrid.SelectedItems.Any())" OnClick="OpenEmailDialogAsync">
+                        Send Email
                     </MudButton>
-                </MudTooltip>
-            </ToolBarContent>
-            <Columns>
-                <SelectColumn T="EmailSubscription" />
-                <PropertyColumn Property="x => x.Id" Title="Id" Sortable="true" Filterable="false" />
-                <PropertyColumn Property="x => x.Name" Title="Name" Sortable="true" Filterable="true" />
-                <PropertyColumn Property="x => x.Email" Title="Email" Sortable="true" Filterable="true" />
-                <PropertyColumn Property="x => x.IsSubscribed" Title="IsSubscribed" Sortable="false" Filterable="true" />
-                <PropertyColumn Property="x => x.SubscribedAt" Title="SubscribedAt" Sortable="true" Filterable="true" >
-                    <CellTemplate>
-                        @context.Item.SubscribedAt.ToString("dd-MM-yyyy HH:mm:ss")
-                    </CellTemplate>
-                </PropertyColumn>
-                <PropertyColumn Property="x => x.UnsubscribedAt" Title="UnsubscribedAt" Sortable="false" Filterable="true" />
-                <PropertyColumn Property="x => x.CreatedAt" Title="CreatedAt" Sortable="true" Filterable="false" >
-                    <CellTemplate>
-                        @context.Item.CreatedAt.ToString("dd-MM-yyyy HH:mm:ss")
-                    </CellTemplate>
-                </PropertyColumn>
-            </Columns>
-            <PagerContent>
-                <MudDataGridPager T="EmailSubscription" />
-            </PagerContent>
-        </MudDataGrid>
-    </div>
+                    <MudSpacer />
+                    <MudTextField @bind-Value="searchEmailSubscriptionsString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"></MudTextField>
+                    <MudTooltip Text="Export to Excel">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ExportEmailSubscriptionsToExcel">
+                            <i class="fa-solid fa-file-csv"></i>
+                        </MudButton>
+                    </MudTooltip>
+                </ToolBarContent>
+                <Columns>
+                    <SelectColumn T="EmailSubscription" />
+                    <PropertyColumn Property="x => x.Id" Title="Id" Sortable="true" Filterable="false" />
+                    <PropertyColumn Property="x => x.Name" Title="Name" Sortable="true" Filterable="true" />
+                    <PropertyColumn Property="x => x.Email" Title="Email" Sortable="true" Filterable="true" />
+                    <PropertyColumn Property="x => x.IsSubscribed" Title="Subscribed" Sortable="false" Filterable="true" >
+                        <CellTemplate>
+                            @if (context.Item.IsSubscribed)
+                            {
+                                <span class="text-success"><i class="fas fa-check-circle"></i> Yes</span>
+                            }
+                            else
+                            {
+                                <span class="text-danger"><i class="fas fa-times-circle"></i> No</span>
+                            }
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.SubscribedAt" Title="Subscribed Date" Sortable="true" Filterable="true">
+                        <CellTemplate>
+                            @context.Item.SubscribedAt.ToString("dd-MM-yyyy HH:mm:ss")
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.UnsubscribedAt" Title="Unsubscribed Date" Sortable="false" Filterable="true" />
+                    <PropertyColumn Property="x => x.CreatedAt" Title="Created Date" Sortable="true" Filterable="false">
+                        <CellTemplate>
+                            @context.Item.CreatedAt.ToString("dd-MM-yyyy HH:mm:ss")
+                        </CellTemplate>
+                    </PropertyColumn>
+                </Columns>
+                <PagerContent>
+                    <MudDataGridPager T="EmailSubscription" />
+                </PagerContent>
+            </MudDataGrid>
+        </MudTabPanel>
+    </MudTabs>
 </section>
 
 @code {
     private string pageTitle = "Admin Dashboard | Ítala Veloso";
     private AuthenticationState authState;
-    private List<Contact> contacts;
+    private List<Session> sessions;
     private List<EmailSubscription> emailSubscriptions;
     private MudDataGrid<EmailSubscription> emailSubscriptionGrid;
+    private MudCalendar calendar;
+    private List<CalendarItem> calendarItems = new();
 
     private string loginError = string.Empty;
     private string searchContactsString {get; set;}
     private string searchEmailSubscriptionsString {get; set;}
 
-    private Func<Contact, bool> quickFilterContacts => c =>
+    private Func<Session, bool> quickFilterSessions => c =>
         string.IsNullOrEmpty(searchContactsString) ||
         c.FullName.Contains(searchContactsString, StringComparison.OrdinalIgnoreCase) ||
         c.Email.Contains(searchContactsString, StringComparison.OrdinalIgnoreCase) ||
@@ -145,8 +158,16 @@
     protected override async Task OnInitializedAsync()
     {
         authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        contacts = ContactService.GetAllContacts() ?? new List<Contact>();
+        sessions = SessionService.GetAllSessions() ?? new List<Session>();
         emailSubscriptions = EmailSubscriptionService.GetAllEmailSubscriptions() ?? new List<EmailSubscription>();
+        calendarItems = sessions.Select(c => new CalendarItem
+        {
+            Start = c.PreferredDateTime,
+            End = c.PreferredDateTime.AddMinutes(45),
+            Text = $"{c.FullName} - {c.SessionCategory}"
+        }).ToList();
+
+        StateHasChanged();
     }
 
     private Task OpenEmailDialogAsync()
@@ -173,11 +194,11 @@
         worksheet.Cell(1, 5).Value = "Message";
         worksheet.Cell(1, 6).Value = "CreatedAt";
 
-        var filteredContacts = contacts.Where(quickFilterContacts).ToList();
+        var filteredSessions = sessions.Where(quickFilterSessions).ToList();
 
-        for (int i = 0; i < filteredContacts.Count; i++)
+        for (int i = 0; i < filteredSessions.Count; i++)
         {
-            var contact = filteredContacts[i];
+            var contact = filteredSessions[i];
             worksheet.Cell(i + 2, 1).Value = contact.Id;
             worksheet.Cell(i + 2, 2).Value = contact.FullName;
             worksheet.Cell(i + 2, 3).Value = contact.Email;
@@ -227,27 +248,5 @@
 
         var fileName = $"EmailSubscriptions_{DateTime.Now:yyyyMMddHHmmss}.xlsx";
         await JSRuntime.InvokeVoidAsync("saveAsFile", fileName, Convert.ToBase64String(stream.ToArray()));
-    }
-
-    private async Task LogoutUser()
-    {
-        try
-        {
-            var result = await JSRuntime.InvokeAsync<SessionResult>("logout");
-
-            if (result.Success)
-            {
-                NavigationManager.NavigateTo("/");
-            }
-            else
-            {
-                loginError = result.Error;
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error during logout: {ex.Message}");
-            loginError = "An unexpected error occurred. Please try again.";
-        }
     }
 }

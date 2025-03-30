@@ -70,7 +70,7 @@ builder.Services.AddAuthorization(options =>
 );
 
 builder.Services.AddScoped<IEmailSubscriptionService, EmailSubscriptionService>();
-builder.Services.AddScoped<IContactService, ContactService>();
+builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<IScrollService, ScrollService>();
 builder.Services.AddScoped<ISecurityService, SecurityService>();
 builder.Services.AddScoped<IHelperService, HelperService>();

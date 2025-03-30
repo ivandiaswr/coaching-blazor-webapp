@@ -12,9 +12,11 @@
 @using BusinessLayer.Services.Interfaces
 
 @using ModelLayer
+@using ModelLayer.Models
 @using BusinessLayer
 @using System.ComponentModel.DataAnnotations
 @using MudBlazor
+@using Heron.MudCalendar
 
 @using Microsoft.AspNetCore.Components.Authorization
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -23,3 +25,7 @@
 @inject IScrollService ScrollService
 @inject HttpClient HttpClient
 
+@inject NavigationManager NavigationManager
+
+@inject ISessionService SessionService
+@inject IEmailSubscriptionService EmailSubscriptionService

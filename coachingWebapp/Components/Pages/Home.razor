@@ -1,18 +1,11 @@
 ﻿@page "/"
 @rendermode InteractiveServer
 
-@inject IEmailSubscriptionService EmailSubscriptionService
-@inject IContactService ContactService
 @inject IHttpClientFactory HttpClientFactory
 @inject ILogService LogService
 
-@inject NavigationManager NavigationManager
-
 @using BusinessLayer.Services.Interfaces
 @using Microsoft.AspNetCore.Components.Forms
-@using ModelLayer.Models
-@using coachingWebapp.Components
-
 
 <PageTitle>@pageTitle</PageTitle>
 
@@ -199,28 +192,28 @@
                 <div class="unified-container">
                     <div class="content-grid">         
                         <div class="form-section">
-                            <h1><span class="highlight">Google</span> Calendar</h1>
-                            <EditForm Model="@contact" OnValidSubmit="ContactSubmitAsync" FormName="contactForm">
+                            <h1><span class="highlight">Calendar</span></h1>
+                            <EditForm Model="@session" OnValidSubmit="CreateSessionAsync" FormName="sessionForm">
                                 <DataAnnotationsValidator />
 
                                 <div class="form-group">
                                     <label for="FirstName">First Name</label>
-                                    <InputText id="firstName" class="form-control" @bind-Value="contact.FirstName" placeholder="First Name" />
-                                    <ValidationMessage For="@(() => contact.FirstName)" />
+                                    <InputText id="firstName" class="form-control" @bind-Value="session.FirstName" placeholder="First Name" />
+                                    <ValidationMessage For="@(() => session.FirstName)" />
                                 </div>
                                 <div class="form-group">
                                     <label for="LastName">Last Name</label>
-                                    <InputText id="lastName" class="form-control" @bind-Value="contact.LastName" placeholder="Last Name" />
-                                    <ValidationMessage For="@(() => contact.LastName)" />
+                                    <InputText id="lastName" class="form-control" @bind-Value="session.LastName" placeholder="Last Name" />
+                                    <ValidationMessage For="@(() => session.LastName)" />
                                 </div>
                                 <div class="form-group">
                                     <label for="Email">Email</label>
-                                    <InputText id="email" class="form-control" @bind-Value="contact.Email" placeholder="Your Email" />
-                                    <ValidationMessage For="@(() => contact.Email)" />
+                                    <InputText id="email" class="form-control" @bind-Value="session.Email" placeholder="Your Email" />
+                                    <ValidationMessage For="@(() => session.Email)" />
                                 </div>
                                <div class="form-group custom-select">
                                     <label for="SessionCategory">Session</label>
-                                    <InputSelect id="SessionCategory" class="form-control hoverable-input" @bind-Value="contact.SessionCategory">
+                                    <InputSelect id="SessionCategory" class="form-control hoverable-input" @bind-Value="session.SessionCategory">
                                         @foreach (var type in Enum.GetValues(typeof(SessionType)).Cast<SessionType>())
                                         {
                                             <option value="@type">
@@ -228,26 +221,26 @@
                                             </option>
                                         }
                                     </InputSelect>
-                                    <ValidationMessage For="@(() => contact.SessionCategory)" />
+                                    <ValidationMessage For="@(() => session.SessionCategory)" />
                                 </div>
                                 <div class="form-group">
                                     <label for="PreferredDateTime">Date & Time</label>
                                     <div class="input-with-icon">
-                                        <InputText id="PreferredDateTime" class="form-control hoverable-input" @bind-Value="contact.PreferredDateTimeString" @onclick="ToggleCalendar" placeholder="Preffered time for the session" readonly/>
+                                        <InputText id="PreferredDateTime" class="form-control hoverable-input" @bind-Value="session.PreferredDateTimeString" @onclick="ToggleCalendar" placeholder="Preffered time for the session" readonly/>
                                         <i class="fas fa-calendar calendar-icon" @onclick="ToggleCalendar"></i>
                                     </div>
-                                    <ValidationMessage For="@(() => contact.PreferredDateTimeString)" />
+                                    <ValidationMessage For="@(() => session.PreferredDateTimeString)" />
                                 </div>
                                 @if (showTimeSlots)
                                 {
-                                    <Calendar IsVisible="showTimeSlots" IsVisibleChanged="OnModalVisibilityChanged">
+                                    <Calendar IsVisible="showTimeSlots" IsVisibleChanged="OnModalVisibilityChanged" CurrentTimeZoneDisplay="@currentTimeZoneDisplay">
                                         <div id="calendar"></div>
                                     </Calendar>
                                 }
                                 <div class="form-group message-group">
                                     <label for="Message">Message</label>
-                                    <InputTextArea id="message" class="form-control" @bind-Value="contact.Message" rows="6" placeholder="Share what's on your mind..." />
-                                    <ValidationMessage For="@(() => contact.Message)" />
+                                    <InputTextArea id="message" class="form-control" @bind-Value="session.Message" rows="6" placeholder="Share what's on your mind..." />
+                                    <ValidationMessage For="@(() => session.Message)" />
                                 </div>
                                 <div id="formStatus" class="form-status">
                                     @if (isLoggingIn)
@@ -259,7 +252,7 @@
                                     }
                                     else
                                     {
-                                        @contactFormStatus
+                                        @sessionFormStatus
                                     }
                                 </div>
                                 <button type="submit"><i class="fa-brands fa-google"></i> Book Your Free Discovery Call</button>
@@ -304,7 +297,7 @@
 @code {
     private string pageTitle = "Home | Ítala Veloso";
     private EmailSubscription emailSubscription = new EmailSubscription();
-    private Contact contact = new Contact();
+    private Session session = new Session();
     private List<Testimonial> testimonials = new List<Testimonial>
         {
             new Testimonial
@@ -334,7 +327,7 @@
         };
     private string subscriptionMessage;
     private bool isSubscribing = false;
-    private string contactFormStatus = string.Empty;
+    private string sessionFormStatus = string.Empty;
     private bool canScroll = true;
     private bool showTimeSlots = false;
     private List<DateTime> availableSlots;
@@ -342,7 +335,7 @@
     private bool calendarNeedsInitialization = false;
     private bool isLoggingIn = false;
     private bool isCalendarLoading = false;
-    private DotNetObjectReference<Home> DotNetRef;
+    private string currentTimeZoneDisplay = "detecting...";
 
     protected override void OnInitialized()
     {
@@ -355,12 +348,11 @@
         {
             calendarNeedsInitialization = false;
 
-            using var dotNetRef = DotNetObjectReference.Create(this);
-
             await JSRuntime.InvokeVoidAsync("initializeCalendar",
                 DotNetObjectReference.Create(this),
                 availableSlots.Select(slot => slot.ToString("o")).ToList(), // ISO 8601 format
-                busyTimes
+                busyTimes,
+                availableSlots.FirstOrDefault().ToString("o")
             );
         }
 
@@ -376,31 +368,38 @@
             }
         }
     }
+
+    [JSInvokable]
+    public void SetUserTimeZone(string timeZoneString)
+    {
+        currentTimeZoneDisplay = timeZoneString;
+        StateHasChanged();
+    }
     
     #region ContactMessage
-    private async Task ContactSubmitAsync()
+    private async Task CreateSessionAsync()
     {
         try
         {
             isLoggingIn = true; 
             StateHasChanged();
- 
-            var result = await ContactService.ContactSubmitAsync(contact);
             
-            contactFormStatus = result ? "Thank you for your message. Meeting scheduled on Google. We'll get back to you soon!" : "Sending contact information failed. Please try again or contact support.";
+            var result = await SessionService.CreateSessionAsync(session);
+            
+            sessionFormStatus = result ? "Thank you for your message. Meeting scheduled on Google. We'll get back to you soon!" : "Sending contact information failed. Please try again or contact support.";
 
             if (result) 
             {
                 @* UserMetrics.RecordSessionBooking("booked", userId); *@
-                contact.UpdateFullName();
-                result = await EmailSubscriptionService.SubscriptionAsync(new EmailSubscription { Name = contact.FullName, Email = contact.Email });
-                contact = new Contact();
+                session.UpdateFullName();
+                result = await EmailSubscriptionService.SubscriptionAsync(new EmailSubscription { Name = session.FullName, Email = session.Email });
+                session = new Session();
             }            
         }
         catch(Exception ex)
         {
-            await LogService.LogError("Error during ContactSubmitAsync", ex.Message);
-            contactFormStatus = "An error occurred. Please try again later.";
+            await LogService.LogError("Error during CreateSessionAsync", ex.Message);
+            sessionFormStatus = "An error occurred. Please try again later.";
         }
         finally 
         {
@@ -420,7 +419,7 @@
 
         try
         {
-            busyTimes = ConvertContactsToBusyTimes(ContactService.GetAllContacts());
+            busyTimes = ConvertContactsToBusyTimes(SessionService.GetAllSessions());
 
             availableSlots = GenerateAvailableSlots(startDate, endDate, busyTimes);
         }
@@ -441,15 +440,15 @@
         StateHasChanged();
     }
 
-    private List<TimePeriod> ConvertContactsToBusyTimes(List<Contact> contacts)
+    private List<TimePeriod> ConvertContactsToBusyTimes(List<Session> sessions)
     {
-        return contacts
+        return sessions
             .Where(c => c.PreferredDateTime != default)
             .Select(c => new TimePeriod
-            {
-                StartDateTimeOffset = c.PreferredDateTime,
-                EndDateTimeOffset = c.PreferredDateTime.AddMinutes(30)
-            })
+                    {
+                        StartDateTimeOffset = new DateTimeOffset(c.PreferredDateTime, TimeSpan.Zero),
+                        EndDateTimeOffset = new DateTimeOffset(c.PreferredDateTime.AddMinutes(45), TimeSpan.Zero)
+                    })
             .ToList();
     }
 
@@ -458,11 +457,13 @@
         var slots = new List<DateTime>();
         var workStartTime = new TimeSpan(10, 0, 0);
         var workEndTime = new TimeSpan(21, 0, 0);
-        var slotDuration = TimeSpan.FromMinutes(30);
+        var slotDuration = TimeSpan.FromMinutes(45);
+
+        var busyStartTimes = busyTimes.Select(b => b.StartDateTimeOffset).ToHashSet(); 
 
         for (var date = startDate; date <= endDate; date = date.AddDays(1))
         {
-             if (@*date.DayOfWeek == DayOfWeek.Saturday ||*@ date.DayOfWeek == DayOfWeek.Sunday) 
+             if (date.DayOfWeek == DayOfWeek.Sunday) 
                 continue;
 
             for (var time = workStartTime; time < workEndTime; time = time.Add(slotDuration))
@@ -470,20 +471,15 @@
                 var slotStart = date.Date.Add(time);
                 var slotEnd = slotStart.Add(slotDuration);
 
-                bool isBusy = false;
-                foreach (var busy in busyTimes)
-                {
-                    if (slotStart < busy.EndDateTimeOffset && busy.StartDateTimeOffset < slotEnd)
-                    {
-                        isBusy = true;
-                        break;
-                    }
-                }
+                var slotStartOffset = new DateTimeOffset(slotStart, TimeSpan.Zero);
 
-                if (!isBusy)
-                {
-                    slots.Add(slotStart);
-                }
+                bool isBusy = busyTimes.Any(busy => slotStartOffset < busy.EndDateTimeOffset 
+                    && new DateTimeOffset(slotEnd, TimeSpan.Zero) > busy.StartDateTimeOffset);
+
+                if (isBusy)
+                    continue;
+
+                slots.Add(slotStart);
             }
         }
 
@@ -499,8 +495,8 @@
 
     private void SelectTimeSlot(DateTime selectedSlot)
     {
-        contact.PreferredDateTime = selectedSlot;
-        contact.PreferredDateTimeString = selectedSlot.ToString("dd/MM/yyyy HH:mm");
+        session.PreferredDateTime = selectedSlot;
+        session.PreferredDateTimeString = selectedSlot.ToString("dd/MM/yyyy HH:mm");
         showTimeSlots = false;
         calendarNeedsInitialization = false;
 

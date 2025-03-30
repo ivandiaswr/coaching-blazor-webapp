@@ -1,13 +1,8 @@
+@using System.Globalization
 <div class="calendar-modal @(IsVisible ? "show" : "")" @onclick="Close">
     <div class="calendar-modal-content" @onclick:stopPropagation="true">
         <div class="timezone-info">
-            @{
-                var englandTimeZone = TimeZoneInfo.FindSystemTimeZoneById("GMT Standard Time");
-                var isDST = englandTimeZone.IsDaylightSavingTime(DateTime.UtcNow);
-                var currentOffset = englandTimeZone.BaseUtcOffset + (isDST ? TimeSpan.FromHours(1) : TimeSpan.Zero);
-                var displayName = $"UTC{(currentOffset.Hours >= 0 ? "+" : "")}{currentOffset.Hours} - Dublin, Edinburgh, Lisbon, London";
-            }
-            Timezone: <strong>@displayName</strong>
+            Timezone: <strong>@CurrentTimeZoneDisplay</strong>
         </div>
         @ChildContent
     </div>
@@ -17,6 +12,7 @@
     [Parameter] public bool IsVisible { get; set; }
     [Parameter] public EventCallback<bool> IsVisibleChanged { get; set; }
     [Parameter] public RenderFragment ChildContent { get; set; }
+    [Parameter] public string CurrentTimeZoneDisplay { get; set; } = "detecting...";
 
     private void Close()
     {

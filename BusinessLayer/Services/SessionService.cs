@@ -1,20 +1,19 @@
 using BusinessLayer.Services.Interfaces;
 using DataAccessLayer;
 using MailKit.Security;
-using Microsoft.Extensions.Logging;
 using MimeKit;
 using MailKit.Net.Smtp;
 using ModelLayer.Models;
 namespace BusinessLayer.Services;
 
-public class ContactService : IContactService
+public class SessionService : ISessionService
 {
     private readonly CoachingDbContext _context;
     private readonly IHelperService _helperService;
     private readonly IEmailSubscriptionService _emailSubscriptionService;
     private readonly ILogService _logService;
 
-    public ContactService(CoachingDbContext context, 
+    public SessionService(CoachingDbContext context, 
         IHelperService helperService,
         IEmailSubscriptionService emailSubscriptionService,
         ILogService logService)
@@ -25,22 +24,22 @@ public class ContactService : IContactService
         this._logService = logService;
     }
 
-    public List<Contact> GetAllContacts()
+    public List<Session> GetAllSessions()
     {
         try
         {
-            var contacts = _context.Contacts.ToList();
+            var contacts = _context.Sessions.ToList();
 
             return contacts;
         } 
         catch(Exception ex)
         {
-            _logService.LogError("GetAllContacts", ex.Message);
+            _logService.LogError("GetAllSessions", ex.Message);
              throw;
         }
     }
 
-    public async Task<bool> ContactSubmitAsync(Contact contact)
+    public async Task<bool> CreateSessionAsync(Session contact)
     {
         if(contact is null)
             return false;
@@ -48,11 +47,12 @@ public class ContactService : IContactService
         try
         {
             contact.CreatedAt = DateTime.UtcNow;
+            contact.IsSessionBooking = true; // add Outro option?
             contact.UpdateFullName();
 
-            _context.Contacts.Add(contact);
+            _context.Sessions.Add(contact);
 
-            await SendEmailAsync(contact); // send email to the admin
+            //await SendEmailAsync(contact); // send email to the admin
 
             await _context.SaveChangesAsync();
         }
@@ -76,7 +76,22 @@ public class ContactService : IContactService
         return true;
     }
 
-    public async Task SendEmailAsync(Contact contact)
+    public Session GetSessionById(int id)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void UpdateSession(Session session)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void DeleteSession(int id)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task SendEmailAsync(Session contact)
     {
         var smtpServer = _helperService.GetConfigValue("SmtpSettings:Server");
         var smtpPort = int.Parse(_helperService.GetConfigValue("SmtpSettings:Port") ?? "");

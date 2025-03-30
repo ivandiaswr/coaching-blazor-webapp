@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ModelLayer.Models;
 
-public class Contact
+public class Session
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -17,7 +17,6 @@ public class Contact
     public string FullName { get; set; } = string.Empty;
     [Required(ErrorMessage = "Please provide a email address.")]
     [EmailAddress(ErrorMessage = "Please provide a valid email address.")]
-    //[RegularExpression(@"^[a-zA-Z0-9._%+-]+@gmail\.com$", ErrorMessage = "Only Gmail email addresses are allowed.")]
     public string Email { get; set; } = string.Empty;
     [Required(ErrorMessage = "Please select a session.")]
     public SessionType SessionCategory { get; set; } 
@@ -28,12 +27,10 @@ public class Contact
     [Required(ErrorMessage = "Let us know what you'd like to discuss in the session.")]
     public string Message { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } 
-    public bool IsSessionBooking { get; set; } = true;
+    public bool IsSessionBooking { get; set; }
+    public bool IsLive { get; set; } = false;
+    public string SessionId { get; set; } = Guid.NewGuid().ToString();
 
-
-    /// <summary>
-    /// Updates the full name property
-    /// </summary>
     public void UpdateFullName()
     {
         FullName = $"{FirstName} {LastName}".Trim();

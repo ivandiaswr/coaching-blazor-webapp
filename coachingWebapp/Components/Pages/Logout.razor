@@ -1,0 +1,28 @@
+@page "/logout"
+@rendermode InteractiveServer
+
+@inject NavigationManager NavigationManager
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var result = await JSRuntime.InvokeAsync<SessionResult>("logout");
+
+            if (result.Success)
+            {
+                NavigationManager.NavigateTo("/");
+            }
+            else
+            {
+                //loginError = result.Error;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during logout: {ex.Message}");
+            //loginError = "An unexpected error occurred. Please try again.";
+        }
+    }
+}

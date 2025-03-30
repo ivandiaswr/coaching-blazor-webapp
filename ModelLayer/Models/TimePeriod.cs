@@ -1,5 +1,5 @@
 public class TimePeriod
 {
-    public DateTime StartDateTimeOffset { get; set; }
-    public DateTime EndDateTimeOffset { get; set; }
+    public DateTimeOffset StartDateTimeOffset { get; set; }
+    public DateTimeOffset EndDateTimeOffset { get; set; }
 }

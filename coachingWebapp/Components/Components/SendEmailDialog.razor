@@ -16,7 +16,7 @@
 </MudDialog>
 
 @code {
-    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    [Parameter] public EventCallback<DialogResult> OnDialogResult { get; set; }
     [Parameter] public List<string> RecipientEmails { get; set; }
     private string EmailSubject { get; set; }
     private string EmailBody { get; set; }
@@ -29,11 +29,12 @@
         try
         {
             await EmailSubscriptionService.SendCustomEmailAsync(RecipientEmails, EmailSubject, EmailBody);
-            MudDialog.Close(DialogResult.Ok(true));
+            await OnDialogResult.InvokeAsync(DialogResult.Ok(true));        
         }
         catch (Exception ex)
         {
-           
+           Console.WriteLine($"Error sending email: {ex.Message}");
+            await OnDialogResult.InvokeAsync(DialogResult.Ok(false));
         }
         finally
         {
@@ -41,5 +42,5 @@
         }
     }
 
-    private void Cancel() => MudDialog.Cancel();
+    private async Task Cancel() => await OnDialogResult.InvokeAsync(DialogResult.Cancel());
 }
