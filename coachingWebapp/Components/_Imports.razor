@@ -11,6 +11,7 @@
 @using coachingWebapp.Components.Components
 @using BusinessLayer.Services.Interfaces
 
+
 @using ModelLayer
 @using ModelLayer.Models
 @using BusinessLayer
@@ -24,8 +25,10 @@
 @inject IJSRuntime JSRuntime
 @inject IScrollService ScrollService
 @inject HttpClient HttpClient
+@inject ILogService LogService
 
 @inject NavigationManager NavigationManager
 
 @inject ISessionService SessionService
 @inject IEmailSubscriptionService EmailSubscriptionService
+

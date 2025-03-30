@@ -2,10 +2,10 @@
 @rendermode InteractiveServer
 
 @inject IHttpClientFactory HttpClientFactory
-@inject ILogService LogService
 
-@using BusinessLayer.Services.Interfaces
 @using Microsoft.AspNetCore.Components.Forms
+
+<MudPopoverProvider/> 
 
 <PageTitle>@pageTitle</PageTitle>
 
@@ -231,12 +231,12 @@
                                     </div>
                                     <ValidationMessage For="@(() => session.PreferredDateTimeString)" />
                                 </div>
-                                @if (showTimeSlots)
-                                {
-                                    <Calendar IsVisible="showTimeSlots" IsVisibleChanged="OnModalVisibilityChanged" CurrentTimeZoneDisplay="@currentTimeZoneDisplay">
-                                        <div id="calendar"></div>
-                                    </Calendar>
-                                }
+                                <Calendar @bind-IsVisible="showTimeSlots"
+                                                Slots="availableSlots"
+                                                BusyTimes="busyTimesConverted"
+                                                FirstAvailableDate="firstAvailableDate"
+                                                CurrentTimeZoneDisplay="@currentTimeZoneDisplay"
+                                                OnSlotSelected="HandleSlotSelected" />
                                 <div class="form-group message-group">
                                     <label for="Message">Message</label>
                                     <InputTextArea id="message" class="form-control" @bind-Value="session.Message" rows="6" placeholder="Share what's on your mind..." />
@@ -295,68 +295,59 @@
 </section>
 
 @code {
-    private string pageTitle = "Home | Ítala Veloso";
-    private EmailSubscription emailSubscription = new EmailSubscription();
+private string pageTitle = "Home | Ítala Veloso";
     private Session session = new Session();
     private List<Testimonial> testimonials = new List<Testimonial>
+    {
+        new Testimonial
         {
-            new Testimonial
-            {
-                Id = 1,
-                Path = "https://italaveloso.com/Testimonials/testimonial_Laviniah.mp4",
-                Results = "Ítala been really helpful in terms of giving me concrete knowedge about things to do with trauma, how it affects our behaviours, thinking, patterns; in order to change our actions and outputs into this world. There has been such growth and work of development and I am very proud with where I am right now. Largely due to Ítala.",
-                Author = "Laviniah",
-                Role = "- Cyber Security Analyst"
-            },
-            new Testimonial
-            {
-                Id = 2,
-                Path = "https://italaveloso.com/Testimonials/testimonial_Fi.mp4",
-                Results = "Ítala kept getting me into this place that it is ok to feel what I was feeling and to no rush it! It's ok to feel the love. It is ok to feel a bit weird, it is ok to feel the love (I've never known how to deal with and how to receive love and all of the sudden there was so much love in the atmosphere)... She gave me the time that I really needed to process that and I am eternally grateful.",
-                Author = "Fi",
-                Role = "- Civil Servant"
-            },
-            new Testimonial
-            {
-                Id = 3,
-                Path = "https://italaveloso.com/Testimonials/testimonial_Monica.mp4",
-                Results = "With coaching, she really helped me to get to know myself better; to believe more in myself... I am really grateful to have unlocked and let go of things that happened in my past that was preventing me to move forward and improve myself. I am really thankful for that. The biggest knowledge I took from this transformation is that I am Capable of more things that I thought that I was. I am such a Stronger person now, since coaching. I highly recommend!",
-                Author = "Mónica",
-                Role = "- Oral Health Backoffice Assistant"
-            }
-        };
-    private string subscriptionMessage;
-    private bool isSubscribing = false;
+            Id = 1,
+            Path = "https://italaveloso.com/Testimonials/testimonial_Laviniah.mp4",
+            Results = "Ítala been really helpful in terms of giving me concrete knowedge about things to do with trauma...",
+            Author = "Laviniah",
+            Role = "- Cyber Security Analyst"
+        },
+        new Testimonial
+        {
+            Id = 2,
+            Path = "https://italaveloso.com/Testimonials/testimonial_Fi.mp4",
+            Results = "Ítala kept getting me into this place that it is ok to feel what I was feeling...",
+            Author = "Fi",
+            Role = "- Civil Servant"
+        },
+        new Testimonial
+        {
+            Id = 3,
+            Path = "https://italaveloso.com/Testimonials/testimonial_Monica.mp4",
+            Results = "With coaching, she really helped me to get to know myself better...",
+            Author = "Mónica",
+            Role = "- Oral Health Backoffice Assistant"
+        }
+    };
     private string sessionFormStatus = string.Empty;
     private bool canScroll = true;
     private bool showTimeSlots = false;
-    private List<DateTime> availableSlots;
-    private List<TimePeriod> busyTimes;
-    private bool calendarNeedsInitialization = false;
+    private List<DateTime> availableSlots = new();
+    private List<(DateTimeOffset Start, DateTimeOffset End)> busyTimesConverted = new();
+    private DateTime? firstAvailableDate = null;
     private bool isLoggingIn = false;
     private bool isCalendarLoading = false;
     private string currentTimeZoneDisplay = "detecting...";
 
     protected override void OnInitialized()
     {
-        JSRuntime.InvokeVoidAsync("setTitle", pageTitle);
+        
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if(calendarNeedsInitialization)
+        if (firstRender)
         {
-            calendarNeedsInitialization = false;
-
-            await JSRuntime.InvokeVoidAsync("initializeCalendar",
-                DotNetObjectReference.Create(this),
-                availableSlots.Select(slot => slot.ToString("o")).ToList(), // ISO 8601 format
-                busyTimes,
-                availableSlots.FirstOrDefault().ToString("o")
-            );
+            await JSRuntime.InvokeVoidAsync("setTitle", pageTitle);
+            currentTimeZoneDisplay = await JSRuntime.InvokeAsync<string>("eval", "Intl.DateTimeFormat().resolvedOptions().timeZone");
         }
 
-        if(canScroll)
+        if (canScroll)
         {
             if (NavigationManager.Uri.Contains('#'))
             {
@@ -367,13 +358,6 @@
                 await ScrollService.ScrollToTop();
             }
         }
-    }
-
-    [JSInvokable]
-    public void SetUserTimeZone(string timeZoneString)
-    {
-        currentTimeZoneDisplay = timeZoneString;
-        StateHasChanged();
     }
     
     #region ContactMessage
@@ -386,7 +370,9 @@
             
             var result = await SessionService.CreateSessionAsync(session);
             
-            sessionFormStatus = result ? "Thank you for your message. Meeting scheduled on Google. We'll get back to you soon!" : "Sending contact information failed. Please try again or contact support.";
+            sessionFormStatus = result 
+            ? "Thank you for your message. Meeting scheduled on Google. We'll get back to you soon!" 
+            : "Sending contact information failed. Please try again or contact support.";
 
             if (result) 
             {
@@ -413,57 +399,50 @@
         if (isCalendarLoading) return;
 
         isCalendarLoading = true;
+        showTimeSlots = !showTimeSlots;
 
         var startDate = DateTime.UtcNow.Date.AddDays(2);
         var endDate = startDate.AddDays(25);
 
         try
         {
-            busyTimes = ConvertContactsToBusyTimes(SessionService.GetAllSessions());
+            var sessions = SessionService.GetAllSessions() ?? new List<Session>();
+            busyTimesConverted = sessions
+                .Where(c => c.PreferredDateTime != default)
+                .Select(c => (
+                    Start: new DateTimeOffset(c.PreferredDateTime, TimeSpan.Zero),
+                    End: new DateTimeOffset(c.PreferredDateTime.AddMinutes(45), TimeSpan.Zero)
+                ))
+                .ToList();
 
-            availableSlots = GenerateAvailableSlots(startDate, endDate, busyTimes);
+            availableSlots = GenerateAvailableSlots(DateTime.UtcNow.Date.AddDays(2), busyTimesConverted);
+            firstAvailableDate = availableSlots.Any() ? availableSlots.Min() : DateTime.Now;
         }
         catch (Exception ex)
         {
             await LogService.LogError("Failed to refresh calendar data", ex.Message);
             availableSlots = new List<DateTime>();
-            busyTimes = new List<TimePeriod>();
+            busyTimesConverted = new List<(DateTimeOffset Start, DateTimeOffset End)>();
+            firstAvailableDate = DateTime.Now;
         }
         finally
         {
-            isCalendarLoading = false; 
+            isCalendarLoading = false;
+            StateHasChanged();
         }
-
-        showTimeSlots = !showTimeSlots;
-        calendarNeedsInitialization = true;
-
-        StateHasChanged();
     }
 
-    private List<TimePeriod> ConvertContactsToBusyTimes(List<Session> sessions)
-    {
-        return sessions
-            .Where(c => c.PreferredDateTime != default)
-            .Select(c => new TimePeriod
-                    {
-                        StartDateTimeOffset = new DateTimeOffset(c.PreferredDateTime, TimeSpan.Zero),
-                        EndDateTimeOffset = new DateTimeOffset(c.PreferredDateTime.AddMinutes(45), TimeSpan.Zero)
-                    })
-            .ToList();
-    }
-
-    private List<DateTime> GenerateAvailableSlots(DateTime startDate, DateTime endDate, List<TimePeriod> busyTimes)
+    private List<DateTime> GenerateAvailableSlots(DateTime startDate, List<(DateTimeOffset Start, DateTimeOffset End)> busyTimes)
     {
         var slots = new List<DateTime>();
+        var endDate = startDate.AddDays(25);
         var workStartTime = new TimeSpan(10, 0, 0);
         var workEndTime = new TimeSpan(21, 0, 0);
         var slotDuration = TimeSpan.FromMinutes(45);
 
-        var busyStartTimes = busyTimes.Select(b => b.StartDateTimeOffset).ToHashSet(); 
-
         for (var date = startDate; date <= endDate; date = date.AddDays(1))
         {
-             if (date.DayOfWeek == DayOfWeek.Sunday) 
+            if (date.DayOfWeek == DayOfWeek.Sunday)
                 continue;
 
             for (var time = workStartTime; time < workEndTime; time = time.Add(slotDuration))
@@ -472,36 +451,28 @@
                 var slotEnd = slotStart.Add(slotDuration);
 
                 var slotStartOffset = new DateTimeOffset(slotStart, TimeSpan.Zero);
+                var slotEndOffset = new DateTimeOffset(slotEnd, TimeSpan.Zero);
 
-                bool isBusy = busyTimes.Any(busy => slotStartOffset < busy.EndDateTimeOffset 
-                    && new DateTimeOffset(slotEnd, TimeSpan.Zero) > busy.StartDateTimeOffset);
+                bool isBusy = busyTimes.Any(busy => 
+                    slotStartOffset < busy.End && slotEndOffset > busy.Start);
 
-                if (isBusy)
-                    continue;
-
-                slots.Add(slotStart);
+                if (!isBusy && slotStart > DateTime.UtcNow)
+                    slots.Add(slotStart);
             }
         }
-
         return slots;
     }
 
-    [JSInvokable]
-    public void SelectTimeSlotFromJS(string selectedSlot)
+    private Task HandleSlotSelected(string selectedSlot)
     {
         var slot = DateTime.Parse(selectedSlot, null, System.Globalization.DateTimeStyles.RoundtripKind);
-        SelectTimeSlot(slot);
-    }
-
-    private void SelectTimeSlot(DateTime selectedSlot)
-    {
-        session.PreferredDateTime = selectedSlot;
-        session.PreferredDateTimeString = selectedSlot.ToString("dd/MM/yyyy HH:mm");
+        session.PreferredDateTime = slot;
+        session.PreferredDateTimeString = slot.ToString("dd/MM/yyyy HH:mm");
         showTimeSlots = false;
-        calendarNeedsInitialization = false;
-
         StateHasChanged();
+        return Task.CompletedTask;
     }
+
     private void OnModalVisibilityChanged(bool isVisible)
     {
         showTimeSlots = isVisible;

@@ -1,18 +1,89 @@
-@using System.Globalization
+@rendermode InteractiveServer
+
 <div class="calendar-modal @(IsVisible ? "show" : "")" @onclick="Close">
     <div class="calendar-modal-content" @onclick:stopPropagation="true">
         <div class="timezone-info">
             Timezone: <strong>@CurrentTimeZoneDisplay</strong>
         </div>
-        @ChildContent
+        <MudCalendar @ref="calendar"
+                     Items="@calendarItems"
+                     View="@CurrentView"
+                     Date="@InitialDate"
+                     SlotDuration="00:45:00"
+                     StartHour="10"
+                     EndHour="21"
+                     OnEventClick="OnEventClick" 
+                     @onclick:stopPropagation="true"/>
+        <div class="debug-info">
+            <p>Items: @calendarItems.Count (Busy: @calendarItems.Count(i => i.Text.Contains("Busy")), Available: @calendarItems.Count(i => i.Text.Contains("Available")))</p>
+            <p>Last Clicked: @lastClickedEvent</p>
+        </div>
     </div>
 </div>
 
 @code {
     [Parameter] public bool IsVisible { get; set; }
     [Parameter] public EventCallback<bool> IsVisibleChanged { get; set; }
-    [Parameter] public RenderFragment ChildContent { get; set; }
+    [Parameter] public List<DateTime> Slots { get; set; } = new();
+    [Parameter] public List<(DateTimeOffset Start, DateTimeOffset End)> BusyTimes { get; set; } = new();
+    [Parameter] public DateTime? FirstAvailableDate { get; set; }
+    [Parameter] public EventCallback<string> OnSlotSelected { get; set; }
     [Parameter] public string CurrentTimeZoneDisplay { get; set; } = "detecting...";
+    [Parameter] public EventCallback<CalendarItem> OnEventClick { get; set; }
+
+    private MudCalendar calendar;
+    private List<CalendarItem> calendarItems = new();
+    private DateTime InitialDate => FirstAvailableDate ?? DateTime.Now;
+    private CalendarView CurrentView => WindowWidth <= 1024 ? CalendarView.Day : CalendarView.Week;
+    private int WindowWidth { get; set; } = 1920;
+    private string lastClickedEvent = "None";
+
+    protected override void OnParametersSet()
+    {
+        calendarItems.Clear();
+        foreach (var busy in BusyTimes)
+        {
+            calendarItems.Add(new CalendarItem
+            {
+                Start = busy.Start.LocalDateTime,
+                End = busy.End.LocalDateTime,
+                Text = "⛔ Busy"
+            });
+        }
+        foreach (var slot in Slots)
+        {
+            calendarItems.Add(new CalendarItem
+            {
+                Start = slot,
+                End = slot.AddMinutes(45),
+                Text = "🟢 Available"
+            });
+        }
+        Console.WriteLine($"Calendar Items Loaded: {calendarItems.Count}, Busy: {BusyTimes.Count}, Available: {Slots.Count}");
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            CurrentTimeZoneDisplay = await JSRuntime.InvokeAsync<string>("eval", "Intl.DateTimeFormat().resolvedOptions().timeZone");
+            WindowWidth = await JSRuntime.InvokeAsync<int>("eval", "window.innerWidth");
+
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleEventClick(CalendarItem item)
+    {
+        lastClickedEvent = $"{item.Text} at {item.Start}";
+        if (item.Text.Contains("Available"))
+        {
+            await OnSlotSelected.InvokeAsync(item.Start.ToString("o"));
+        }
+
+        // Isto permite propagar o clique para o pai se quiseres
+        await OnEventClick.InvokeAsync(item);
+    }
 
     private void Close()
     {

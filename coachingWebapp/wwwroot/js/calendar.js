@@ -61,7 +61,6 @@ window.initializeCalendar = (dotNetHelper, slots, busyTimes, firstAvailableISO) 
     calendarElement.calendar = calendar;
 
     const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    console.log("Detected Timezone:", userTimeZone); // Debug log
     dotNetHelper.invokeMethodAsync("SetUserTimeZone", userTimeZone)
         .then(() => console.log("SetUserTimeZone invoked successfully"))
         .catch(err => console.error("Error invoking SetUserTimeZone:", err));

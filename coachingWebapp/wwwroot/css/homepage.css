@@ -1492,7 +1492,55 @@ h1:focus {
   margin-bottom: 0;
 }
 
-#calendar {
+.calendar-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+.calendar-modal.show {
+  display: block;
+}
+.calendar-modal-content {
+  background: white;
+  margin: 50px auto;
+  padding: 20px;
+  width: 90%;
+  max-width: 1200px;
+  border-radius: 8px;
+}
+.timezone-info {
+  margin-bottom: 10px;
+}
+.debug-info {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #666;
+}
+
+.mud-calendar-event {
+  padding: 4px;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.mud-drop-item {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  user-select: auto !important;
+  touch-action: auto !important;
+}
+
+.mud-chip {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+/* #calendar {
   max-height: 80vh;
   overflow-y: auto;
 }
@@ -1519,7 +1567,7 @@ h1:focus {
   padding: 20px;
   border: 1px solid #888;
   width: 80%;
-}
+} */
 
 .timezone-info {
   text-align: center;
@@ -1528,7 +1576,7 @@ h1:focus {
   font-weight: bold;
   color: #333;
 }
-
+/* 
 .fc-event {
   margin: 0 !important; 
   border: none !important; 
@@ -1590,7 +1638,7 @@ h1:focus {
 .fc-event, .fc-time-grid .fc-event-container {
   inset: unset !important; 
 }
-
+  */
 .input-with-icon {
   position: relative;
   display: flex;
@@ -1609,7 +1657,7 @@ h1:focus {
   font-size: 1.2rem;
 }
 
-.hoverable-input {
+/* .hoverable-input {
   background-color: initial;
   opacity: 1;
   color: inherit;
@@ -1618,7 +1666,7 @@ h1:focus {
 
 .hoverable-input:hover {
   cursor: pointer;
-}
+} */
 
 input.form-control[readonly] {
     background-color: transparent !important;
