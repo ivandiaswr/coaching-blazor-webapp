@@ -367,7 +367,7 @@ private string pageTitle = "Home | Ítala Veloso";
         {
             isLoggingIn = true; 
             StateHasChanged();
-            
+
             var result = await SessionService.CreateSessionAsync(session);
             
             sessionFormStatus = result 
@@ -450,14 +450,13 @@ private string pageTitle = "Home | Ítala Veloso";
                 var slotStart = date.Date.Add(time);
                 var slotEnd = slotStart.Add(slotDuration);
 
-                var slotStartOffset = new DateTimeOffset(slotStart, TimeSpan.Zero);
-                var slotEndOffset = new DateTimeOffset(slotEnd, TimeSpan.Zero);
-
-                bool isBusy = busyTimes.Any(busy => 
-                    slotStartOffset < busy.End && slotEndOffset > busy.Start);
+                bool isBusy = busyTimes.Any(busy =>
+                    slotStart < busy.End.LocalDateTime && slotEnd > busy.Start.LocalDateTime);
 
                 if (!isBusy && slotStart > DateTime.UtcNow)
+                {
                     slots.Add(slotStart);
+                }
             }
         }
         return slots;

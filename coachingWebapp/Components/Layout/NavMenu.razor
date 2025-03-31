@@ -1,4 +1,5 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
 @inject NavigationManager NavigationManager
 
 <div class="container-header">
@@ -85,14 +86,37 @@
                         </li>
                     </NotAuthorized>
                     <Authorized>
-                        <li class="auth-item">
-                            <NavLink class="nav-li account-btn" href="/account">
-                                <i class="fa-solid fa-user-circle"></i> Account
-                            </NavLink>
-                        </li>
+                        @if (isHomePage)
+                        {
+                            @if (isAdmin)
+                            {
+                                <li class="auth-item">
+                                    <NavLink class="nav-li account-btn" href="/AdminDashboard">
+                                        <i class="fa-solid fa-gauge"></i> Admin Panel
+                                    </NavLink>
+                                </li>
+                            }
+                            else
+                            {
+                                <li class="auth-item">
+                                    <NavLink class="nav-li account-btn" href="/UserDashboard">
+                                        <i class="fa-solid fa-user-chart"></i> My Dashboard
+                                    </NavLink>
+                                </li>
+                            }
+                        }
+                        else if (isDashboardPage)
+                        {
+                            <li class="auth-item">
+                                <NavLink class="nav-li account-btn" href="/account">
+                                    <i class="fa-solid fa-user-circle"></i> Account
+                                </NavLink>
+                            </li>
+                        }
+
                         <li class="auth-item">
                             <NavLink class="nav-li logout-btn" href="/logout">
-                            <i class="fa-solid fa-sign-out-alt"></i> Logout
+                                <i class="fa-solid fa-sign-out-alt"></i> Logout
                             </NavLink>
                         </li>
                     </Authorized>
@@ -101,3 +125,25 @@
         </nav>
     </div>
 </div>
+
+@code {
+    private bool isAdmin;
+    private bool isHomePage;
+    private bool isDashboardPage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity is not null && user.Identity.IsAuthenticated)
+        {
+           isAdmin = user.IsInRole("Admin");
+        }
+
+        var uri = NavigationManager.Uri.ToLower();
+        isHomePage = uri.EndsWith("/") || uri.Contains("account");
+        isDashboardPage = uri.Contains("dashboard");
+    }
+}
+

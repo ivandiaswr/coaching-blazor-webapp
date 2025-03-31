@@ -1,23 +1,22 @@
-@rendermode InteractiveServer
+@using MudBlazor
+@using System.Globalization
 
 <div class="calendar-modal @(IsVisible ? "show" : "")" @onclick="Close">
     <div class="calendar-modal-content" @onclick:stopPropagation="true">
         <div class="timezone-info">
             Timezone: <strong>@CurrentTimeZoneDisplay</strong>
         </div>
-        <MudCalendar @ref="calendar"
+
+        <MudCalendar T="CalendarItem"
+                     @ref="calendar"
                      Items="@calendarItems"
                      View="@CurrentView"
                      Date="@InitialDate"
                      SlotDuration="00:45:00"
                      StartHour="10"
                      EndHour="21"
-                     OnEventClick="OnEventClick" 
-                     @onclick:stopPropagation="true"/>
-        <div class="debug-info">
-            <p>Items: @calendarItems.Count (Busy: @calendarItems.Count(i => i.Text.Contains("Busy")), Available: @calendarItems.Count(i => i.Text.Contains("Available")))</p>
-            <p>Last Clicked: @lastClickedEvent</p>
-        </div>
+                     ItemClicked="OnSlotClicked"
+                     Class="mud-calendar-event" />
     </div>
 </div>
 
@@ -41,6 +40,7 @@
     protected override void OnParametersSet()
     {
         calendarItems.Clear();
+
         foreach (var busy in BusyTimes)
         {
             calendarItems.Add(new CalendarItem
@@ -50,6 +50,7 @@
                 Text = "⛔ Busy"
             });
         }
+
         foreach (var slot in Slots)
         {
             calendarItems.Add(new CalendarItem
@@ -59,35 +60,30 @@
                 Text = "🟢 Available"
             });
         }
-        Console.WriteLine($"Calendar Items Loaded: {calendarItems.Count}, Busy: {BusyTimes.Count}, Available: {Slots.Count}");
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            CurrentTimeZoneDisplay = await JSRuntime.InvokeAsync<string>("eval", "Intl.DateTimeFormat().resolvedOptions().timeZone");
             WindowWidth = await JSRuntime.InvokeAsync<int>("eval", "window.innerWidth");
-
             StateHasChanged();
         }
     }
 
-    private async Task HandleEventClick(CalendarItem item)
+    private async Task OnSlotClicked(CalendarItem item)
     {
-        lastClickedEvent = $"{item.Text} at {item.Start}";
         if (item.Text.Contains("Available"))
         {
             await OnSlotSelected.InvokeAsync(item.Start.ToString("o"));
         }
 
-        // Isto permite propagar o clique para o pai se quiseres
         await OnEventClick.InvokeAsync(item);
     }
 
-    private void Close()
+    private async void Close()
     {
         IsVisible = false;
-        IsVisibleChanged.InvokeAsync(IsVisible);
+        await IsVisibleChanged.InvokeAsync(IsVisible);
     }
 }

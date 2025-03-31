@@ -60,7 +60,7 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
         options.Password.RequiredLength = 12;
     })
     .AddEntityFrameworkStores<CoachingDbContext>() // Links Identity to context for storing users and roles in the database
-    .AddDefaultTokenProviders(); // Enables features like email confirmation, password reset, and two-factor authentication.
+    .AddDefaultTokenProviders(); // Enables features like email confirmation, password reset, and two-factor authentication
 
 // Defines policy for Admin role to restrict access to specific parts of the application
 builder.Services.AddAuthorization(options =>
