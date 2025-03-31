@@ -71,12 +71,12 @@ builder.Services.AddAuthorization(options =>
 
 builder.Services.AddScoped<IEmailSubscriptionService, EmailSubscriptionService>();
 builder.Services.AddScoped<ISessionService, SessionService>();
+builder.Services.AddScoped<IUnavailableTimeService, UnavailableTimeService>();
 builder.Services.AddScoped<IScrollService, ScrollService>();
 builder.Services.AddScoped<ISecurityService, SecurityService>();
 builder.Services.AddScoped<IHelperService, HelperService>();
 builder.Services.AddScoped<ILogService, LogService>();
 builder.Services.AddSingleton<LogProcessor>();
-
 
 builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation(); 
 

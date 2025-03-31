@@ -36,6 +36,23 @@
             <MudCalendar @ref="calendar" Items="@calendarItems" OnCellClick="OnCellClicked" />
 
             <MudText Typo="Typo.h4">Busy Time</MudText>
+            <MudCard>
+                <MudCardContent>
+                    <MudSelect T="DayOfWeek?" Label="Day of the Week" @bind-Value="_newUnavailableTime.DayOfWeek">
+                        @foreach (DayOfWeek day in Enum.GetValues(typeof(DayOfWeek)))
+                        {
+                            <MudSelectItem T="DayOfWeek?" Value="@day">@day</MudSelectItem>
+                        }
+                    </MudSelect>
+
+                    <MudTimePicker Label="Hora de Início" Time="@_newUnavailableTime.StartTime" TimeChanged="@(t => _newUnavailableTime.StartTime = t)" />
+                    <MudTimePicker Label="Hora de Fim" Time="@_newUnavailableTime.EndTime" TimeChanged="@(t => _newUnavailableTime.EndTime = t)" />
+
+                    <MudCheckBox T="bool" Label="Recorrente semanalmente" @bind-Checked="_newUnavailableTime.IsRecurring" />
+
+                    <MudButton Variant="Variant.Filled" OnClick="AddUnavailability">Add</MudButton>
+                </MudCardContent>
+            </MudCard>
         </MudTabPanel>
 
         <MudTabPanel Text="Sessions">
@@ -155,6 +172,16 @@
         string.IsNullOrEmpty(searchEmailSubscriptionsString) ||
         e.Name.Contains(searchEmailSubscriptionsString, StringComparison.OrdinalIgnoreCase) ||
         e.Email.Contains(searchEmailSubscriptionsString, StringComparison.OrdinalIgnoreCase);
+
+    private UnavailableTime _newUnavailableTime = new();
+    private List<UnavailableTime> _adminUnavailableTimes = new();
+
+    private async Task AddUnavailability()
+    {
+        await UnavailableTimeService.CreateUnavailableTimeAsync(_newUnavailableTime);
+        _newUnavailableTime = new(); // reset
+        _adminUnavailableTimes = (await UnavailableTimeService.GetAllUnavailableTimesAsync()).ToList();
+    }
 
     protected override async Task OnInitializedAsync()
     {

@@ -415,7 +415,9 @@ private string pageTitle = "Home | Ítala Veloso";
                 ))
                 .ToList();
 
-            availableSlots = GenerateAvailableSlots(DateTime.UtcNow.Date.AddDays(2), busyTimesConverted);
+            var adminUnavailabilities = (await UnavailableTimeService.GetAllUnavailableTimesAsync()).ToList();
+
+            availableSlots = GenerateAvailableSlots(DateTime.UtcNow.Date.AddDays(2), busyTimesConverted, adminUnavailabilities);
             firstAvailableDate = availableSlots.Any() ? availableSlots.Min() : DateTime.Now;
         }
         catch (Exception ex)
@@ -432,7 +434,7 @@ private string pageTitle = "Home | Ítala Veloso";
         }
     }
 
-    private List<DateTime> GenerateAvailableSlots(DateTime startDate, List<(DateTimeOffset Start, DateTimeOffset End)> busyTimes)
+    private List<DateTime> GenerateAvailableSlots(DateTime startDate, List<(DateTimeOffset Start, DateTimeOffset End)> busyTimes, List<UnavailableTime> adminUnavailabilities)
     {
         var slots = new List<DateTime>();
         var endDate = startDate.AddDays(25);
@@ -453,7 +455,16 @@ private string pageTitle = "Home | Ítala Veloso";
                 bool isBusy = busyTimes.Any(busy =>
                     slotStart < busy.End.LocalDateTime && slotEnd > busy.Start.LocalDateTime);
 
-                if (!isBusy && slotStart > DateTime.UtcNow)
+                bool isWithinUnavailability = adminUnavailabilities.Any(u =>
+                    (u.IsRecurring 
+                    && u.DayOfWeek == slotStart.DayOfWeek 
+                    && slotStart.TimeOfDay >= u.StartTime && slotStart.TimeOfDay < u.EndTime)
+                    ||
+                    (!u.IsRecurring && u.Date == slotStart.Date 
+                    && slotStart.TimeOfDay >= u.StartTime 
+                    && slotStart.TimeOfDay < u.EndTime));
+
+                if (!isBusy && !isWithinUnavailability && slotStart > DateTime.UtcNow)
                 {
                     slots.Add(slotStart);
                 }
