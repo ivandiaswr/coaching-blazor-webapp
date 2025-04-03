@@ -12,4 +12,5 @@ public interface ISessionService
 
     // Email    
     Task SendEmailAsync(Session contact);
+    Task SendSessionConfirmationEmailAsync(Session session, VideoSession videoSession);
 }

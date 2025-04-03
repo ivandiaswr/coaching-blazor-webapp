@@ -39,22 +39,38 @@ public class SessionService : ISessionService
         }
     }
 
-    public async Task<bool> CreateSessionAsync(Session contact)
+    public async Task<bool> CreateSessionAsync(Session session)
     {
-        if(contact is null)
+        if(session is null)
             return false;
 
         try
         {
-            contact.CreatedAt = DateTime.UtcNow;
-            contact.IsSessionBooking = true; // add Outro option?
-            contact.UpdateFullName();
+            session.CreatedAt = DateTime.UtcNow;
+            session.IsSessionBooking = true; // add Outro option?
+            session.DiscoveryCall = true;
+            session.UpdateFullName();
 
-            _context.Sessions.Add(contact);
+            _context.Sessions.Add(session);
 
             //await SendEmailAsync(contact); // send email to the admin
 
             await _context.SaveChangesAsync();
+
+            var videoSession = new VideoSession
+            {
+                UserId = session.Email,
+                ScheduledAt = session.PreferredDateTime,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                SessionRefId = session.Id,
+            };
+
+            _context.VideoSessions.Add(videoSession);
+            await _context.SaveChangesAsync();
+
+            await SendSessionConfirmationEmailAsync(session, videoSession);
+
         }
         catch (Exception ex)
         {
@@ -91,7 +107,7 @@ public class SessionService : ISessionService
         throw new NotImplementedException();
     }
 
-    public async Task SendEmailAsync(Session contact)
+    public async Task SendEmailAsync(Session session)
     {
         var smtpServer = _helperService.GetConfigValue("SmtpSettings:Server");
         var smtpPort = int.Parse(_helperService.GetConfigValue("SmtpSettings:Port") ?? "");
@@ -107,14 +123,14 @@ public class SessionService : ISessionService
         var message = new MimeMessage();
         message.From.Add(new MailboxAddress("Meeting Scheduled", smtpUsername));
         message.To.Add(new MailboxAddress("", smtpUsername));
-        message.Subject = $"Meeting Scheduled - {contact.FullName}";
+        message.Subject = $"Meeting Scheduled - {session.FullName}";
         message.Body = new TextPart("plain")
         {
-            Text = $"Name: {contact.FullName}\n" + 
-                   "Email: " + contact.Email + "\n" +
-                   "Session Category: " + contact.SessionCategory + "\n" +  
-                   "Message: " + contact.Message + "\n" +
-                   "Preferred Meeting Date: " + contact.PreferredDateTime
+            Text = $"Name: {session.FullName}\n" + 
+                   "Email: " + session.Email + "\n" +
+                   "Session Category: " + session.SessionCategory + "\n" +  
+                   "Message: " + session.Message + "\n" +
+                   "Preferred Meeting Date: " + session.PreferredDateTime
         };
 
        using var client = new SmtpClient();
@@ -131,5 +147,51 @@ public class SessionService : ISessionService
             await _logService.LogError("SendCustomEmailAsync", ex.Message);
             throw;
         }
+    }
+
+    public async Task SendSessionConfirmationEmailAsync(Session session, VideoSession videoSession)
+    {
+        var smtpServer = _helperService.GetConfigValue("SmtpSettings:Server");
+        var smtpPort = int.Parse(_helperService.GetConfigValue("SmtpSettings:Port") ?? "587");
+        var smtpUsername = _helperService.GetConfigValue("SmtpSettings:Username");
+        var smtpPassword = _helperService.GetConfigValue("SmtpSettings:Password");
+
+        var message = new MimeMessage();
+        message.From.Add(new MailboxAddress("Ítala Veloso", smtpUsername));
+        message.To.Add(new MailboxAddress(session.FullName, session.Email));
+        message.Subject = "Your Discovery Call is Confirmed";
+
+        string baseUrl = _helperService.GetConfigValue("AppSettings:BaseUrl");
+        string videoCallLink = $"{baseUrl}/session/{videoSession.SessionId}";
+
+        string formattedDate = session.PreferredDateTime.ToString("dddd, dd MMMM yyyy 'at' HH:mm");
+
+        var builder = new BodyBuilder
+        {
+            HtmlBody = $@"
+            <div style='font-family: Arial, sans-serif; font-size: 14px; color: #333;'>
+                <p>Dear {session.FirstName},</p>
+
+                <p>Thank you for booking a free Discovery Call with Ítala Veloso.</p>
+
+                <p><strong>📅 Date:</strong> {formattedDate}<br>
+                <strong>💼 Session:</strong> {session.SessionCategory}<br>
+                <strong>📍 Access Link:</strong> <a href='{videoCallLink}' target='_blank'>{videoCallLink}</a></p>
+
+                <p>Please join a few minutes before your session time. If you need to reschedule, just reply to this email.</p>
+
+                <p>Looking forward to seeing you!</p>
+
+                <p>Warm regards,<br><strong>Ítala Veloso</strong></p>
+            </div>"
+        };
+
+        message.Body = builder.ToMessageBody();
+
+        using var client = new SmtpClient();
+        await client.ConnectAsync(smtpServer, smtpPort, SecureSocketOptions.StartTls);
+        await client.AuthenticateAsync(smtpUsername, smtpPassword);
+        await client.SendAsync(message);
+        await client.DisconnectAsync(true);
     }
 }

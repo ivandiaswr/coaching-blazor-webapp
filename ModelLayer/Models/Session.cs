@@ -29,7 +29,9 @@ public class Session
     public DateTime CreatedAt { get; set; } 
     public bool IsSessionBooking { get; set; }
     public bool IsLive { get; set; } = false;
-    public string SessionId { get; set; } = Guid.NewGuid().ToString();
+    public bool DiscoveryCall { get; set; }
+
+    public VideoSession? VideoSession { get; set; }
 
     public void UpdateFullName()
     {

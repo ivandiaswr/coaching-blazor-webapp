@@ -3,6 +3,7 @@ using System;
 using DataAccessLayer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessLayer.Migrations
 {
     [DbContext(typeof(CoachingDbContext))]
-    partial class CoachingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250403073617_UpdateSessionTableIsDiscovery")]
+    partial class UpdateSessionTableIsDiscovery
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.7");
@@ -304,6 +307,10 @@ namespace DataAccessLayer.Migrations
                     b.Property<int>("SessionCategory")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("SessionId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.HasKey("Id");
 
                     b.ToTable("Sessions");
@@ -314,6 +321,10 @@ namespace DataAccessLayer.Migrations
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("AdminId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
@@ -331,9 +342,6 @@ namespace DataAccessLayer.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("SessionRefId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<DateTime?>("StartedAt")
                         .HasColumnType("TEXT");
 
@@ -342,9 +350,6 @@ namespace DataAccessLayer.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("SessionRefId")
-                        .IsUnique();
 
                     b.ToTable("VideoSessions");
                 });
@@ -431,20 +436,6 @@ namespace DataAccessLayer.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("ModelLayer.Models.VideoSession", b =>
-                {
-                    b.HasOne("ModelLayer.Models.Session", "Session")
-                        .WithOne("VideoSession")
-                        .HasForeignKey("ModelLayer.Models.VideoSession", "SessionRefId");
-
-                    b.Navigation("Session");
-                });
-
-            modelBuilder.Entity("ModelLayer.Models.Session", b =>
-                {
-                    b.Navigation("VideoSession");
                 });
 #pragma warning restore 612, 618
         }

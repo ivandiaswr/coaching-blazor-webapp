@@ -1,7 +1,6 @@
 using DataAccessLayer;
 using Microsoft.EntityFrameworkCore;
 using BusinessLayer.Services.Interfaces;
-using ModelLayer.Models;
 
 public class UnavailableTimeService : IUnavailableTimeService
 {

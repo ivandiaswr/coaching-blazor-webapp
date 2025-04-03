@@ -192,7 +192,7 @@
                 <div class="unified-container">
                     <div class="content-grid">         
                         <div class="form-section">
-                            <h1><span class="highlight">Calendar</span></h1>
+                            <h1><span class="highlight">Meeting</span> Schedule</h1>
                             <EditForm Model="@session" OnValidSubmit="CreateSessionAsync" FormName="sessionForm">
                                 <DataAnnotationsValidator />
 
@@ -236,6 +236,7 @@
                                                 BusyTimes="busyTimesConverted"
                                                 FirstAvailableDate="firstAvailableDate"
                                                 CurrentTimeZoneDisplay="@currentTimeZoneDisplay"
+                                                AdminUnavailabilities="adminUnavailabilities"
                                                 OnSlotSelected="HandleSlotSelected" />
                                 <div class="form-group message-group">
                                     <label for="Message">Message</label>
@@ -329,6 +330,7 @@ private string pageTitle = "Home | Ítala Veloso";
     private bool showTimeSlots = false;
     private List<DateTime> availableSlots = new();
     private List<(DateTimeOffset Start, DateTimeOffset End)> busyTimesConverted = new();
+    private List<UnavailableTime> adminUnavailabilities { get; set; } = new();
     private DateTime? firstAvailableDate = null;
     private bool isLoggingIn = false;
     private bool isCalendarLoading = false;
@@ -371,7 +373,7 @@ private string pageTitle = "Home | Ítala Veloso";
             var result = await SessionService.CreateSessionAsync(session);
             
             sessionFormStatus = result 
-            ? "Thank you for your message. Meeting scheduled on Google. We'll get back to you soon!" 
+            ? "Thank you for your message. Meeting scheduled. We'll get back to you soon!" 
             : "Sending contact information failed. Please try again or contact support.";
 
             if (result) 
@@ -408,14 +410,14 @@ private string pageTitle = "Home | Ítala Veloso";
         {
             var sessions = SessionService.GetAllSessions() ?? new List<Session>();
             busyTimesConverted = sessions
-                .Where(c => c.PreferredDateTime != default)
+                .Where(c => c.PreferredDateTime != default && c.PreferredDateTime > DateTime.UtcNow.AddDays(2))
                 .Select(c => (
                     Start: new DateTimeOffset(c.PreferredDateTime, TimeSpan.Zero),
                     End: new DateTimeOffset(c.PreferredDateTime.AddMinutes(45), TimeSpan.Zero)
                 ))
                 .ToList();
 
-            var adminUnavailabilities = (await UnavailableTimeService.GetAllUnavailableTimesAsync()).ToList();
+            adminUnavailabilities = (await UnavailableTimeService.GetAllUnavailableTimesAsync()).ToList();
 
             availableSlots = GenerateAvailableSlots(DateTime.UtcNow.Date.AddDays(2), busyTimesConverted, adminUnavailabilities);
             firstAvailableDate = availableSlots.Any() ? availableSlots.Min() : DateTime.Now;
@@ -444,27 +446,30 @@ private string pageTitle = "Home | Ítala Veloso";
 
         for (var date = startDate; date <= endDate; date = date.AddDays(1))
         {
-            if (date.DayOfWeek == DayOfWeek.Sunday)
-                continue;
+            @* if (date.DayOfWeek == DayOfWeek.Sunday)
+                continue; *@
 
             for (var time = workStartTime; time < workEndTime; time = time.Add(slotDuration))
             {
                 var slotStart = date.Date.Add(time);
                 var slotEnd = slotStart.Add(slotDuration);
 
+                if (slotStart <= DateTime.UtcNow.AddDays(2))
+                continue;
+
                 bool isBusy = busyTimes.Any(busy =>
                     slotStart < busy.End.LocalDateTime && slotEnd > busy.Start.LocalDateTime);
 
                 bool isWithinUnavailability = adminUnavailabilities.Any(u =>
                     (u.IsRecurring 
-                    && u.DayOfWeek == slotStart.DayOfWeek 
+                    && ((int)u.DayOfWeek + 1) % 7 == (int)slotStart.DayOfWeek
                     && slotStart.TimeOfDay >= u.StartTime && slotStart.TimeOfDay < u.EndTime)
                     ||
                     (!u.IsRecurring && u.Date == slotStart.Date 
                     && slotStart.TimeOfDay >= u.StartTime 
                     && slotStart.TimeOfDay < u.EndTime));
 
-                if (!isBusy && !isWithinUnavailability && slotStart > DateTime.UtcNow)
+                if (!isBusy && !isWithinUnavailability)
                 {
                     slots.Add(slotStart);
                 }

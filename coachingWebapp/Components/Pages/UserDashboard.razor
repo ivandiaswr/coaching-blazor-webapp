@@ -1,10 +1,117 @@
 @page "/UserDashboard"
 
-<section id="userDashboard">
-    <div class="dashboard-header">
-        <div>
-            <h1><span class="highlight">Dashboard</span></h1>  
-    
-        </div>
-    </div>
-</section>
+<MudTabs>
+    <MudTabPanel Text="Upcoming">
+        <MudCalendar T="CalendarItem"
+             Items="@calendarItems"
+             Date="@DateTime.Today"
+             View="CalendarView.Week"
+             FirstDayOfWeek="DayOfWeek.Monday"
+             StartHour="10"
+             EndHour="21"
+             SlotDuration="00:45:00"
+             ShowTodayButton="true"
+             ItemClicked="HandleCalendarClick"
+             Class="mud-calendar-event" />
+    </MudTabPanel>
+
+    <MudTabPanel Text="List View">
+        <MudTable Items="upcomingSessions" Hover="true" Striped="true">
+            <HeaderContent>
+                <MudTh>Date</MudTh>
+                <MudTh>Status</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>@context.ScheduledAt.ToString("dd MMM yyyy - HH:mm")</MudTd>
+                <MudTd>
+                    @if (context.EndedAt.HasValue)
+                    {
+                        <MudChip T="string" Color="Color.Success">Completed</MudChip>
+                    }
+                    else if (DateTime.UtcNow < context.ScheduledAt)
+                    {
+                        <MudChip T="string" Color="Color.Info">Scheduled</MudChip>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Color="Color.Warning">Missed</MudChip>
+                    }
+                </MudTd>
+                <MudTd>
+                    @if (context.IsActive && DateTime.UtcNow.AddMinutes(-10) <= context.ScheduledAt)
+                    {
+                        <MudButton Size="Size.Small" OnClick="@(() => JoinSession(context.SessionId))">
+                            Join Call
+                        </MudButton>
+                    }
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudTabPanel>
+
+    <MudTabPanel Text="Past Sessions">
+        <MudList T="VideoSession" Dense="true">
+            @foreach (var session in pastSessions)
+            {
+                <MudListItem>
+                    <MudText>
+                        <strong>@session.ScheduledAt.ToString("dd MMM yyyy")</strong>
+                        - Duration: @((session.EndedAt - session.StartedAt)?.TotalMinutes ?? 0) min
+                    </MudText>
+                </MudListItem>
+            }
+        </MudList>
+    </MudTabPanel>
+</MudTabs>
+
+@code {
+    private List<VideoSession> allSessions = new();
+    private List<VideoSession> upcomingSessions = new();
+    private List<VideoSession> pastSessions = new();
+    private DateTime _selectedDate = DateTime.Today;
+    private List<CalendarItem> calendarItems = new();
+
+    private string userId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var auth = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        userId = auth.User?.Identity?.Name;
+
+        allSessions = await VideoCallService.GetSessionsForUserAsync(userId);
+        upcomingSessions = allSessions
+            .Where(s => s.ScheduledAt >= DateTime.UtcNow)
+            .OrderBy(s => s.ScheduledAt).ToList();
+
+        pastSessions = allSessions
+            .Where(s => s.ScheduledAt < DateTime.UtcNow)
+            .OrderByDescending(s => s.ScheduledAt).ToList();
+
+        calendarItems = upcomingSessions.Select(session => new CalendarItem
+        {
+            Start = session.ScheduledAt,
+            End = session.ScheduledAt.AddMinutes(45),
+            Text = "Coaching Session"
+        }).ToList();
+    }
+
+    private void JoinSession(string sessionId)
+    {
+        NavigationManager.NavigateTo($"/session/{sessionId}");
+    }
+
+    private void HandleCalendarClick(CalendarItem item)
+    {
+        var session = upcomingSessions.FirstOrDefault(s =>
+            s.ScheduledAt == item.Start);
+
+        if (session is not null && session.IsActive)
+            NavigationManager.NavigateTo($"/session/{session.SessionId}");
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await JSRuntime.InvokeVoidAsync("VideoCall.endCall");
+    }
+}

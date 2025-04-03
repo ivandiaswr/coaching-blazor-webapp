@@ -6,30 +6,29 @@
 @using static Microsoft.AspNetCore.Components.Web.RenderMode
 @using Microsoft.AspNetCore.Components.Web.Virtualization
 @using Microsoft.JSInterop
+@using System.ComponentModel.DataAnnotations
+@using System.Security.Claims
+
 @using coachingWebapp
 @using coachingWebapp.Components
 @using coachingWebapp.Components.Components
+@using BusinessLayer
 @using BusinessLayer.Services.Interfaces
-
-
 @using ModelLayer
 @using ModelLayer.Models
-@using BusinessLayer
-@using System.ComponentModel.DataAnnotations
+
 @using MudBlazor
 @using Heron.MudCalendar
 
 @using Microsoft.AspNetCore.Components.Authorization
 @inject AuthenticationStateProvider AuthenticationStateProvider
-
-@inject IJSRuntime JSRuntime
-@inject IScrollService ScrollService
-@inject HttpClient HttpClient
-@inject ILogService LogService
-
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@inject HttpClient HttpClient
 
 @inject ISessionService SessionService
 @inject IUnavailableTimeService UnavailableTimeService
 @inject IEmailSubscriptionService EmailSubscriptionService
-
+@inject IVideoCallService VideoCallService
+@inject IScrollService ScrollService
+@inject ILogService LogService

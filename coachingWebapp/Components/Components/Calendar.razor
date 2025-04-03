@@ -12,9 +12,12 @@
                      Items="@calendarItems"
                      View="@CurrentView"
                      Date="@InitialDate"
+                     FirstDayOfWeek="DayOfWeek.Monday"
+                     ShowTodayButton="true"
                      SlotDuration="00:45:00"
                      StartHour="10"
                      EndHour="21"
+                     lang="en"
                      ItemClicked="OnSlotClicked"
                      Class="mud-calendar-event" />
     </div>
@@ -25,6 +28,7 @@
     [Parameter] public EventCallback<bool> IsVisibleChanged { get; set; }
     [Parameter] public List<DateTime> Slots { get; set; } = new();
     [Parameter] public List<(DateTimeOffset Start, DateTimeOffset End)> BusyTimes { get; set; } = new();
+    [Parameter] public List<UnavailableTime> AdminUnavailabilities { get; set; } = new();
     [Parameter] public DateTime? FirstAvailableDate { get; set; }
     [Parameter] public EventCallback<string> OnSlotSelected { get; set; }
     [Parameter] public string CurrentTimeZoneDisplay { get; set; } = "detecting...";
@@ -35,7 +39,6 @@
     private DateTime InitialDate => FirstAvailableDate ?? DateTime.Now;
     private CalendarView CurrentView => WindowWidth <= 1024 ? CalendarView.Day : CalendarView.Week;
     private int WindowWidth { get; set; } = 1920;
-    private string lastClickedEvent = "None";
 
     protected override void OnParametersSet()
     {
@@ -60,6 +63,37 @@
                 Text = "🟢 Available"
             });
         }
+
+        foreach (var unavailable in AdminUnavailabilities)
+        {
+            if (unavailable.IsRecurring)
+            {
+                var startDate = (FirstAvailableDate ?? DateTime.Now).Date;
+                var endDate = startDate.AddDays(25);
+                var adjustedDayOfWeek = (DayOfWeek)((((int)unavailable.DayOfWeek + 1) % 7));
+                for (var date = startDate; date <= endDate; date = date.AddDays(1))
+                {
+                    if (date.DayOfWeek == adjustedDayOfWeek)
+                    {
+                        calendarItems.Add(new CalendarItem
+                        {
+                            Start = date.Add(unavailable.StartTime ?? TimeSpan.Zero),
+                            End = date.Add(unavailable.EndTime ?? TimeSpan.Zero),
+                            Text = "🔴 " + unavailable.Reason
+                        });
+                    }
+                }
+            }
+            else
+            {
+                calendarItems.Add(new CalendarItem
+                {
+                    Start = unavailable.Date.Add(unavailable.StartTime ?? TimeSpan.Zero),
+                    End = unavailable.Date.Add(unavailable.EndTime ?? TimeSpan.Zero),
+                    Text = "🔴 " + unavailable.Reason
+                });
+            }
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -67,6 +101,7 @@
         if (firstRender)
         {
             WindowWidth = await JSRuntime.InvokeAsync<int>("eval", "window.innerWidth");
+                await JSRuntime.InvokeVoidAsync("colorCalendarSlots");
             StateHasChanged();
         }
     }

@@ -72,11 +72,14 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddScoped<IEmailSubscriptionService, EmailSubscriptionService>();
 builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<IUnavailableTimeService, UnavailableTimeService>();
+builder.Services.AddScoped<IVideoCallService, VideoCallService>();
 builder.Services.AddScoped<IScrollService, ScrollService>();
 builder.Services.AddScoped<ISecurityService, SecurityService>();
 builder.Services.AddScoped<IHelperService, HelperService>();
 builder.Services.AddScoped<ILogService, LogService>();
 builder.Services.AddSingleton<LogProcessor>();
+
+builder.Services.AddSignalR();
 
 builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation(); 
 
@@ -156,7 +159,6 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseStaticFiles();
-
 app.UseAntiforgery();
 
 // When the user logins it created a cookie that UseAuthentication uses to validate
@@ -174,5 +176,7 @@ using (var scope = app.Services.CreateScope())
     var dbContext = scope.ServiceProvider.GetRequiredService<CoachingDbContext>();
     dbContext.Database.EnsureCreated();
 }
+
+app.MapHub<VideoCallHub>("/videoHub");
 
 app.Run();

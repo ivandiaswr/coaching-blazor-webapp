@@ -1,0 +1,85 @@
+@page "/session/{sessionId}"
+
+<h3>Video Session</h3>
+
+@if (isGuest)
+{
+    <MudAlert Severity="Severity.Warning">
+        <b>Guest access:</b> You can join this session as a guest. Your camera and microphone will be used, but you won't have access to dashboard features.
+    </MudAlert>
+    @CallLayout()
+}
+else if (isUser)
+{
+    <MudAlert Severity="Severity.Info">
+        <b>Welcome back!</b> You're joining this session as a registered client.
+    </MudAlert>
+    @CallLayout()
+}
+else if (isAdmin)
+{
+    <MudAlert Severity="Severity.Success">
+        <b>Admin:</b> You're managing this session as the coach.
+    </MudAlert>
+    @CallLayout()
+}
+
+
+@code {
+    [Parameter] public string SessionId { get; set; }
+    private VideoSession session;
+    private bool isGuest = true;
+    private bool isUser = false;
+    private bool isAdmin = false;
+    private ClaimsPrincipal currentUser;
+    private bool isReady = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        currentUser = authState.User;
+
+        if (currentUser.Identity?.IsAuthenticated == true)
+        {
+            isGuest = false;
+            isAdmin = currentUser.IsInRole("Admin");
+            isUser = !isAdmin; // basic assumption
+        }
+
+        isReady = true;
+        StateHasChanged();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && isReady)
+        {
+            await JSRuntime.InvokeVoidAsync("VideoCall.init", SessionId);
+        }
+    }
+
+    private async Task JoinCall()
+    {
+        await JSRuntime.InvokeVoidAsync("VideoCall.startCall");
+        await JSRuntime.InvokeVoidAsync("console.log", "Call started");
+    }
+
+    private async Task EndCall()
+    {
+        await JSRuntime.InvokeVoidAsync("VideoCall.endCall");
+        await JSRuntime.InvokeVoidAsync("console.log", "Call ended");
+    }
+
+     RenderFragment CallLayout() => __builder =>
+    {
+        <MudPaper style="padding:1rem;">
+            <p><b>Session:</b> @SessionId</p>
+            <div>
+                <video id="localVideo" autoplay playsinline muted></video>
+                <video id="remoteVideo" autoplay playsinline></video>
+            </div>
+            <MudButton Color="Color.Primary" OnClick="@JoinCall">Join Call</MudButton>
+            <MudButton Color="Color.Secondary" OnClick="@EndCall">End Call</MudButton>
+        </MudPaper>
+    };
+}

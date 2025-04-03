@@ -50,8 +50,65 @@
     width: 100%;
 }
 
-/* Admin Auth */
+/* Calendar */
+.mud-calendar {
+    background-color: var(--primary-white) !important;
+    border-radius: 8px !important;
+}
 
+.mud-button-root.mud-button {
+    background-color: var(--accent-orange) !important;
+    color: var(--primary-white) !important;
+    transition: background-color 0.3s ease;
+    border: none !important;
+}
+
+.mud-button-root.mud-button:hover {
+    background-color: var(--accent-orange-hover) !important;
+}
+
+.mud-calendar .mud-chip.mud-chip-color-primary {
+    border-radius: 6px;
+    padding: 6px 10px;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    font-weight: 500;
+    color: #1a1a1a !important;
+}
+
+.mud-cal-cell-template-chip {
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    cursor: pointer;
+}
+
+.mud-cal-cell-template-chip {
+    cursor: default;
+}
+
+.calendar-slot-available {
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.calendar-slot-available:hover {
+    background-color: rgba(76, 175, 80, 0.3) !important;
+    transform: scale(1.03);
+}
+
+.calendar-slot-busy,
+.calendar-slot-unavailable {
+    cursor: default !important;
+}
+
+.timezone-info {
+    color: var(--text-gray) !important;
+    background-color: var(--soft-gray) !important;
+    padding: 8px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    border: 1px solid var(--accent-orange) !important;
+}
+
+/* Admin Auth */
 #admin-auth {
     display: flex;
     flex-direction: column;
