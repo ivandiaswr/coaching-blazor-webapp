@@ -34,10 +34,8 @@ window.colorCalendarSlots = () => {
     const calendarRoot = document.querySelector('.mud-calendar');
     if (!calendarRoot) return;
 
-    // Aplica logo à primeira
     applyStyles();
 
-    // Observa mudanças no DOM do calendário
     const observer = new MutationObserver((mutationsList, observer) => {
         applyStyles();
     });
