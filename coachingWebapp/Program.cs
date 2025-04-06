@@ -14,6 +14,8 @@ using OpenTelemetry.Logs;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddSignalR();
+
 SQLitePCL.Batteries.Init();
 SQLitePCL.raw.SetProvider(new SQLitePCL.SQLite3Provider_e_sqlite3());  
 
@@ -78,8 +80,6 @@ builder.Services.AddScoped<ISecurityService, SecurityService>();
 builder.Services.AddScoped<IHelperService, HelperService>();
 builder.Services.AddScoped<ILogService, LogService>();
 builder.Services.AddSingleton<LogProcessor>();
-
-builder.Services.AddSignalR();
 
 builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation(); 
 

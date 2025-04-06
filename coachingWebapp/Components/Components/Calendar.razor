@@ -101,7 +101,7 @@
         if (firstRender)
         {
             WindowWidth = await JSRuntime.InvokeAsync<int>("eval", "window.innerWidth");
-                await JSRuntime.InvokeVoidAsync("colorCalendarSlots");
+            await JSRuntime.InvokeVoidAsync("window.colorCalendarSlots");
             StateHasChanged();
         }
     }

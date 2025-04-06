@@ -1,68 +1,49 @@
-window.initializeCalendar = (dotNetHelper, slots, busyTimes, firstAvailableISO) => {
-    const calendarElement = document.getElementById("calendar");
+window.colorCalendarSlots = () => {
+    const applyStyles = () => {
+        const chips = document.querySelectorAll('.mud-cal-cell-template-chip');
 
-    if (calendarElement.calendar) {
-        calendarElement.calendar.destroy();
-    }
+        chips.forEach(chip => {
+            const content = chip.querySelector('.mud-chip-content')?.textContent ?? "";
 
-    const initialDate = firstAvailableISO ? new Date(firstAvailableISO) : new Date();
+            chip.classList.remove('mud-chip-color-primary');
+            chip.classList.remove('mud-chip-filled');
 
-    const calendar = new FullCalendar.Calendar(calendarElement, {
-        initialView: window.innerWidth <= 1024 ? 'listWeek' : 'timeGridWeek',
-        initialDate: initialDate,
-        timeZone: 'local',
-        dayMaxEvents: true,
-        nowIndicator: true,
-        allDaySlot: false,
-        selectable: true,
-        eventOverlap: false,
-        slotMinTime: '10:00:00',
-        slotMaxTime: '21:15:00',
-        scrollTime: '10:00:00',
-        slotDuration: '00:45:00',
-        slotLabelInterval: '00:45:00',
-        height: 'auto', 
-        aspectRatio: window.innerWidth <= 768 ? 0.45 : 1.1,
-        validRange: {
-            start: new Date().toISOString(),
-            end: new Date(new Date().setDate(new Date().getDate() + 25)).toISOString()
-        },
-        eventOrder: 'order',
-        eventDisplay: 'block',
-        events: [
-            ...busyTimes.map(busy => ({
-                start: busy.startDateTimeOffset,
-                end: busy.endDateTimeOffset,
-                title: '⛔ Busy',
-                backgroundColor: '#f8d7da',
-                textColor: '#842029',
-                className: 'fc-event-busy',
-                order: 1
-            })),
-            ...slots.map(slot => ({
-                start: slot,
-                end: new Date(new Date(slot).getTime() + 45 * 60 * 1000),
-                title: '🟢 Available',
-                backgroundColor: '#d1e7dd',
-                textColor: '#0f5132',
-                className: 'fc-event-available',
-                order: 2
-            })),
-        ],
-        eventClick: function (info) {
-            info.jsEvent.preventDefault();
-            if (info.event.title.includes("Available")) {
-                dotNetHelper.invokeMethodAsync("SelectTimeSlotFromJS", info.event.startStr);
+            if (content.includes("🟢")) {
+                chip.classList.add("calendar-slot-available");
+                chip.style.backgroundColor = "rgba(76, 175, 80, 0.15)";
+                chip.style.border = "1px solid rgba(76, 175, 80, 0.4)";
             }
-        }
+            else if (content.includes("🔴")) {
+                chip.classList.add("calendar-slot-unavailable");
+                chip.style.backgroundColor = "rgba(244, 67, 54, 0.15)";
+                chip.style.border = "1px solid rgba(244, 67, 54, 0.4)";
+            }
+            else if (content.includes("⛔")) {
+                chip.classList.add("calendar-slot-busy");
+                chip.style.backgroundColor = "rgba(255, 152, 0, 0.15)";
+                chip.style.border = "1px solid rgba(255, 152, 0, 0.4)";
+            }
+
+            chip.style.color = "#1a1a1a";
+            chip.style.borderRadius = "6px";
+            chip.style.padding = "6px 10px";
+            chip.style.transition = "background-color 0.2s ease";
+        });
+    };
+
+    const calendarRoot = document.querySelector('.mud-calendar');
+    if (!calendarRoot) return;
+
+    // Aplica logo à primeira
+    applyStyles();
+
+    // Observa mudanças no DOM do calendário
+    const observer = new MutationObserver((mutationsList, observer) => {
+        applyStyles();
     });
 
-    calendar.render();
-    calendarElement.calendar = calendar;
-
-    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    dotNetHelper.invokeMethodAsync("SetUserTimeZone", userTimeZone)
-        .then(() => console.log("SetUserTimeZone invoked successfully"))
-        .catch(err => console.error("Error invoking SetUserTimeZone:", err));
-
+    observer.observe(calendarRoot, {
+        childList: true,
+        subtree: true,
+    });
 };

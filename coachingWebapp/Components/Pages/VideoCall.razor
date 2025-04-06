@@ -1,49 +1,104 @@
-@page "/session/{sessionId}"
+@page "/session/{SessionId}"
+@rendermode InteractiveServer
 
-<h3>Video Session</h3>
+<section id="video-session" class="services-section">
+    <div class="container">
+        
+        <header class="services-header">
+            <h1>Video Session</h1>
+            <p class="header-description">
+                Join your session below.
+            </p>
+        </header>
 
-@if (isGuest)
-{
-    <MudAlert Severity="Severity.Warning">
-        <b>Guest access:</b> You can join this session as a guest. Your camera and microphone will be used, but you won't have access to dashboard features.
-    </MudAlert>
-    @CallLayout()
-}
-else if (isUser)
-{
-    <MudAlert Severity="Severity.Info">
-        <b>Welcome back!</b> You're joining this session as a registered client.
-    </MudAlert>
-    @CallLayout()
-}
-else if (isAdmin)
-{
-    <MudAlert Severity="Severity.Success">
-        <b>Admin:</b> You're managing this session as the coach.
-    </MudAlert>
-    @CallLayout()
-}
+        @if (isAdmin)
+        {
+            <MudAlert Severity="Severity.Success">
+                <b>Admin (Coach):</b> You’re managing this session.
+            </MudAlert>
+        }
+        else if (isUser)
+        {
+            <MudAlert Severity="Severity.Info">
+                <b>Welcome back!</b> You're joining this session as a registered client.
+            </MudAlert>
+        }
+        else
+        {
+            isGuest = true;
+            <MudAlert Severity="Severity.Warning">
+                <b>Guest access:</b> You can join this session as a guest. Your camera and microphone will be used, but you won't have access to dashboard features.
+            </MudAlert>
+        }
+
+        <MudPaper Style="padding:1rem; margin-top:1rem;">
+            <p><b>Session:</b> @SessionId</p>
+
+            <div style="display: flex; gap:1rem; justify-content: center;">
+                <video id="localVideo"
+                       autoplay playsinline muted
+                       style="width:45%; border-radius: 8px; background: #000;" />
+                
+                <video id="remoteVideo"
+                       autoplay playsinline
+                       style="width:45%; border-radius: 8px; background: #000;" />
+            </div>
+
+            <div style="
+                margin-top: 1rem;
+                display: flex; 
+                flex-direction: row;
+                gap: 1rem;
+                justify-content: center;">
+                
+                <MudIconButton Icon="@Icons.Material.Filled.Call" 
+                               Color="Color.Primary"
+                               OnClick="@JoinCall"
+                               ToolTip="Start/Join Call" />
+                
+                <MudIconButton Icon="@Icons.Material.Filled.MicOff"
+                               Color="Color.Warning"
+                               OnClick="@ToggleMic"
+                               ToolTip="Mute/Unmute Microphone" />
+                
+                <MudIconButton Icon="@Icons.Material.Filled.VideocamOff"
+                               Color="Color.Warning"
+                               OnClick="@ToggleCamera"
+                               ToolTip="Enable/Disable Camera" />
+                
+                <MudIconButton Icon="@Icons.Material.Filled.ScreenShare"
+                               Color="Color.Info"
+                               OnClick="@ShareScreen"
+                               ToolTip="Share Your Screen" />
+                
+                <MudIconButton Icon="@Icons.Material.Filled.CallEnd"
+                               Color="Color.Error"
+                               OnClick="@EndCall"
+                               ToolTip="End Call" />
+            </div>
+        </MudPaper>
+
+    </div>
+</section>
 
 
 @code {
     [Parameter] public string SessionId { get; set; }
-    private VideoSession session;
     private bool isGuest = true;
     private bool isUser = false;
     private bool isAdmin = false;
-    private ClaimsPrincipal currentUser;
     private bool isReady = false;
 
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        currentUser = authState.User;
+        var currentUser = authState.User;
 
         if (currentUser.Identity?.IsAuthenticated == true)
         {
             isGuest = false;
             isAdmin = currentUser.IsInRole("Admin");
-            isUser = !isAdmin; // basic assumption
+            isUser = !isAdmin;
         }
 
         isReady = true;
@@ -54,32 +109,14 @@ else if (isAdmin)
     {
         if (firstRender && isReady)
         {
+            isReady = false;
             await JSRuntime.InvokeVoidAsync("VideoCall.init", SessionId);
         }
     }
 
-    private async Task JoinCall()
-    {
-        await JSRuntime.InvokeVoidAsync("VideoCall.startCall");
-        await JSRuntime.InvokeVoidAsync("console.log", "Call started");
-    }
-
-    private async Task EndCall()
-    {
-        await JSRuntime.InvokeVoidAsync("VideoCall.endCall");
-        await JSRuntime.InvokeVoidAsync("console.log", "Call ended");
-    }
-
-     RenderFragment CallLayout() => __builder =>
-    {
-        <MudPaper style="padding:1rem;">
-            <p><b>Session:</b> @SessionId</p>
-            <div>
-                <video id="localVideo" autoplay playsinline muted></video>
-                <video id="remoteVideo" autoplay playsinline></video>
-            </div>
-            <MudButton Color="Color.Primary" OnClick="@JoinCall">Join Call</MudButton>
-            <MudButton Color="Color.Secondary" OnClick="@EndCall">End Call</MudButton>
-        </MudPaper>
-    };
+    private async Task JoinCall() => await JSRuntime.InvokeVoidAsync("VideoCall.startCall");
+    private async Task EndCall() => await JSRuntime.InvokeVoidAsync("VideoCall.endCall");
+    private async Task ToggleMic() => await JSRuntime.InvokeVoidAsync("VideoCall.toggleMic");
+    private async Task ToggleCamera() => await JSRuntime.InvokeVoidAsync("VideoCall.toggleCamera");
+    private async Task ShareScreen() => await JSRuntime.InvokeVoidAsync("VideoCall.shareScreen");
 }
