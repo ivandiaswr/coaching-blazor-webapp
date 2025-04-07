@@ -4,6 +4,7 @@ using MailKit.Security;
 using MimeKit;
 using MailKit.Net.Smtp;
 using ModelLayer.Models;
+using Microsoft.EntityFrameworkCore;
 namespace BusinessLayer.Services;
 
 public class SessionService : ISessionService
@@ -22,21 +23,6 @@ public class SessionService : ISessionService
         this._helperService = helperService;
         this._emailSubscriptionService = emailSubscriptionService;
         this._logService = logService;
-    }
-
-    public List<Session> GetAllSessions()
-    {
-        try
-        {
-            var contacts = _context.Sessions.ToList();
-
-            return contacts;
-        } 
-        catch(Exception ex)
-        {
-            _logService.LogError("GetAllSessions", ex.Message);
-             throw;
-        }
     }
 
     public async Task<bool> CreateSessionAsync(Session session)
@@ -94,17 +80,89 @@ public class SessionService : ISessionService
 
     public Session GetSessionById(int id)
     {
-        throw new NotImplementedException();
+        try
+        {
+            return _context.Sessions
+                .Include(s => s.VideoSession)
+                .FirstOrDefault(s => s.Id == id) 
+                ?? throw new InvalidOperationException($"Session with ID {id} not found.");
+        }
+        catch (Exception ex)
+        {
+            _logService.LogError("GetSessionById", ex.Message);
+            throw;
+        }
     }
 
     public void UpdateSession(Session session)
     {
-        throw new NotImplementedException();
+        try
+        {
+            var existing = _context.Sessions.FirstOrDefault(s => s.Id == session.Id);
+            if (existing == null)
+                throw new Exception("Session not found.");
+
+            existing.Email = session.Email;
+            existing.SessionCategory = session.SessionCategory;
+            existing.Message = session.Message;
+            existing.PreferredDateTime = session.PreferredDateTime;
+            existing.DiscoveryCall = session.DiscoveryCall;
+            existing.IsSessionBooking = session.IsSessionBooking;
+
+            existing.FullName = session.FullName;
+
+            _context.Sessions.Update(existing);
+            _context.SaveChanges();
+        }
+        catch (Exception ex)
+        {
+            _logService.LogError("UpdateSession", ex.Message);
+            throw;
+        }
     }
+
 
     public void DeleteSession(int id)
     {
-        throw new NotImplementedException();
+        try
+        {
+            var session = _context.Sessions
+                .Include(s => s.VideoSession)
+                .FirstOrDefault(s => s.Id == id);
+
+            if (session == null)
+                throw new Exception("Session not found.");
+
+            if (session.VideoSession != null)
+            {
+                _context.VideoSessions.Remove(session.VideoSession);
+            }
+
+            _context.Sessions.Remove(session);
+            _context.SaveChanges();
+        }
+        catch (Exception ex)
+        {
+            _logService.LogError("DeleteSession", ex.Message);
+            throw;
+        }
+    }
+
+    public async Task<List<Session>> GetAllSessions()
+    {
+        try
+        {
+            var sessions = await _context.Sessions
+                            .Include(s => s.VideoSession)
+                            .ToListAsync();
+
+            return sessions;
+        } 
+        catch(Exception ex)
+        {
+            await _logService.LogError("GetAllSessions", ex.Message);
+            throw;
+        }
     }
 
     public async Task SendEmailAsync(Session session)

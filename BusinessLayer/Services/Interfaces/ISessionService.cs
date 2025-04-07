@@ -4,7 +4,7 @@ namespace BusinessLayer.Services.Interfaces;
 
 public interface ISessionService
 {
-    List<Session> GetAllSessions();
+    Task<List<Session>> GetAllSessions();
     Session GetSessionById(int id);
     Task<bool> CreateSessionAsync(Session contact);
     void UpdateSession(Session session);

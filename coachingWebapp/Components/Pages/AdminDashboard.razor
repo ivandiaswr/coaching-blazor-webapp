@@ -33,7 +33,7 @@
     <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
         <MudTabPanel Text="Calendar">
             <MudText Typo="Typo.h4">Sessions</MudText>
-            <MudCalendar @ref="calendar" Items="@calendarItems" OnCellClick="OnCellClicked" />
+            <MudCalendar @ref="calendar" Items="@calendarItems" ItemClicked="OnSessionClicked" />
 
             <MudText Class="mt-3 mb-3" Typo="Typo.h4">Busy Time</MudText>
             <MudCard Class="mt-2">
@@ -235,7 +235,7 @@
     protected override async Task OnInitializedAsync()
     {
         authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        sessions = SessionService.GetAllSessions() ?? new List<Session>();
+        sessions = await SessionService.GetAllSessions() ?? new List<Session>();
         emailSubscriptions = EmailSubscriptionService.GetAllEmailSubscriptions() ?? new List<EmailSubscription>();
         calendarItems = sessions.Select(c => new CalendarItem
         {
@@ -246,6 +246,30 @@
         _adminUnavailableTimes = (await UnavailableTimeService.GetAllUnavailableTimesAsync()).ToList();
 
         StateHasChanged();
+    }
+
+    private async Task OnSessionClicked(CalendarItem item)
+    {
+        var session = sessions.FirstOrDefault(s => 
+            s.PreferredDateTime == item.Start && 
+            item.Text.Contains(s.FullName));
+
+        if (session == null)
+            return;
+
+        var parameters = new DialogParameters
+        {
+            { "Session", session }
+        };
+
+        var options = new DialogOptions 
+        { 
+            CloseButton = true, 
+            MaxWidth = MaxWidth.Medium, 
+            FullWidth = true 
+        };
+
+        await DialogService.ShowAsync<SessionDialog>("Session Details", parameters, options);
     }
 
     private async Task HandleAddUnavailability()

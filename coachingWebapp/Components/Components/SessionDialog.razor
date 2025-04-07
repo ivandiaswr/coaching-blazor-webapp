@@ -1,0 +1,46 @@
+<MudDialog>
+    <DialogContent>
+        @if (Session != null)
+        {
+            <MudPaper Class="pa-3 mt-2">
+                <MudText><b>Full Name:</b> @Session.FullName</MudText>
+                <MudText><b>Email:</b> @Session.Email</MudText>
+                <MudText><b>Session:</b> @Session.SessionCategory</MudText>
+                <MudText><b>Message:</b> @Session.Message</MudText>
+                <MudText><b>Date:</b> @Session.PreferredDateTime.ToString("dd-MM-yyyy HH:mm")</MudText>
+            </MudPaper>
+
+            <MudButton Class="mt-3" Variant="Variant.Filled" Color="Color.Primary"
+                       OnClick="GoToSessionPage">
+                Go to Session
+            </MudButton>
+        }
+        else
+        {
+            <MudText>No session info available.</MudText>
+        }
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="CloseDialog">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    public IDialogReference DialogReference { get; set; }
+
+    [Parameter]
+    public Session Session { get; set; }
+
+    private void GoToSessionPage()
+    {
+        DialogReference?.Close();
+        NavigationManager.NavigateTo($"/session/{Session.VideoSession?.SessionId}");
+    }
+
+    private void CloseDialog()
+    {
+        DialogReference?.Close();
+    }
+}

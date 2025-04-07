@@ -408,7 +408,7 @@ private string pageTitle = "Home | Ítala Veloso";
 
         try
         {
-            var sessions = SessionService.GetAllSessions() ?? new List<Session>();
+            var sessions = await SessionService.GetAllSessions() ?? new List<Session>();
             busyTimesConverted = sessions
                 .Where(c => c.PreferredDateTime != default && c.PreferredDateTime > DateTime.UtcNow.AddDays(2))
                 .Select(c => (
