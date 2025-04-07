@@ -1,7 +1,4 @@
 window.VideoCall = (() => {
-
-    console.log("VideoCall module loading...");
-
     let hubConnection = null;
     let peerConnection = null;  
     let localStream = null;      
@@ -21,13 +18,15 @@ window.VideoCall = (() => {
         // Builds and starts the connection
         hubConnection = new signalR.HubConnectionBuilder()
             .withUrl("/videoHub")
+            .withAutomaticReconnect()
             .build();
 
         hubConnection.on("ReceiveSignal", onReceiveSignal);
 
+        hubConnection.on("ReceiveChatMessage", onReceiveChatMessage);
+
         try {
             await hubConnection.start();
-
             await hubConnection.invoke("JoinSession", sessionId);
         } 
         catch (err) {
@@ -59,13 +58,13 @@ window.VideoCall = (() => {
             peerConnection.close();
             peerConnection = null;
         }
-        if (localStream) {
-            localStream.getTracks().forEach(t => t.stop());
-            localStream = null;
-        }
         if (hubConnection) {
             hubConnection.stop();
             hubConnection = null;
+        }
+        if (localStream) {
+            localStream.getTracks().forEach(t => t.stop());
+            localStream = null;
         }
 
         document.getElementById("localVideo").srcObject = null;
@@ -184,6 +183,30 @@ window.VideoCall = (() => {
             console.error("Error sharing screen:", err);
         }
     }
+
+    function sendChatMessage(userName, message) {
+        if (hubConnection && message.trim()) {
+            hubConnection.invoke("SendChatMessage", sessionId, userName, message)
+                .catch(err => console.error("Error sending chat message:", err));
+        }
+    }
+
+    function onReceiveChatMessage(userName, timestamp, message) {
+        const chatContainer = document.getElementById("chatMessages");
+        if (chatContainer) {
+            const shouldAutoScroll =
+                chatContainer.scrollTop + chatContainer.clientHeight >= chatContainer.scrollHeight - 50;
+    
+            const messageDiv = document.createElement("div");
+            messageDiv.innerHTML = `<strong>[${timestamp}] ${userName}:</strong> ${message}`;
+            chatContainer.appendChild(messageDiv);
+    
+            if (shouldAutoScroll) {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+        }
+    }
+    
     
     return {
         init,
@@ -191,6 +214,7 @@ window.VideoCall = (() => {
         endCall,
         toggleMic,
         toggleCamera,
-        shareScreen
+        shareScreen,
+        sendChatMessage
     };
 })();

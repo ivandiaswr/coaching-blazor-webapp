@@ -1,11 +1,12 @@
 
+using System.Collections.Concurrent;
 using Microsoft.AspNetCore.SignalR;
 
 public class VideoCallHub : Hub
 {
-    private static readonly Dictionary<string, string> NonAdminOccupantBySession = new Dictionary<string, string>();
+    private static readonly ConcurrentDictionary<string, string> NonAdminOccupantBySession = new ();
 
-    private static readonly Dictionary<string, string> SessionByConnection = new Dictionary<string, string>();
+    private static readonly ConcurrentDictionary<string, string> SessionByConnection = new ();
 
     public async Task SendSignal(string sessionId, string message)
     {
@@ -35,17 +36,20 @@ public class VideoCallHub : Hub
         await Groups.AddToGroupAsync(Context.ConnectionId, sessionId);
     }
 
+    public async Task SendChatMessage(string sessionId, string userName, string message)
+    {
+        await Clients.Group(sessionId).SendAsync("ReceiveChatMessage", userName, DateTime.UtcNow.ToString("HH:mm:ss"), message);
+    }
+
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        if (SessionByConnection.TryGetValue(Context.ConnectionId, out string sessionId))
+        if (SessionByConnection.TryRemove(Context.ConnectionId, out string sessionId))
         {
-            SessionByConnection.Remove(Context.ConnectionId);
-
             if (NonAdminOccupantBySession.TryGetValue(sessionId, out var occupantConnId))
             {
                 if (occupantConnId == Context.ConnectionId)
                 {
-                    NonAdminOccupantBySession[sessionId] = null;
+                    NonAdminOccupantBySession.TryRemove(sessionId, out _);
                 }
             }
         }
