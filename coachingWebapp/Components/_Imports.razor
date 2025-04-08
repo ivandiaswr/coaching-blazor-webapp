@@ -8,6 +8,7 @@
 @using Microsoft.JSInterop
 @using System.ComponentModel.DataAnnotations
 @using System.Security.Claims
+@using Microsoft.AspNetCore.Identity
 
 @using coachingWebapp
 @using coachingWebapp.Components
@@ -17,9 +18,11 @@
 @using ModelLayer
 @using ModelLayer.Models
 
+
 @using MudBlazor
 @using Heron.MudCalendar
 
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject NavigationManager NavigationManager

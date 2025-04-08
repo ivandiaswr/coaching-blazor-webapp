@@ -65,11 +65,11 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
     .AddDefaultTokenProviders(); // Enables features like email confirmation, password reset, and two-factor authentication
 
 // Defines policy for Admin role to restrict access to specific parts of the application
-builder.Services.AddAuthorization(options =>
-    {
-        options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
-    }
-);
+// builder.Services.AddAuthorization(options =>
+//     {
+//         options.AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+//     }
+// );
 
 builder.Services.AddScoped<IEmailSubscriptionService, EmailSubscriptionService>();
 builder.Services.AddScoped<ISessionService, SessionService>();
@@ -175,6 +175,17 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<CoachingDbContext>();
     dbContext.Database.EnsureCreated();
+
+    var roleMananger = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    string[] = { "Admin", "User"};
+
+    foreach (var role in roles)
+    {
+        if (!await roleMananger.RoleExistsAsync(role))
+        {
+            await roleMananger.CreateAsync(new IdentityRole(role));
+        }
+    }
 }
 
 app.MapHub<VideoCallHub>("/videoHub");

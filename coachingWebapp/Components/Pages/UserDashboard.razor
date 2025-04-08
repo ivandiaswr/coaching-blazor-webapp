@@ -1,4 +1,8 @@
 @page "/UserDashboard"
+@rendermode InteractiveServer
+
+@attribute [Authorize(Roles = "User")]
+<PageTitle>@pageTitle</PageTitle>
 
 <MudTabs>
     <MudTabPanel Text="Upcoming">
@@ -66,6 +70,7 @@
 </MudTabs>
 
 @code {
+    private string pageTitle = "User Dashboard | Ítala Veloso";
     private List<VideoSession> allSessions = new();
     private List<VideoSession> upcomingSessions = new();
     private List<VideoSession> pastSessions = new();

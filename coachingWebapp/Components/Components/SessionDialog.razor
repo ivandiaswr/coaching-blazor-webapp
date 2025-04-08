@@ -10,37 +10,27 @@
                 <MudText><b>Date:</b> @Session.PreferredDateTime.ToString("dd-MM-yyyy HH:mm")</MudText>
             </MudPaper>
 
-            <MudButton Class="mt-3" Variant="Variant.Filled" Color="Color.Primary"
-                       OnClick="GoToSessionPage">
-                Go to Session
-            </MudButton>
+
         }
         else
         {
             <MudText>No session info available.</MudText>
         }
     </DialogContent>
-
     <DialogActions>
-        <MudButton OnClick="CloseDialog">Close</MudButton>
+            <MudButton Class="mt-3" Variant="Variant.Filled" Color="Color.Primary" OnClick="GoToSessionPage">
+                Go to Session
+            </MudButton>
     </DialogActions>
 </MudDialog>
 
 @code {
-    [CascadingParameter]
-    public IDialogReference DialogReference { get; set; }
 
     [Parameter]
     public Session Session { get; set; }
 
     private void GoToSessionPage()
     {
-        DialogReference?.Close();
         NavigationManager.NavigateTo($"/session/{Session.VideoSession?.SessionId}");
-    }
-
-    private void CloseDialog()
-    {
-        DialogReference?.Close();
     }
 }
