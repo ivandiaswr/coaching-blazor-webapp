@@ -1,0 +1,82 @@
+.account-settings {
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: var(--primary-white);
+    border-radius: 16px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.05);
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.account-settings h1 {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-gray);
+    text-align: center;
+}
+
+.account-settings .form-group {
+    margin-bottom: 1.25rem;
+}
+
+.account-settings label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--text-gray);
+}
+
+.account-settings input[type="text"],
+.account-settings input[type="email"],
+.account-settings input[type="password"],
+.account-settings select {
+    width: 100%;
+    padding: 0.6rem;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    background-color: var(--soft-gray);
+    color: var(--primary-black);
+    transition: border-color 0.2s ease-in-out, background-color 0.2s;
+    font-size: 1rem;
+}
+
+.account-settings input:focus {
+    border-color: var(--accent-orange);
+    outline: none;
+    background-color: #fff;
+}
+
+.account-settings button.btn {
+    padding: 0.7rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    background-color: var(--accent-orange);
+    color: var(--primary-white);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.account-settings button.btn:hover {
+    background-color: var(--accent-orange-hover);
+}
+
+.account-settings .alert {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.account-settings .alert-success {
+    background-color: #e6f4ea;
+    color: #207d45;
+    border: 1px solid #b1e0c5;
+}
+
+.account-settings .alert-danger {
+    background-color: #fdecea;
+    color: #a94442;
+    border: 1px solid #f5c6cb;
+}

@@ -170,14 +170,14 @@ app.MapControllers(); // Use controllers for the api
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-// Ensure the database is created
+// Ensure the database is created anad roles exist
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<CoachingDbContext>();
     dbContext.Database.EnsureCreated();
 
     var roleMananger = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    string[] = { "Admin", "User"};
+    string[] roles = { "Admin", "User"};
 
     foreach (var role in roles)
     {

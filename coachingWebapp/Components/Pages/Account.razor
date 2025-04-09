@@ -1,20 +1,101 @@
 @page "/account"
 @rendermode InteractiveServer
+@attribute [Authorize(Roles = "Admin,User")]
 
-@inject NavigationManager NavigationManager
 
-<section id="accout">
-    <div class="dashboard-header">
-        <div>
-            <h1><span class="highlight">Account</span></h1>  
+@inject UserManager<IdentityUser> UserManager
+@inject AuthenticationStateProvider AuthProvider
+@inject SignInManager<IdentityUser> SignInManager
+
+<EditForm Model="@accountModel" OnValidSubmit="HandleSubmit">
+    <DataAnnotationsValidator />
     
+
+    <section class="account-settings">
+        <h1>Account Settings</h1>
+
+        <div class="form-group">
+            <label>Email</label>
+            <p>@accountModel.Email</p>
         </div>
-    </div>
-</section>
+
+        <div class="form-group">
+            <label>Current Password</label>
+            <InputText @bind-Value="accountModel.CurrentPassword" class="form-control" type="password" />
+            <ValidationMessage For="@(() => accountModel.CurrentPassword)" />
+        </div>
+
+        <div class="form-group">
+            <label>New Password</label>
+            <InputText @bind-Value="accountModel.NewPassword" class="form-control" type="password" />
+            <ValidationMessage For="@(() => accountModel.NewPassword)" />
+        </div>
+
+        <div class="form-group">
+            <label>Confirm New Password</label>
+            <InputText @bind-Value="accountModel.ConfirmNewPassword" class="form-control" type="password" />
+            <ValidationMessage For="@(() => accountModel.ConfirmNewPassword)" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Update Account</button>
+        @if (!string.IsNullOrEmpty(successMessage))
+        {
+            <div class="alert alert-success mt-3">@successMessage</div>
+        }
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger mt-3">@errorMessage</div>
+        }
+    </section>
+</EditForm>
 
 @code {
+    private UpdateUser accountModel = new();
+    private string? successMessage;
+    private string? errorMessage;
+
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var user = await UserManager.GetUserAsync(authState.User);
+        if (user is not null)
+        {
+            accountModel.Email = user.Email!;
+        }
+    }
 
+    private async Task HandleSubmit()
+    {
+        successMessage = null;
+        errorMessage = null;
+
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var user = await UserManager.GetUserAsync(authState.User);
+
+        if (user is null)
+        {
+            errorMessage = "User not found.";
+            return;
+        }
+
+        @* if (user.Email != accountModel.Email)
+        {
+            var setEmailResult = await UserManager.SetEmailAsync(user, accountModel.Email);
+            if (!setEmailResult.Succeeded)
+            {
+                errorMessage = string.Join(", ", setEmailResult.Errors.Select(e => e.Description));
+                return;
+            }
+        } *@
+
+        var changePasswordResult = await UserManager.ChangePasswordAsync(user, accountModel.CurrentPassword, accountModel.NewPassword);
+        if (!changePasswordResult.Succeeded)
+        {
+            errorMessage = string.Join(", ", changePasswordResult.Errors.Select(e => e.Description));
+            return;
+        }
+
+        await SignInManager.RefreshSignInAsync(user);
+        successMessage = "Account updated successfully!";
     }
 }

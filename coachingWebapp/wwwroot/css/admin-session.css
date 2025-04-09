@@ -108,6 +108,98 @@
     border: 1px solid var(--accent-orange) !important;
 }
 
+/* Busy Times */
+.busy-time-section {
+    background-color: var(--primary-white);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 0 6px rgba(0,0,0,0.05);
+    margin-top: 1rem;
+}
+
+.busy-time-section h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--primary-black);
+}
+
+.busy-time-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: flex-end;
+}
+
+.busy-time-form .mud-input-control,
+.busy-time-form .mud-select,
+.busy-time-form .mud-time-picker {
+    min-width: 150px;
+    flex: 1 1 auto;
+}
+
+.busy-time-form .mud-checkbox {
+    margin-left: 1rem;
+    white-space: nowrap;
+    font-size: 0.95rem;
+}
+
+.busy-time-form .mud-button {
+    align-self: stretch;
+    height: 40px;
+}
+
+.busy-time-list {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background-color: var(--soft-gray);
+    border-radius: 8px;
+}
+
+.busy-time-list .mud-list-item {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #eaeaea;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.busy-time-list .mud-list-item:last-child {
+    border-bottom: none;
+}
+
+.busy-time-list .mud-list-item div {
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.busy-time-list .mud-icon-button {
+    margin-left: 0.5rem;
+}
+
+.busy-time-entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.busy-time-info {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-gray);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.busy-time-actions {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+}
+
 /* Admin Auth */
 #admin-auth {
     display: flex;

@@ -31,78 +31,93 @@
             <MudCalendar @ref="calendar" Items="@calendarItems" ItemClicked="OnSessionClicked" />
 
             <MudText Class="mt-3 mb-3" Typo="Typo.h4">Busy Time</MudText>
-            <MudCard Class="mt-2">
-                <MudCardContent>
-                    <MudForm @ref="_busyForm" Model="_newUnavailableTime">
-                        <MudGrid Dense="true" Class="align-center">
-                            <MudItem xs="12" sm="3">
-                                <MudSelect T="DayOfWeek?" Label="Day of the week" Dense="true"
-                                        @bind-Value="_newUnavailableTime.DayOfWeek" Required="true"
-                                        RequiredError="Day of the week is required">
-                                    @foreach (DayOfWeek day in Enum.GetValues(typeof(DayOfWeek)))
-                                    {
-                                        <MudSelectItem T="DayOfWeek?" Value="@day">@day</MudSelectItem>
-                                    }
-                                </MudSelect>
-                            </MudItem>
+           <MudGrid Class="mt-2" Gutter="GutterSize.Small">
+                <MudItem xs="12" sm="6">
+                    <MudCard Class="p-4">
+                        <MudCardContent>
+                            <MudForm @ref="_busyForm" Model="_newUnavailableTime">
+                                <MudGrid Dense="true" Class="busy-time-form">
+                                    <MudItem xs="12" sm="12">
+                                        <MudSelect T="DayOfWeek?" Label="Day of the week" Dense="true"
+                                                @bind-Value="_newUnavailableTime.DayOfWeek" Required="true"
+                                                RequiredError="Day of the week is required">
+                                            @foreach (DayOfWeek day in Enum.GetValues(typeof(DayOfWeek)))
+                                            {
+                                                <MudSelectItem T="DayOfWeek?" Value="@day">@day</MudSelectItem>
+                                            }
+                                        </MudSelect>
+                                    </MudItem>
 
-                            <MudItem xs="6" sm="2">
-                                <MudTimePicker Label="Start time" Dense="true" @bind-Time="_newUnavailableTime.StartTime"
-                                            Required="true" RequiredError="Start time is required" />
-                            </MudItem>
+                                    <MudItem xs="6" sm="6">
+                                        <MudTimePicker Label="Start time" Dense="true" @bind-Time="_newUnavailableTime.StartTime"
+                                                    Required="true" RequiredError="Start time is required" />
+                                    </MudItem>
 
-                            <MudItem xs="6" sm="2">
-                                <MudTimePicker Label="End time" Dense="true" @bind-Time="_newUnavailableTime.EndTime"
-                                            Required="true" RequiredError="End time is required" />
-                            </MudItem>
+                                    <MudItem xs="6" sm="6">
+                                        <MudTimePicker Label="End time" Dense="true" @bind-Time="_newUnavailableTime.EndTime"
+                                                    Required="true" RequiredError="End time is required" />
+                                    </MudItem>
 
-                            <MudItem xs="12" sm="3">
-                                <MudCheckBox T="bool" Label="Recurring weekly" @bind-Checked="_newUnavailableTime.IsRecurring" />
-                            </MudItem>
+                                    <MudItem xs="12">
+                                        <MudCheckBox T="bool" Label="Recurring weekly" @bind-Checked="_newUnavailableTime.IsRecurring" />
+                                    </MudItem>
 
-                            <MudItem xs="12" sm="2">
-                                <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                                        StartIcon="@Icons.Material.Filled.Add"
-                                        OnClick="HandleAddUnavailability">
-                                    Add
-                                </MudButton>
-                            </MudItem>
-                        </MudGrid>
-                    </MudForm>
-                </MudCardContent>
-            </MudCard>
+                                    <MudItem xs="12">
+                                        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                                StartIcon="@Icons.Material.Filled.Add"
+                                                OnClick="HandleAddUnavailability">
+                                            Add
+                                        </MudButton>
+                                    </MudItem>
+                                </MudGrid>
+                            </MudForm>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
 
-            <MudPaper Class="mt-4 p-3">
-                    <MudText Typo="Typo.h6">Unavailable Times:</MudText>
-                    <MudList T="UnavailableTime" Dense="true" Hover="true">
+                <MudItem xs="12" sm="6">
+                    <MudPaper Class="p-4">
+                        <MudText Typo="Typo.h6" Class="mb-2">Unavailable Times:</MudText>
+                       <MudList T="UnavailableTime" Dense="true" Hover="true">
                         @if (_adminUnavailableTimes.Any())
                         {
                             @foreach (var time in _adminUnavailableTimes)
                             {
-                                <MudListItem Class="d-flex justify-between align-center">
-                                    <div>
+                                <MudListItem Class="busy-time-entry">
+                                    <div class="busy-time-info">
                                         <strong>@time.DayOfWeek</strong>: @time.StartTime - @time.EndTime
                                         @if (time.IsRecurring)
                                         {
-                                            <span class="ml-2 text-success">(Recurring)</span>
+                                            <span class="ml-2 text-success d-inline-flex align-center">
+                                                <MudIcon Icon="@Icons.Material.Filled.Loop" Size="Size.Small" Class="mr-1" />
+                                                Recurring
+                                            </span>
                                         }
+                                        <div class="busy-time-actions">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                                        Color="Color.Primary"
+                                                        OnClick="@(() => StartEditUnavailability(time))"
+                                                        Size="Size.Small" />
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                                        Color="Color.Error"
+                                                        OnClick="@(() => DeleteUnavailableTime(time.Id))"
+                                                        Size="Size.Small" />
+                                        </div>
                                     </div>
-
-                                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                                Color="Color.Primary"
-                                                OnClick="@(() => StartEditUnavailability(time))" />
-                                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                                Color="Color.Error"
-                                                OnClick="@(() => DeleteUnavailableTime(time.Id))" />
                                 </MudListItem>
                             }
                         }
-                        else 
+                        else
                         {
-                            <MudListItem>No unavailable times defined.</MudListItem>
+                            <MudListItem>
+                                <MudText>No unavailable times defined.</MudText>
+                            </MudListItem>
                         }
                     </MudList>
-                </MudPaper>
+
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
         </MudTabPanel>
 
         <MudTabPanel Text="Sessions">
