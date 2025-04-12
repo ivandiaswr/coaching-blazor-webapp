@@ -9,6 +9,7 @@
 @using System.ComponentModel.DataAnnotations
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Identity
+@using System.Globalization
 
 @using coachingWebapp
 @using coachingWebapp.Components
@@ -18,9 +19,9 @@
 @using ModelLayer
 @using ModelLayer.Models
 
-
 @using MudBlazor
 @using Heron.MudCalendar
+@inject ISnackbar Snackbar
 
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization

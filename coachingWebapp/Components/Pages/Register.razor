@@ -3,47 +3,66 @@
 
 @inject UserManager<IdentityUser> UserManager
 @inject SignInManager<IdentityUser> SignInManager
+@inject NavigationManager NavigationManager
 
-<h3>Register</h3>
+<div class="register-container">
+    <h3 class="mb-4">Create Account</h3>
 
-@if (!string.IsNullOrEmpty(ErrorMessage))
-{
-    <div class="alert alert-danger">@ErrorMessage</div>
-}
+    <EditForm Model="@newUser" OnValidSubmit="HandleRegister">
+        <DataAnnotationsValidator />
 
-<EditForm Model="@newUser" OnValidSubmit="HandleRegister">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label for="firstName" class="form-label">First Name</label>
+                <InputText id="firstName" @bind-Value="newUser.FirstName" class="form-control" />
+            </div>
+            <div class="col-md-6">
+                <label for="lastName" class="form-label">Last Name</label>
+                <InputText id="lastName" @bind-Value="newUser.LastName" class="form-control" />
+            </div>
+            <div class="col-12">
+                <label for="email" class="form-label">Email</label>
+                <InputText id="email" @bind-Value="newUser.Email" type="email" class="form-control" />
+            </div>
+            <div class="col-md-6">
+                <label for="password" class="form-label">Password</label>
+                <InputText id="password" @bind-Value="newUser.Password" type="password" class="form-control" />
+            </div>
+            <div class="col-md-6">
+                <label for="confirmPassword" class="form-label">Confirm Password</label>
+                <InputText id="confirmPassword" @bind-Value="newUser.ConfirmPassword" type="password" class="form-control" />
+            </div>
+            <div class="col-12 d-grid">
+                <button type="submit" class="btn btn-orange mt-3">Register</button>
+            </div>
 
-    <div class="mb-3">
-        <label>Email</label>
-        <InputText @bind-Value="newUser.Email" class="form-control" />
-    </div>
-    <div class="mb-3">
-        <label>Password</label>
-        <InputText @bind-Value="newUser.Password" type="password" class="form-control" />
-    </div>
-    <div class="mb-3">
-        <label>Confirm Password</label>
-        <InputText @bind-Value="newUser.ConfirmPassword" type="password" class="form-control" />
-    </div>
-    <button type="submit" class="btn btn-primary">Register</button>
-</EditForm>
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <div class="alert alert-danger">@ErrorMessage</div>
+            }
+        </div>
+    </EditForm>
+</div>
 
 @code {
-    private RegisterUser newUser = new ();
+    private RegisterUser newUser = new();
     private string ErrorMessage;
 
     private async Task HandleRegister()
     {
-        var user = new IdentityUser { UserName = newUser.Email, Email = newUser.Email };
+        var user = new IdentityUser
+        {
+            UserName = newUser.Email,
+            Email = newUser.Email
+        };
+
         var result = await UserManager.CreateAsync(user, newUser.Password);
 
         if (result.Succeeded)
         {
             await UserManager.AddToRoleAsync(user, "User");
             await SignInManager.SignInAsync(user, isPersistent: false);
-            NavigationManager.NavigateTo("/");
+            NavigationManager.NavigateTo("/UserDashboard");
         }
         else
         {

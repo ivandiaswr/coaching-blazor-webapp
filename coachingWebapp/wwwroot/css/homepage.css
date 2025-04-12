@@ -1571,6 +1571,11 @@ h1:focus {
   opacity: 1;
   color: inherit;
   background-color: #f8f9fa;
+  cursor: pointer;
+}
+
+.hoverable-input input {
+  cursor: pointer !important;
 }
 
 .hoverable-input:hover {

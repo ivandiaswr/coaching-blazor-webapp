@@ -1,29 +1,104 @@
 @page "/UserDashboard"
 @rendermode InteractiveServer
 
+<MudPopoverProvider/>
+
 @attribute [Authorize(Roles = "User")]
 <PageTitle>@pageTitle</PageTitle>
 
-<MudTabs>
-    <MudTabPanel Text="Upcoming">
-        <MudCalendar T="CalendarItem"
-             Items="@calendarItems"
-             Date="@DateTime.Today"
-             View="CalendarView.Week"
-             FirstDayOfWeek="DayOfWeek.Monday"
-             StartHour="10"
-             EndHour="21"
-             SlotDuration="00:45:00"
-             ShowTodayButton="true"
-             ItemClicked="HandleCalendarClick"
-             Class="mud-calendar-event" />
+
+<MudPaper Class="dashboard-welcome" Elevation="1">
+    <MudText Typo="Typo.h5" Class="welcome-title">
+    Hello, @userId!
+    </MudText>
+    
+    @if (upcomingSessions.Any())
+    {
+        var nextSession = upcomingSessions.First();
+        <MudText Typo="Typo.subtitle1">
+            A tua próxima sessão está agendada para 
+        <strong>@nextSession.ScheduledAt.ToString("MMMM dd 'at' HH:mm", new CultureInfo("en-US"))</strong>. Get ready to take your next step!
+        </MudText>
+    }
+    else
+    {
+        <MudText Typo="Typo.subtitle1">
+        You don’t have any sessions scheduled yet. It’s time to book a moment just for you.
+        </MudText>
+        <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="@(() => selectedTab = 1)">
+        Book a Session
+        </MudButton>
+    }
+</MudPaper>
+
+<MudTabs @bind-ActivePanelIndex="selectedTab" Class="centered-tabs">
+    <MudTabPanel Text="Upcoming" Icon="@Icons.Material.Filled.Event">
+        <MudPaper Class="upcoming-calendar-wrapper" Elevation="0">
+            <MudCalendar T="CalendarItem"
+                Items="@calendarItems"
+                Date="@DateTime.Today"
+                View="CalendarView.Week"
+                FirstDayOfWeek="DayOfWeek.Monday"
+                StartHour="10"
+                EndHour="21"
+                SlotDuration="00:45:00"
+                ShowTodayButton="true"
+                ItemClicked="HandleCalendarClick"
+                Class="mud-calendar-event" /> 
+        </MudPaper>
     </MudTabPanel>
 
-    <MudTabPanel Text="List View">
+    <MudTabPanel Text="Request Session" Icon="@Icons.Material.Filled.CalendarToday">
+         <div class="user-dashboard-request">
+            <MudForm @ref="requestForm" Model="@requestModel">
+                <MudSelect Label="Session Type" 
+                    T="SessionType"
+                    @bind-Value="requestModel.SessionCategory"
+                    For="@(() => requestModel.SessionCategory)">
+                        @foreach (var type in Enum.GetValues(typeof(SessionType)).Cast<SessionType>())
+                        {
+                            <MudSelectItem Value="@type">
+                                @((type.GetType().GetField(type.ToString())?.GetCustomAttributes(typeof(DisplayAttribute), false).FirstOrDefault() as DisplayAttribute)?.Name ?? type.ToString())
+                            </MudSelectItem>
+                        }
+                </MudSelect>
+
+                <MudTextField Label="Message" 
+                    T="string" 
+                    Lines="3" 
+                    @bind-Value="requestModel.Message"
+                    For="@(() => requestModel.Message)" />
+
+                <MudPaper Class="hoverable-input" @onclick="ToggleCalendar" Style="cursor: pointer;">
+                    <MudTextField Label="Preferred Date & Time"
+                                Value="@selectedSlotString"
+                                For="@(() => requestModel.PreferredDateTimeString)"
+                                ReadOnly="true"
+                                Adornment="Adornment.End"
+                                AdornmentIcon="@Icons.Material.Filled.CalendarMonth" />
+                </MudPaper>
+
+                <Calendar @bind-IsVisible="showSlotCalendar"
+                        OnSlotSelected="HandleSlotSelected"
+                        CurrentTimeZoneDisplay="@userTimeZone"
+                        Slots="@AvailableSlots"
+                        BusyTimes="@BusyTimes"
+                        AdminUnavailabilities="@Unavailabilities"
+                        FirstAvailableDate="@firstAvailableDate" />
+
+                <MudButton OnClick="SubmitSessionRequest" Variant="Variant.Filled" Color="Color.Primary">
+                    Request Session
+                </MudButton>
+            </MudForm>
+        </div>
+    </MudTabPanel>
+
+    <MudTabPanel Text="List View" Icon="@Icons.Material.Filled.ViewList">
         <MudTable Items="upcomingSessions" Hover="true" Striped="true">
             <HeaderContent>
                 <MudTh>Date</MudTh>
                 <MudTh>Status</MudTh>
+                <MudTh>Type</MudTh>
                 <MudTh></MudTh>
             </HeaderContent>
             <RowTemplate>
@@ -42,6 +117,7 @@
                         <MudChip T="string" Color="Color.Warning">Missed</MudChip>
                     }
                 </MudTd>
+                <MudTd>@(context.Session?.SessionCategory.ToString() ?? "N/A")</MudTd>
                 <MudTd>
                     @if (context.IsActive && DateTime.UtcNow.AddMinutes(-10) <= context.ScheduledAt)
                     {
@@ -54,7 +130,7 @@
         </MudTable>
     </MudTabPanel>
 
-    <MudTabPanel Text="Past Sessions">
+    <MudTabPanel Text="Past Sessions" Icon="@Icons.Material.Filled.History">
         <MudList T="VideoSession" Dense="true">
             @foreach (var session in pastSessions)
             {
@@ -62,6 +138,7 @@
                     <MudText>
                         <strong>@session.ScheduledAt.ToString("dd MMM yyyy")</strong>
                         - Duration: @((session.EndedAt - session.StartedAt)?.TotalMinutes ?? 0) min
+                        - Type: @session.Session?.SessionCategory.ToString() ?? "N/A"
                     </MudText>
                 </MudListItem>
             }
@@ -71,6 +148,7 @@
 
 @code {
     private string pageTitle = "User Dashboard | Ítala Veloso";
+    private int selectedTab = 0;
     private List<VideoSession> allSessions = new();
     private List<VideoSession> upcomingSessions = new();
     private List<VideoSession> pastSessions = new();
@@ -78,11 +156,31 @@
     private List<CalendarItem> calendarItems = new();
     private string userId;
 
+    private MudForm requestForm;
+    private Session requestModel = new();
+
+    private bool showSlotCalendar = false;
+
+    private string selectedSlotString;
+    private SessionType requestType = SessionType.lifeCoaching;
+    private string requestMessage;
+
+    private List<DateTime> AvailableSlots = new();
+    private List<(DateTimeOffset Start, DateTimeOffset End)> BusyTimes = new();
+    private List<UnavailableTime> Unavailabilities = new();
+    private DateTime? firstAvailableDate;
+
+    private string userTimeZone = TimeZoneInfo.Local.DisplayName;
+
     protected override async Task OnInitializedAsync()
     {
         var auth = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         userId = auth.User?.Identity?.Name;
+        await LoadSessions();
+    }
 
+    private async Task LoadSessions()
+    {
         allSessions = await VideoCallService.GetSessionsForUserAsync(userId);
         upcomingSessions = allSessions
             .Where(s => s.ScheduledAt >= DateTime.UtcNow)
@@ -96,8 +194,114 @@
         {
             Start = session.ScheduledAt,
             End = session.ScheduledAt.AddMinutes(45),
-            Text = "Coaching Session"
+            Text = session.Session?.SessionCategory.ToString() ?? "Session"
         }).ToList();
+    }
+
+    private async Task ToggleCalendar()
+    {
+        try
+        {
+            showSlotCalendar = !showSlotCalendar;
+
+            var startDate = DateTime.UtcNow.Date.AddDays(2);
+            var sessions = await SessionService.GetAllSessions() ?? new List<Session>();
+            BusyTimes = sessions
+                .Where(c => c.PreferredDateTime != default && c.PreferredDateTime > DateTime.UtcNow.AddDays(2))
+                .Select(c => (
+                    Start: new DateTimeOffset(c.PreferredDateTime, TimeSpan.Zero),
+                    End: new DateTimeOffset(c.PreferredDateTime.AddMinutes(45), TimeSpan.Zero)
+                ))
+                .ToList();
+
+            Unavailabilities = (await UnavailableTimeService.GetAllUnavailableTimesAsync()).ToList();
+            AvailableSlots = GenerateAvailableSlots(startDate, BusyTimes, Unavailabilities);
+            firstAvailableDate = AvailableSlots.Any() ? AvailableSlots.Min() : DateTime.Now;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in ToggleCalendar: {ex.Message}");
+        }
+        finally {
+            StateHasChanged();
+        }
+    }
+
+    private List<DateTime> GenerateAvailableSlots(DateTime startDate, List<(DateTimeOffset Start, DateTimeOffset End)> busyTimes, List<UnavailableTime> adminUnavailabilities)
+    {
+        var slots = new List<DateTime>();
+        var endDate = startDate.AddDays(25);
+        var workStartTime = new TimeSpan(10, 0, 0);
+        var workEndTime = new TimeSpan(21, 0, 0);
+        var slotDuration = TimeSpan.FromMinutes(45);
+
+        for (var date = startDate; date <= endDate; date = date.AddDays(1))
+        {
+            for (var time = workStartTime; time < workEndTime; time = time.Add(slotDuration))
+            {
+                var slotStart = date.Date.Add(time);
+                var slotEnd = slotStart.Add(slotDuration);
+
+                if (slotStart <= DateTime.UtcNow.AddDays(2))
+                    continue;
+
+                bool isBusy = busyTimes.Any(busy =>
+                    slotStart < busy.End.LocalDateTime && slotEnd > busy.Start.LocalDateTime);
+
+                bool isWithinUnavailability = adminUnavailabilities.Any(u =>
+                    (u.IsRecurring 
+                    && ((int)u.DayOfWeek + 1) % 7 == (int)slotStart.DayOfWeek
+                    && slotStart.TimeOfDay >= u.StartTime && slotStart.TimeOfDay < u.EndTime)
+                    ||
+                    (!u.IsRecurring && u.Date == slotStart.Date 
+                    && slotStart.TimeOfDay >= u.StartTime 
+                    && slotStart.TimeOfDay < u.EndTime));
+
+                if (!isBusy && !isWithinUnavailability)
+                {
+                    slots.Add(slotStart);
+                }
+            }
+        }
+        return slots;
+    }
+
+    private async Task HandleSlotSelected(string isoString)
+    {
+        selectedSlotString = isoString;
+        showSlotCalendar = false;
+        StateHasChanged();
+    }
+
+    private async Task SubmitSessionRequest()
+    {
+        await requestForm.Validate();
+        if (!requestForm.IsValid || string.IsNullOrWhiteSpace(selectedSlotString))
+            return;
+
+        var scheduledAt = DateTime.Parse(selectedSlotString);
+
+        var session = new Session
+        {
+            PreferredDateTime = scheduledAt,
+            SessionCategory = requestType,
+            Message = requestMessage ?? string.Empty,
+            CreatedAt = DateTime.UtcNow,
+            IsSessionBooking = true,
+            DiscoveryCall = false,
+            Email = userId,
+            FullName = ""
+        };
+
+        await SessionService.CreateSessionAsync(session);
+
+        Snackbar.Add("Session successfully scheduled!", Severity.Success);
+
+        selectedSlotString = null;
+        requestMessage = string.Empty;
+        showSlotCalendar = false;
+
+        await LoadSessions();
     }
 
     private void JoinSession(string sessionId)

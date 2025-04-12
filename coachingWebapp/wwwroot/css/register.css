@@ -1,0 +1,40 @@
+.register-container {
+    max-width: 600px;
+    margin: 4rem auto;
+    padding: 2rem;
+    background-color: var(--primary-white);
+    border-radius: 16px;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.05);
+  }
+  
+  .register-container h3 {
+    color: var(--primary-black);
+    font-weight: bold;
+  }
+  
+  .register-container .form-label {
+    font-weight: 600;
+    color: var(--primary-black);
+  }
+  
+  .register-container .form-control {
+    border-radius: 0.5rem;
+  }
+  
+  .register-container .btn-orange {
+    background-color: var(--accent-orange);
+    border: none;
+    color: var(--primary-white);
+    font-weight: bold;
+    padding: 0.6rem 1.2rem;
+    border-radius: 0.5rem;
+    transition: background-color 0.2s ease-in-out;
+  }
+  
+  .register-container .btn-orange:hover {
+    background-color: var(--accent-orange-hover);
+  }
+  
+  .register-container .alert {
+    border-radius: 0.5rem;
+  }

@@ -3,8 +3,6 @@
 
 @inject IHttpClientFactory HttpClientFactory
 
-@using Microsoft.AspNetCore.Components.Forms
-
 <MudPopoverProvider/> 
 
 <PageTitle>@pageTitle</PageTitle>
@@ -335,11 +333,6 @@ private string pageTitle = "Home | Ítala Veloso";
     private bool isLoggingIn = false;
     private bool isCalendarLoading = false;
     private string currentTimeZoneDisplay = "detecting...";
-
-    protected override void OnInitialized()
-    {
-        
-    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
