@@ -31,8 +31,8 @@
     }
 </MudPaper>
 
-<MudTabs @bind-ActivePanelIndex="selectedTab" Class="centered-tabs">
-    <MudTabPanel Text="Upcoming" Icon="@Icons.Material.Filled.Event">
+<MudTabs @bind-ActivePanelIndex="selectedTab" Class="tabs">
+    <MudTabPanel Text="Calendar" Icon="@Icons.Material.Filled.Event">
         <MudPaper Class="upcoming-calendar-wrapper" Elevation="0">
             <MudCalendar T="CalendarItem"
                 Items="@calendarItems"
@@ -93,8 +93,22 @@
         </div>
     </MudTabPanel>
 
-    <MudTabPanel Text="List View" Icon="@Icons.Material.Filled.ViewList">
-        <MudTable Items="upcomingSessions" Hover="true" Striped="true">
+    <MudTabPanel Text="Sessions" Icon="@Icons.Material.Filled.ListAlt">
+    <MudPaper>
+        <MudStack Row="true" Justify="@Justify.Center" AlignItems="@AlignItems.Center" Spacing="3" Class="session-filters-wrapper">
+            <MudSelect T="string" Label="Filter" @bind-Value="selectedFilter" Dense="true">
+                <MudSelectItem Value="@("Upcoming")">Upcoming</MudSelectItem>
+                <MudSelectItem Value="@("Past")">Past</MudSelectItem>
+                <MudSelectItem Value="@("All")">All</MudSelectItem>
+            </MudSelect>
+
+            <MudTextField @bind-Value="searchText" 
+                Placeholder="Search by type..." 
+                Adornment="Adornment.Start" 
+                AdornmentIcon="@Icons.Material.Filled.Search" />
+        </MudStack>
+
+        <MudTable Items="FilteredSessions" Hover="true" Striped="true">
             <HeaderContent>
                 <MudTh>Date</MudTh>
                 <MudTh>Status</MudTh>
@@ -128,22 +142,9 @@
                 </MudTd>
             </RowTemplate>
         </MudTable>
-    </MudTabPanel>
+    </MudPaper>
+</MudTabPanel>
 
-    <MudTabPanel Text="Past Sessions" Icon="@Icons.Material.Filled.History">
-        <MudList T="VideoSession" Dense="true">
-            @foreach (var session in pastSessions)
-            {
-                <MudListItem>
-                    <MudText>
-                        <strong>@session.ScheduledAt.ToString("dd MMM yyyy")</strong>
-                        - Duration: @((session.EndedAt - session.StartedAt)?.TotalMinutes ?? 0) min
-                        - Type: @session.Session?.SessionCategory.ToString() ?? "N/A"
-                    </MudText>
-                </MudListItem>
-            }
-        </MudList>
-    </MudTabPanel>
 </MudTabs>
 
 @code {
@@ -169,6 +170,19 @@
     private List<(DateTimeOffset Start, DateTimeOffset End)> BusyTimes = new();
     private List<UnavailableTime> Unavailabilities = new();
     private DateTime? firstAvailableDate;
+
+    private string selectedFilter = "Upcoming";
+    private string searchText = "";
+
+    private IEnumerable<VideoSession> FilteredSessions => allSessions
+        .Where(session =>
+            (selectedFilter == "Upcoming" && session.ScheduledAt >= DateTime.UtcNow) ||
+            (selectedFilter == "Past" && session.ScheduledAt < DateTime.UtcNow) ||
+            (selectedFilter == "All"))
+        .Where(session => string.IsNullOrWhiteSpace(searchText)
+            || session.Session?.SessionCategory.ToString().Contains(searchText, StringComparison.InvariantCultureIgnoreCase) == true)
+        .OrderByDescending(session => session.ScheduledAt);
+
 
     private string userTimeZone = TimeZoneInfo.Local.DisplayName;
 
@@ -268,7 +282,10 @@
 
     private async Task HandleSlotSelected(string isoString)
     {
-        selectedSlotString = isoString;
+        var date = DateTime.Parse(isoString);
+        selectedSlotString = date.ToString("yyyy-MM-ddTHH:mm");
+        requestModel.PreferredDateTimeString = selectedSlotString;
+
         showSlotCalendar = false;
         StateHasChanged();
     }

@@ -39,17 +39,14 @@
     private string pageTitle = "Login | Ítala Veloso";
     private LoginModel loginModel = new();
     private string loginError = string.Empty;
+    
     private async Task LoginUser()
     {
         try
         {
             var result = await JSRuntime.InvokeAsync<SessionResult>("login", loginModel);
 
-            if (result.Success)
-            {
-                await JSRuntime.InvokeVoidAsync("eval", "window.location.href = '/AdminDashboard'");
-            }
-            else
+            if (!result.Success)
             {
                 loginError = result.Error;
             }
@@ -57,7 +54,7 @@
         catch (Exception ex)
         {
             Console.WriteLine($"Error during login: {ex.Message}");
-            loginError = "Erro ao iniciar sessão.";
+            loginError = "Error during login.";
         }
 
         StateHasChanged();

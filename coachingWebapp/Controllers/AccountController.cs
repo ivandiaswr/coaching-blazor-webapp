@@ -42,7 +42,10 @@ public class AccountController : ControllerBase
                         ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
                     });
 
-                return Ok();
+                var roles = await _signInManager.UserManager.GetRolesAsync(user);
+                var role = roles.FirstOrDefault() ?? "User";
+
+                return Ok(new { success = true, role });
             }
             else if (result.IsLockedOut)
             {
@@ -68,7 +71,7 @@ public class AccountController : ControllerBase
         catch(Exception ex)
         {
             await _logService.LogError("Login", ex.Message);
-            return BadRequest(ex);
+            return BadRequest(ex.Message);
         }
     }
 

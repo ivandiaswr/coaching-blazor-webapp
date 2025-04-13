@@ -16,15 +16,30 @@ window.scrollToFragment = () => {
 window.login = function (loginModel) {
     return fetch('/api/account/login', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(loginModel)
-    }).then(response => {
+    })
+    .then(response => {
         if (response.ok) {
-            return { success: true };
+            return response.json().then(data => {
+                if (data.role === "Admin") {
+                    window.location.href = "/AdminDashboard";
+                } else {
+                    window.location.href = "/UserDashboard";
+                }
+                return { success: true };
+            });
         } else {
-            return response.text().then(text => { return { success: false, error: text }; });
+            return response.text().then(text => {
+                let errorMsg = "Login failed.";
+                try {
+                    const parsed = JSON.parse(text);
+                    errorMsg = parsed.detail || text;
+                } catch {
+                    errorMsg = text;
+                }
+                return { success: false, error: errorMsg };
+            });
         }
     });
 };
@@ -37,9 +52,11 @@ window.logout = function () {
         }
     }).then(response => {
         if (response.ok) {
-            return { success: true };
+            window.location.href = '/';
         } else {
-            return response.text().then(text => { return { success: false, error: text }; });
+            return response.text().then(text => {
+                return { success: false, error: text };
+            });
         }
     });
 };

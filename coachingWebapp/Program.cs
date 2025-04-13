@@ -15,6 +15,7 @@ using OpenTelemetry.Logs;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSignalR();
+builder.Logging.SetMinimumLevel(LogLevel.Debug);
 
 SQLitePCL.Batteries.Init();
 SQLitePCL.raw.SetProvider(new SQLitePCL.SQLite3Provider_e_sqlite3());  
@@ -114,34 +115,34 @@ builder.Services.AddAuthentication(options =>
 });
 
 // Open Telemetry
-builder.Services.AddOpenTelemetry()
-    .WithTracing(tracerProviderBuilder =>
-    {
-        tracerProviderBuilder
-            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("CoachingApp"))
-            .AddAspNetCoreInstrumentation()
-            .AddConsoleExporter();
-    })
-    .WithMetrics(metricsProviderBuilder =>
-    {
-        metricsProviderBuilder
-            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("CoachingApp"))
-            .AddAspNetCoreInstrumentation()
-            .AddMeter("CoachingMetrics")
-            .AddConsoleExporter();
-    });;
+// builder.Services.AddOpenTelemetry()
+//     .WithTracing(tracerProviderBuilder =>
+//     {
+//         tracerProviderBuilder
+//             .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("CoachingApp"))
+//             .AddAspNetCoreInstrumentation()
+//             .AddConsoleExporter();
+//     })
+//     .WithMetrics(metricsProviderBuilder =>
+//     {
+//         metricsProviderBuilder
+//             .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("CoachingApp"))
+//             .AddAspNetCoreInstrumentation()
+//             .AddMeter("CoachingMetrics")
+//             .AddConsoleExporter();
+//     });;
 
 // OpenTelemetry Logging
-builder.Logging
-    .SetMinimumLevel(LogLevel.Error)
-    .AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Error)
-    .AddOpenTelemetry(options =>
-    {
-        options.IncludeFormattedMessage = true;
-        options.AddProcessor(provider => provider.GetRequiredService<LogProcessor>());
-        options.AddConsoleExporter();
-    })
-    .AddConsole();
+// builder.Logging
+//     .SetMinimumLevel(LogLevel.Error)
+//     .AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Error)
+//     .AddOpenTelemetry(options =>
+//     {
+//         options.IncludeFormattedMessage = true;
+//         options.AddProcessor(provider => provider.GetRequiredService<LogProcessor>());
+//         options.AddConsoleExporter();
+//     })
+//     .AddConsole();
 
 // Mudblazor framework
 builder.Services.AddMudServices();
@@ -157,6 +158,8 @@ if (!app.Environment.IsDevelopment())
 
     app.UseHttpsRedirection();
 }
+
+app.UseWebSockets();
 
 app.UseStaticFiles();
 app.UseAntiforgery();
