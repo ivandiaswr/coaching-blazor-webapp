@@ -71,7 +71,7 @@ public class AccountController : ControllerBase
         catch(Exception ex)
         {
             await _logService.LogError("Login", ex.Message);
-            return BadRequest(ex.Message);
+            return Problem(title: "Login failed", detail: ex.Message, statusCode: 500);
         }
     }
 
