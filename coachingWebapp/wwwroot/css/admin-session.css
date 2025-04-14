@@ -1,19 +1,3 @@
-#login {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 70vh;
-    width: 100%; 
-    max-width: 900px; 
-    margin: 0 auto;
-    padding: 2rem;
-}
-
-#login form {
-    width: 100%;
-    max-width: 600px
-}
-
 #adminDashboard{
     width: 1600px;
     margin: 0 auto;
@@ -48,13 +32,6 @@
     margin: 0 auto 3rem auto;
 }
 
-.mud-grids-container {
-    display: flex;
-    flex-direction: column;
-    gap: 5rem;
-    width: 100%;
-}
-
 /* Calendar */
 .mud-calendar {
     background-color: var(--primary-white) !important;
@@ -77,7 +54,7 @@
     padding: 6px 10px;
     transition: background-color 0.2s ease, transform 0.1s ease;
     font-weight: 500;
-    color: #1a1a1a !important;
+    color: #ffffff !important;
 }
 
 .mud-cal-cell-template-chip {
@@ -89,14 +66,9 @@
     cursor: default;
 }
 
-.calendar-slot-available {
-    cursor: pointer;
-    transition: background-color 0.2s ease, transform 0.1s ease;
-}
-
-.calendar-slot-available:hover {
-    background-color: rgba(76, 175, 80, 0.3) !important;
-    transform: scale(1.03);
+.mud-calendar .mud-chip:hover {
+    background-color: var(--accent-orange-hover) !important;
+    transform: scale(1.01);
 }
 
 .calendar-slot-busy,
@@ -110,78 +82,10 @@
     padding: 8px;
     border-radius: 4px;
     margin-bottom: 8px;
-    border: 1px solid var(--accent-orange) !important;
+    border: 0.5px solid var(--accent-orange) !important;
 }
 
 /* Busy Times */
-.busy-time-section {
-    background-color: var(--primary-white);
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 0 6px rgba(0,0,0,0.05);
-    margin-top: 1rem;
-}
-
-.busy-time-section h2 {
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-    color: var(--primary-black);
-}
-
-.busy-time-form {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    align-items: flex-end;
-}
-
-.busy-time-form .mud-input-control,
-.busy-time-form .mud-select,
-.busy-time-form .mud-time-picker {
-    min-width: 150px;
-    flex: 1 1 auto;
-}
-
-.busy-time-form .mud-checkbox {
-    margin-left: 1rem;
-    white-space: nowrap;
-    font-size: 0.95rem;
-}
-
-.busy-time-form .mud-button {
-    align-self: stretch;
-    height: 40px;
-}
-
-.busy-time-list {
-    margin-top: 1.5rem;
-    padding: 1rem;
-    background-color: var(--soft-gray);
-    border-radius: 8px;
-}
-
-.busy-time-list .mud-list-item {
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid #eaeaea;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.busy-time-list .mud-list-item:last-child {
-    border-bottom: none;
-}
-
-.busy-time-list .mud-list-item div {
-    font-size: 1rem;
-    font-weight: 500;
-}
-
-.busy-time-list .mud-icon-button {
-    margin-left: 0.5rem;
-}
-
 .busy-time-entry {
     display: flex;
     justify-content: space-between;
@@ -205,15 +109,64 @@
     align-items: center;
 }
 
-/* Admin Auth */
-#admin-auth {
+/* Session popup */
+.dialog-title {
+    font-weight: 600;
+    color: #1a1a1a;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.session-details-card {
+    background-color: var(--primary-white, #ffffff);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.session-details-grid {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 70vh;
-    width: 100%; 
-    max-width: 900px; 
+    gap: 0.5rem;
+}
+
+.session-detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.session-detail-item:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    font-weight: 500;
+    color: #666;
+    font-size: 0.875rem;
+}
+
+.detail-value {
+    color: #1a1a1a;
+    font-size: 1rem;
+    word-break: break-word;
+}
+
+.text-muted {
+    color: #888;
+}
+
+.go-to-session-btn {
+    background-color: var(--accent-orange) !important;
+    color: var(--primary-white, #ffffff) !important;
+    border-radius: 6px;
+    padding: 0.5rem 1.5rem;
+    transition: background-color 0.3s ease;
     margin: 0 auto;
-    padding: 2rem;
+    display: block;
+}
+
+.go-to-session-btn:hover {
+    background-color: var(--accent-orange-hover, #e55a00) !important;
 }

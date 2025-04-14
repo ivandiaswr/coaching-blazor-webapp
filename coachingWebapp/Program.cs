@@ -147,6 +147,9 @@ builder.Services.AddAuthentication(options =>
 // Mudblazor framework
 builder.Services.AddMudServices();
 
+// CultureInfo.DefaultThreadCurrentCulture = new CultureInfo("en-GB");
+// CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo("en-GB");
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

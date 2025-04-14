@@ -94,7 +94,7 @@
     </MudTabPanel>
 
     <MudTabPanel Text="Sessions" Icon="@Icons.Material.Filled.ListAlt">
-    <MudPaper>
+    <MudPaper class="sessions-wrapper" Elevation="0">
         <MudStack Row="true" Justify="@Justify.Center" AlignItems="@AlignItems.Center" Spacing="3" Class="session-filters-wrapper">
             <MudSelect T="string" Label="Filter" @bind-Value="selectedFilter" Dense="true">
                 <MudSelectItem Value="@("Upcoming")">Upcoming</MudSelectItem>

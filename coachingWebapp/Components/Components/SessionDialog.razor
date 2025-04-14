@@ -1,31 +1,56 @@
 <MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6" Class="dialog-title">
+            Session Details
+        </MudText>
+    </TitleContent>
     <DialogContent>
         @if (Session != null)
         {
-            <MudPaper Class="pa-3 mt-2">
-                <MudText><b>Full Name:</b> @Session.FullName</MudText>
-                <MudText><b>Email:</b> @Session.Email</MudText>
-                <MudText><b>Session:</b> @Session.SessionCategory</MudText>
-                <MudText><b>Message:</b> @Session.Message</MudText>
-                <MudText><b>Date:</b> @Session.PreferredDateTime.ToString("dd-MM-yyyy HH:mm")</MudText>
+            <MudPaper Class="pa-4 session-details-card" Elevation="2">
+                <MudGrid Spacing="2" Class="session-details-grid">
+                    <MudItem xs="12" Class="session-detail-item">
+                        <MudText Typo="Typo.body2" Class="detail-label">Name</MudText>
+                        <MudText Typo="Typo.body1" Class="detail-value">@Session.FullName</MudText>
+                    </MudItem>
+                    <MudItem xs="12" Class="session-detail-item">
+                        <MudText Typo="Typo.body2" Class="detail-label">Email</MudText>
+                        <MudText Typo="Typo.body1" Class="detail-value">@Session.Email</MudText>
+                    </MudItem>
+                    <MudItem xs="12" Class="session-detail-item">
+                        <MudText Typo="Typo.body2" Class="detail-label">Session Category</MudText>
+                        <MudText Typo="Typo.body1" Class="detail-value">@Session.SessionCategory</MudText>
+                    </MudItem>
+                    <MudItem xs="12" Class="session-detail-item">
+                        <MudText Typo="Typo.body2" Class="detail-label">Message</MudText>
+                        <MudText Typo="Typo.body1" Class="detail-value">@Session.Message</MudText>
+                    </MudItem>
+                    <MudItem xs="12" Class="session-detail-item">
+                        <MudText Typo="Typo.body2" Class="detail-label">Date</MudText>
+                        <MudText Typo="Typo.body1" Class="detail-value">@Session.PreferredDateTime.ToString("dd-MM-yyyy HH:mm")</MudText>
+                    </MudItem>
+                </MudGrid>
             </MudPaper>
-
-
         }
         else
         {
-            <MudText>No session info available.</MudText>
+            <MudText Typo="Typo.body1" Class="pa-3 text-center text-muted">
+                No session info available.
+            </MudText>
         }
     </DialogContent>
     <DialogActions>
-            <MudButton Class="mt-3" Variant="Variant.Filled" Color="Color.Primary" OnClick="GoToSessionPage">
-                Go to Session
-            </MudButton>
+        <MudButton Variant="Variant.Filled" 
+                   Color="Color.Primary" 
+                   StartIcon="@Icons.Material.Filled.VideoCall" 
+                   Class="go-to-session-btn"
+                   OnClick="GoToSessionPage">
+            Go to Session
+        </MudButton>
     </DialogActions>
 </MudDialog>
 
 @code {
-
     [Parameter]
     public Session Session { get; set; }
 
