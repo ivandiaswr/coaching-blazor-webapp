@@ -48,7 +48,7 @@
         </MudPaper>
     </MudTabPanel>
 
-    <MudTabPanel Text="Request Session" Icon="@Icons.Material.Filled.CalendarToday">
+    <MudTabPanel Text="Book Session" Icon="@Icons.Material.Filled.CalendarToday">
          <div class="user-dashboard-request">
             <MudForm @ref="requestForm" Model="@requestModel">
                 <MudSelect Label="Session Type" 
@@ -94,57 +94,132 @@
     </MudTabPanel>
 
     <MudTabPanel Text="Sessions" Icon="@Icons.Material.Filled.ListAlt">
-    <MudPaper class="sessions-wrapper" Elevation="0">
-        <MudStack Row="true" Justify="@Justify.Center" AlignItems="@AlignItems.Center" Spacing="3" Class="session-filters-wrapper">
-            <MudSelect T="string" Label="Filter" @bind-Value="selectedFilter" Dense="true">
-                <MudSelectItem Value="@("Upcoming")">Upcoming</MudSelectItem>
-                <MudSelectItem Value="@("Past")">Past</MudSelectItem>
-                <MudSelectItem Value="@("All")">All</MudSelectItem>
-            </MudSelect>
+        <MudPaper class="sessions-wrapper" Elevation="0">
+            <MudStack Row="true" Justify="@Justify.Center" AlignItems="@AlignItems.Center" Spacing="3" Class="session-filters-wrapper">
+                <MudSelect T="string" Label="Filter" @bind-Value="selectedFilter" Dense="true">
+                    <MudSelectItem Value="@("Upcoming")">Upcoming</MudSelectItem>
+                    <MudSelectItem Value="@("Past")">Past</MudSelectItem>
+                    <MudSelectItem Value="@("All")">All</MudSelectItem>
+                </MudSelect>
 
-            <MudTextField @bind-Value="searchText" 
-                Placeholder="Search by type..." 
-                Adornment="Adornment.Start" 
-                AdornmentIcon="@Icons.Material.Filled.Search" />
-        </MudStack>
+                <MudTextField @bind-Value="searchText" 
+                    Placeholder="Search by type..." 
+                    Adornment="Adornment.Start" 
+                    AdornmentIcon="@Icons.Material.Filled.Search" />
+            </MudStack>
 
-        <MudTable Items="FilteredSessions" Hover="true" Striped="true">
-            <HeaderContent>
-                <MudTh>Date</MudTh>
-                <MudTh>Status</MudTh>
-                <MudTh>Type</MudTh>
-                <MudTh></MudTh>
-            </HeaderContent>
-            <RowTemplate>
-                <MudTd>@context.ScheduledAt.ToString("dd MMM yyyy - HH:mm")</MudTd>
-                <MudTd>
-                    @if (context.EndedAt.HasValue)
-                    {
-                        <MudChip T="string" Color="Color.Success">Completed</MudChip>
-                    }
-                    else if (DateTime.UtcNow < context.ScheduledAt)
-                    {
-                        <MudChip T="string" Color="Color.Info">Scheduled</MudChip>
-                    }
-                    else
-                    {
-                        <MudChip T="string" Color="Color.Warning">Missed</MudChip>
-                    }
-                </MudTd>
-                <MudTd>@(context.Session?.SessionCategory.ToString() ?? "N/A")</MudTd>
-                <MudTd>
-                    @if (context.IsActive && DateTime.UtcNow.AddMinutes(-10) <= context.ScheduledAt)
-                    {
-                        <MudButton Size="Size.Small" OnClick="@(() => JoinSession(context.SessionId))">
-                            Join Call
-                        </MudButton>
-                    }
-                </MudTd>
-            </RowTemplate>
-        </MudTable>
-    </MudPaper>
-</MudTabPanel>
+            <MudTable Items="FilteredSessions" Hover="true" Striped="true">
+                <HeaderContent>
+                    <MudTh>Date</MudTh>
+                    <MudTh>Status</MudTh>
+                    <MudTh>Type</MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.ScheduledAt.ToString("dd MMM yyyy - HH:mm")</MudTd>
+                    <MudTd>
+                        @if (context.EndedAt.HasValue)
+                        {
+                            <MudChip T="string" Color="Color.Success">Completed</MudChip>
+                        }
+                        else if (DateTime.UtcNow < context.ScheduledAt)
+                        {
+                            <MudChip T="string" Color="Color.Info">Scheduled</MudChip>
+                        }
+                        else
+                        {
+                            <MudChip T="string" Color="Color.Warning">Missed</MudChip>
+                        }
+                    </MudTd>
+                    <MudTd>@(context.Session?.SessionCategory.ToString() ?? "N/A")</MudTd>
+                    <MudTd>
+                        @if (context.IsActive && DateTime.UtcNow.AddMinutes(-10) <= context.ScheduledAt)
+                        {
+                            <MudButton Size="Size.Small" OnClick="@(() => JoinSession(context.SessionId))">
+                                Join Call
+                            </MudButton>
+                        }
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    </MudTabPanel>
 
+    <MudTabPanel Text="Chat with Ítala(AI)" Icon="@Icons.Material.Filled.Chat">
+       <MudPaper Class="chat-wrapper" Elevation="0">
+            <MudStack Spacing="3">
+                <div class="d-flex justify-end">
+                    <MudButton OnClick="ClearChat" 
+                               Class="clear-chat-button" 
+                               StartIcon="@Icons.Material.Filled.Clear" 
+                               Size="Size.Small">
+                        Clear Chat
+                    </MudButton>
+                </div>
+                <div class="chat-messages" style="max-height: 400px; overflow-y: auto;" @ref="chatContainer">
+                    @foreach (var message in chatMessages)
+                    {
+                        <MudCard Class="@(message.IsUser ? "user-message" : "bot-message")" AriaLabel="@(message.IsUser ? "User message" : "Bot message")">
+                            <MudCardContent Class="d-flex align-center">
+                                @if (!message.IsUser)
+                                {
+                                    <MudAvatar Color="Color.Primary" Size="Size.Small" Class="mr-2">
+                                        <MudIcon Icon="@Icons.Material.Filled.SmartToy" />
+                                    </MudAvatar>
+                                }
+                                <div>
+                                    <MudText Typo="Typo.body2" Class="message-text">@message.Text</MudText>
+                                    @if (message.Resources?.Any() == true)
+                                    {
+                                        <MudText Typo="Typo.caption">Resources:</MudText>
+                                        foreach (var resource in message.Resources)
+                                        {
+                                            <MudLink Href="@resource.Url" Target="_blank" Class="d-block">@resource.Name</MudLink>
+                                        }
+                                    }
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
+                                        @message.Timestamp.ToString("HH:mm")
+                                    </MudText>
+                                </div>
+                                @if (message.IsUser)
+                                {
+                                    <MudAvatar Color="Color.Secondary" Size="Size.Small" Class="ml-2">
+                                        <MudIcon Icon="@Icons.Material.Filled.Person" />
+                                    </MudAvatar>
+                                }
+                            </MudCardContent>
+                        </MudCard>
+                    }
+                    @if (isSending)
+                    {
+                        <MudCard Class="bot-message">
+                            <MudCardContent Class="d-flex align-center">
+                                <MudAvatar Color="Color.Primary" Size="Size.Small" Class="mr-2">
+                                    <MudIcon Icon="@Icons.Material.Filled.SmartToy" />
+                                </MudAvatar>
+                                <MudProgressCircular Color="Color.Primary" Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                                <MudText>Ítala(AI) is typing...</MudText>
+                            </MudCardContent>
+                        </MudCard>
+                    }
+                </div>
+                <MudForm @ref="chatForm" Class="chat-input-form">
+                    <MudTextField InputRef="@chatInputRef"
+                                @bind-Value="newMessage" 
+                                Placeholder="How can Ítala help you?" 
+                                Immediate="true" 
+                                OnKeyDown="@(async (KeyboardEventArgs e) => { if (e.Key == "Enter" && !isSending) await SendMessage(); })" 
+                                Disabled="isSending" 
+                                Variant="Variant.Outlined" 
+                                Adornment="Adornment.End" 
+                                AdornmentIcon="@Icons.Material.Filled.Send" 
+                                AdornmentColor="Color.Primary" 
+                                OnAdornmentClick="SendMessage" 
+                                Class="chat-input" />
+                </MudForm>
+            </MudStack>
+        </MudPaper>
+    </MudTabPanel>
 </MudTabs>
 
 @code {
@@ -173,6 +248,13 @@
 
     private string selectedFilter = "Upcoming";
     private string searchText = "";
+
+    private List<ChatMessage> chatMessages = new();
+    private string newMessage = "";
+    private MudForm chatForm;
+    private bool isSending = false;
+    private ElementReference chatContainer;
+    private ElementReference chatInputRef;
 
     private IEnumerable<VideoSession> FilteredSessions => allSessions
         .Where(session =>
@@ -333,6 +415,53 @@
 
         if (session is not null && session.IsActive)
             NavigationManager.NavigateTo($"/session/{session.SessionId}");
+    }
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(newMessage) || isSending)
+            return;
+
+        isSending = true;
+        try
+        {
+            var userMessage = newMessage;
+            chatMessages.Add(new ChatMessage { IsUser = true, Text = userMessage, Timestamp = DateTime.Now });
+            newMessage = "";
+
+            var botMessage = await ChatService.SendMessageAsync(chatMessages, userMessage);
+            botMessage.Timestamp = DateTime.Now;
+            chatMessages.Add(botMessage);
+
+            await JSRuntime.InvokeVoidAsync("scrollToBottom", chatContainer);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in SendMessage: {ex.Message}");
+            chatMessages.Add(new ChatMessage { IsUser = false, Text = "Sorry, something went wrong.", Resources = new List<ChatResource>(), Timestamp = DateTime.Now });
+        }
+        finally
+        {
+            isSending = false;
+            StateHasChanged();
+
+            await Task.Delay(50);
+
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("focusElement", chatInputRef);
+            }
+            catch (JSException jsEx)
+            {
+                await LogService.LogError("Erro ao focar input: ", jsEx.Message);
+            }
+        }
+    }
+
+    private void ClearChat()
+    {
+        chatMessages.Clear();
+        StateHasChanged();
     }
 
     public async ValueTask DisposeAsync()

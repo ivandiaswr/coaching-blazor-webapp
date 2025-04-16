@@ -89,3 +89,25 @@ function downloadGift(url) {
     document.body.removeChild(link);
 }
 
+window.focusElement = (elementRef) => {
+    const container = document.querySelector(`[data-blazor-id="${elementRef.id}"]`);
+    if (container) {
+        const input = container.querySelector('input');
+        if (input) {
+            input.focus();
+        } else {
+            console.error("Input element not found within container:", container);
+        }
+    } else {
+        console.error("Container element not found for ElementReference:", elementRef);
+    }
+};
+
+window.scrollToBottom = (elementRef) => {
+    const element = document.querySelector(`[data-blazor-id="${elementRef.id}"]`);
+    if (element) {
+        element.scrollTop = element.scrollHeight;
+    } else {
+        console.error("Element not found for ElementReference:", elementRef);
+    }
+};
