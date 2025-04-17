@@ -11,14 +11,18 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Logs;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
+
+CultureInfo.DefaultThreadCurrentCulture = new CultureInfo("en-GB");
+CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo("en-GB");
 
 builder.Services.AddSignalR();
 builder.Logging.SetMinimumLevel(LogLevel.Debug);
 
 SQLitePCL.Batteries.Init();
-SQLitePCL.raw.SetProvider(new SQLitePCL.SQLite3Provider_e_sqlite3());  
+SQLitePCL.raw.SetProvider(new SQLitePCL.SQLite3Provider_e_sqlite3());
 
 string databasePath;
 if (builder.Environment.IsDevelopment())
@@ -35,7 +39,7 @@ if (builder.Environment.IsDevelopment())
 else
 {
     // Production path for SmarterASP.NET
-    string dbFolder = Path.Combine(AppContext.BaseDirectory, "../db"); 
+    string dbFolder = Path.Combine(AppContext.BaseDirectory, "../db");
     Directory.CreateDirectory(dbFolder); // Ensure folder exists
     databasePath = Path.Combine(dbFolder, "coaching.db");
 }
@@ -147,9 +151,6 @@ builder.Services.AddAuthentication(options =>
 
 // Mudblazor framework
 builder.Services.AddMudServices();
-
-// CultureInfo.DefaultThreadCurrentCulture = new CultureInfo("en-GB");
-// CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo("en-GB");
 
 var app = builder.Build();
 
