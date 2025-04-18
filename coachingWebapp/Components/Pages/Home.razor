@@ -3,7 +3,7 @@
 
 @inject IHttpClientFactory HttpClientFactory
 
-<MudPopoverProvider/> 
+<MudPopoverProvider /> 
 
 <PageTitle>@pageTitle</PageTitle>
 
@@ -187,76 +187,103 @@
     <div class="contact-container">
         <div class="contact-form-container">
             <div class="contact-wrapper">
-                <div class="unified-container">
-                    <div class="content-grid">         
+                    <div class="content-grid">
                         <div class="form-section">
-                            <h1><span class="highlight">Meeting</span> Schedule</h1>
-                            <EditForm Model="@session" OnValidSubmit="CreateSessionAsync" FormName="sessionForm">
-                                <DataAnnotationsValidator />
+                            <MudText Typo="Typo.h3" Align="Align.Center" Class="mb-4"><span class="highlight">Session</span> Schedule</MudText>
+                            <MudForm @ref="sessionForm" Model="@session">
+                                <MudTextField Label="First Name"
+                                              @bind-Value="session.FirstName"
+                                              For="@(() => session.FirstName)"
+                                              Placeholder="First Name"
+                                              Class="mb-4"
+                                              Required="true"
+                                              RequiredError="First name is required" />
 
-                                <div class="form-group">
-                                    <label for="FirstName">First Name</label>
-                                    <InputText id="firstName" class="form-control" @bind-Value="session.FirstName" placeholder="First Name" />
-                                    <ValidationMessage For="@(() => session.FirstName)" />
-                                </div>
-                                <div class="form-group">
-                                    <label for="LastName">Last Name</label>
-                                    <InputText id="lastName" class="form-control" @bind-Value="session.LastName" placeholder="Last Name" />
-                                    <ValidationMessage For="@(() => session.LastName)" />
-                                </div>
-                                <div class="form-group">
-                                    <label for="Email">Email</label>
-                                    <InputText id="email" class="form-control" @bind-Value="session.Email" placeholder="Your Email" />
-                                    <ValidationMessage For="@(() => session.Email)" />
-                                </div>
-                               <div class="form-group custom-select">
-                                    <label for="SessionCategory">Session</label>
-                                    <InputSelect id="SessionCategory" class="form-control hoverable-input" @bind-Value="session.SessionCategory">
+                                <MudTextField Label="Last Name"
+                                              @bind-Value="session.LastName"
+                                              For="@(() => session.LastName)"
+                                              Placeholder="Last Name"
+                                              Class="mb-4"
+                                              Required="true"
+                                              RequiredError="Last name is required" />
+
+                                <MudTextField Label="Email"
+                                              @bind-Value="session.Email"
+                                              For="@(() => session.Email)"
+                                              Placeholder="Your Email"
+                                              Class="mb-4"
+                                              InputType="InputType.Email"
+                                              Required="true"
+                                              RequiredError="A valid email is required" />
+
+                                <MudSelect T="SessionType" PopoverClass="custom-popper"
+                                        Label="Session Category"
+                                        @bind-Value="session.SessionCategory"
+                                        For="@(() => session.SessionCategory)"
+                                        Class="mb-4">
                                         @foreach (var type in Enum.GetValues(typeof(SessionType)).Cast<SessionType>())
                                         {
-                                            <option value="@type">
+                                            <MudSelectItem Value="@type">
                                                 @((type.GetType().GetField(type.ToString())?.GetCustomAttributes(typeof(DisplayAttribute), false).FirstOrDefault() as DisplayAttribute)?.Name ?? type.ToString())
-                                            </option>
+                                            </MudSelectItem>
                                         }
-                                    </InputSelect>
-                                    <ValidationMessage For="@(() => session.SessionCategory)" />
-                                </div>
-                                <div class="form-group">
-                                    <label for="PreferredDateTime">Date & Time</label>
-                                    <div class="input-with-icon">
-                                        <InputText id="PreferredDateTime" class="form-control hoverable-input" @bind-Value="session.PreferredDateTimeString" @onclick="ToggleCalendar" placeholder="Preffered time for the session" readonly/>
-                                        <i class="fas fa-calendar calendar-icon" @onclick="ToggleCalendar"></i>
-                                    </div>
-                                    <ValidationMessage For="@(() => session.PreferredDateTimeString)" />
-                                </div>
+                                </MudSelect>
+
+                                <MudPaper Class="hoverable-input mb-4" @onclick="ToggleCalendar" Style="cursor: pointer;">
+                                    <MudTextField Label="Preferred Date"
+                                                  Value="@session.PreferredDateTimeString"
+                                                  For="@(() => session.PreferredDateTimeString)"
+                                                  ReadOnly="true"
+                                                  Adornment="Adornment.End"
+                                                  AdornmentIcon="@Icons.Material.Filled.CalendarMonth"
+                                                  Placeholder="Preferred date for the session" />
+                                </MudPaper>
+
                                 <Calendar @bind-IsVisible="showTimeSlots"
-                                                Slots="availableSlots"
-                                                BusyTimes="busyTimesConverted"
-                                                FirstAvailableDate="firstAvailableDate"
-                                                CurrentTimeZoneDisplay="@currentTimeZoneDisplay"
-                                                AdminUnavailabilities="adminUnavailabilities"
-                                                OnSlotSelected="HandleSlotSelected" />
-                                <div class="form-group message-group">
-                                    <label for="Message">Message</label>
-                                    <InputTextArea id="message" class="form-control" @bind-Value="session.Message" rows="6" placeholder="Share what's on your mind..." />
-                                    <ValidationMessage For="@(() => session.Message)" />
-                                </div>
-                                <div id="formStatus" class="form-status">
+                                          Slots="availableSlots"
+                                          BusyTimes="busyTimesConverted"
+                                          FirstAvailableDate="firstAvailableDate"
+                                          CurrentTimeZoneDisplay="@currentTimeZoneDisplay"
+                                          AdminUnavailabilities="adminUnavailabilities"
+                                          OnSlotSelected="HandleSlotSelected" />
+
+                                <MudTextField Label="Message"
+                                              @bind-Value="session.Message"
+                                              For="@(() => session.Message)"
+                                              Lines="6"
+                                              Placeholder="Share what's on your mind..."
+                                              Class="mb-4" />
+
+                                <div class="form-status mb-4">
                                     @if (isLoggingIn)
                                     {
-                                        <div class="spinner-border text-primary" role="status">
-                                            <span class="sr-only">Loading...</span>
-                                        </div>
-                                        <p>Scheduling your session. Please wait...</p>
+                                        <MudProgressCircular Color="Color.Primary" Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                                        <MudText>Scheduling your session. Please wait...</MudText>
                                     }
                                     else
                                     {
-                                        @sessionFormStatus
+                                        <MudText Color="@(isSuccess ? Color.Success : Color.Error)">
+                                            @sessionFormStatus
+                                        </MudText>
                                     }
                                 </div>
-                                <button type="submit"><i class="fa-regular fa-calendar"></i> Book Your Free Discovery Call</button>
-                                <p class="privacy-notice">By signing up, you’re agreeing to receive marketing emails from Ítala Veloso. You can unsubscribe at any time. For more details, check out our <a href="/privacy-policy">Privacy Policy</a> and <a href="/terms-and-conditions">Terms & Conditions</a>.</p>
-                            </EditForm>
+
+                                <MudButton Variant="Variant.Filled"
+                                           Color="Color.Primary"
+                                           StartIcon="@Icons.Material.Filled.CalendarToday"
+                                           Type="submit"
+                                           Disabled="@isLoggingIn"
+                                           Class="mb-4 book-submit-button"
+                                           OnClick="CreateSessionAsync">
+                                    Book Your Free Discovery Call
+                                </MudButton>
+
+                                <MudText Typo="Typo.caption" Class="privacy-notice">
+                                    By signing up, you’re agreeing to receive marketing emails from Ítala Veloso. You can unsubscribe at any time. For more details, check out our
+                                    <MudLink Href="/privacy-policy">Privacy Policy</MudLink> and
+                                    <MudLink Href="/terms-and-conditions">Terms & Conditions</MudLink>.
+                                </MudText>
+                            </MudForm>
                         </div>
 
                         <div class="right-content">
@@ -267,26 +294,25 @@
                                 </video>
                                 <div class="contact-video-overlay">
                                     <div class="contact-header">
-                                        <i class="fas fa-calendar-check header-icon"></i>
-                                        <h2>Begin Your Self-Discovery Journey Today</h2>
-                                        <p class="contact-subtitle">Transform your life, your profession, your destiny</p>
+                                        <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Class="header-icon" />
+                                        <MudText Typo="Typo.h5">Begin Your Self-Discovery Journey Today</MudText>
+                                        <MudText Typo="Typo.body2" Class="contact-subtitle">Transform your life, your profession, your destiny</MudText>
                                     </div>
                                 </div>
                             </div>
                             <div class="benefits-section">
                                 <div class="benefits-content">
-                                    <h3>Your Path to Growth</h3>
-                                    <ul class="benefits-list">
-                                        <li><i class="fas fa-check-circle"></i> Live a Purpose-Driven Life</li>
-                                        <li><i class="fas fa-check-circle"></i> Get Clear and Focused Goals</li>
-                                        <li><i class="fas fa-check-circle"></i> Change every area of your Life</li>
-                                        <li><i class="fas fa-check-circle"></i> 1:1 and Group Life Coaching Sessions</li>
-                                    </ul>
-                                    <p class="benefits-note">A confidential commitment to yourself, for self-development, growth and expansion</p>
+                                    <MudText Typo="Typo.h6" Class="mb-2">Your Path to Growth</MudText>
+                                    <MudList T="string">
+                                        <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" Class="benefits-icon">Live a Purpose-Driven Life</MudListItem>
+                                        <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" Class="benefits-icon">Get Clear and Focused Goals</MudListItem>
+                                        <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" Class="benefits-icon">Change every area of your Life</MudListItem>
+                                        <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" Class="benefits-icon">1:1 and Group Life Coaching Sessions</MudListItem>
+                                    </MudList>
+                                    <MudText Typo="Typo.caption" Class="benefits-note">A confidential commitment to yourself, for self-development, growth and expansion</MudText>
                                 </div>
                             </div>
                         </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -333,6 +359,8 @@
     private bool isLoggingIn = false;
     private bool isCalendarLoading = false;
     private string currentTimeZoneDisplay = "detecting...";
+    private MudForm sessionForm;
+    private bool isSuccess = false;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -358,6 +386,12 @@
     #region ContactMessage
     private async Task CreateSessionAsync()
     {
+        await sessionForm.Validate();
+        if (!sessionForm.IsValid)
+        {
+            return;
+        }
+
         try
         {
             isLoggingIn = true; 
@@ -368,6 +402,7 @@
             sessionFormStatus = result 
             ? "Thank you for your message. Meeting scheduled. We'll get back to you soon!" 
             : "Sending contact information failed. Please try again or contact support.";
+            isSuccess = result;
 
             if (result) 
             {
