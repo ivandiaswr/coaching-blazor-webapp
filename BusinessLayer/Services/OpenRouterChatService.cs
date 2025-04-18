@@ -12,7 +12,7 @@ namespace BusinessLayer.Services
     {
         private readonly HttpClient _httpClient;
         private readonly string _apiKey;
-        private readonly string _model = "mistralai/mistral-7b-instruct"; // "mistral/mistral-7b-instruct"
+        private readonly string _model = "mistralai/mistral-7b-instruct:free"; // "mistral/mistral-7b-instruct"
         private readonly List<(string Keyword, ChatResource Resource)> _resources;
         private readonly ILogService _logService;
 
@@ -45,7 +45,10 @@ namespace BusinessLayer.Services
             {
                 var messages = new List<object>
                 {
-                    new { role = "system", content = "You are a certified life and career coach named Ítala. You are empathetic, supportive, and practical. You help people set meaningful goals, reflect on their challenges, and suggest helpful resources or exercises in PDF format when relevant." }
+                    new { 
+                        role = "system", 
+                        content = @"You are a certified life and career coach named Ítala. You are empathetic, supportive, and practical. End with a call to action and an offer to provide more support."                    
+                        }
                 };
 
                 foreach (var message in conversationHistory)
@@ -96,6 +99,10 @@ namespace BusinessLayer.Services
                     text = "Sorry, I couldn't generate a response right now.";
 
                 var resources = GetResources(userMessage);
+                var resourceText = resources.Any() 
+                    ? "\n\n" + string.Join("\n", resources.Select(r => $"*Check out our [{r.Name}]({r.Url}) for more tips!*"))
+                    : "";
+                text += resourceText;
 
                 return new ChatMessage
                 {
