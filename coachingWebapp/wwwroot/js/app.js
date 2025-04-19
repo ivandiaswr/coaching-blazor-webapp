@@ -111,3 +111,14 @@ window.scrollToBottom = (elementRef) => {
         console.error("Element not found for ElementReference:", elementRef);
     }
 };
+
+window.VideoCallHelpers = {
+    triggerFileInput: function (elementId) {
+        const input = document.getElementById(elementId);
+        if (input) {
+            input.click();
+        } else {
+            console.warn("File input not found:", elementId);
+        }
+    }
+};

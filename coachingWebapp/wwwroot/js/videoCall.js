@@ -13,23 +13,56 @@ window.VideoCall = (() => {
 
     async function init(sessId) {
         sessionId = sessId;
-        console.log("Initializing VideoCall for session:", sessionId);
 
-        // Builds and starts the connection
+        if (hubConnection && hubConnection.state !== signalR.HubConnectionState.Disconnected) {
+            console.log("🛑 Existing hubConnection still active. Stopping...");
+            await hubConnection.stop();
+        }
+    
         hubConnection = new signalR.HubConnectionBuilder()
             .withUrl("/videoHub")
-            .withAutomaticReconnect()
+            .withAutomaticReconnect([0, 2000, 10000, 30000])
+            .configureLogging(signalR.LogLevel.Information)
             .build();
-
+    
         hubConnection.on("ReceiveSignal", onReceiveSignal);
-
         hubConnection.on("ReceiveChatMessage", onReceiveChatMessage);
-
+        hubConnection.on("ReceiveFileAttachment", onReceiveFileAttachment);
+    
+        hubConnection.onreconnecting((error) => {
+            console.warn("SignalR connection lost. Reconnecting...", error);
+        });
+    
+        hubConnection.onreconnected(async (connectionId) => {
+            console.log("SignalR reconnected. Connection ID:", connectionId);
+        
+            try {
+                await hubConnection.stop().then(async () => {
+                    await hubConnection.start();
+                    await hubConnection.invoke("JoinSession", sessionId);
+                    console.log("✅ Rejoined session after full reconnect");
+                }).catch(err => console.error("❌ Failed to re-establish connection:", err));
+                
+                console.log("✅ Successfully rejoined session");
+            } catch (err) {
+                console.error("❌ Failed to rejoin session:", err);
+            }
+        });      
+    
+        hubConnection.onclose((error) => {
+            console.error("SignalR connection closed:", error);
+        });
+    
         try {
             await hubConnection.start();
-            await hubConnection.invoke("JoinSession", sessionId);
-        } 
-        catch (err) {
+            console.log("SignalR connected. Connection ID:", hubConnection.connectionId);
+            await hubConnection.stop().then(async () => {
+                await hubConnection.start();
+                await hubConnection.invoke("JoinSession", sessionId);
+                console.log("✅ Rejoined session after full reconnect");
+            }).catch(err => console.error("❌ Failed to re-establish connection:", err));
+            
+        } catch (err) {
             console.error("Failed to connect to SignalR hub:", err);
         }
     }
@@ -127,7 +160,7 @@ window.VideoCall = (() => {
             }
         }
         else if (message.candidate) {
-            // We got an ICE candidate
+            // ICE candidate
             if (peerConnection) {
                 try {
                     await peerConnection.addIceCandidate(new RTCIceCandidate(message.candidate));
@@ -185,10 +218,13 @@ window.VideoCall = (() => {
     }
 
     function sendChatMessage(userName, message) {
-        if (hubConnection && message.trim()) {
-            hubConnection.invoke("SendChatMessage", sessionId, userName, message)
-                .catch(err => console.error("Error sending chat message:", err));
+        if (!hubConnection || hubConnection.state !== signalR.HubConnectionState.Connected) {
+            console.warn("Hub not connected. Cannot send message.");
+            return;
         }
+    
+        hubConnection.invoke("SendChatMessage", sessionId, userName, message)
+            .catch(err => console.error("Error sending chat message:", err));
     }
 
     function onReceiveChatMessage(userName, timestamp, message) {
@@ -205,9 +241,95 @@ window.VideoCall = (() => {
                 chatContainer.scrollTop = chatContainer.scrollHeight;
             }
         }
+    }  
+    
+    function sendFileAttachment(fileName, base64Content, contentType) {
+        if (!hubConnection || hubConnection.state !== signalR.HubConnectionState.Connected) {
+            console.warn("Hub not connected. Cannot send file.");
+            return;
+        }
+
+        if (!hubConnection) {
+            console.warn("Hub connection not established");
+            return;
+        }
+    
+        if (!fileName || !base64Content || !contentType) {
+            console.error("Invalid file attachment data:", { fileName, base64Content, contentType });
+            return;
+        }
+    
+        const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const chatContainer = document.getElementById("chatMessages");
+        if (!chatContainer) {
+            console.warn("Chat container not found");
+            return;
+        }
+    
+        try {
+            const extensionMap = {
+                "image/png": ".png",
+                "image/jpeg": ".jpg",
+                "application/pdf": ".pdf",
+                "text/plain": ".txt",
+                "application/msword": ".doc",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
+            };
+    
+            let downloadFileName = fileName;
+            if (!downloadFileName.includes('.')) {
+                const extension = extensionMap[contentType] || `.${contentType.split('/').pop()}`;
+                downloadFileName += extension;
+            }
+    
+            const binaryData = Uint8Array.from(atob(base64Content), c => c.charCodeAt(0));
+            const blob = new Blob([binaryData], { type: contentType });
+            const url = URL.createObjectURL(blob);
+    
+            const fileSize = (binaryData.length / 1024).toFixed(2);
+            const sizeText = fileSize < 1024 ? `${fileSize} KB` : `${(fileSize / 1024).toFixed(2)} MB`;
+    
+            const messageDiv = document.createElement("div");
+            const fileIcon = contentType.startsWith('image/') ? '🖼️' : contentType === 'application/pdf' ? '📄' : '📎';
+            messageDiv.innerHTML = `
+                <strong>[${timestamp}] You:</strong> 
+                <a href="${url}" download="${downloadFileName}" title="Download ${downloadFileName}">
+                    ${downloadFileName} (${sizeText}) ${fileIcon}
+                </a>
+            `;
+    
+            const shouldAutoScroll = chatContainer.scrollTop + chatContainer.clientHeight >= chatContainer.scrollHeight - 50;
+            chatContainer.appendChild(messageDiv);
+            if (shouldAutoScroll) {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+    
+            hubConnection.invoke("SendFileAttachment", sessionId, fileName, base64Content, contentType)
+                .then(() => console.log("File attachment sent to hub"))
+                .catch(err => console.error("Error sending attachment:", err));
+    
+        } catch (err) {
+            console.error("Error processing file attachment:", err);
+        }
     }
-    
-    
+
+    function onReceiveFileAttachment(userName, timestamp, fileName, base64Data, contentType) {
+        const chatContainer = document.getElementById("chatMessages");
+        if (chatContainer) {
+            const shouldAutoScroll = 
+                chatContainer.scrollTop + chatContainer.clientHeight >= chatContainer.scrollHeight - 50;
+
+            const fileDiv = document.createElement("div");
+            const dataUrl = `data:${contentType};base64,${base64Data}`;
+            fileDiv.innerHTML = `<strong>[${timestamp}] ${userName}:</strong> <a href="${dataUrl}" download="${fileName}">${fileName}</a>`;
+            chatContainer.appendChild(fileDiv);
+
+            if (shouldAutoScroll) {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+        }
+    }
+
     return {
         init,
         startCall,
@@ -215,6 +337,7 @@ window.VideoCall = (() => {
         toggleMic,
         toggleCamera,
         shareScreen,
-        sendChatMessage
+        sendChatMessage,
+        sendFileAttachment
     };
 })();

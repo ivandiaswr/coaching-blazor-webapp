@@ -76,11 +76,36 @@
                                OnClick="@EndCall"
                                ToolTip="End Call" />
             </div>
+
+            <MudPaper Style="margin-top:1rem; padding:1rem; height:200px; display:flex; flex-direction:column;">
+                <div id="chatMessages" 
+                     style="flex:1; overflow-y:auto; padding:0.5rem; border:1px solid #e0e0e0; border-radius:4px;">
+                </div>
+                <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
+                    <MudTextField @ref="chatInputRef"
+                                  @bind-Value="chatMessage" 
+                                  Placeholder="Type a message..." 
+                                  Variant="Variant.Outlined" 
+                                  Style="flex:1;" 
+                                  Immediate="true"
+                                  OnKeyDown="@(async (KeyboardEventArgs e) => { if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(chatMessage)) await SendChatMessage(); })" />
+                    <InputFile OnChange="OnFileSelected" style="display:none" id="fileInput" key="@inputFileKey" />
+
+                    <MudButton Color="Color.Secondary" OnClick="TriggerFileUpload">
+                        Anexar
+                    </MudButton>
+                    <MudButton Color="Color.Primary" 
+                               OnClick="@SendChatMessage" 
+                               Disabled="@(string.IsNullOrWhiteSpace(chatMessage))">
+                        Send
+                    </MudButton>
+                </div>
+            </MudPaper>
+
         </MudPaper>
 
     </div>
 </section>
-
 
 @code {
     [Parameter] public string SessionId { get; set; }
@@ -88,6 +113,10 @@
     private bool isUser = false;
     private bool isAdmin = false;
     private bool isReady = false;
+    private string chatMessage = string.Empty;
+    private MudTextField<string> chatInputRef;
+    private ElementReference fileInputRef;
+    private string inputFileKey = Guid.NewGuid().ToString();
 
     protected override async Task OnInitializedAsync()
     {
@@ -111,6 +140,50 @@
         {
             isReady = false;
             await JSRuntime.InvokeVoidAsync("VideoCall.init", SessionId);
+        }
+    }
+
+    private async Task TriggerFileUpload()
+    {
+        await JSRuntime.InvokeVoidAsync("VideoCallHelpers.triggerFileInput", "fileInput");
+    }
+
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file != null)
+        {
+            try
+            {
+                var buffer = new byte[file.Size];
+                await file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024).ReadAsync(buffer);
+
+                var fileName = file.Name;
+                var base64 = Convert.ToBase64String(buffer);
+                var contentType = file.ContentType;
+
+                await JSRuntime.InvokeVoidAsync("VideoCall.sendFileAttachment", fileName, base64, contentType);
+                inputFileKey = Guid.NewGuid().ToString();
+            }
+            catch (Exception ex)
+            {
+                await LogService.LogError("OnFileSelected", ex.Message);
+            }
+        }
+    }
+
+    private async Task SendChatMessage()
+    {
+        if (!string.IsNullOrWhiteSpace(chatMessage))
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var userName = authState.User.Identity?.Name ?? "Guest";
+            await JSRuntime.InvokeVoidAsync("VideoCall.sendChatMessage", userName, chatMessage);
+            chatMessage = string.Empty;
+            if (chatInputRef != null)
+            await chatInputRef.Clear();
+            StateHasChanged();
         }
     }
 
