@@ -2,11 +2,10 @@
 @rendermode InteractiveServer
 
 @inject IHttpClientFactory HttpClientFactory
-
 <MudPopoverProvider /> 
+<MudSnackbarProvider />
 
 <PageTitle>@pageTitle</PageTitle>
-
 <section id="services" class="services-section">
     <div class="container">
 
@@ -382,7 +381,7 @@
             }
         }
     }
-    
+
     #region ContactMessage
     private async Task CreateSessionAsync()
     {

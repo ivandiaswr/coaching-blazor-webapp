@@ -3,6 +3,8 @@ window.VideoCall = (() => {
     let peerConnection = null;  
     let localStream = null;      
     let sessionId = null;
+    let isScreenSharing = false;
+    let dotNetRef = null;
 
     // needs STUN/TURN configs for users with nat/firewalls 
     const rtcConfig = {
@@ -11,8 +13,9 @@ window.VideoCall = (() => {
         ]
     };
 
-    async function init(sessId) {
+    async function init(sessId, dotNetReference) {
         sessionId = sessId;
+        dotNetRef = dotNetReference;
 
         if (hubConnection && hubConnection.state !== signalR.HubConnectionState.Disconnected) {
             console.log("🛑 Existing hubConnection still active. Stopping...");
@@ -20,8 +23,8 @@ window.VideoCall = (() => {
         }
     
         hubConnection = new signalR.HubConnectionBuilder()
-            .withUrl("/videoHub")
-            .withAutomaticReconnect([0, 2000, 10000, 30000])
+            .withUrl("/videoHub", { transport: signalR.HttpTransportType.WebSockets })
+            .withAutomaticReconnect()
             .configureLogging(signalR.LogLevel.Information)
             .build();
     
@@ -100,6 +103,8 @@ window.VideoCall = (() => {
             localStream = null;
         }
 
+        isScreenSharing = false;
+
         document.getElementById("localVideo").srcObject = null;
         document.getElementById("remoteVideo").srcObject = null;
     }
@@ -120,6 +125,10 @@ window.VideoCall = (() => {
             const remoteVideo = document.getElementById("remoteVideo");
             if (event.streams && event.streams[0]) {
                 remoteVideo.srcObject = event.streams[0];
+                
+                if (dotNetRef) {
+                    dotNetRef.invokeMethodAsync("OnRemoteStreamConnected", true);
+                }
             }
         };
 
@@ -172,48 +181,77 @@ window.VideoCall = (() => {
     }
 
     function toggleMic() {
-        if (!localStream) return;
-    
+        if (!localStream) {
+            console.warn("No local stream available to toggle microphone.");
+            return false;
+        }
+
         const audioTrack = localStream.getAudioTracks()[0];
         if (audioTrack) {
             audioTrack.enabled = !audioTrack.enabled;
+            console.log("Microphone toggled. Muted:", !audioTrack.enabled);
+            return !audioTrack.enabled;
         }
+        return false;
     }
-    
+
     function toggleCamera() {
-        if (!localStream) return;
-    
+        if (!localStream) {
+            console.warn("No local stream available to toggle camera.");
+            return false;
+        }
+
         const videoTrack = localStream.getVideoTracks()[0];
         if (videoTrack) {
             videoTrack.enabled = !videoTrack.enabled;
+            console.log("Camera toggled. Off:", !videoTrack.enabled);
+            return !videoTrack.enabled;
         }
+        return false;
     }
-    
 
     async function shareScreen() {
         if (!peerConnection) {
-            console.warn("No peer connection");
-            return;
+            console.warn("No peer connection available for screen sharing.");
+            return false;
         }
-    
+
         try {
-            const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-    
-            const screenTrack = screenStream.getVideoTracks()[0];
-            const sender = peerConnection.getSenders().find(s => s.track.kind === "video");
-    
-            if (sender) {
-                sender.replaceTrack(screenTrack);
-    
-                screenTrack.onended = async () => {
-                    const cameraTrack = localStream.getVideoTracks()[0];
-                    if (cameraTrack) {
-                        await sender.replaceTrack(cameraTrack);
+            if (isScreenSharing) {
+                const videoTrack = localStream.getVideoTracks()[0];
+                if (videoTrack) {
+                    const sender = peerConnection.getSenders().find(s => s.track?.kind === "video");
+                    if (sender) {
+                        await sender.replaceTrack(videoTrack);
+                        console.log("Stopped screen sharing. Reverted to camera.");
                     }
-                };
+                }
+                isScreenSharing = false;
+                return false;
+            } else {
+                const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+                const screenTrack = screenStream.getVideoTracks()[0];
+                const sender = peerConnection.getSenders().find(s => s.track?.kind === "video");
+
+                if (sender) {
+                    await sender.replaceTrack(screenTrack);
+                    console.log("Started screen sharing.");
+                    isScreenSharing = true;
+
+                    screenTrack.onended = async () => {
+                        const videoTrack = localStream.getVideoTracks()[0];
+                        if (videoTrack && sender) {
+                            await sender.replaceTrack(videoTrack);
+                            console.log("Screen sharing ended by user. Reverted to camera.");
+                            isScreenSharing = false;
+                        }
+                    };
+                }
+                return true;
             }
         } catch (err) {
-            console.error("Error sharing screen:", err);
+            console.error("Error toggling screen sharing:", err);
+            throw err;
         }
     }
 

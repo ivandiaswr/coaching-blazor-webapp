@@ -12,13 +12,18 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Logs;
 using System.Globalization;
+using MudBlazor;
 
 var builder = WebApplication.CreateBuilder(args);
 
 CultureInfo.DefaultThreadCurrentCulture = new CultureInfo("en-GB");
 CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo("en-GB");
 
-builder.Services.AddSignalR();
+// builder.Services.AddSignalR();
+builder.Services.AddSignalR(options =>
+{
+    options.MaximumReceiveMessageSize = 10 * 1024 * 1024; // 10MB
+});
 builder.Logging.SetMinimumLevel(LogLevel.Debug);
 
 SQLitePCL.Batteries.Init();
@@ -150,7 +155,13 @@ builder.Services.AddAuthentication(options =>
 //     .AddConsole();
 
 // Mudblazor framework
-builder.Services.AddMudServices();
+builder.Services.AddMudServices(config =>
+{
+    config.SnackbarConfiguration.PositionClass = Defaults.Classes.Position.BottomRight;
+    config.SnackbarConfiguration.MaxDisplayedSnackbars = 3;
+    config.SnackbarConfiguration.ShowCloseIcon = true;
+    config.SnackbarConfiguration.SnackbarVariant = Variant.Filled;
+});
 
 var app = builder.Build();
 
