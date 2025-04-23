@@ -46,6 +46,7 @@ public class VideoCallService : IVideoCallService
     public async Task<List<VideoSession>> GetSessionsForUserAsync(string userId)
     {
         return await _context.VideoSessions
+            .Include(v => v.Session)
             .Where(v => v.UserId == userId)
             .OrderByDescending(v => v.ScheduledAt)
             .ToListAsync();
