@@ -1,0 +1,16 @@
+using ModelLayer;
+
+namespace BusinessLayer.Services.Interfaces
+{
+    public interface ISessionPackService
+    {
+        Task<List<SessionPack>> GetAllAsync();
+        Task CreateAsync(SessionPack pack);
+        Task UpdateAsync(SessionPack pack);
+        Task DeleteAsync(int id);
+        Task<bool> ConsumeSession(string userId);
+        Task<int> GetRemainingSessions(string userId);
+        Task<List<SessionPack>> GetUserPacksAsync(string userId);
+        Task RestoreSession(string userId);
+    }
+}

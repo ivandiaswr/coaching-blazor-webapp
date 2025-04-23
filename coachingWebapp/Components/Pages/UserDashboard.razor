@@ -6,10 +6,9 @@
 @attribute [Authorize(Roles = "User")]
 <PageTitle>@pageTitle</PageTitle>
 
-
 <MudPaper Class="dashboard-welcome" Elevation="1">
     <MudText Typo="Typo.h5" Class="welcome-title">
-    Hello, @userId!
+        Hello, @userId!
     </MudText>
     
     @if (upcomingSessions.Any())
@@ -17,17 +16,30 @@
         var nextSession = upcomingSessions.First();
         <MudText Typo="Typo.subtitle1">
             A tua próxima sessão está agendada para 
-        <strong>@nextSession.ScheduledAt.ToString("MMMM dd 'at' HH:mm", new CultureInfo("en-US"))</strong>. Get ready to take your next step!
+            <strong>@nextSession.ScheduledAt.ToString("MMMM dd 'at' HH:mm", new CultureInfo("en-US"))</strong>. Get ready to take your next step!
         </MudText>
     }
     else
     {
         <MudText Typo="Typo.subtitle1">
-        You don’t have any sessions scheduled yet. It’s time to book a moment just for you.
+            You don’t have any sessions scheduled yet. It’s time to book a moment just for you.
         </MudText>
         <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="@(() => selectedTab = 1)">
-        Book a Session
+            Book a Session
         </MudButton>
+    }
+
+    @if (hasValidPack)
+    {
+        <MudAlert Severity="Severity.Info" Variant="Variant.Filled">
+            You have @remainingPackSessions session(s) left in your pack. No payment needed.
+        </MudAlert>
+    }
+    @if (hasActiveSubscription)
+    {
+        <MudAlert Severity="Severity.Info" Variant="Variant.Filled">
+            You have @remainingSubscriptionSessions session(s) left this month (@sessionsUsed of @monthlyLimit used).
+        </MudAlert>
     }
 </MudPaper>
 
@@ -49,48 +61,86 @@
     </MudTabPanel>
 
     <MudTabPanel Text="Book Session" Icon="@Icons.Material.Filled.CalendarToday">
-         <div class="user-dashboard-request">
-            <MudForm @ref="requestForm" Model="@requestModel">
-                <MudSelect Label="Session Type" 
-                    T="SessionType"
-                    @bind-Value="requestModel.SessionCategory"
-                    For="@(() => requestModel.SessionCategory)">
+        <MudPaper Class="booking-tab-wrapper p-4">
+            <MudText Typo="Typo.subtitle1">Total booking options: @BookingOptions.Count</MudText>
+        
+            <MudGrid>
+                @foreach (var option in BookingOptions)
+                {
+                    <MudItem xs="12" sm="6" md="4">
+                        <MudCard Class="@($"booking-option-card {(SelectedOption?.Id == option.Id ? "selected" : "")}")"
+                                 Style="cursor:pointer"
+                                 @onclick="@(() => SelectBookingOption(option))">
+                            <MudCardContent>
+                                <MudText Typo="Typo.h6">@option.Title</MudText>
+                                <MudText Typo="Typo.body2">@option.Description</MudText>
+                                @if (option.PriceEUR.HasValue)
+                                {
+                                    <MudText Color="Color.Primary" Typo="Typo.subtitle2">from @option.PriceEUR€</MudText>
+                                }
+                                else
+                                {
+                                    <MudText Color="Color.Success" Typo="Typo.subtitle2">Included</MudText>
+                                }
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                }
+            </MudGrid>
+
+            <div class="user-dashboard-request">
+                <MudForm @ref="requestForm" Model="@requestModel">
+                    <MudSelect Label="Session Type" 
+                               T="SessionType"
+                               @bind-Value="requestModel.SessionCategory"
+                               For="@(() => requestModel.SessionCategory)">
                         @foreach (var type in Enum.GetValues(typeof(SessionType)).Cast<SessionType>())
                         {
                             <MudSelectItem Value="@type">
                                 @((type.GetType().GetField(type.ToString())?.GetCustomAttributes(typeof(DisplayAttribute), false).FirstOrDefault() as DisplayAttribute)?.Name ?? type.ToString())
                             </MudSelectItem>
                         }
-                </MudSelect>
+                    </MudSelect>
 
-                <MudTextField Label="Message" 
-                    T="string" 
-                    Lines="3" 
-                    @bind-Value="requestModel.Message"
-                    For="@(() => requestModel.Message)" />
+                    <MudTextField Label="Message" 
+                                  T="string" 
+                                  Lines="3" 
+                                  @bind-Value="requestModel.Message"
+                                  For="@(() => requestModel.Message)" />
 
-                <MudPaper Class="hoverable-input" @onclick="ToggleCalendar" Style="cursor: pointer;">
-                    <MudTextField Label="Preferred Date & Time"
-                                Value="@selectedSlotString"
-                                For="@(() => requestModel.PreferredDateTimeString)"
-                                ReadOnly="true"
-                                Adornment="Adornment.End"
-                                AdornmentIcon="@Icons.Material.Filled.CalendarMonth" />
-                </MudPaper>
+                    <MudPaper Class="hoverable-input" @onclick="ToggleCalendar" Style="cursor: pointer;">
+                        <MudTextField Label="Preferred Date & Time"
+                                      Value="@selectedSlotString"
+                                      For="@(() => requestModel.PreferredDateTimeString)"
+                                      ReadOnly="true"
+                                      Adornment="Adornment.End"
+                                      AdornmentIcon="@Icons.Material.Filled.CalendarMonth" />
+                    </MudPaper>
 
-                <Calendar @bind-IsVisible="showSlotCalendar"
-                        OnSlotSelected="HandleSlotSelected"
-                        CurrentTimeZoneDisplay="@userTimeZone"
-                        Slots="@AvailableSlots"
-                        BusyTimes="@BusyTimes"
-                        AdminUnavailabilities="@Unavailabilities"
-                        FirstAvailableDate="@firstAvailableDate" />
+                    <Calendar @bind-IsVisible="showSlotCalendar"
+                              OnSlotSelected="HandleSlotSelected"
+                              CurrentTimeZoneDisplay="@userTimeZone"
+                              Slots="@AvailableSlots"
+                              BusyTimes="@BusyTimes"
+                              AdminUnavailabilities="@Unavailabilities"
+                              FirstAvailableDate="@firstAvailableDate" />
+                    
+                    @if (SelectedOption == null)
+                    {
+                        <MudAlert Severity="Severity.Warning" Class="mt-2">
+                            Please select a booking option to proceed.
+                        </MudAlert>
+                    }
 
-                <MudButton OnClick="SubmitSessionRequest" Variant="Variant.Filled" Color="Color.Primary">
-                    Request Session
-                </MudButton>
-            </MudForm>
-        </div>
+                    <MudButton OnClick="SubmitSessionRequest" 
+                               Variant="Variant.Filled" 
+                               Color="Color.Primary"
+                               Disabled="@(SelectedOption == null || !requestForm?.IsValid == true || string.IsNullOrWhiteSpace(selectedSlotString))">
+                        Request Session
+                    </MudButton>
+                </MudForm>
+            </div>
+        </MudPaper>
     </MudTabPanel>
 
     <MudTabPanel Text="Sessions" Icon="@Icons.Material.Filled.ListAlt">
@@ -103,9 +153,9 @@
                 </MudSelect>
 
                 <MudTextField @bind-Value="searchText" 
-                    Placeholder="Search by type..." 
-                    Adornment="Adornment.Start" 
-                    AdornmentIcon="@Icons.Material.Filled.Search" />
+                              Placeholder="Search by type..." 
+                              Adornment="Adornment.Start" 
+                              AdornmentIcon="@Icons.Material.Filled.Search" />
             </MudStack>
 
             <MudTable Items="FilteredSessions" Hover="true" Striped="true">
@@ -156,7 +206,7 @@
     </MudTabPanel>
 
     <MudTabPanel Text="Chat with Ítala(AI)" Icon="@Icons.Material.Filled.Chat">
-       <MudPaper Class="chat-wrapper" Elevation="0">
+        <MudPaper Class="chat-wrapper" Elevation="0">
             <MudStack Spacing="3">
                 <div class="d-flex justify-end">
                     <MudButton OnClick="ClearChat" 
@@ -215,17 +265,17 @@
                 </div>
                 <MudForm @ref="chatForm" Class="chat-input-form">
                     <MudTextField InputRef="@chatInputRef"
-                                @bind-Value="newMessage" 
-                                Placeholder="How can Ítala help you?" 
-                                Immediate="true" 
-                                OnKeyDown="@(async (KeyboardEventArgs e) => { if (e.Key == "Enter" && !isSending) await SendMessage(); })" 
-                                Disabled="isSending" 
-                                Variant="Variant.Outlined" 
-                                Adornment="Adornment.End" 
-                                AdornmentIcon="@Icons.Material.Filled.Send" 
-                                AdornmentColor="Color.Primary" 
-                                OnAdornmentClick="SendMessage" 
-                                Class="chat-input" />
+                                  @bind-Value="newMessage" 
+                                  Placeholder="How can Ítala help you?" 
+                                  Immediate="true" 
+                                  OnKeyDown="@(async (KeyboardEventArgs e) => { if (e.Key == "Enter" && !isSending) await SendMessage(); })" 
+                                  Disabled="isSending" 
+                                  Variant="Variant.Outlined" 
+                                  Adornment="Adornment.End" 
+                                  AdornmentIcon="@Icons.Material.Filled.Send" 
+                                  AdornmentColor="Color.Primary" 
+                                  OnAdornmentClick="SendMessage" 
+                                  Class="chat-input" />
                 </MudForm>
             </MudStack>
         </MudPaper>
@@ -248,9 +298,6 @@
     private bool showSlotCalendar = false;
 
     private string selectedSlotString;
-    private SessionType requestType = SessionType.lifeCoaching;
-    private string requestMessage;
-
     private List<DateTime> AvailableSlots = new();
     private List<(DateTimeOffset Start, DateTimeOffset End)> BusyTimes = new();
     private List<UnavailableTime> Unavailabilities = new();
@@ -266,6 +313,16 @@
     private ElementReference chatContainer;
     private ElementReference chatInputRef;
 
+    private BookingType selectedBookingOption = BookingType.Subscription;
+    private bool hasValidPack = false;
+    private bool hasActiveSubscription = false;
+    private int remainingPackSessions = 0;
+    private int remainingSubscriptionSessions = 0;
+    private int sessionsUsed = 0;
+    private int monthlyLimit = 0;
+    private List<BookingOption> BookingOptions = new();
+    private BookingOption? SelectedOption;
+
     private IEnumerable<VideoSession> FilteredSessions => allSessions
         .Where(session =>
             (selectedFilter == "Upcoming" && session.ScheduledAt >= DateTime.UtcNow) ||
@@ -275,7 +332,6 @@
             || session.Session?.SessionCategory.GetDisplayName().Contains(searchText, StringComparison.InvariantCultureIgnoreCase) == true)
         .OrderByDescending(session => session.ScheduledAt);
 
-
     private string userTimeZone = TimeZoneInfo.Local.Id;
 
     protected override async Task OnInitializedAsync()
@@ -283,6 +339,99 @@
         var auth = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         userId = auth.User?.Identity?.Name;
         await LoadSessions();
+
+        var status = await UserSubscriptionService.GetStatusAsync(userId);
+        hasActiveSubscription = status.HasActiveSubscription;
+        remainingSubscriptionSessions = status.Remaining;
+        sessionsUsed = status.SessionsUsed;
+        monthlyLimit = status.MonthlyLimit;
+
+        remainingPackSessions = await SessionPackService.GetRemainingSessions(userId);
+        hasValidPack = remainingPackSessions > 0;
+
+        var subscriptionPlans = await SubscriptionPlanService.GetAllAsync();
+        foreach (var plan in subscriptionPlans)
+        {
+            BookingOptions.Add(new BookingOption
+            {
+                Id = Guid.NewGuid().ToString(),
+                Title = plan.Name,
+                Description = "Monthly subscription plan.",
+                PriceEUR = plan.PriceEUR,
+                Type = BookingType.Subscription,
+                PlanId = plan.Id,
+                IsAvailable = true,
+                RequiresPurchase = true
+            });
+        }
+
+        var packDefinitions = await SessionPackDefinitionService.GetAllAsync();
+        foreach (var def in packDefinitions)
+        {
+            BookingOptions.Add(new BookingOption
+            {
+                Id = Guid.NewGuid().ToString(),
+                Title = def.Name,
+                Description = def.Description,
+                PriceEUR = def.PriceEUR,
+                Type = BookingType.SessionPack,
+                PlanId = def.Id,
+                IsAvailable = true,
+                RequiresPurchase = true
+            });
+        }
+
+        var userPacks = await SessionPackService.GetUserPacksAsync(userId);
+        foreach (var pack in userPacks.Where(p => p.SessionsRemaining > 0))
+        {
+            var option = new BookingOption
+            {
+                Id = Guid.NewGuid().ToString(),
+                Title = "Use Session Pack",
+                Description = $"You have {pack.SessionsRemaining} sessions left.",
+                Type = BookingType.SessionPack,
+                PlanId = pack.DefinitionId,
+                IsAvailable = true,
+                RequiresPurchase = false
+            };
+            BookingOptions.Add(option);
+
+            // Pre-select this option if available
+            if (SelectedOption == null)
+            {
+                SelectedOption = option;
+                selectedBookingOption = option.Type;
+            }
+        }
+
+        if (status.HasActiveSubscription)
+        {
+            var option = new BookingOption
+            {
+                Id = Guid.NewGuid().ToString(),
+                Title = "Use Subscription",
+                Description = $"You’ve used {status.SessionsUsed} of {status.MonthlyLimit}.",
+                Type = BookingType.Subscription,
+                PlanId = status.PlanId,
+                IsAvailable = status.Remaining > 0,
+                RequiresPurchase = false
+            };
+            BookingOptions.Add(option);
+
+            // Pre-select this option if available and no pack is selected
+            if (SelectedOption == null && option.IsAvailable)
+            {
+                SelectedOption = option;
+                selectedBookingOption = option.Type;
+            }
+        }
+    }
+
+    private void SelectBookingOption(BookingOption option)
+    {
+        SelectedOption = option;
+        selectedBookingOption = option.Type;
+        StateHasChanged();
     }
 
     private async Task LoadSessions()
@@ -327,8 +476,10 @@
         catch (Exception ex)
         {
             Console.WriteLine($"Error in ToggleCalendar: {ex.Message}");
+            await LogService.LogError("Error in ToggleCalendar: ", ex.Message);
         }
-        finally {
+        finally
+        {
             StateHasChanged();
         }
     }
@@ -386,15 +537,25 @@
     {
         await requestForm.Validate();
         if (!requestForm.IsValid || string.IsNullOrWhiteSpace(selectedSlotString))
+        {
+            Snackbar.Add("Please fill out all required fields and select a date/time.", Severity.Error);
             return;
+        }
 
-        var scheduledAt = DateTime.Parse(selectedSlotString);
+        if (SelectedOption == null)
+        {
+            Snackbar.Add("Please select a booking option.", Severity.Error);
+            return;
+        }
+
+        var scheduledAtLocal = DateTime.Parse(selectedSlotString);
+        var scheduledAtUtc = TimeZoneInfo.ConvertTimeToUtc(scheduledAtLocal, TimeZoneInfo.FindSystemTimeZoneById(userTimeZone));
 
         var session = new Session
         {
-            PreferredDateTime = scheduledAt,
-            SessionCategory = requestType,
-            Message = requestMessage ?? string.Empty,
+            PreferredDateTime = scheduledAtUtc,
+            SessionCategory = requestModel.SessionCategory,
+            Message = requestModel.Message ?? string.Empty,
             CreatedAt = DateTime.UtcNow,
             IsSessionBooking = true,
             DiscoveryCall = false,
@@ -402,15 +563,75 @@
             FullName = ""
         };
 
-        await SessionService.CreateSessionAsync(session);
+        try
+        {
+            if (SelectedOption.Type == BookingType.SessionPack)
+            {
+                if (remainingPackSessions <= 0)
+                {
+                    Snackbar.Add("You have no remaining sessions in your pack. Please purchase a new pack.", Severity.Error);
+                    return;
+                }
 
-        Snackbar.Add("Session successfully scheduled!", Severity.Success);
+                var success = await SessionPackService.ConsumeSession(userId);
+                if (!success)
+                {
+                    Snackbar.Add("Failed to consume a session from your pack.", Severity.Error);
+                    return;
+                }
 
-        selectedSlotString = null;
-        requestMessage = string.Empty;
-        showSlotCalendar = false;
+                await SessionService.CreateSessionAsync(session);
+                remainingPackSessions = await SessionPackService.GetRemainingSessions(userId);
+                Snackbar.Add($"Session scheduled! You have {remainingPackSessions} session(s) left in your pack.", Severity.Success);
+            }
+            else if (SelectedOption.Type == BookingType.Subscription)
+            {
+                if (remainingSubscriptionSessions <= 0)
+                {
+                    Snackbar.Add("You have reached your monthly session limit. Please upgrade your plan or wait until next month.", Severity.Error);
+                    return;
+                }
 
-        await LoadSessions();
+                var success = await UserSubscriptionService.RegisterMonthlyUsage(userId);
+                if (!success)
+                {
+                    Snackbar.Add("Failed to register session usage. Monthly limit may have been reached.", Severity.Error);
+                    return;
+                }
+
+                await SessionService.CreateSessionAsync(session);
+                var status = await UserSubscriptionService.GetStatusAsync(userId);
+                remainingSubscriptionSessions = status.Remaining;
+                sessionsUsed = status.SessionsUsed;
+                Snackbar.Add($"Session scheduled! You have {remainingSubscriptionSessions} session(s) left this month.", Severity.Success);
+            }
+            else
+            {
+                var response = await HttpClient.PostAsJsonAsync("/api/payments/create-checkout-session", session);
+                if (response.IsSuccessStatusCode)
+                {
+                    var data = await response.Content.ReadFromJsonAsync<StripeResponse>();
+                    NavigationManager.NavigateTo(data!.Url, true);
+                }
+                else
+                {
+                    Snackbar.Add("Failed to initiate payment. Please try again.", Severity.Error);
+                }
+                return;
+            }
+
+            selectedSlotString = null;
+            requestModel.Message = string.Empty;
+            requestModel.SessionCategory = SessionType.lifeCoaching;
+            showSlotCalendar = false;
+            await LoadSessions();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            await LogService.LogError("Error in SubmitSessionRequest: ", ex.Message);
+            Snackbar.Add("An error occurred while scheduling the session. Please try again.", Severity.Error);
+        }
     }
 
     private void JoinSession(string sessionId)
@@ -508,6 +729,7 @@
         catch (Exception ex)
         {
             Console.WriteLine($"Error in SendMessage: {ex.Message}");
+            await LogService.LogError("Error in SendMessage: ", ex.Message);
             chatMessages.Add(new ChatMessage { IsUser = false, Text = "Sorry, something went wrong.", Resources = new List<ChatResource>(), Timestamp = DateTime.Now });
         }
         finally

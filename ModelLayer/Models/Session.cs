@@ -31,6 +31,11 @@ public class Session
     public bool IsLive { get; set; } = false;
     public bool DiscoveryCall { get; set; }
 
+    // Stripe
+    public bool IsPaid { get; set; } = false;
+    public string? StripeSessionId { get; set; }
+    public DateTime PaidAt { get; set; }
+
     public VideoSession? VideoSession { get; set; }
 
     public void UpdateFullName()

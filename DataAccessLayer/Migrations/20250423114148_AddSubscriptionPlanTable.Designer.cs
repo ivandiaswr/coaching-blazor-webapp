@@ -3,6 +3,7 @@ using System;
 using DataAccessLayer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccessLayer.Migrations
 {
     [DbContext(typeof(CoachingDbContext))]
-    partial class CoachingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250423114148_AddSubscriptionPlanTable")]
+    partial class AddSubscriptionPlanTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.0");
@@ -318,30 +321,6 @@ namespace DataAccessLayer.Migrations
                     b.ToTable("Sessions");
                 });
 
-            modelBuilder.Entity("ModelLayer.Models.SessionPackDefinition", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("PriceEUR")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("TotalSessions")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("SessionPackDefinitions");
-                });
-
             modelBuilder.Entity("ModelLayer.Models.SessionPrice", b =>
                 {
                     b.Property<int>("Id")
@@ -368,9 +347,6 @@ namespace DataAccessLayer.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Description")
-                        .HasColumnType("TEXT");
-
                     b.Property<int>("MonthlySessionLimit")
                         .HasColumnType("INTEGER");
 
@@ -388,39 +364,6 @@ namespace DataAccessLayer.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("SubscriptionPlans");
-                });
-
-            modelBuilder.Entity("ModelLayer.Models.UserSubscription", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("SessionsUsedThisMonth")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("StartedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("StripeSubscriptionId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("SubscriptionPlanId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SubscriptionPlanId");
-
-                    b.ToTable("UserSubscriptions");
                 });
 
             modelBuilder.Entity("ModelLayer.Models.VideoSession", b =>
@@ -469,9 +412,6 @@ namespace DataAccessLayer.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("DefinitionId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<DateTime?>("ExpiresAt")
                         .HasColumnType("TEXT");
 
@@ -481,13 +421,14 @@ namespace DataAccessLayer.Migrations
                     b.Property<int>("SessionsRemaining")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("TotalSessions")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("DefinitionId");
 
                     b.ToTable("SessionPacks");
                 });
@@ -574,17 +515,6 @@ namespace DataAccessLayer.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ModelLayer.Models.UserSubscription", b =>
-                {
-                    b.HasOne("ModelLayer.Models.SubscriptionPlan", "Plan")
-                        .WithMany()
-                        .HasForeignKey("SubscriptionPlanId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Plan");
-                });
-
             modelBuilder.Entity("ModelLayer.Models.VideoSession", b =>
                 {
                     b.HasOne("ModelLayer.Models.Session", "Session")
@@ -592,17 +522,6 @@ namespace DataAccessLayer.Migrations
                         .HasForeignKey("ModelLayer.Models.VideoSession", "SessionRefId");
 
                     b.Navigation("Session");
-                });
-
-            modelBuilder.Entity("ModelLayer.SessionPack", b =>
-                {
-                    b.HasOne("ModelLayer.Models.SessionPackDefinition", "Definition")
-                        .WithMany()
-                        .HasForeignKey("DefinitionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Definition");
                 });
 
             modelBuilder.Entity("ModelLayer.Models.Session", b =>

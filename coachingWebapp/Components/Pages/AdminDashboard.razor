@@ -5,6 +5,7 @@
 @inject IDialogService DialogService
 <MudPopoverProvider/> @*only works if its in the page of the mud component*@
 <MudDialogProvider/>
+<MudSnackbarProvider />
 
 @attribute [Authorize(Roles = "Admin")]
 <PageTitle>@pageTitle</PageTitle>
@@ -216,6 +217,108 @@
                 </PagerContent>
             </MudDataGrid>
         </MudTabPanel>
+
+        <MudTabPanel Text="Session Prices">
+            <MudText Typo="Typo.h5" Class="mb-2">Session Prices</MudText>
+
+            <MudTable Items="@sessionPrices" Hover="true">
+                <HeaderContent>
+                    <MudTh>Session Type</MudTh>
+                    <MudTh>Price (EUR)</MudTh>
+                    <MudTh>Last Updated</MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>
+                        <MudSelect T="SessionType" @bind-Value="context.SessionType" Dense="true">
+                            @foreach (var type in GetAvailableSessionTypes(context))
+                            {
+                                <MudSelectItem Value="@type">@type.GetDisplayName()</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudTd>
+                    <MudTd>
+                        <MudNumericField T="decimal" @bind-Value="context.PriceEUR" Adornment="Adornment.Start" AdornmentText="€" />
+                    </MudTd>
+                    <MudTd>@context.LastUpdated.ToString("dd-MM-yyyy")</MudTd>
+                    <MudTd>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => SavePrice(context)">
+                            Save
+                        </MudButton>
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => DeletePrice(context.Id)" />
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+
+            <MudButton Class="mt-3" Color="Color.Secondary" Variant="Variant.Filled" OnClick="AddNewPrice">
+                Add Configuration Price
+            </MudButton>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Session Packs">
+            <MudText Typo="Typo.h5" Class="mb-3">Manage Session Pack Definitions</MudText>
+
+            <MudTable Items="@sessionPackDefinitions" Hover="true">
+                <HeaderContent>
+                    <MudTh>Name</MudTh>
+                    <MudTh>Description</MudTh>
+                    <MudTh>Total Sessions</MudTh>
+                    <MudTh>Price (EUR)</MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd><MudTextField @bind-Value="context.Name" /></MudTd>
+                    <MudTd><MudTextField @bind-Value="context.Description" /></MudTd>
+                    <MudTd><MudNumericField T="int" @bind-Value="context.TotalSessions" /></MudTd>
+                    <MudTd><MudNumericField T="decimal" @bind-Value="context.PriceEUR" Adornment="Adornment.Start" AdornmentText="€" /></MudTd>
+                    <MudTd>
+                        <MudButton OnClick="() => SavePackDefinition(context)">Save</MudButton>
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => DeletePackDefinition(context.Id)" />
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+
+            <MudButton Class="mt-3" OnClick="AddNewPackDefinition" Variant="Variant.Filled" Color="Color.Secondary">
+                Add New Pack
+            </MudButton>
+        </MudTabPanel>
+
+        <MudTabPanel Text="Subscription Plans">
+            <MudText Typo="Typo.h5" Class="mb-3">Manage Subscription Plans</MudText>
+
+            <MudTable Items="@subscriptionPlans" Hover="true">
+                <HeaderContent>
+                    <MudTh>Name</MudTh>
+                    <MudTh>Monthly Limit</MudTh>
+                    <MudTh>Price (EUR)</MudTh>
+                    <MudTh>Stripe ID</MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>
+                        <MudTextField @bind-Value="context.Name" />
+                    </MudTd>
+                    <MudTd>
+                        <MudNumericField T="int" @bind-Value="context.MonthlySessionLimit" />
+                    </MudTd>
+                    <MudTd>
+                        <MudNumericField T="decimal" @bind-Value="context.PriceEUR" Adornment="Adornment.Start" AdornmentText="€" />
+                    </MudTd>
+                    <MudTd>
+                        <MudTextField @bind-Value="context.StripePriceId" />
+                    </MudTd>
+                    <MudTd>
+                        <MudButton Color="Color.Primary" OnClick="() => SavePlan(context)">Save</MudButton>
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => DeletePlan(context.Id)" />
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+
+            <MudButton Class="mt-3" Variant="Variant.Filled" Color="Color.Secondary" OnClick="AddNewPlan">
+                Add New Plan
+            </MudButton>
+        </MudTabPanel>
+
     </MudTabs>
 </section>
 
@@ -248,6 +351,9 @@
 
     private UnavailableTime _newUnavailableTime = new();
     private List<UnavailableTime> _adminUnavailableTimes = new();
+    private List<SessionPrice> sessionPrices = new();
+    private List<SessionPackDefinition> sessionPackDefinitions = new();
+    private List<SubscriptionPlan> subscriptionPlans = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -274,6 +380,10 @@
         nextSessions = sessions
                 .Where(s => s.CreatedAt >= DateTime.UtcNow)
                 .ToList();
+
+        sessionPrices = await SessionPriceService.GetAllAsync();
+        sessionPackDefinitions = await SessionPackDefinitionService.GetAllAsync();
+        subscriptionPlans = await SubscriptionPlanService.GetAllAsync();
 
         StateHasChanged();
     }
@@ -346,6 +456,62 @@
         _adminUnavailableTimes = (await UnavailableTimeService.GetAllUnavailableTimesAsync()).ToList();
     }
 
+    private IEnumerable<SessionType> GetAvailableSessionTypes(SessionPrice current)
+    {
+        var usedTypes = sessionPrices
+            .Where(p => p != current)
+            .Select(p => p.SessionType)
+            .ToHashSet();
+
+        return Enum.GetValues<SessionType>()
+            .Where(t => !usedTypes.Contains(t));
+    }
+
+    private async Task SavePrice(SessionPrice price)
+    {
+        try
+        {
+            await SessionPriceService.AddOrUpdateAsync(price);
+            Snackbar.Add("Price saved successfully!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error saving price.", Severity.Error);
+        }
+    }
+
+    private async Task DeletePrice(int id)
+    {
+        try
+        {
+            await SessionPriceService.DeleteAsync(id);
+            sessionPrices = await SessionPriceService.GetAllAsync();
+            Snackbar.Add("Price deleted.", Severity.Info);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error deleting price.", Severity.Error);
+        }
+    }
+
+    private void AddNewPrice()
+    {
+        var available = GetAvailableSessionTypes(null).ToList();
+
+        if (available.Any())
+        {
+            sessionPrices.Add(new SessionPrice
+            {
+                SessionType = available.First(),
+                PriceEUR = 0
+            });
+            Snackbar.Add("New session price added. Don’t forget to save!", Severity.Info);
+        }
+        else
+        {
+            Snackbar.Add("All session types already have prices configured.", Severity.Warning);
+        }
+    }
 
     private Task OpenEmailDialogAsync()
     {
@@ -425,5 +591,67 @@
 
         var fileName = $"EmailSubscriptions_{DateTime.Now:yyyyMMddHHmmss}.xlsx";
         await JSRuntime.InvokeVoidAsync("saveAsFile", fileName, Convert.ToBase64String(stream.ToArray()));
+    }
+
+    private void AddNewPackDefinition()
+    {
+        sessionPackDefinitions.Add(new SessionPackDefinition
+        {
+            Name = "New Pack",
+            Description = "Enter description...",
+            TotalSessions = 5,
+            PriceEUR = 0
+        });
+
+        Snackbar.Add("New session pack definition added. Don’t forget to save!", Severity.Info);
+    }
+
+    private async Task SavePackDefinition(SessionPackDefinition pack)
+    {
+        if (pack.Id == 0)
+        {
+            await SessionPackDefinitionService.CreateAsync(pack);
+            Snackbar.Add("Session pack definition created.", Severity.Success);
+        }
+        else
+        {
+            await SessionPackDefinitionService.UpdateAsync(pack);
+            Snackbar.Add("Session pack definition updated.", Severity.Success);
+        }
+
+        sessionPackDefinitions = await SessionPackDefinitionService.GetAllAsync();
+    }
+
+    private async Task DeletePackDefinition(int id)
+    {
+        await SessionPackDefinitionService.DeleteAsync(id);
+        sessionPackDefinitions = await SessionPackDefinitionService.GetAllAsync();
+        Snackbar.Add("Session pack definition deleted.", Severity.Info);
+    }
+
+    private async Task SavePlan(SubscriptionPlan plan)
+    {
+        await SubscriptionPlanService.AddOrUpdateAsync(plan);
+        Snackbar.Add("Subscription plan saved.", Severity.Success);
+        subscriptionPlans = await SubscriptionPlanService.GetAllAsync();
+    }
+
+    private async Task DeletePlan(int id)
+    {
+        await SubscriptionPlanService.DeleteAsync(id);
+        subscriptionPlans = await SubscriptionPlanService.GetAllAsync();
+        Snackbar.Add("Subscription plan deleted.", Severity.Info);
+    }
+
+    private void AddNewPlan()
+    {
+        subscriptionPlans.Add(new SubscriptionPlan
+        {
+            Name = "New Plan",
+            MonthlySessionLimit = 4,
+            PriceEUR = 0,
+            StripePriceId = ""
+        });
+        Snackbar.Add("New plan added. Don’t forget to save!", Severity.Info);
     }
 }

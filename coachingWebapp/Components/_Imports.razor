@@ -18,6 +18,8 @@
 @using BusinessLayer.Services.Interfaces
 @using ModelLayer
 @using ModelLayer.Models
+@using ModelLayer.Models.Enums
+@using ModelLayer.Models.DTOs
 
 @using MudBlazor
 @using Heron.MudCalendar
@@ -26,10 +28,11 @@
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject UserManager<IdentityUser> UserManager
+
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 @inject HttpClient HttpClient
-@inject UserManager<IdentityUser> UserManager
 
 @inject ISessionService SessionService
 @inject IUnavailableTimeService UnavailableTimeService
@@ -38,3 +41,8 @@
 @inject IScrollService ScrollService
 @inject ILogService LogService
 @inject IChatService ChatService
+@inject ISessionPriceService SessionPriceService
+@inject ISessionPackDefinitionService SessionPackDefinitionService
+@inject ISessionPackService SessionPackService
+@inject ISubscriptionPlanService SubscriptionPlanService
+@inject IUserSubscriptionService UserSubscriptionService

@@ -60,7 +60,6 @@ public class VideoCallHub : Hub
         await base.OnDisconnectedAsync(exception);
     }
 
-
     public async Task SendFileAttachment(string sessionId, string userName, string fileName, string base64Data, string contentType)
     {
         var timestamp = DateTime.UtcNow.ToString("HH:mm:ss");

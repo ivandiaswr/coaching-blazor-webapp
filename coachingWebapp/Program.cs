@@ -89,6 +89,13 @@ builder.Services.AddScoped<ISecurityService, SecurityService>();
 builder.Services.AddScoped<IHelperService, HelperService>();
 builder.Services.AddScoped<ILogService, LogService>();
 builder.Services.AddScoped<IChatService, OpenRouterChatService>();
+builder.Services.AddScoped<IPaymentService, StripeService>();
+builder.Services.AddScoped<ISessionPriceService, SessionPriceService>();
+builder.Services.AddScoped<ISessionPackDefinitionService, SessionPackDefinitionService>();
+builder.Services.AddScoped<ISessionPackService, SessionPackService>();
+builder.Services.AddScoped<ISubscriptionPlanService, SubscriptionPlanService>();
+builder.Services.AddScoped<IUserSubscriptionService, UserSubscriptionService>();
+
 builder.Services.AddSingleton<LogProcessor>();
 
 builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation(); 
