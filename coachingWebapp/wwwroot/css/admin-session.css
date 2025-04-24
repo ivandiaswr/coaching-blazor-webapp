@@ -37,16 +37,13 @@
     background-color: var(--primary-white) !important;
     border-radius: 8px !important;
 }
-
-.mud-button-root.mud-button {
-    background-color: var(--accent-orange) !important;
-    color: var(--primary-white) !important;
+/
+:not(.mud-calendar) > .mud-button-root.mud-button,
+:not(.mud-calendar) .mud-button-root.mud-button {
+    background-color: var(--accent-orange);
+    color: var(--primary-white);
     transition: background-color 0.3s ease;
-    border: none !important;
-}
-
-.mud-button-root.mud-button:hover {
-    background-color: var(--accent-orange-hover) !important;
+    border: none;
 }
 
 .mud-calendar .mud-chip.mud-chip-color-primary {
@@ -74,6 +71,29 @@
 .calendar-slot-busy,
 .calendar-slot-unavailable {
     cursor: default !important;
+}
+
+.mud-calendar .mud-button:not(.mud-selected) {
+    background-color: transparent;
+    border: 1.5px solid var(--mud-palette-primary);
+    color: var(--mud-palette-primary);
+}
+
+.mud-calendar .mud-button.mud-selected {
+    background-color: var(--mud-palette-primary);
+    color: white;
+    border: none;
+}
+
+.mud-calendar .mud-button {
+    border-radius: 6px;
+    min-width: 80px;
+    font-weight: 600;
+}
+
+.mud-calendar .mud-button:not(.mud-selected):hover {
+    background-color: rgba(var(--mud-palette-primary-rgb), 0.08);
+    color: var(--accent-orange);
 }
 
 .timezone-info {

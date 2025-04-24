@@ -56,6 +56,7 @@
                 SlotDuration="00:45:00"
                 ShowTodayButton="true"
                 ItemClicked="HandleCalendarClick"
+                CssClassFunc="GetCalendarClass"
                 Class="mud-calendar-event" /> 
         </MudPaper>
     </MudTabPanel>
@@ -588,8 +589,12 @@
     private async Task LoadSessions()
     {
         allSessions = await VideoCallService.GetSessionsForUserAsync(userId);
+
+        var rangeStart = DateTime.UtcNow.AddDays(-30);
+        var rangeEnd = DateTime.UtcNow.AddDays(30);
+
         upcomingSessions = allSessions
-            .Where(s => s.ScheduledAt >= DateTime.UtcNow)
+            .Where(s => s.ScheduledAt >= rangeStart && s.ScheduledAt <= rangeEnd)
             .OrderBy(s => s.ScheduledAt)
             .ToList();
 
@@ -847,7 +852,7 @@
 
         if (now < joinWindowStart)
         {
-            Snackbar.Add($"The session hasn’t started yet. Please try again after {joinWindowStart:HH:mm}.", Severity.Warning);
+            Snackbar.Add($"The session hasn’t started yet. Please try again at {joinWindowStart:HH:mm}.", Severity.Warning);
             return;
         }
 
