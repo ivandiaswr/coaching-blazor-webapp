@@ -11,6 +11,7 @@ namespace ModelLayer.Models
         public BookingType Type { get; set; }
         public bool IsAvailable { get; set; } = true;
         public bool RequiresPurchase { get; set; } = false;
-        public int? PlanId { get; set; }
+        public string? PlanId { get; set; }
+        public int? PackId { get; set; }
     }
 }

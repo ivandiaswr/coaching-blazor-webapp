@@ -1,6 +1,7 @@
 using BusinessLayer.Services.Interfaces;
 using DataAccessLayer;
 using Microsoft.EntityFrameworkCore;
+using ModelLayer.Models;
 using ModelLayer.Models.DTOs;
 
 namespace BusinessLayer.Services
@@ -111,6 +112,13 @@ namespace BusinessLayer.Services
                 subscription.SessionsUsedThisMonth--;
                 await _context.SaveChangesAsync();
             }
+        }
+
+        public async Task<UserSubscription?> GetActiveSubscriptionAsync(string userId)
+        {
+            return await _context.UserSubscriptions
+                .Include(s => s.Plan)
+                .FirstOrDefaultAsync(s => s.UserId == userId && s.IsActive);
         }
     }
 }

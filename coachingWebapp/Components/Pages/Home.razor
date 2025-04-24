@@ -396,6 +396,7 @@
             isLoggingIn = true; 
             StateHasChanged();
 
+            session.DiscoveryCall = true;
             var result = await SessionService.CreateSessionAsync(session);
             
             sessionFormStatus = result 
@@ -436,7 +437,7 @@
 
         try
         {
-            var sessions = await SessionService.GetAllSessions() ?? new List<Session>();
+            var sessions = await SessionService.GetAllSessionsAsync() ?? new List<Session>();
             busyTimesConverted = sessions
                 .Where(c => c.PreferredDateTime != default && c.PreferredDateTime > DateTime.UtcNow.AddDays(2))
                 .Select(c => (

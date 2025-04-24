@@ -6,6 +6,6 @@ namespace ModelLayer.Models.DTOs
         public int MonthlyLimit { get; set; }
         public int SessionsUsed { get; set; }
         public int Remaining => MonthlyLimit - SessionsUsed;
-        public int PlanId { get; set; }
+        public string PlanId { get; set; }
     }
 }

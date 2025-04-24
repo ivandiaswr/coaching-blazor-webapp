@@ -15,8 +15,8 @@
     {
         var nextSession = upcomingSessions.First();
         <MudText Typo="Typo.subtitle1">
-            A tua próxima sessão está agendada para 
-            <strong>@nextSession.ScheduledAt.ToString("MMMM dd 'at' HH:mm", new CultureInfo("en-US"))</strong>. Get ready to take your next step!
+            Your next session is scheduled for
+            <strong>@nextSession.ScheduledAt.ToString("MMMM dd 'at' HH:mm")</strong>. Get ready to take your next step!
         </MudText>
     }
     else
@@ -60,88 +60,163 @@
         </MudPaper>
     </MudTabPanel>
 
-    <MudTabPanel Text="Book Session" Icon="@Icons.Material.Filled.CalendarToday">
-        <MudPaper Class="booking-tab-wrapper p-4">
-            <MudText Typo="Typo.subtitle1">Total booking options: @BookingOptions.Count</MudText>
-        
-            <MudGrid>
-                @foreach (var option in BookingOptions)
-                {
-                    <MudItem xs="12" sm="6" md="4">
-                        <MudCard Class="@($"booking-option-card {(SelectedOption?.Id == option.Id ? "selected" : "")}")"
-                                 Style="cursor:pointer"
-                                 @onclick="@(() => SelectBookingOption(option))">
-                            <MudCardContent>
-                                <MudText Typo="Typo.h6">@option.Title</MudText>
-                                <MudText Typo="Typo.body2">@option.Description</MudText>
-                                @if (option.PriceEUR.HasValue)
+<MudTabPanel Text="Book Session" Icon="@Icons.Material.Filled.CalendarToday">
+    <MudPaper Class="booking-tab-wrapper p-4">
+        <MudGrid GutterSize="32px">
+            <MudItem xs="12" md="6">
+                <div class="booking-options-grid">
+                    <MudGrid Class="mt-4" GutterSize="16px">
+                        <MudItem xs="12" md="4">
+                            <MudStack Spacing="2">
+                                <MudText Typo="Typo.h6">Single Session</MudText>
+                                @foreach (var option in BookingOptions.Where(o => o.Type == BookingType.SingleSession))
                                 {
-                                    <MudText Color="Color.Primary" Typo="Typo.subtitle2">from @option.PriceEUR€</MudText>
+                                    var cardStyle = $"cursor:{(option.IsAvailable ? "pointer" : "not-allowed")};opacity:{(option.IsAvailable ? "1" : "0.6")}";
+                                    <MudCard 
+                                        Class="@($"option-card single-session {(SelectedOption?.Id == option.Id ? "selected" : "")}")"
+                                        Style="@cardStyle"
+                                        @onclick="() => SelectBookingOption(option)">
+                                        <MudCardContent>
+                                            <MudText Typo="Typo.h6">@option.Title</MudText>
+                                            <MudText Typo="Typo.body2">@option.Description</MudText>
+                                            <MudText Typo="Typo.subtitle2" Color="Color.Primary">@option.PriceEUR€</MudText>
+                                            @if (!option.IsAvailable && option.RequiresPurchase)
+                                            {
+                                                <MudText Typo="Typo.caption" Color="Color.Error">Unavailable</MudText>
+                                            }
+                                        </MudCardContent>
+                                    </MudCard>
                                 }
-                                else
-                                {
-                                    <MudText Color="Color.Success" Typo="Typo.subtitle2">Included</MudText>
-                                }
-                            </MudCardContent>
-                        </MudCard>
-                    </MudItem>
-                }
-            </MudGrid>
+                            </MudStack>
+                        </MudItem>
 
-            <div class="user-dashboard-request">
-                <MudForm @ref="requestForm" Model="@requestModel">
-                    <MudSelect Label="Session Type" 
-                               T="SessionType"
-                               @bind-Value="requestModel.SessionCategory"
-                               For="@(() => requestModel.SessionCategory)">
-                        @foreach (var type in Enum.GetValues(typeof(SessionType)).Cast<SessionType>())
+                        <MudItem xs="12" md="4">
+                            <MudStack Spacing="2">
+                                <MudText Typo="Typo.h6">Session Packs</MudText>
+                                @foreach (var option in BookingOptions.Where(o => o.Type == BookingType.SessionPack))
+                                {
+                                    var cardStyle = $"cursor:{(option.IsAvailable ? "pointer" : "not-allowed")};opacity:{(option.IsAvailable ? "1" : "0.6")}";
+                                    <MudCard 
+                                        Class="@($"option-card session-pack {(SelectedOption?.Id == option.Id ? "selected" : "")}")"
+                                        Style="@cardStyle"
+                                        @onclick="() => SelectBookingOption(option)">
+                                        <MudCardContent>
+                                            <MudText Typo="Typo.h6">@option.Title</MudText>
+                                            <MudText Typo="Typo.body2">@option.Description</MudText>
+                                            <MudText Typo="Typo.subtitle2" Color="Color.Primary">@option.PriceEUR€</MudText>
+                                            @if (!option.RequiresPurchase)
+                                            {
+                                                <MudChip T="string" Color="Color.Info" Size="Size.Small">You have sessions left</MudChip>
+                                            }
+                                        </MudCardContent>
+                                    </MudCard>
+                                }
+                            </MudStack>
+                        </MudItem>
+
+                        <MudItem xs="12" md="4">
+                            <MudStack Spacing="2">
+                                <MudText Typo="Typo.h6">Subscriptions</MudText>
+
+                                @{
+                                    var highestSubPrice = BookingOptions
+                                        .Where(o => o.Type == BookingType.Subscription && o.RequiresPurchase && o.PriceEUR.HasValue)
+                                        .Max(o => o.PriceEUR ?? 0);
+                                }
+
+                                @foreach (var option in BookingOptions.Where(o => o.Type == BookingType.Subscription))
+                                {
+                                    var isRecommended = option.RequiresPurchase && (option.PriceEUR ?? 0) == highestSubPrice;
+                                    var cardStyle = $"cursor:{(option.IsAvailable ? "pointer" : "not-allowed")};opacity:{(option.IsAvailable ? "1" : "0.6")}";
+                                    
+                                    <MudCard 
+                                        Class="@($"option-card subscription {(SelectedOption?.Id == option.Id ? "selected" : "")}")"
+                                        Style="@cardStyle"
+                                        @onclick="() => SelectBookingOption(option)">
+                                        <MudCardContent>
+                                            @if (isRecommended)
+                                            {
+                                                <MudChip T="string" Color="Color.Warning" Variant="Variant.Filled" Size="Size.Small" Class="mb-1">
+                                                    Recommended
+                                                </MudChip>
+                                            }
+
+                                            <MudText Typo="Typo.h6">@option.Title</MudText>
+                                            <MudText Typo="Typo.body2">@option.Description</MudText>
+                                            <MudText Typo="Typo.subtitle2" Color="Color.Primary">@option.PriceEUR€</MudText>
+
+                                            @if (!option.RequiresPurchase)
+                                            {
+                                                <MudChip T="string" Color="Color.Success" Size="Size.Small">Included in your plan</MudChip>
+                                            }
+                                        </MudCardContent>
+                                    </MudCard>
+                                }
+                            </MudStack>
+                        </MudItem>
+                    </MudGrid>
+                </div>
+            </MudItem>
+
+            <MudItem xs="12" md="6">
+                <div class="user-dashboard-request">
+                    <MudForm @ref="requestForm" Model="@requestModel">
+                        <MudSelect Label="Session" 
+                                   T="SessionType"
+                                   @bind-Value="requestModel.SessionCategory"
+                                   For="@(() => requestModel.SessionCategory)"
+                                   @onchange="HandleSessionTypeChange">
+                            @foreach (var type in Enum.GetValues(typeof(SessionType)).Cast<SessionType>())
+                            {
+                                <MudSelectItem Value="@type">
+                                    @((type.GetType().GetField(type.ToString())?.GetCustomAttributes(typeof(DisplayAttribute), false).FirstOrDefault() as DisplayAttribute)?.Name ?? type.ToString())
+                                </MudSelectItem>
+                            }
+                        </MudSelect>
+
+                        <MudTextField Label="Message" 
+                                      T="string" 
+                                      Lines="3" 
+                                      @bind-Value="requestModel.Message"
+                                      For="@(() => requestModel.Message)" />
+
+                        <MudPaper Class="hoverable-input" @onclick="ToggleCalendar" Style="cursor: pointer;">
+                            <MudTextField Label="Preferred Date & Time"
+                                          Value="@selectedSlotString"
+                                          For="@(() => requestModel.PreferredDateTimeString)"
+                                          ReadOnly="true"
+                                          Adornment="Adornment.End"
+                                          AdornmentIcon="@Icons.Material.Filled.CalendarMonth" />
+                        </MudPaper>
+
+                        <Calendar @bind-IsVisible="showSlotCalendar"
+                                  OnSlotSelected="HandleSlotSelected"
+                                  CurrentTimeZoneDisplay="@userTimeZone"
+                                  Slots="@AvailableSlots"
+                                  BusyTimes="@BusyTimes"
+                                  AdminUnavailabilities="@Unavailabilities"
+                                  FirstAvailableDate="@firstAvailableDate" />
+                        
+                        @if (SelectedOption == null)
                         {
-                            <MudSelectItem Value="@type">
-                                @((type.GetType().GetField(type.ToString())?.GetCustomAttributes(typeof(DisplayAttribute), false).FirstOrDefault() as DisplayAttribute)?.Name ?? type.ToString())
-                            </MudSelectItem>
+                            <MudAlert Severity="Severity.Warning" Class="mt-2">
+                                Please select a booking option to proceed.
+                            </MudAlert>
                         }
-                    </MudSelect>
 
-                    <MudTextField Label="Message" 
-                                  T="string" 
-                                  Lines="3" 
-                                  @bind-Value="requestModel.Message"
-                                  For="@(() => requestModel.Message)" />
+                        <MudButton OnClick="SubmitSessionRequest" 
+                                   Variant="Variant.Filled" 
+                                   Color="Color.Primary"
+                                   Disabled="@(SelectedOption == null || !requestForm?.IsValid == true || string.IsNullOrWhiteSpace(selectedSlotString))">
+                            Request Session
+                        </MudButton>
+                    </MudForm>
+                </div>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+</MudTabPanel>
 
-                    <MudPaper Class="hoverable-input" @onclick="ToggleCalendar" Style="cursor: pointer;">
-                        <MudTextField Label="Preferred Date & Time"
-                                      Value="@selectedSlotString"
-                                      For="@(() => requestModel.PreferredDateTimeString)"
-                                      ReadOnly="true"
-                                      Adornment="Adornment.End"
-                                      AdornmentIcon="@Icons.Material.Filled.CalendarMonth" />
-                    </MudPaper>
-
-                    <Calendar @bind-IsVisible="showSlotCalendar"
-                              OnSlotSelected="HandleSlotSelected"
-                              CurrentTimeZoneDisplay="@userTimeZone"
-                              Slots="@AvailableSlots"
-                              BusyTimes="@BusyTimes"
-                              AdminUnavailabilities="@Unavailabilities"
-                              FirstAvailableDate="@firstAvailableDate" />
-                    
-                    @if (SelectedOption == null)
-                    {
-                        <MudAlert Severity="Severity.Warning" Class="mt-2">
-                            Please select a booking option to proceed.
-                        </MudAlert>
-                    }
-
-                    <MudButton OnClick="SubmitSessionRequest" 
-                               Variant="Variant.Filled" 
-                               Color="Color.Primary"
-                               Disabled="@(SelectedOption == null || !requestForm?.IsValid == true || string.IsNullOrWhiteSpace(selectedSlotString))">
-                        Request Session
-                    </MudButton>
-                </MudForm>
-            </div>
-        </MudPaper>
-    </MudTabPanel>
 
     <MudTabPanel Text="Sessions" Icon="@Icons.Material.Filled.ListAlt">
         <MudPaper class="sessions-wrapper" Elevation="0">
@@ -288,32 +363,30 @@
     private List<VideoSession> allSessions = new();
     private List<VideoSession> upcomingSessions = new();
     private List<VideoSession> pastSessions = new();
-    private DateTime _selectedDate = DateTime.Today;
     private List<CalendarItem> calendarItems = new();
-    private string userId;
+    private string userId = string.Empty;
 
-    private MudForm requestForm;
+    private MudForm? requestForm;
     private Session requestModel = new();
 
     private bool showSlotCalendar = false;
-
-    private string selectedSlotString;
+    private string? selectedSlotString;
     private List<DateTime> AvailableSlots = new();
     private List<(DateTimeOffset Start, DateTimeOffset End)> BusyTimes = new();
     private List<UnavailableTime> Unavailabilities = new();
     private DateTime? firstAvailableDate;
 
     private string selectedFilter = "All";
-    private string searchText = "";
+    private string searchText = string.Empty;
 
     private List<ChatMessage> chatMessages = new();
-    private string newMessage = "";
-    private MudForm chatForm;
+    private string newMessage = string.Empty;
+    private MudForm? chatForm;
     private bool isSending = false;
     private ElementReference chatContainer;
     private ElementReference chatInputRef;
 
-    private BookingType selectedBookingOption = BookingType.Subscription;
+    private BookingType selectedBookingOption = BookingType.SingleSession;
     private bool hasValidPack = false;
     private bool hasActiveSubscription = false;
     private int remainingPackSessions = 0;
@@ -329,7 +402,7 @@
             (selectedFilter == "Past" && session.ScheduledAt < DateTime.UtcNow) ||
             (selectedFilter == "All"))
         .Where(session => string.IsNullOrWhiteSpace(searchText)
-            || session.Session?.SessionCategory.GetDisplayName().Contains(searchText, StringComparison.InvariantCultureIgnoreCase) == true)
+            || session.Session?.SessionCategory.GetDisplayName()?.Contains(searchText, StringComparison.OrdinalIgnoreCase) == true)
         .OrderByDescending(session => session.ScheduledAt);
 
     private string userTimeZone = TimeZoneInfo.Local.Id;
@@ -337,17 +410,46 @@
     protected override async Task OnInitializedAsync()
     {
         var auth = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        userId = auth.User?.Identity?.Name;
+        userId = auth.User?.Identity?.Name ?? string.Empty;
+
         await LoadSessions();
 
+        // Get subscription status
         var status = await UserSubscriptionService.GetStatusAsync(userId);
         hasActiveSubscription = status.HasActiveSubscription;
         remainingSubscriptionSessions = status.Remaining;
         sessionsUsed = status.SessionsUsed;
         monthlyLimit = status.MonthlyLimit;
 
+        // Get pack status
         remainingPackSessions = await SessionPackService.GetRemainingSessions(userId);
         hasValidPack = remainingPackSessions > 0;
+
+        await LoadBookingOptions();
+
+        if (SelectedOption == null)
+        {
+            SelectedOption = BookingOptions.FirstOrDefault(o => o.Type == BookingType.SingleSession && o.IsAvailable);
+            selectedBookingOption = SelectedOption?.Type ?? BookingType.SingleSession;
+        }
+    }
+
+    private async Task LoadBookingOptions()
+    {
+        BookingOptions.Clear();
+
+        var sessionPrice = await SessionPriceService.GetPriceForSessionTypeAsync(requestModel.SessionCategory);
+        await LogService.LogInfo($"LoadBookingOptions: SessionType={requestModel.SessionCategory}, Price={(sessionPrice != null ? sessionPrice.PriceEUR : "null")}");
+        BookingOptions.Add(new BookingOption
+        {
+            Id = Guid.NewGuid().ToString(),
+            Title = $"Single Session ({requestModel.SessionCategory.GetDisplayName()})",
+            Description = "Book a one-time session without a subscription or pack.",
+            PriceEUR = sessionPrice?.PriceEUR,
+            Type = BookingType.SingleSession,
+            IsAvailable = sessionPrice != null,
+            RequiresPurchase = true
+        });
 
         var subscriptionPlans = await SubscriptionPlanService.GetAllAsync();
         foreach (var plan in subscriptionPlans)
@@ -356,10 +458,10 @@
             {
                 Id = Guid.NewGuid().ToString(),
                 Title = plan.Name,
-                Description = "Monthly subscription plan.",
+                Description = plan.Description ?? "Monthly subscription plan.",
                 PriceEUR = plan.PriceEUR,
                 Type = BookingType.Subscription,
-                PlanId = plan.Id,
+                PlanId = plan.Id.ToString(),
                 IsAvailable = true,
                 RequiresPurchase = true
             });
@@ -372,10 +474,10 @@
             {
                 Id = Guid.NewGuid().ToString(),
                 Title = def.Name,
-                Description = def.Description,
+                Description = def.Description ?? $"{def.TotalSessions} sessions pack.",
                 PriceEUR = def.PriceEUR,
                 Type = BookingType.SessionPack,
-                PlanId = def.Id,
+                PlanId = def.Id.ToString(),
                 IsAvailable = true,
                 RequiresPurchase = true
             });
@@ -384,53 +486,102 @@
         var userPacks = await SessionPackService.GetUserPacksAsync(userId);
         foreach (var pack in userPacks.Where(p => p.SessionsRemaining > 0))
         {
-            var option = new BookingOption
+            var def = packDefinitions.FirstOrDefault(d => d.Id == pack.DefinitionId);
+            if (def != null)
             {
-                Id = Guid.NewGuid().ToString(),
-                Title = "Use Session Pack",
-                Description = $"You have {pack.SessionsRemaining} sessions left.",
-                Type = BookingType.SessionPack,
-                PlanId = pack.DefinitionId,
-                IsAvailable = true,
-                RequiresPurchase = false
-            };
-            BookingOptions.Add(option);
+                var option = new BookingOption
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Title = $"Use {def.Name}",
+                    Description = $"You have {pack.SessionsRemaining} sessions left.",
+                    Type = BookingType.SessionPack,
+                    PlanId = def.Id.ToString(),
+                    PackId = pack.Id,
+                    IsAvailable = true,
+                    RequiresPurchase = false
+                };
+                BookingOptions.Add(option);
 
-            // Pre-select this option if available
-            if (SelectedOption == null)
-            {
-                SelectedOption = option;
-                selectedBookingOption = option.Type;
+                if (SelectedOption == null)
+                {
+                    SelectedOption = option;
+                    selectedBookingOption = option.Type;
+                }
             }
         }
 
+        var status = await UserSubscriptionService.GetStatusAsync(userId);
         if (status.HasActiveSubscription)
         {
-            var option = new BookingOption
+            var plan = subscriptionPlans.FirstOrDefault(p => p.Id.ToString() == status.PlanId);
+            if (plan != null)
             {
-                Id = Guid.NewGuid().ToString(),
-                Title = "Use Subscription",
-                Description = $"You’ve used {status.SessionsUsed} of {status.MonthlyLimit}.",
-                Type = BookingType.Subscription,
-                PlanId = status.PlanId,
-                IsAvailable = status.Remaining > 0,
-                RequiresPurchase = false
-            };
-            BookingOptions.Add(option);
+                var option = new BookingOption
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Title = $"Use {plan.Name}",
+                    Description = $"You’ve used {status.SessionsUsed} of {status.MonthlyLimit}.",
+                    Type = BookingType.Subscription,
+                    PlanId = plan.Id.ToString(),
+                    IsAvailable = status.Remaining > 0,
+                    RequiresPurchase = false
+                };
+                BookingOptions.Add(option);
 
-            // Pre-select this option if available and no pack is selected
-            if (SelectedOption == null && option.IsAvailable)
-            {
-                SelectedOption = option;
-                selectedBookingOption = option.Type;
+                if (SelectedOption == null && option.IsAvailable)
+                {
+                    SelectedOption = option;
+                    selectedBookingOption = option.Type;
+                }
             }
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task SelectBookingOption(BookingOption option)
+    {
+        if (option.IsAvailable)
+        {
+            SelectedOption = option;
+            selectedBookingOption = option.Type;
+            StateHasChanged();
         }
     }
 
-    private void SelectBookingOption(BookingOption option)
+    private async Task HandleSessionTypeChange(ChangeEventArgs args)
     {
-        SelectedOption = option;
-        selectedBookingOption = option.Type;
+        var sessionPrice = await SessionPriceService.GetPriceForSessionTypeAsync(requestModel.SessionCategory);
+
+        var existing = BookingOptions.FirstOrDefault(o => o.Type == BookingType.SingleSession && o.RequiresPurchase);
+        
+        var newOption = new BookingOption
+        {
+            Id = existing?.Id ?? Guid.NewGuid().ToString(),
+            Title = $"Single Session ({requestModel.SessionCategory.GetDisplayName()})",
+            Description = "Book a one-time session without a subscription or pack.",
+            PriceEUR = sessionPrice?.PriceEUR,
+            Type = BookingType.SingleSession,
+            IsAvailable = sessionPrice != null,
+            RequiresPurchase = true
+        };
+
+        if (existing != null)
+        {
+            var index = BookingOptions.IndexOf(existing);
+            BookingOptions[index] = newOption;
+        }
+        else
+        {
+            BookingOptions.Insert(0, newOption);
+        }
+
+        if (SelectedOption?.Type == BookingType.SingleSession)
+        {
+            SelectedOption = newOption;
+            selectedBookingOption = newOption.Type;
+        }
+
         StateHasChanged();
     }
 
@@ -439,11 +590,13 @@
         allSessions = await VideoCallService.GetSessionsForUserAsync(userId);
         upcomingSessions = allSessions
             .Where(s => s.ScheduledAt >= DateTime.UtcNow)
-            .OrderBy(s => s.ScheduledAt).ToList();
+            .OrderBy(s => s.ScheduledAt)
+            .ToList();
 
         pastSessions = allSessions
             .Where(s => s.ScheduledAt < DateTime.UtcNow)
-            .OrderByDescending(s => s.ScheduledAt).ToList();
+            .OrderByDescending(s => s.ScheduledAt)
+            .ToList();
 
         calendarItems = upcomingSessions.Select(session => new CalendarItem
         {
@@ -460,7 +613,7 @@
             showSlotCalendar = !showSlotCalendar;
 
             var startDate = DateTime.UtcNow.Date.AddDays(2);
-            var sessions = await SessionService.GetAllSessions() ?? new List<Session>();
+            var sessions = await SessionService.GetAllSessionsAsync() ?? new List<Session>();
             BusyTimes = sessions
                 .Where(c => c.PreferredDateTime != default && c.PreferredDateTime > DateTime.UtcNow.AddDays(2))
                 .Select(c => (
@@ -475,8 +628,8 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error in ToggleCalendar: {ex.Message}");
-            await LogService.LogError("Error in ToggleCalendar: ", ex.Message);
+            await LogService.LogError("ToggleCalendar Error: ", ex.Message);
+            Snackbar.Add("Failed to load calendar. Please try again.", Severity.Error);
         }
         finally
         {
@@ -529,14 +682,31 @@
         selectedSlotString = date.ToString("yyyy-MM-ddTHH:mm");
         requestModel.PreferredDateTimeString = selectedSlotString;
 
+        var sessionPrice = await SessionPriceService.GetPriceForSessionTypeAsync(requestModel.SessionCategory);
+        await LogService.LogInfo($"HandleSlotSelected: SessionType={requestModel.SessionCategory}, Price={(sessionPrice != null ? sessionPrice.PriceEUR : "null")}");
+        var singleSessionOption = BookingOptions.FirstOrDefault(o => o.Type == BookingType.SingleSession);
+        if (singleSessionOption != null)
+        {
+            BookingOptions.Remove(singleSessionOption);
+            BookingOptions.Add(new BookingOption
+            {
+                Id = Guid.NewGuid().ToString(),
+                Title = $"Single Session ({requestModel.SessionCategory.GetDisplayName()})",
+                Description = "Book a one-time session without a subscription or pack.",
+                PriceEUR = sessionPrice?.PriceEUR,
+                Type = BookingType.SingleSession,
+                IsAvailable = sessionPrice != null,
+                RequiresPurchase = true
+            });
+        }
+
         showSlotCalendar = false;
         StateHasChanged();
     }
 
     private async Task SubmitSessionRequest()
     {
-        await requestForm.Validate();
-        if (!requestForm.IsValid || string.IsNullOrWhiteSpace(selectedSlotString))
+        if (requestForm == null || !requestForm.IsValid || string.IsNullOrWhiteSpace(selectedSlotString))
         {
             Snackbar.Add("Please fill out all required fields and select a date/time.", Severity.Error);
             return;
@@ -556,12 +726,12 @@
             PreferredDateTime = scheduledAtUtc,
             SessionCategory = requestModel.SessionCategory,
             Message = requestModel.Message ?? string.Empty,
-            CreatedAt = DateTime.UtcNow,
-            IsSessionBooking = true,
-            DiscoveryCall = false,
             Email = userId,
-            FullName = ""
+            FirstName = requestModel.FirstName,
+            LastName = requestModel.LastName,
+            DiscoveryCall = false
         };
+        session.UpdateFullName();
 
         try
         {
@@ -569,26 +739,33 @@
             {
                 if (remainingPackSessions <= 0)
                 {
-                    Snackbar.Add("You have no remaining sessions in your pack. Please purchase a new pack.", Severity.Error);
+                    Snackbar.Add("No remaining sessions in your pack. Please purchase a new pack or select another option.", Severity.Error);
                     return;
                 }
 
-                var success = await SessionPackService.ConsumeSession(userId);
+                var success = await SessionPackService.ConsumeSession(userId, SelectedOption.PackId);
                 if (!success)
                 {
                     Snackbar.Add("Failed to consume a session from your pack.", Severity.Error);
                     return;
                 }
 
-                await SessionService.CreateSessionAsync(session);
+                var created = await SessionService.CreateSessionAsync(session);
+                if (!created)
+                {
+                    Snackbar.Add("Failed to schedule session. Please try again.", Severity.Error);
+                    return;
+                }
+
                 remainingPackSessions = await SessionPackService.GetRemainingSessions(userId);
+                hasValidPack = remainingPackSessions > 0;
                 Snackbar.Add($"Session scheduled! You have {remainingPackSessions} session(s) left in your pack.", Severity.Success);
             }
             else if (SelectedOption.Type == BookingType.Subscription)
             {
                 if (remainingSubscriptionSessions <= 0)
                 {
-                    Snackbar.Add("You have reached your monthly session limit. Please upgrade your plan or wait until next month.", Severity.Error);
+                    Snackbar.Add("Monthly session limit reached. Please select another option or wait until next month.", Severity.Error);
                     return;
                 }
 
@@ -599,14 +776,27 @@
                     return;
                 }
 
-                await SessionService.CreateSessionAsync(session);
+                var created = await SessionService.CreateSessionAsync(session);
+                if (!created)
+                {
+                    Snackbar.Add("Failed to schedule session. Please try again.", Severity.Error);
+                    return;
+                }
+
                 var status = await UserSubscriptionService.GetStatusAsync(userId);
                 remainingSubscriptionSessions = status.Remaining;
                 sessionsUsed = status.SessionsUsed;
+                hasActiveSubscription = status.HasActiveSubscription;
                 Snackbar.Add($"Session scheduled! You have {remainingSubscriptionSessions} session(s) left this month.", Severity.Success);
             }
-            else
+            else if (SelectedOption.Type == BookingType.SingleSession)
             {
+                if (!SelectedOption.IsAvailable)
+                {
+                    Snackbar.Add("Single session not available for this session type.", Severity.Error);
+                    return;
+                }
+
                 var response = await HttpClient.PostAsJsonAsync("/api/payments/create-checkout-session", session);
                 if (response.IsSuccessStatusCode)
                 {
@@ -615,8 +805,13 @@
                 }
                 else
                 {
-                    Snackbar.Add("Failed to initiate payment. Please try again.", Severity.Error);
+                    Snackbar.Add("Failed to initiate payment for single session. Please try again.", Severity.Error);
                 }
+                return;
+            }
+            else
+            {
+                Snackbar.Add("Invalid booking option selected.", Severity.Error);
                 return;
             }
 
@@ -625,11 +820,13 @@
             requestModel.SessionCategory = SessionType.lifeCoaching;
             showSlotCalendar = false;
             await LoadSessions();
+
+            await LoadBookingOptions();
             StateHasChanged();
         }
         catch (Exception ex)
         {
-            await LogService.LogError("Error in SubmitSessionRequest: ", ex.Message);
+            await LogService.LogError("SubmitSessionRequest Error: ", ex.Message);
             Snackbar.Add("An error occurred while scheduling the session. Please try again.", Severity.Error);
         }
     }
@@ -650,7 +847,7 @@
 
         if (now < joinWindowStart)
         {
-            Snackbar.Add($"The session hasn’t started yet. Please try again after {joinWindowStart.ToString("HH:mm")}.", Severity.Warning);
+            Snackbar.Add($"The session hasn’t started yet. Please try again after {joinWindowStart:HH:mm}.", Severity.Warning);
             return;
         }
 
@@ -718,7 +915,7 @@
         {
             var userMessage = newMessage;
             chatMessages.Add(new ChatMessage { IsUser = true, Text = userMessage, Timestamp = DateTime.Now });
-            newMessage = "";
+            newMessage = string.Empty;
 
             var botMessage = await ChatService.SendMessageAsync(chatMessages, userMessage);
             botMessage.Timestamp = DateTime.Now;
@@ -728,8 +925,7 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error in SendMessage: {ex.Message}");
-            await LogService.LogError("Error in SendMessage: ", ex.Message);
+            await LogService.LogError("SendMessage Error: ", ex.Message);
             chatMessages.Add(new ChatMessage { IsUser = false, Text = "Sorry, something went wrong.", Resources = new List<ChatResource>(), Timestamp = DateTime.Now });
         }
         finally
@@ -738,14 +934,13 @@
             StateHasChanged();
 
             await Task.Delay(50);
-
             try
             {
                 await JSRuntime.InvokeVoidAsync("focusElement", chatInputRef);
             }
             catch (JSException jsEx)
             {
-                await LogService.LogError("Erro ao focar input: ", jsEx.Message);
+                await LogService.LogError("Focus Input Error: ", jsEx.Message);
             }
         }
     }

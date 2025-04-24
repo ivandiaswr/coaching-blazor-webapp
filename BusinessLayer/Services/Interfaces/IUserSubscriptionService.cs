@@ -1,3 +1,4 @@
+using ModelLayer.Models;
 using ModelLayer.Models.DTOs;
 
 namespace BusinessLayer.Services.Interfaces
@@ -9,5 +10,6 @@ namespace BusinessLayer.Services.Interfaces
         Task<int> GetRemainingSessionsThisMonth(string userId);
         Task<SubscriptionStatusDto> GetStatusAsync(string userId);
         Task RollbackMonthlyUsage(string userId);
+        Task<UserSubscription?> GetActiveSubscriptionAsync(string userId);
     }
 }

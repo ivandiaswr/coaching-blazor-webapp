@@ -8,10 +8,8 @@ public class Session
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
-    [NotMapped]
     [Required(ErrorMessage = "Please provide your first name.")]
     public string FirstName { get; set; } = string.Empty;
-    [NotMapped]
     [Required(ErrorMessage = "Please provide your last name.")]
     public string LastName { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
@@ -28,7 +26,6 @@ public class Session
     public string Message { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } 
     public bool IsSessionBooking { get; set; }
-    public bool IsLive { get; set; } = false;
     public bool DiscoveryCall { get; set; }
 
     // Stripe

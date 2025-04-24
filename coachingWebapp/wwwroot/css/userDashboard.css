@@ -53,18 +53,64 @@
   box-shadow: 0 0 12px rgba(0, 0, 0, 0.03);
 }
 
-.booking-option-card.selected {
-  border: 2px solid var(--mud-palette-primary);
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+.booking-options-grid,
+.user-dashboard-request {
+  background-color: var(--primary-white);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.06);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.booking-options-grid {
+  max-width: 100%;
+  margin: 0;
+}
+
+.single-session {
+  border-left: 5px solid #9e9e9e;
+}
+
+.session-pack {
+  border-left: 5px solid #2196f3;
+}
+
+.subscription {
+  border-left: 5px solid #4caf50;
+}
+
+.option-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.option-card:hover {
+  transform: scale(1.02);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.option-card.selected.single-session {
+  border: 2px solid #9e9e9e;
+}
+
+.option-card.selected.session-pack {
+  border: 2px solid #1976d2;
+}
+
+.option-card.selected.subscription {
+  border: 2px solid #388e3c;
 }
 
 .user-dashboard-request {
-  max-width: 650px;
-  margin: 2rem auto;
-  padding: 2rem;
-  background-color: var(--primary-white);
-  border-radius: 16px;
-  box-shadow: 0 0 12px rgba(0, 0, 0, 0.06);
+  max-width: 100%;
+  margin: 0;
 }
   
 .user-dashboard-request h3 {

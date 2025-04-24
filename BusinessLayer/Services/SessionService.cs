@@ -27,21 +27,14 @@ public class SessionService : ISessionService
 
     public async Task<bool> CreateSessionAsync(Session session)
     {
-        if(session is null)
+        if (session == null)
             return false;
 
         try
         {
             session.CreatedAt = DateTime.UtcNow;
-            session.IsSessionBooking = true; // add Outro option?
-            session.DiscoveryCall = true;
+            session.IsSessionBooking = true;
             session.UpdateFullName();
-
-            _context.Sessions.Add(session);
-
-            //await SendEmailAsync(contact); // send email to the admin
-
-            await _context.SaveChangesAsync();
 
             var videoSession = new VideoSession
             {
@@ -49,18 +42,19 @@ public class SessionService : ISessionService
                 ScheduledAt = session.PreferredDateTime,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow,
-                SessionRefId = session.Id,
+                Session = session 
             };
 
+            _context.Sessions.Add(session);
             _context.VideoSessions.Add(videoSession);
+
             await _context.SaveChangesAsync();
 
             await SendSessionConfirmationEmailAsync(session, videoSession);
-
         }
         catch (Exception ex)
         {
-            await _logService.LogError("Error during ContactSubmitAsync", ex.Message);
+            await _logService.LogError("Error during CreateSessionAsync", ex.Message);
 
             await _emailSubscriptionService.SendCustomEmailAsync(
                 new List<string>
@@ -69,11 +63,11 @@ public class SessionService : ISessionService
                     _helperService.GetConfigValue("AdminEmail:Secondary")
                 },
                 "Schedule Error",
-                @$"Exception: {ex}<br>Message: {ex.Message}"
+                $"Exception: {ex}<br>Message: {ex.Message}"
             );
 
             return false;
-        }  
+        }
 
         return true;
     }
@@ -148,7 +142,7 @@ public class SessionService : ISessionService
         }
     }
 
-    public async Task<List<Session>> GetAllSessions()
+    public async Task<List<Session>> GetAllSessionsAsync()
     {
         try
         {
@@ -160,7 +154,7 @@ public class SessionService : ISessionService
         } 
         catch(Exception ex)
         {
-            await _logService.LogError("GetAllSessions", ex.Message);
+            await _logService.LogError("GetAllSessionsAsync", ex.Message);
             throw;
         }
     }

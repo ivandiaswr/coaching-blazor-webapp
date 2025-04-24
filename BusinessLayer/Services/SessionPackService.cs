@@ -2,6 +2,7 @@ using BusinessLayer.Services.Interfaces;
 using DataAccessLayer;
 using Microsoft.EntityFrameworkCore;
 using ModelLayer;
+using ModelLayer.Models;
 
 namespace BusinessLayer.Services
 {
@@ -40,13 +41,24 @@ namespace BusinessLayer.Services
             }
         }
 
-        public async Task<bool> ConsumeSession(string userId)
+        public async Task<bool> ConsumeSession(string userId, int? packId)
         {
-            var pack = await _context.SessionPacks
-                .Where(p => p.UserId == userId && p.SessionsRemaining > 0 && 
-                            (p.ExpiresAt == null || p.ExpiresAt > DateTime.UtcNow))
-                .OrderBy(p => p.PurchasedAt)
-                .FirstOrDefaultAsync();
+            SessionPack? pack;
+            if (packId.HasValue)
+            {
+                pack = await _context.SessionPacks
+                    .Where(p => p.Id == packId && p.UserId == userId && p.SessionsRemaining > 0 &&
+                                (p.ExpiresAt == null || p.ExpiresAt > DateTime.UtcNow))
+                    .FirstOrDefaultAsync();
+            }
+            else
+            {
+                pack = await _context.SessionPacks
+                    .Where(p => p.UserId == userId && p.SessionsRemaining > 0 &&
+                                (p.ExpiresAt == null || p.ExpiresAt > DateTime.UtcNow))
+                    .OrderBy(p => p.PurchasedAt)
+                    .FirstOrDefaultAsync();
+            }
 
             if (pack == null)
                 return false;

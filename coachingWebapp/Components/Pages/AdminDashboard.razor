@@ -367,7 +367,7 @@
             adminName = identityUser?.UserName ?? "Admin";
         }
 
-        sessions = await SessionService.GetAllSessions() ?? new List<Session>();
+        sessions = await SessionService.GetAllSessionsAsync() ?? new List<Session>();
         emailSubscriptions = EmailSubscriptionService.GetAllEmailSubscriptions() ?? new List<EmailSubscription>();
         calendarItems = sessions.Select(c => new CalendarItem
         {

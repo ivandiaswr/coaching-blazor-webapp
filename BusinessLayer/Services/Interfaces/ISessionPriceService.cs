@@ -8,5 +8,6 @@ namespace BusinessLayer.Services.Interfaces
         Task<SessionPrice?> GetBySessionTypeAsync(SessionType type);
         Task AddOrUpdateAsync(SessionPrice price);
         Task DeleteAsync(int id);
+        Task<SessionPrice?> GetPriceForSessionTypeAsync(SessionType sessionType);
     }
 }

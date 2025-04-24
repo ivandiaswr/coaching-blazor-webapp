@@ -45,5 +45,13 @@ namespace BusinessLayer.Services
                 await _context.SaveChangesAsync();
             }
         }
+
+        public async Task<SessionPrice?> GetPriceForSessionTypeAsync(SessionType sessionType)
+        {
+            return await _context.SessionPrices
+                .Where(sp => sp.SessionType == sessionType)
+                .OrderByDescending(sp => sp.LastUpdated)
+                .FirstOrDefaultAsync();
+        }
     }
 }
