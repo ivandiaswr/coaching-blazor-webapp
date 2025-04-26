@@ -24,7 +24,7 @@
         <MudText Typo="Typo.subtitle1">
             You don’t have any sessions scheduled yet. It’s time to book a moment just for you.
         </MudText>
-        <MudButton Variant="Variant.Filled" Color="Color.Secondary" OnClick="@(() => selectedTab = 1)">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => selectedTab = 0)">
             Book a Session
         </MudButton>
     }
@@ -43,181 +43,210 @@
     }
 </MudPaper>
 
-<MudTabs @bind-ActivePanelIndex="selectedTab" Class="tabs">
-    <MudTabPanel Text="Calendar" Icon="@Icons.Material.Filled.Event">
-        <MudPaper Class="upcoming-calendar-wrapper" Elevation="0">
-            <MudCalendar T="CalendarItem"
-                Items="@calendarItems"
-                Date="@DateTime.Today"
-                View="CalendarView.Week"
-                FirstDayOfWeek="DayOfWeek.Monday"
-                StartHour="10"
-                EndHour="21"
-                SlotDuration="00:45:00"
-                ShowTodayButton="true"
-                ItemClicked="HandleCalendarClick"
-                CssClassFunc="GetCalendarClass"
-                Class="mud-calendar-event" /> 
+<MudTabs @bind-ActivePanelIndex="selectedTab" Class="tabs" Elevation="2">
+    <MudTabPanel Text="Book Session" Icon="@Icons.Material.Filled.CalendarToday">
+        <MudPaper Class="booking-tab-wrapper p-4">
+            <MudGrid GutterSize="32px">
+                <MudItem xs="12" md="6">
+                    <div class="booking-options-grid">
+                        <MudGrid Class="mt-4" GutterSize="16px">
+                            <MudItem xs="12" md="4">
+                                <MudStack Spacing="2">
+                                    <MudText Typo="Typo.h6">Single Session</MudText>
+                                    @foreach (var option in BookingOptions.Where(o => o.Type == BookingType.SingleSession))
+                                    {
+                                        var cardStyle = $"cursor:{(option.IsAvailable ? "pointer" : "not-allowed")};opacity:{(option.IsAvailable ? "1" : "0.6")}";
+                                        <MudCard 
+                                            Class="@($"option-card single-session {(SelectedOption?.Id == option.Id ? "selected" : "")}")"
+                                            Style="@cardStyle"
+                                            @onclick="() => SelectBookingOption(option)">
+                                            <MudCardContent>
+                                                <MudText Typo="Typo.h6">@option.Title</MudText>
+                                                <MudText Typo="Typo.body2">@option.Description</MudText>
+                                                <MudText Typo="Typo.subtitle2" Color="Color.Primary">@option.PriceEUR€</MudText>
+                                                @if (!option.IsAvailable && option.RequiresPurchase)
+                                                {
+                                                    <MudText Typo="Typo.caption" Color="Color.Error">Unavailable</MudText>
+                                                }
+                                            </MudCardContent>
+                                        </MudCard>
+                                    }
+                                </MudStack>
+                            </MudItem>
+
+                            <MudItem xs="12" md="4">
+                                <MudStack Spacing="2">
+                                    <MudText Typo="Typo.h6">Session Packs</MudText>
+                                    @foreach (var option in BookingOptions.Where(o => o.Type == BookingType.SessionPack))
+                                    {
+                                        var cardStyle = $"cursor:{(option.IsAvailable ? "pointer" : "not-allowed")};opacity:{(option.IsAvailable ? "1" : "0.6")}";
+                                        <MudCard 
+                                            Class="@($"option-card session-pack {(SelectedOption?.Id == option.Id ? "selected" : "")}")"
+                                            Style="@cardStyle"
+                                            @onclick="() => SelectBookingOption(option)">
+                                            <MudCardContent>
+                                                <MudText Typo="Typo.h6">@option.Title</MudText>
+                                                <MudText Typo="Typo.body2">@option.Description</MudText>
+                                                <MudText Typo="Typo.subtitle2" Color="Color.Primary">@option.PriceEUR€</MudText>
+                                                @if (!option.RequiresPurchase)
+                                                {
+                                                    <MudChip T="string" Color="Color.Info" Size="Size.Small">You have sessions left</MudChip>
+                                                }
+                                            </MudCardContent>
+                                        </MudCard>
+                                    }
+                                </MudStack>
+                            </MudItem>
+
+                            <MudItem xs="12" md="4">
+                                <MudStack Spacing="2">
+                                    <MudText Typo="Typo.h6">Subscriptions</MudText>
+
+                                    @{
+                                        var highestSubPrice = BookingOptions
+                                            .Where(o => o.Type == BookingType.Subscription && o.RequiresPurchase && o.PriceEUR.HasValue)
+                                            .Max(o => o.PriceEUR ?? 0);
+                                    }
+
+                                    @foreach (var option in BookingOptions.Where(o => o.Type == BookingType.Subscription))
+                                    {
+                                        var isRecommended = option.RequiresPurchase && (option.PriceEUR ?? 0) == highestSubPrice;
+                                        var cardStyle = $"cursor:{(option.IsAvailable ? "pointer" : "not-allowed")};opacity:{(option.IsAvailable ? "1" : "0.6")}";
+                                        
+                                        <MudCard 
+                                            Class="@($"option-card subscription {(SelectedOption?.Id == option.Id ? "selected" : "")}")"
+                                            Style="@cardStyle"
+                                            @onclick="() => SelectBookingOption(option)">
+                                            <MudCardContent>
+                                                @if (isRecommended)
+                                                {
+                                                    <MudChip T="string" Color="Color.Warning" Variant="Variant.Filled" Size="Size.Small" Class="mb-3">
+                                                        Recommended
+                                                    </MudChip>
+                                                }
+
+                                                <MudText Typo="Typo.h6">@option.Title</MudText>
+                                                <MudText Typo="Typo.body2">@option.Description</MudText>
+                                                <MudText Typo="Typo.subtitle2" Color="Color.Primary">@option.PriceEUR€</MudText>
+
+                                                @if (!option.RequiresPurchase)
+                                                {
+                                                    <MudChip T="string" Color="Color.Success" Size="Size.Small">Included in your plan</MudChip>
+                                                }
+                                            </MudCardContent>
+                                        </MudCard>
+                                    }
+                                </MudStack>
+                            </MudItem>
+                        </MudGrid>
+                    </div>
+                </MudItem>
+
+               
+                <MudItem xs="12" md="6">
+                    <div class="user-dashboard-request">
+                        <MudForm @ref="requestForm" Model="@requestModel">
+                            @if (SelectedOption != null)
+                            {
+                                var typeClass = SelectedOption.Type switch
+                                {
+                                    BookingType.SingleSession => "single-session",
+                                    BookingType.SessionPack => "session-pack",
+                                    BookingType.Subscription => "subscription",
+                                    _ => ""
+                                };
+                                <MudText Typo="Typo.subtitle1" Class="mb-2">Selected booking option*</MudText>
+                                <MudCard Class="@($"option-card selected {typeClass} mb-4")">
+                                    <MudCardContent>
+                                        <MudText Typo="Typo.h6">@SelectedOption.Title</MudText>
+                                        <MudText Typo="Typo.body2">@SelectedOption.Description</MudText>
+                                        @if (SelectedOption.PriceEUR.HasValue)
+                                        {
+                                            <MudText Typo="Typo.subtitle2" Color="Color.Primary">@SelectedOption.PriceEUR€</MudText>
+                                        }
+                                        <MudText Typo="Typo.caption" Color="Color.Info">Booking Option: @SelectedOption.Type.GetDisplayName()</MudText>
+                                    </MudCardContent>
+                                </MudCard>
+                            }
+                            else
+                            {
+                                <MudAlert Severity="Severity.Warning" Variant="Variant.Text" Class="mb-4">
+                                    Please select a booking option
+                                </MudAlert>
+                            }
+
+                            <MudSelect Label="Session Type" 
+                                       T="SessionType"
+                                       @bind-Value="requestModel.SessionCategory"
+                                       For="@(() => requestModel.SessionCategory)"
+                                       @onchange="HandleSessionTypeChange"
+                                       Required="true"
+                                       RequiredError="Session type is required">
+                                @foreach (var type in Enum.GetValues(typeof(SessionType)).Cast<SessionType>())
+                                {
+                                    <MudSelectItem Value="@type">
+                                        @((type.GetType().GetField(type.ToString())?.GetCustomAttributes(typeof(DisplayAttribute), false).FirstOrDefault() as DisplayAttribute)?.Name ?? type.ToString())
+                                    </MudSelectItem>
+                                }
+                            </MudSelect>
+
+                            <MudTextField Label="Message" 
+                                          T="string" 
+                                          Lines="3" 
+                                          @bind-Value="requestModel.Message"
+                                          For="@(() => requestModel.Message)"
+                                          Required="true"
+                                          RequiredError="Message is required" />
+
+                            <MudPaper Class="hoverable-input" @onclick="ToggleCalendar" Style="cursor: pointer;">
+                                <MudTextField Label="Preferred Date & Time"
+                                              Value="@selectedSlotString"
+                                              For="@(() => requestModel.PreferredDateTimeString)"
+                                              ReadOnly="true"
+                                              Adornment="Adornment.End"
+                                              AdornmentIcon="@Icons.Material.Filled.CalendarMonth"
+                                              Required="true"
+                                              RequiredError="Preferred date and time are required" />
+                            </MudPaper>
+
+                            <Calendar @bind-IsVisible="showSlotCalendar"
+                                      OnSlotSelected="HandleSlotSelected"
+                                      CurrentTimeZoneDisplay="@userTimeZone"
+                                      Slots="@AvailableSlots"
+                                      BusyTimes="@BusyTimes"
+                                      AdminUnavailabilities="@Unavailabilities"
+                                      FirstAvailableDate="@firstAvailableDate" />
+
+                            <MudButton OnClick="SubmitSessionRequest" 
+                                       Variant="Variant.Filled" 
+                                       Color="Color.Primary"
+                                       Disabled="false"
+                                       Class="pt-4 pb-4 mt-5">
+                                Request Session
+                            </MudButton>
+                        </MudForm>
+                    </div>
+                </MudItem>
+            </MudGrid>
         </MudPaper>
     </MudTabPanel>
 
-<MudTabPanel Text="Book Session" Icon="@Icons.Material.Filled.CalendarToday">
-    <MudPaper Class="booking-tab-wrapper p-4">
-        <MudGrid GutterSize="32px">
-            <MudItem xs="12" md="6">
-                <div class="booking-options-grid">
-                    <MudGrid Class="mt-4" GutterSize="16px">
-                        <MudItem xs="12" md="4">
-                            <MudStack Spacing="2">
-                                <MudText Typo="Typo.h6">Single Session</MudText>
-                                @foreach (var option in BookingOptions.Where(o => o.Type == BookingType.SingleSession))
-                                {
-                                    var cardStyle = $"cursor:{(option.IsAvailable ? "pointer" : "not-allowed")};opacity:{(option.IsAvailable ? "1" : "0.6")}";
-                                    <MudCard 
-                                        Class="@($"option-card single-session {(SelectedOption?.Id == option.Id ? "selected" : "")}")"
-                                        Style="@cardStyle"
-                                        @onclick="() => SelectBookingOption(option)">
-                                        <MudCardContent>
-                                            <MudText Typo="Typo.h6">@option.Title</MudText>
-                                            <MudText Typo="Typo.body2">@option.Description</MudText>
-                                            <MudText Typo="Typo.subtitle2" Color="Color.Primary">@option.PriceEUR€</MudText>
-                                            @if (!option.IsAvailable && option.RequiresPurchase)
-                                            {
-                                                <MudText Typo="Typo.caption" Color="Color.Error">Unavailable</MudText>
-                                            }
-                                        </MudCardContent>
-                                    </MudCard>
-                                }
-                            </MudStack>
-                        </MudItem>
-
-                        <MudItem xs="12" md="4">
-                            <MudStack Spacing="2">
-                                <MudText Typo="Typo.h6">Session Packs</MudText>
-                                @foreach (var option in BookingOptions.Where(o => o.Type == BookingType.SessionPack))
-                                {
-                                    var cardStyle = $"cursor:{(option.IsAvailable ? "pointer" : "not-allowed")};opacity:{(option.IsAvailable ? "1" : "0.6")}";
-                                    <MudCard 
-                                        Class="@($"option-card session-pack {(SelectedOption?.Id == option.Id ? "selected" : "")}")"
-                                        Style="@cardStyle"
-                                        @onclick="() => SelectBookingOption(option)">
-                                        <MudCardContent>
-                                            <MudText Typo="Typo.h6">@option.Title</MudText>
-                                            <MudText Typo="Typo.body2">@option.Description</MudText>
-                                            <MudText Typo="Typo.subtitle2" Color="Color.Primary">@option.PriceEUR€</MudText>
-                                            @if (!option.RequiresPurchase)
-                                            {
-                                                <MudChip T="string" Color="Color.Info" Size="Size.Small">You have sessions left</MudChip>
-                                            }
-                                        </MudCardContent>
-                                    </MudCard>
-                                }
-                            </MudStack>
-                        </MudItem>
-
-                        <MudItem xs="12" md="4">
-                            <MudStack Spacing="2">
-                                <MudText Typo="Typo.h6">Subscriptions</MudText>
-
-                                @{
-                                    var highestSubPrice = BookingOptions
-                                        .Where(o => o.Type == BookingType.Subscription && o.RequiresPurchase && o.PriceEUR.HasValue)
-                                        .Max(o => o.PriceEUR ?? 0);
-                                }
-
-                                @foreach (var option in BookingOptions.Where(o => o.Type == BookingType.Subscription))
-                                {
-                                    var isRecommended = option.RequiresPurchase && (option.PriceEUR ?? 0) == highestSubPrice;
-                                    var cardStyle = $"cursor:{(option.IsAvailable ? "pointer" : "not-allowed")};opacity:{(option.IsAvailable ? "1" : "0.6")}";
-                                    
-                                    <MudCard 
-                                        Class="@($"option-card subscription {(SelectedOption?.Id == option.Id ? "selected" : "")}")"
-                                        Style="@cardStyle"
-                                        @onclick="() => SelectBookingOption(option)">
-                                        <MudCardContent>
-                                            @if (isRecommended)
-                                            {
-                                                <MudChip T="string" Color="Color.Warning" Variant="Variant.Filled" Size="Size.Small" Class="mb-1">
-                                                    Recommended
-                                                </MudChip>
-                                            }
-
-                                            <MudText Typo="Typo.h6">@option.Title</MudText>
-                                            <MudText Typo="Typo.body2">@option.Description</MudText>
-                                            <MudText Typo="Typo.subtitle2" Color="Color.Primary">@option.PriceEUR€</MudText>
-
-                                            @if (!option.RequiresPurchase)
-                                            {
-                                                <MudChip T="string" Color="Color.Success" Size="Size.Small">Included in your plan</MudChip>
-                                            }
-                                        </MudCardContent>
-                                    </MudCard>
-                                }
-                            </MudStack>
-                        </MudItem>
-                    </MudGrid>
-                </div>
-            </MudItem>
-
-            <MudItem xs="12" md="6">
-                <div class="user-dashboard-request">
-                    <MudForm @ref="requestForm" Model="@requestModel">
-                        <MudSelect Label="Session" 
-                                   T="SessionType"
-                                   @bind-Value="requestModel.SessionCategory"
-                                   For="@(() => requestModel.SessionCategory)"
-                                   @onchange="HandleSessionTypeChange">
-                            @foreach (var type in Enum.GetValues(typeof(SessionType)).Cast<SessionType>())
-                            {
-                                <MudSelectItem Value="@type">
-                                    @((type.GetType().GetField(type.ToString())?.GetCustomAttributes(typeof(DisplayAttribute), false).FirstOrDefault() as DisplayAttribute)?.Name ?? type.ToString())
-                                </MudSelectItem>
-                            }
-                        </MudSelect>
-
-                        <MudTextField Label="Message" 
-                                      T="string" 
-                                      Lines="3" 
-                                      @bind-Value="requestModel.Message"
-                                      For="@(() => requestModel.Message)" />
-
-                        <MudPaper Class="hoverable-input" @onclick="ToggleCalendar" Style="cursor: pointer;">
-                            <MudTextField Label="Preferred Date & Time"
-                                          Value="@selectedSlotString"
-                                          For="@(() => requestModel.PreferredDateTimeString)"
-                                          ReadOnly="true"
-                                          Adornment="Adornment.End"
-                                          AdornmentIcon="@Icons.Material.Filled.CalendarMonth" />
-                        </MudPaper>
-
-                        <Calendar @bind-IsVisible="showSlotCalendar"
-                                  OnSlotSelected="HandleSlotSelected"
-                                  CurrentTimeZoneDisplay="@userTimeZone"
-                                  Slots="@AvailableSlots"
-                                  BusyTimes="@BusyTimes"
-                                  AdminUnavailabilities="@Unavailabilities"
-                                  FirstAvailableDate="@firstAvailableDate" />
-                        
-                        @if (SelectedOption == null)
-                        {
-                            <MudAlert Severity="Severity.Warning" Class="mt-2">
-                                Please select a booking option to proceed.
-                            </MudAlert>
-                        }
-
-                        <MudButton OnClick="SubmitSessionRequest" 
-                                   Variant="Variant.Filled" 
-                                   Color="Color.Primary"
-                                   Disabled="@(SelectedOption == null || !requestForm?.IsValid == true || string.IsNullOrWhiteSpace(selectedSlotString))">
-                            Request Session
-                        </MudButton>
-                    </MudForm>
-                </div>
-            </MudItem>
-        </MudGrid>
-    </MudPaper>
-</MudTabPanel>
-
+    <MudTabPanel Text="Calendar" Icon="@Icons.Material.Filled.Event">
+        <MudPaper Class="upcoming-calendar-wrapper" Elevation="0">
+            <MudCalendar T="CalendarItem"
+                         Items="@calendarItems"
+                         Date="@DateTime.Today"
+                         View="CalendarView.Week"
+                         FirstDayOfWeek="DayOfWeek.Monday"
+                         StartHour="10"
+                         EndHour="21"
+                         SlotDuration="00:45:00"
+                         ShowTodayButton="true"
+                         ItemClicked="HandleCalendarClick"
+                         CssClassFunc="GetCalendarClass"
+                         Class="mud-calendar-event" /> 
+        </MudPaper>
+    </MudTabPanel>
 
     <MudTabPanel Text="Sessions" Icon="@Icons.Material.Filled.ListAlt">
         <MudPaper class="sessions-wrapper" Elevation="0">
@@ -444,7 +473,7 @@
         BookingOptions.Add(new BookingOption
         {
             Id = Guid.NewGuid().ToString(),
-            Title = $"Single Session ({requestModel.SessionCategory.GetDisplayName()})",
+            Title = $"{requestModel.SessionCategory.GetDisplayName()}",
             Description = "Book a one-time session without a subscription or pack.",
             PriceEUR = sessionPrice?.PriceEUR,
             Type = BookingType.SingleSession,
@@ -590,16 +619,15 @@
     {
         allSessions = await VideoCallService.GetSessionsForUserAsync(userId);
 
-        var rangeStart = DateTime.UtcNow.AddDays(-30);
-        var rangeEnd = DateTime.UtcNow.AddDays(30);
+        var now = DateTime.UtcNow;
 
         upcomingSessions = allSessions
-            .Where(s => s.ScheduledAt >= rangeStart && s.ScheduledAt <= rangeEnd)
+            .Where(s => s.ScheduledAt >= now)
             .OrderBy(s => s.ScheduledAt)
             .ToList();
 
         pastSessions = allSessions
-            .Where(s => s.ScheduledAt < DateTime.UtcNow)
+            .Where(s => s.ScheduledAt < now)
             .OrderByDescending(s => s.ScheduledAt)
             .ToList();
 
@@ -711,15 +739,25 @@
 
     private async Task SubmitSessionRequest()
     {
-        if (requestForm == null || !requestForm.IsValid || string.IsNullOrWhiteSpace(selectedSlotString))
+        if (requestForm == null)
         {
-            Snackbar.Add("Please fill out all required fields and select a date/time.", Severity.Error);
             return;
         }
 
+        // Trigger form validation
+        await requestForm.Validate();
+
+        // Check for booking option
         if (SelectedOption == null)
         {
-            Snackbar.Add("Please select a booking option.", Severity.Error);
+            // Display error without Snackbar, rely on UI feedback
+            // Optionally, add a visual indicator in the booking options section
+            return;
+        }
+
+        // If form is invalid, let MudBlazor's validation UI show errors
+        if (!requestForm.IsValid)
+        {
             return;
         }
 
