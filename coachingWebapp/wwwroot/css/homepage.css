@@ -1545,3 +1545,11 @@ h1:focus {
     margin: 0 0 30px;
   }
 }
+
+/* MudBlazor */
+
+:not(.mud-calendar) > .mud-button-root.mud-button:hover,
+:not(.mud-calendar) .mud-button-root.mud-button:hover {
+    background-color: var(--accent-orange-hover);
+    color: #ffffff;
+}

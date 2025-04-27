@@ -164,7 +164,7 @@
                                         {
                                             <MudText Typo="Typo.subtitle2" Color="Color.Primary">@SelectedOption.PriceEUR€</MudText>
                                         }
-                                        <MudText Typo="Typo.caption" Color="Color.Info">Booking Option: @SelectedOption.Type.GetDisplayName()</MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Info">Booking Option: <b>@SelectedOption.Type.GetDisplayName()</b></MudText>
                                     </MudCardContent>
                                 </MudCard>
                             }
@@ -321,7 +321,7 @@
                         Clear Chat
                     </MudButton>
                 </div>
-                <div class="chat-messages" style="max-height: 400px; overflow-y: auto;" @ref="chatContainer">
+                <div class="ai-chat-messages" @ref="chatContainer">
                     @foreach (var message in chatMessages)
                     {
                         <MudCard Class="@(message.IsUser ? "user-message" : "bot-message")" AriaLabel="@(message.IsUser ? "User message" : "Bot message")">
@@ -744,18 +744,13 @@
             return;
         }
 
-        // Trigger form validation
         await requestForm.Validate();
 
-        // Check for booking option
         if (SelectedOption == null)
         {
-            // Display error without Snackbar, rely on UI feedback
-            // Optionally, add a visual indicator in the booking options section
             return;
         }
 
-        // If form is invalid, let MudBlazor's validation UI show errors
         if (!requestForm.IsValid)
         {
             return;

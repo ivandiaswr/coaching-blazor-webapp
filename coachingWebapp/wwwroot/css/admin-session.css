@@ -37,7 +37,7 @@
     background-color: var(--primary-white) !important;
     border-radius: 8px !important;
 }
-/
+
 :not(.mud-calendar) > .mud-button-root.mud-button,
 :not(.mud-calendar) .mud-button-root.mud-button {
     background-color: var(--accent-orange);

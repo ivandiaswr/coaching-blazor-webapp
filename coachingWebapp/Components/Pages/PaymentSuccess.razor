@@ -1,0 +1,119 @@
+@page "/payment-success"
+<MudSnackbarProvider />
+
+<MudPaper Class="pa-4" Elevation="1">
+    <MudText Typo="Typo.h5" Class="mb-4">Processing Payment</MudText>
+    @if (isLoading)
+    {
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+        <MudText>Verifying your payment...</MudText>
+    }
+    else if (isSuccess)
+    {
+        <MudAlert Severity="Severity.Success" Variant="Variant.Filled" Class="mb-4">
+            Payment successful! Your session is confirmed.
+        </MudAlert>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ReturnToDashboard">
+            Return to Dashboard
+        </MudButton>
+    }
+    else
+    {
+        <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mb-4">
+            @errorMessage
+        </MudAlert>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ReturnToDashboard">
+            Return to Dashboard
+        </MudButton>
+    }
+</MudPaper>
+
+@code {
+    [SupplyParameterFromQuery(Name = "sessionId")]
+    public string? StripeSessionId { get; set; }
+
+    private bool isLoading = true;
+    private bool isSuccess = false;
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (string.IsNullOrEmpty(StripeSessionId))
+        {
+            isLoading = false;
+            isSuccess = false;
+            errorMessage = "Invalid payment session. Please try again.";
+            Snackbar.Add(errorMessage, Severity.Error);
+            return;
+        }
+
+        try
+        {
+            var paymentConfirmed = await StripeService.ConfirmPaymentAsync(StripeSessionId);
+            if (!paymentConfirmed)
+            {
+                isLoading = false;
+                isSuccess = false;
+                errorMessage = "Payment verification failed. Please contact support.";
+                Snackbar.Add(errorMessage, Severity.Error);
+                return;
+            }
+
+            var dbSession = await SessionService.GetAllSessionsAsync();
+            var session = dbSession.FirstOrDefault(s => s.StripeSessionId == StripeSessionId);
+            if (session == null)
+            {
+                isLoading = false;
+                isSuccess = false;
+                errorMessage = "Session not found. Please contact support.";
+                Snackbar.Add(errorMessage, Severity.Error);
+                await LogService.LogError("PaymentSuccess: Session not found", $"StripeSessionId: {StripeSessionId}");
+                return;
+            }
+
+            if (!session.IsPaid)
+            {
+                session.IsPaid = true;
+                session.PaidAt = DateTime.UtcNow;
+                SessionService.UpdateSession(session);
+            }
+
+            var sessions = await SessionService.GetAllSessionsAsync();
+            var videoSession = sessions
+                .Select(s => s.VideoSession)
+                .FirstOrDefault(vs => vs?.SessionRefId == session.Id);
+
+            if (videoSession == null)
+            {
+                videoSession = new VideoSession
+                {
+                    UserId = session.Email,
+                    SessionId = Guid.NewGuid().ToString(),
+                    ScheduledAt = session.PreferredDateTime,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    Session = session,
+                    SessionRefId = session.Id
+                };
+                await SessionService.CreateSessionAsync(session);
+            }
+
+            isLoading = false;
+            isSuccess = true;
+            Snackbar.Add("Payment successful! Your session is confirmed.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            isLoading = false;
+            isSuccess = false;
+            errorMessage = "An error occurred while processing your payment. Please contact support.";
+            Snackbar.Add(errorMessage, Severity.Error);
+            await LogService.LogError("PaymentSuccess Error", ex.Message);
+        }
+    }
+
+    private void ReturnToDashboard()
+    {
+        NavigationManager.NavigateTo("/UserDashboard");
+    }
+}
