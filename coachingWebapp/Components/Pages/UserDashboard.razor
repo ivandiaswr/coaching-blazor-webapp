@@ -838,7 +838,7 @@
                 var response = await HttpClient.PostAsJsonAsync("/api/payments/create-checkout-session", session);
                 if (response.IsSuccessStatusCode)
                 {
-                    var data = await response.Content.ReadFromJsonAsync<StripeResponse>();
+                    var data = await response.Content.ReadFromJsonAsync<ModelLayer.Models.DTOs.StripeResponse>();
                     NavigationManager.NavigateTo(data!.Url, true);
                 }
                 else
