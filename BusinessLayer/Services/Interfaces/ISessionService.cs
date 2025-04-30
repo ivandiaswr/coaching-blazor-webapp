@@ -9,6 +9,7 @@ public interface ISessionService
     Task<bool> CreateSessionAsync(Session contact);
     void UpdateSession(Session session);
     void DeleteSession(int id);
+    Task<Session?> GetLatestSessionByEmailAsync(string email);
 
     // Email    
     Task SendEmailAsync(Session contact);

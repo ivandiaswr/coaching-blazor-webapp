@@ -6,7 +6,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="HuggingFace" Version="0.4.0" />
     <PackageReference Include="MailKit" Version="4.8.0" />
     <PackageReference Include="OpenTelemetry" Version="1.11.2" />
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.11.2" />
@@ -18,7 +17,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <UserSecretsId>b1fedadc-4e32-41a0-82b4-9947c59af1ee</UserSecretsId>
+    <UserSecretsId>cba3327a-85fb-442f-92e3-726659dcd3f5</UserSecretsId>
   </PropertyGroup>
 
 </Project>

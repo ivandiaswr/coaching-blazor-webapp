@@ -1,62 +1,74 @@
 @page "/login"
 @rendermode InteractiveServer
 
-@using Microsoft.AspNetCore.Identity
-@using Microsoft.EntityFrameworkCore
-
-@using System.Net.Http.Json
-
-@inject SignInManager<IdentityUser> SignInManager
-@inject UserManager<IdentityUser> UserManager
-
 <PageTitle>@pageTitle</PageTitle>
 
 <section id="login">
-    <EditForm Model="@loginModel" OnValidSubmit="LoginUser" FormName="loginForm">
+    <EditForm Model="@loginModel" OnValidSubmit="HandleLogin" FormName="loginForm" class="login-form">
         <DataAnnotationsValidator />
 
         <div class="form-group">
-            <label for="Email">Email</label>
-            <InputText @bind-Value="loginModel.Email" class="form-control" aria-placeholder="Your Email" />
-            <ValidationMessage For="@(() => loginModel.Email)" />
+            <label for="email">Email</label>
+            <InputText id="email" @bind-Value="loginModel.Email" class="form-control" placeholder="Your Email" autocomplete="email" required />
+            <ValidationMessage For="@(() => loginModel.Email)" class="text-danger" />
         </div>
+
         <div class="form-group">
-            <label for="Password">Password</label>
-            <InputText type="password" @bind-Value="loginModel.Password" class="form-control" />
-            <ValidationMessage For="@(() => loginModel.Password)" />
+            <label for="password">Password</label>
+            <InputText id="password" type="password" @bind-Value="loginModel.Password" class="form-control" placeholder="Your Password" autocomplete="current-password" required />
+            <ValidationMessage For="@(() => loginModel.Password)" class="text-danger" />
         </div>
-        <button type="submit" class="btn btn-primary">Login</button>
-        
+
+        <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
+            @if (isSubmitting)
+            {
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                <span> Logging in...</span>
+            }
+            else
+            {
+                <span>Login</span>
+            }
+        </button>
+
+        @if (!string.IsNullOrEmpty(loginError))
+        {
+            <div class="alert alert-danger mt-3" role="alert">@loginError</div>
+        }
     </EditForm>
-    
-    @if(!string.IsNullOrEmpty(loginError))
-    {
-        <div class="alert alert-message">@loginError</div>
-    }
-</section>   
+</section>
 
 @code {
     private string pageTitle = "Login | Ítala Veloso";
     private LoginModel loginModel = new();
     private string loginError = string.Empty;
-    
-    private async Task LoginUser()
+    private bool isSubmitting = false;
+
+    private async Task HandleLogin()
     {
+        if (isSubmitting) return;
+
+        isSubmitting = true;
+        loginError = string.Empty;
+
         try
         {
             var result = await JSRuntime.InvokeAsync<SessionResult>("login", loginModel);
 
             if (!result.Success)
             {
-                loginError = result.Error;
+                loginError = result.Error ?? "Invalid email or password.";
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error during login: {ex.Message}");
-            loginError = "Error during login.";
+            loginError = "An error occurred during login. Please try again.";
+            Console.WriteLine($"Login error: {ex.Message}");
         }
-
-        StateHasChanged();
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
+        }
     }
 } 

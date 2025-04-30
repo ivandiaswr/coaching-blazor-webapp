@@ -1,0 +1,39 @@
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6" Class="mb-1">Confirm Your Booking</MudText>
+    </TitleContent>
+
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudAlert Class="mb-2" Severity="Severity.Warning" Variant="Variant.Outlined" Dense="true">
+                Please review your booking details. You’ll be redirected to the payment screen next.
+            </MudAlert>
+            <MudPaper Class="pa-3" Elevation="1" Style="border-left: 4px solid var(--mud-palette-primary);">
+                <MudText Typo="Typo.subtitle2"><b>Option:</b> @SelectedOption?.Title</MudText>
+                <MudText Typo="Typo.body2"><b>Description:</b> @SelectedOption?.Description</MudText>
+                <MudText Typo="Typo.body2"><b>Date & Time:</b> @SelectedDateTime</MudText>
+                <MudText Typo="Typo.body2"><b>Price:</b> @((SelectedOption?.PriceEUR.HasValue == true ? $"{SelectedOption.PriceEUR}€" : "Included"))</MudText>
+                <MudText Typo="Typo.body2"><b>Payment Method:</b> Stripe</MudText>
+            </MudPaper>
+        </MudStack>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="@Close" Color="Color.Default" Variant="Variant.Text">
+            Cancel
+        </MudButton>
+        <MudButton Class="mr-4" OnClick="@OnConfirmClicked" Color="Color.Primary" Variant="Variant.Filled">
+            Continue to Payment
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public BookingOption SelectedOption { get; set; } = default!;
+    [Parameter] public string SelectedDateTime { get; set; } = default!;
+
+    private void Close() => MudDialog.Close(DialogResult.Cancel());
+
+    private void OnConfirmClicked() => MudDialog.Close(DialogResult.Ok(true));
+}

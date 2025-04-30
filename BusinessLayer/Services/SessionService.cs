@@ -159,6 +159,17 @@ public class SessionService : ISessionService
         }
     }
 
+    public async Task<Session?> GetLatestSessionByEmailAsync(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return null;
+
+        return await _context.Sessions
+            .Where(s => s.Email == email)
+            .OrderByDescending(s => s.CreatedAt)
+            .FirstOrDefaultAsync();
+    }
+
     public async Task SendEmailAsync(Session session)
     {
         var smtpServer = _helperService.GetConfigValue("SmtpSettings:Server");

@@ -122,3 +122,10 @@ window.VideoCallHelpers = {
         }
     }
 };
+
+window.scrollCalendarToHour = function (elementId, hour) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+
+    el.scrollTop = hour * estimatedPixelsPerHour;
+};

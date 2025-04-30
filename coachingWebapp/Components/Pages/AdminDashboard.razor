@@ -520,7 +520,13 @@
             { "RecipientEmails", emailSubscriptionGrid.SelectedItems.Select(e => e.Email).ToList() }
         };
 
-        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Large, FullWidth = true };
+        var options = new DialogOptions 
+        { 
+            CloseButton = true,
+            CloseOnEscapeKey = true, 
+            MaxWidth = MaxWidth.Large, 
+            FullWidth = true
+        };
 
         return DialogService.ShowAsync<SendEmailDialog>("Compose Email", parameters, options);
     }

@@ -11,13 +11,15 @@ public class StripeService : IPaymentService
     private readonly IConfiguration _configuration;
     private readonly CoachingDbContext _context;
     private readonly ILogService _logService;
+    private readonly IHelperService _helperService;
 
-    public StripeService(IConfiguration configuration, CoachingDbContext context, ILogService logService)
+    public StripeService(IConfiguration configuration, CoachingDbContext context, ILogService logService, IHelperService helperService)
     {
         _configuration = configuration;
         _context = context;
         _logService = logService;
-        StripeConfiguration.ApiKey = _configuration["Stripe:SecretKey"];
+        _helperService = helperService;
+        StripeConfiguration.ApiKey = _helperService.GetConfigValue("Stripe:SecretKey");
     }
 
     public async Task<string> CreateCheckoutSessionAsync(ModelLayer.Models.Session session)
@@ -53,8 +55,8 @@ public class StripeService : IPaymentService
                     },
                 },
                 Mode = "payment",
-                SuccessUrl = $"{_configuration["App:BaseUrl"]}/payment-success?sessionId={{CHECKOUT_SESSION_ID}}",
-                CancelUrl = $"{_configuration["App:BaseUrl"]}/payment-cancelled",
+                SuccessUrl = $"{_configuration["AppSettings:BaseUrl"]}/payment-success?sessionId={{CHECKOUT_SESSION_ID}}",
+                CancelUrl = $"{_configuration["AppSettings:BaseUrl"]}/payment-cancelled",
                 Metadata = new Dictionary<string, string>
                 {
                     { "SessionId", session.Id.ToString() }
@@ -135,7 +137,7 @@ public class StripeService : IPaymentService
     {
         try
         {
-            var webhookSecret = _configuration["Stripe:WebhookSecret"];
+            var webhookSecret = _helperService.GetConfigValue("Stripe:WebhookSecret");
             var stripeEvent = EventUtility.ConstructEvent(json, stripeSignature, webhookSecret);
 
             if (stripeEvent.Type == "checkout.session.completed")

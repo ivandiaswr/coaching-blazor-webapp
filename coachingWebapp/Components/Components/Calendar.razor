@@ -18,8 +18,9 @@
                      StartHour="10"
                      EndHour="21"
                      lang="en"
+                     id="calendar-scroll-target" 
                      ItemClicked="OnSlotClicked"
-                     Class="mud-calendar-event" />
+                     Class="responsive-calendar" />
     </div>
 </div>
 
@@ -103,6 +104,15 @@
             WindowWidth = await JSRuntime.InvokeAsync<int>("eval", "window.innerWidth");
             await JSRuntime.InvokeVoidAsync("window.colorCalendarSlots");
             StateHasChanged();
+        }
+
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("scrollCalendarToHour", "calendar-scroll-target", 10);
+        }
+        catch (Exception ex)
+        {
+            await LogService.LogError("ScrollCalendarToHour JS Error", ex.Message);
         }
     }
 

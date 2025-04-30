@@ -17,9 +17,24 @@
   /*outline: 1px solid red;*/
 }
 
+html {
+  font-size: clamp(13px, 1.2vw, 16px) !important;
+}
+
+@media (max-width: 1440px) {
+  html {
+    font-size: clamp(9px, 0.8vw, 15px) !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  html {
+    font-size: clamp(7px, 0.5vw, 14px) !important;
+  }
+}
+
 html, body {
   font-family: 'Montserrat', Helvetica, Arial, sans-serif;
-  font-size: 0.84rem;
   margin: 0;
   padding: 0;
   width: 100%;
@@ -438,7 +453,7 @@ h1:focus {
 }
 
 .main-heading {
-  font-size: clamp(2.5rem, 6vw, 3.5rem);
+  font-size: clamp(2rem, 5vw, 3rem);
   font-weight: 700;
   margin-bottom: 1rem;
   text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
@@ -1265,11 +1280,19 @@ h1:focus {
 
 .hoverable-input {
   background-color: #f8f9fa;
-  cursor: pointer;
+  border: none !important;
+  box-shadow: none !important;
+  cursor: default;
   transition: all 0.3s ease;
 }
 
 .hoverable-input:hover {
+  cursor: pointer !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+.pointer-cursor {
   cursor: pointer !important;
 }
 

@@ -6,7 +6,7 @@ using Stripe;
 namespace coachingWebapp.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/payments")]
     public class StripeController : ControllerBase
     {
         private readonly IPaymentService _paymentService;
@@ -23,13 +23,25 @@ namespace coachingWebapp.Controllers
         {
             try
             {
+                if (session == null)
+                {
+                    await _logService.LogError("CreateCheckoutSession", "Invalid session data provided.");
+                    return BadRequest(new { error = "Invalid session data provided." });
+                }
+
                 var url = await _paymentService.CreateCheckoutSessionAsync(session);
+                
                 return Ok(new { url });
+            }
+            catch (StripeException ex)
+            {
+                await _logService.LogError("CreateCheckoutSession Stripe Error", $"Error: {ex.Message}, StripeError: {ex.StripeError?.Message}");
+                return BadRequest(new { error = $"Stripe error: {ex.Message}", details = ex.StripeError?.Message });
             }
             catch (Exception ex)
             {
                 await _logService.LogError("CreateCheckoutSession Error", ex.Message);
-                return BadRequest(new { error = "Failed to create checkout session. Please try again." });
+                return BadRequest(new { error = "Failed to create checkout session.", details = ex.Message });
             }
         }
 

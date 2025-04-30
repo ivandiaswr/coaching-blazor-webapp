@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 <MudPopoverProvider/>
 <MudSnackbarProvider />
+<MudDialogProvider />
 
 @attribute [Authorize(Roles = "User")]
 <PageTitle>@pageTitle</PageTitle>
@@ -146,6 +147,7 @@
                 <MudItem xs="12" md="6">
                     <div class="user-dashboard-request">
                         <MudForm @ref="requestForm" Model="@requestModel">
+                            <MudText Typo="Typo.subtitle1" Class="mb-2">Selected booking option*</MudText>
                             @if (SelectedOption != null)
                             {
                                 var typeClass = SelectedOption.Type switch
@@ -155,7 +157,7 @@
                                     BookingType.Subscription => "subscription",
                                     _ => ""
                                 };
-                                <MudText Typo="Typo.subtitle1" Class="mb-2">Selected booking option*</MudText>
+
                                 <MudCard Class="@($"option-card selected {typeClass} mb-4")">
                                     <MudCardContent>
                                         <MudText Typo="Typo.h6">@SelectedOption.Title</MudText>
@@ -205,6 +207,7 @@
                                               ReadOnly="true"
                                               Adornment="Adornment.End"
                                               AdornmentIcon="@Icons.Material.Filled.CalendarMonth"
+                                              InputClass="pointer-cursor"
                                               Required="true"
                                               RequiredError="Preferred date and time are required" />
                             </MudPaper>
@@ -217,12 +220,11 @@
                                       AdminUnavailabilities="@Unavailabilities"
                                       FirstAvailableDate="@firstAvailableDate" />
 
-                            <MudButton OnClick="SubmitSessionRequest" 
+                            <MudButton OnClick="OpenConfirmationDialog" 
                                        Variant="Variant.Filled" 
                                        Color="Color.Primary"
-                                       Disabled="false"
                                        Class="pt-4 pb-4 mt-5">
-                                Request Session
+                                Confirm Informations
                             </MudButton>
                         </MudForm>
                     </div>
@@ -243,8 +245,7 @@
                          SlotDuration="00:45:00"
                          ShowTodayButton="true"
                          ItemClicked="HandleCalendarClick"
-                         CssClassFunc="GetCalendarClass"
-                         Class="mud-calendar-event" /> 
+                         Class="mud-calendar-event" />
         </MudPaper>
     </MudTabPanel>
 
@@ -387,6 +388,20 @@
     </MudTabPanel>
 </MudTabs>
 
+<div style="position: fixed; bottom: 24px; right: 24px; z-index: 1000;">
+    <MudTooltip Text="Need help? Contact me on WhatsApp">
+        <MudFab Color="Color.Success"
+                Target="_blank"
+                Href="https://wa.me/351912345678"
+                AriaLabel="Contact Admin via WhatsApp"
+                Style="display: flex; align-items: center; justify-content: center;">
+            <span class="fa-stack fa-lg">
+                <i class="fa-brands fa-whatsapp fa-stack-1x" style="color: white;"></i>
+            </span>
+        </MudFab>
+    </MudTooltip>
+</div>
+
 @code {
     private string pageTitle = "User Dashboard | Ítala Veloso";
     private int selectedTab = 0;
@@ -424,7 +439,10 @@
     private int sessionsUsed = 0;
     private int monthlyLimit = 0;
     private List<BookingOption> BookingOptions = new();
-    private BookingOption? SelectedOption;
+    private BookingOption? SelectedOption = null;
+
+    [Inject] public IDialogService DialogService { get; set; } = default!;
+
 
     private IEnumerable<VideoSession> FilteredSessions => allSessions
         .Where(session =>
@@ -456,12 +474,6 @@
         hasValidPack = remainingPackSessions > 0;
 
         await LoadBookingOptions();
-
-        if (SelectedOption == null)
-        {
-            SelectedOption = BookingOptions.FirstOrDefault(o => o.Type == BookingType.SingleSession && o.IsAvailable);
-            selectedBookingOption = SelectedOption?.Type ?? BookingType.SingleSession;
-        }
     }
 
     private async Task LoadBookingOptions()
@@ -469,7 +481,7 @@
         BookingOptions.Clear();
 
         var sessionPrice = await SessionPriceService.GetPriceForSessionTypeAsync(requestModel.SessionCategory);
-        await LogService.LogInfo($"LoadBookingOptions: SessionType={requestModel.SessionCategory}, Price={(sessionPrice != null ? sessionPrice.PriceEUR : "null")}");
+
         BookingOptions.Add(new BookingOption
         {
             Id = Guid.NewGuid().ToString(),
@@ -716,7 +728,6 @@
         requestModel.PreferredDateTimeString = selectedSlotString;
 
         var sessionPrice = await SessionPriceService.GetPriceForSessionTypeAsync(requestModel.SessionCategory);
-        await LogService.LogInfo($"HandleSlotSelected: SessionType={requestModel.SessionCategory}, Price={(sessionPrice != null ? sessionPrice.PriceEUR : "null")}");
         var singleSessionOption = BookingOptions.FirstOrDefault(o => o.Type == BookingType.SingleSession);
         if (singleSessionOption != null)
         {
@@ -737,7 +748,7 @@
         StateHasChanged();
     }
 
-    private async Task SubmitSessionRequest()
+    private async Task OpenConfirmationDialog()
     {
         if (requestForm == null)
         {
@@ -756,20 +767,58 @@
             return;
         }
 
+        if (SelectedOption == null || string.IsNullOrEmpty(selectedSlotString))
+            return;
+
+        var parameters = new DialogParameters
+        {
+            { "SelectedOption", SelectedOption },
+            { "SelectedDateTime", selectedSlotString }
+        };
+
+        var options = new DialogOptions 
+        { 
+            CloseButton = true,
+            CloseOnEscapeKey = true, 
+            MaxWidth = MaxWidth.Small, 
+            FullWidth = true
+        };
+
+        var dialog = await DialogService.ShowAsync<BookingConfirmationDialog>("Confirm Booking", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await SubmitSessionRequest();
+        }
+    }
+
+    private async Task SubmitSessionRequest()
+    {
         var scheduledAtLocal = DateTime.Parse(selectedSlotString);
         var scheduledAtUtc = TimeZoneInfo.ConvertTimeToUtc(scheduledAtLocal, TimeZoneInfo.FindSystemTimeZoneById(userTimeZone));
+
+        var lastSession = await SessionService.GetLatestSessionByEmailAsync(userId);
+
+        if (lastSession == null)
+        {
+            Snackbar.Add("Error confirming your information. Please contact Itala for assistance.", Severity.Error);
+            await LogService.LogError("Previous Session", "Unable to retrieve previous session. User Email: " + userId);
+            return;
+        }
 
         var session = new Session
         {
             PreferredDateTime = scheduledAtUtc,
+            PreferredDateTimeString = requestModel.PreferredDateTimeString,
             SessionCategory = requestModel.SessionCategory,
             Message = requestModel.Message ?? string.Empty,
             Email = userId,
-            FirstName = requestModel.FirstName,
-            LastName = requestModel.LastName,
+            FirstName = lastSession?.FirstName ?? string.Empty,
+            LastName = lastSession?.LastName ?? string.Empty,
+            FullName = lastSession?.FullName ?? string.Empty,
             DiscoveryCall = false
         };
-        session.UpdateFullName();
 
         try
         {
@@ -835,7 +884,9 @@
                     return;
                 }
 
-                var response = await HttpClient.PostAsJsonAsync("/api/payments/create-checkout-session", session);
+                var baseUrl = Configuration["AppSettings:BaseUrl"];
+                var response = await HttpClient.PostAsJsonAsync($"{baseUrl}/api/payments/create-checkout-session", session);
+
                 if (response.IsSuccessStatusCode)
                 {
                     var data = await response.Content.ReadFromJsonAsync<ModelLayer.Models.DTOs.StripeResponse>();
@@ -844,6 +895,8 @@
                 else
                 {
                     Snackbar.Add("Failed to initiate payment for single session. Please try again.", Severity.Error);
+                    await LogService.LogError("SubmitSessionRequest", $"Response Status: {response.StatusCode}");
+
                 }
                 return;
             }
@@ -864,7 +917,7 @@
         }
         catch (Exception ex)
         {
-            await LogService.LogError("SubmitSessionRequest Error: ", ex.Message);
+            await LogService.LogError("SubmitSessionRequest", ex.Message);
             Snackbar.Add("An error occurred while scheduling the session. Please try again.", Severity.Error);
         }
     }
