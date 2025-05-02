@@ -264,6 +264,16 @@
                                         <MudText Color="@(isSuccess ? Color.Success : Color.Error)">
                                             @sessionFormStatus
                                         </MudText>
+
+                                        @if (!isSuccess && sessionFormStatus.Contains("create an account"))
+                                            {
+                                                <MudButton Variant="Variant.Filled"
+                                                        Color="Color.Secondary"
+                                                        Href="/register"
+                                                        Class="mt-2">
+                                                    Create an Account
+                                                </MudButton>
+                                            }
                                     }
                                 </div>
 
@@ -394,7 +404,18 @@
         try
         {
             isLoggingIn = true; 
+            sessionFormStatus = string.Empty;
             StateHasChanged();
+
+            var existingSession = await SessionService.GetSessionByEmailAsync(session.Email);
+            if (existingSession != null)
+            {
+                sessionFormStatus = "This email has already been used for a discovery call or is registered. Please create an account or log in to continue.";
+                isSuccess = false;
+                isLoggingIn = false;
+                StateHasChanged();
+                return;
+            }
 
             session.DiscoveryCall = true;
             var result = await SessionService.CreateSessionAsync(session);

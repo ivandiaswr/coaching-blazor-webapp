@@ -169,6 +169,12 @@ public class SessionService : ISessionService
             .OrderByDescending(s => s.CreatedAt)
             .FirstOrDefaultAsync();
     }
+    
+    public async Task<Session?> GetSessionByEmailAsync(string email)
+    {
+        return await _context.Sessions
+            .FirstOrDefaultAsync(s => s.Email.ToLower() == email.ToLower());
+    }
 
     public async Task SendEmailAsync(Session session)
     {
@@ -189,14 +195,14 @@ public class SessionService : ISessionService
         message.Subject = $"Meeting Scheduled - {session.FullName}";
         message.Body = new TextPart("plain")
         {
-            Text = $"Name: {session.FullName}\n" + 
+            Text = $"Name: {session.FullName}\n" +
                    "Email: " + session.Email + "\n" +
-                   "Session Category: " + session.SessionCategory + "\n" +  
+                   "Session Category: " + session.SessionCategory + "\n" +
                    "Message: " + session.Message + "\n" +
                    "Preferred Meeting Date: " + session.PreferredDateTime
         };
 
-       using var client = new SmtpClient();
+        using var client = new SmtpClient();
 
         try
         {
