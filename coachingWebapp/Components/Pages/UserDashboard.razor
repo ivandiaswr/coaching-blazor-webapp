@@ -9,39 +9,58 @@
 
 <MudPaper Class="dashboard-welcome" Elevation="1">
     <MudText Typo="Typo.h5" Class="welcome-title">
-        Hello, @userId!
+        Welcome, @userFullName!
     </MudText>
     
     @if (upcomingSessions.Any())
     {
         var nextSession = upcomingSessions.First();
-        <MudText Typo="Typo.subtitle1">
+        <MudText Typo="Typo.subtitle1" Class="mb-4">
             Your next session is scheduled for
             <strong>@nextSession.ScheduledAt.ToString("MMMM dd 'at' HH:mm")</strong>. Get ready to take your next step!
         </MudText>
     }
     else
     {
-        <MudText Typo="Typo.subtitle1">
+        <MudText Typo="Typo.subtitle1" Class="mb-2">
             You don’t have any sessions scheduled yet. It’s time to book a moment just for you.
         </MudText>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => selectedTab = 0)">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => selectedTab = 0)" Class="mb-4">
             Book a Session
         </MudButton>
     }
 
-    @if (hasValidPack)
-    {
-        <MudAlert Severity="Severity.Info" Variant="Variant.Filled">
-            You have @remainingPackSessions session(s) left in your pack. No payment needed.
-        </MudAlert>
-    }
-    @if (hasActiveSubscription)
-    {
-        <MudAlert Severity="Severity.Info" Variant="Variant.Filled">
-            You have @remainingSubscriptionSessions session(s) left this month (@sessionsUsed of @monthlyLimit used).
-        </MudAlert>
-    }
+    <MudCard Class="booking-option-card">
+        <MudCardContent>
+            <MudText Typo="Typo.h6" Class="mb-2">Your Booking Option</MudText>
+            @if (hasValidPack)
+            {
+                var packOption = BookingOptions.FirstOrDefault(o => o.Type == BookingType.SessionPack && !o.RequiresPurchase);
+                <MudText Typo="Typo.body1" Class="mb-2">
+                    <strong>Session Pack:</strong> @(packOption?.Title ?? "Active Pack")
+                </MudText>
+                <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Class="mb-2">
+                    You have <strong>@remainingPackSessions</strong> session(s) left in your pack. No payment needed.
+                </MudAlert>
+            }
+            else if (hasActiveSubscription)
+            {
+                var subscriptionOption = BookingOptions.FirstOrDefault(o => o.Type == BookingType.Subscription && !o.RequiresPurchase);
+                <MudText Typo="Typo.body1" Class="mb-2">
+                    <strong>Subscription:</strong> @(subscriptionOption?.Title ?? "Active Subscription")
+                </MudText>
+                <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Class="mb-2">
+                    You have <strong>@remainingSubscriptionSessions</strong> session(s) left this month (@sessionsUsed of @monthlyLimit used).
+                </MudAlert>
+            }
+            else
+            {
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-2">
+                    No active session pack or subscription. Pick one in the booking session section!
+                </MudText>
+            }
+        </MudCardContent>
+    </MudCard>
 </MudPaper>
 
 <MudTabs @bind-ActivePanelIndex="selectedTab" Class="tabs" Elevation="2">
@@ -143,7 +162,6 @@
                     </div>
                 </MudItem>
 
-               
                 <MudItem xs="12" md="6">
                     <div class="user-dashboard-request">
                         <MudForm @ref="requestForm" Model="@requestModel">
@@ -410,6 +428,7 @@
     private List<VideoSession> pastSessions = new();
     private List<CalendarItem> calendarItems = new();
     private string userId = string.Empty;
+    private string userFullName = "Guest"; // Default fallback
 
     private MudForm? requestForm;
     private Session requestModel = new();
@@ -443,7 +462,6 @@
 
     [Inject] public IDialogService DialogService { get; set; } = default!;
 
-
     private IEnumerable<VideoSession> FilteredSessions => allSessions
         .Where(session =>
             (selectedFilter == "Upcoming" && session.ScheduledAt >= DateTime.UtcNow) ||
@@ -459,6 +477,26 @@
     {
         var auth = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         userId = auth.User?.Identity?.Name ?? string.Empty;
+
+        // Load user's full name
+        try
+        {
+            var latestSession = await SessionService.GetLatestSessionByEmailAsync(userId);
+            if (latestSession != null && !string.IsNullOrWhiteSpace(latestSession.FullName))
+            {
+                userFullName = latestSession.FullName;
+            }
+            else
+            {
+                userFullName = "Guest"; // Fallback if no full name is found
+            }
+        }
+        catch (Exception ex)
+        {
+            await LogService.LogError("LoadFullName Error", ex.Message);
+            userFullName = "Guest"; // Fallback on error
+            Snackbar.Add("Failed to load user information. Using default greeting.", Severity.Warning);
+        }
 
         await LoadSessions();
 
@@ -896,7 +934,6 @@
                 {
                     Snackbar.Add("Failed to initiate payment for single session. Please try again.", Severity.Error);
                     await LogService.LogError("SubmitSessionRequest", $"Response Status: {response.StatusCode}");
-
                 }
                 return;
             }
