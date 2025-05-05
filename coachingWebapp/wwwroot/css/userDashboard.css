@@ -18,13 +18,13 @@
   display: flex;
   justify-content: center;
   width: 100%;
-  margin-bottom: 2rem;
 }
 
 .mud-tabs-tabbar {
   display: flex;
   justify-content: center;
   width: auto !important;
+  margin-bottom: 1.4rem !important;
 }
 
 .mud-tabs-tabbar-inner {
@@ -42,6 +42,10 @@
 .mud-tabs-tabbar-wrapper {
   display: inline-flex;
   width: auto !important;
+}
+
+.mud-table-cell {
+  text-align: center !important;
 }
 
 .upcoming-calendar-wrapper {

@@ -33,7 +33,6 @@
     [Parameter] public BookingOption SelectedOption { get; set; } = default!;
     [Parameter] public string SelectedDateTime { get; set; } = default!;
 
-    private void Close() => MudDialog.Close(DialogResult.Cancel());
-
     private void OnConfirmClicked() => MudDialog.Close(DialogResult.Ok(true));
+    private void Close() => MudDialog.Close(DialogResult.Cancel());
 }

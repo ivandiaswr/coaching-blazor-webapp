@@ -15,5 +15,8 @@ namespace ModelLayer.Models
         public DateTime StartedAt { get; set; }
         public bool IsActive { get; set; } = true;
         public int SessionsUsedThisMonth { get; set; } = 0;
+        public DateTime? CancelledAt { get; set; }
+        public DateTime? CurrentPeriodEnd { get; set; }
+        public DateTime CurrentPeriodStart { get; set; }
     }
 }

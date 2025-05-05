@@ -11,5 +11,6 @@ namespace BusinessLayer.Services.Interfaces
         Task<SubscriptionStatusDto> GetStatusAsync(string userId);
         Task RollbackMonthlyUsage(string userId);
         Task<UserSubscription?> GetActiveSubscriptionAsync(string userId);
+        Task<bool> CancelSubscriptionAsync(string userId);
     }
 }
