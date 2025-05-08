@@ -12,6 +12,8 @@ namespace DataAccessLayer {
         public DbSet<UnavailableTime> UnavailableTimes { get; set; }
         public DbSet<VideoSession> VideoSessions { get; set; }
         public DbSet<SessionPrice> SessionPrices { get; set; }
+        public DbSet<SessionPackPrice> SessionPackPrices { get; set; }
+        public DbSet<SubscriptionPrice> SubscriptionPrices { get; set; }
         public DbSet<SessionPackDefinition> SessionPackDefinitions { get; set; }
         public DbSet<SessionPack> SessionPacks { get; set; }
         public DbSet<SubscriptionPlan> SubscriptionPlans { get; set; }

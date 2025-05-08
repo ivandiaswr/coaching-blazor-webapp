@@ -361,3 +361,77 @@
       font-size: 0.6rem;
   }
 }
+
+/* Payment Cancelled */
+#payment-cancelled {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 70vh;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.cancelled-card {
+  width: 100%;
+  max-width: 400px;
+  background: #fff;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.cancelled-title {
+  margin-bottom: 1rem;
+  color: #d32f2f;
+  font-weight: 600;
+}
+
+.cancelled-message {
+  margin-bottom: 2rem;
+  color: #555;
+}
+
+.return-button {
+  width: 100%;
+}
+
+/* Payment Cancelled */
+#payment-status {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 75vh;
+  padding: 2rem;
+  background-color: #f9f9f9;
+}
+
+.payment-box {
+  max-width: 480px;
+  width: 100%;
+}
+
+.payment-box .mud-paper {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.payment-box .mud-text {
+  margin-bottom: 1rem;
+}
+
+.payment-box .mud-alert {
+  width: 100%;
+}
+
+.payment-box .mud-button {
+  margin-top: 1rem;
+  width: 100%;
+  max-width: 240px;
+}

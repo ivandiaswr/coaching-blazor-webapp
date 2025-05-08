@@ -6,6 +6,7 @@ namespace BusinessLayer.Services.Interfaces{
         Task<string> CreateCheckoutSessionAsync(Session session);
         Task<bool> ConfirmPaymentAsync(string stripeSessionId);
         Task HandleWebhookAsync(string json, string stripeSignature);
+        Task<string> CreateOrUpdateSubscriptionPriceAsync(string productName, decimal amount, string sessionType);
     }
 }
 

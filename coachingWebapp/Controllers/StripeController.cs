@@ -57,7 +57,7 @@ namespace coachingWebapp.Controllers
                 }
                 else
                 {
-                    await _logService.LogInfo($"ConfirmPayment -> Payment not confirmed for sessionId: {sessionId}");
+                    await _logService.LogInfo("ConfirmPayment", $"Payment not confirmed for sessionId: {sessionId}");
                     return BadRequest(new { error = "Payment not confirmed." });
                 }
             }

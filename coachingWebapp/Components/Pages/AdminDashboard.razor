@@ -1,10 +1,7 @@
 @page "/AdminDashboard"
 @rendermode InteractiveServer
 
-@inject SignInManager<IdentityUser> SignInManager
-@inject IDialogService DialogService
-<MudPopoverProvider/> @*only works if its in the page of the mud component*@
-<MudDialogProvider/>
+<MudPopoverProvider/>
 <MudSnackbarProvider />
 
 @attribute [Authorize(Roles = "Admin")]
@@ -37,7 +34,7 @@
             <MudCalendar @ref="calendar" Items="@calendarItems" ItemClicked="OnSessionClicked" />
 
             <MudText Class="mt-3 mb-3" Typo="Typo.h4">Busy Time</MudText>
-           <MudGrid Class="mt-2" Gutter="GutterSize.Small">
+            <MudGrid Class="mt-2" Gutter="GutterSize.Small">
                 <MudItem xs="12" sm="6">
                     <MudCard Class="p-4">
                         <MudCardContent>
@@ -84,43 +81,42 @@
                 <MudItem xs="12" sm="6">
                     <MudPaper Class="p-4">
                         <MudText Typo="Typo.h6" Class="mb-2">Unavailable Times:</MudText>
-                       <MudList T="UnavailableTime" Dense="true" Hover="true">
-                        @if (_adminUnavailableTimes.Any())
-                        {
-                            @foreach (var time in _adminUnavailableTimes)
+                        <MudList T="UnavailableTime" Dense="true" Hover="true">
+                            @if (_adminUnavailableTimes.Any())
                             {
-                                <MudListItem Class="busy-time-entry">
-                                    <div class="busy-time-info">
-                                        <strong>@time.DayOfWeek</strong>: @time.StartTime - @time.EndTime
-                                        @if (time.IsRecurring)
-                                        {
-                                            <span class="ml-2 text-success d-inline-flex align-center">
-                                                <MudIcon Icon="@Icons.Material.Filled.Loop" Size="Size.Small" Class="mr-1" />
-                                                Recurring
-                                            </span>
-                                        }
-                                        <div class="busy-time-actions">
-                                            <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                                        Color="Color.Primary"
-                                                        OnClick="@(() => StartEditUnavailability(time))"
-                                                        Size="Size.Small" />
-                                            <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                                        Color="Color.Error"
-                                                        OnClick="@(() => DeleteUnavailableTime(time.Id))"
-                                                        Size="Size.Small" />
+                                @foreach (var time in _adminUnavailableTimes)
+                                {
+                                    <MudListItem Class="busy-time-entry">
+                                        <div class="busy-time-info">
+                                            <strong>@time.DayOfWeek</strong>: @time.StartTime - @time.EndTime
+                                            @if (time.IsRecurring)
+                                            {
+                                                <span class="ml-2 text-success d-inline-flex align-center">
+                                                    <MudIcon Icon="@Icons.Material.Filled.Loop" Size="Size.Small" Class="mr-1" />
+                                                    Recurring
+                                                </span>
+                                            }
+                                            <div class="busy-time-actions">
+                                                <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                                            Color="Color.Primary"
+                                                            OnClick="@(() => StartEditUnavailability(time))"
+                                                            Size="Size.Small" />
+                                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                                            Color="Color.Error"
+                                                            OnClick="@(() => ConfirmDeleteUnavailableTime(time.Id))"
+                                                            Size="Size.Small" />
+                                            </div>
                                         </div>
-                                    </div>
+                                    </MudListItem>
+                                }
+                            }
+                            else
+                            {
+                                <MudListItem>
+                                    <MudText>No unavailable times defined.</MudText>
                                 </MudListItem>
                             }
-                        }
-                        else
-                        {
-                            <MudListItem>
-                                <MudText>No unavailable times defined.</MudText>
-                            </MudListItem>
-                        }
-                    </MudList>
-
+                        </MudList>
                     </MudPaper>
                 </MudItem>
             </MudGrid>
@@ -218,125 +214,195 @@
             </MudDataGrid>
         </MudTabPanel>
 
-        <MudTabPanel Text="Session Prices">
-            <MudText Typo="Typo.h5" Class="mb-2">Session Prices</MudText>
+        <MudTabPanel Text="Pricing Configuration">
+            <MudText Typo="Typo.h5" Class="mb-4">Pricing Configuration</MudText>
+            <MudTabs Elevation="1" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-4">
+                @foreach (var sessionType in Enum.GetValues(typeof(SessionType)).Cast<SessionType>())
+                {
+                    <MudTabPanel Text="@sessionType.GetDisplayName()">
+                        <MudGrid>
+                            <MudItem xs="12">
+                                <MudCard Class="mb-4">
+                                    <MudCardContent>
+                                        <MudText Typo="Typo.h6" Class="mb-2">@BookingType.SingleSession.GetDisplayName()</MudText>
+                                        <MudForm @ref="singleForms[sessionType]">
+                                            <MudGrid>
+                                                <MudItem xs="12" sm="6">
+                                                    <MudNumericField Label="Price (€)"
+                                                                    @bind-Value="singlePrices[sessionType].PriceEUR"
+                                                                    For="@(() => singlePrices[sessionType].PriceEUR)"
+                                                                    Adornment="Adornment.Start"
+                                                                    AdornmentText="€"
+                                                                    Required="true"
+                                                                    RequiredError="Price is required"
+                                                                    Min="0" />
+                                                </MudItem>
+                                            </MudGrid>
+                                        </MudForm>
+                                    </MudCardContent>
+                                </MudCard>
+                            </MudItem>
 
-            <MudTable Items="@sessionPrices" Hover="true">
-                <HeaderContent>
-                    <MudTh>Session Type</MudTh>
-                    <MudTh>Price (EUR)</MudTh>
-                    <MudTh>Last Updated</MudTh>
-                    <MudTh></MudTh>
-                </HeaderContent>
-                <RowTemplate>
-                    <MudTd>
-                        <MudSelect T="SessionType" @bind-Value="context.SessionType" Dense="true">
-                            @foreach (var type in GetAvailableSessionTypes(context))
-                            {
-                                <MudSelectItem Value="@type">@type.GetDisplayName()</MudSelectItem>
-                            }
-                        </MudSelect>
-                    </MudTd>
-                    <MudTd>
-                        <MudNumericField T="decimal" @bind-Value="context.PriceEUR" Adornment="Adornment.Start" AdornmentText="€" />
-                    </MudTd>
-                    <MudTd>@context.LastUpdated.ToString("dd-MM-yyyy")</MudTd>
-                    <MudTd>
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="() => SavePrice(context)">
-                            Save
-                        </MudButton>
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => DeletePrice(context.Id)" />
-                    </MudTd>
-                </RowTemplate>
-            </MudTable>
+                            <!-- Session Packs -->
+                            <MudItem xs="12">
+                                <MudText Typo="Typo.h6" Class="mb-2">@BookingType.SessionPack.GetDisplayName()</MudText>
+                                @foreach (var pack in packPrices[sessionType])
+                                {
+                                    <MudCard Class="mb-4">
+                                        <MudCardContent>
+                                            <MudForm @ref="packForms[(sessionType, pack.Id)]">
+                                                <MudGrid>
+                                                    <MudItem xs="12" sm="6">
+                                                        <MudTextField Label="Pack Name"
+                                                                    @bind-Value="pack.Name"
+                                                                    For="@(() => pack.Name)"
+                                                                    Required="true"
+                                                                    RequiredError="Name is required" />
+                                                    </MudItem>
+                                                    <MudItem xs="12" sm="6">
+                                                        <MudTextField Label="Pack Description"
+                                                                    @bind-Value="pack.Description"
+                                                                    For="@(() => pack.Description)" />
+                                                    </MudItem>
+                                                    <MudItem xs="12" sm="6">
+                                                        <MudNumericField Label="Total Sessions"
+                                                                        @bind-Value="pack.TotalSessions"
+                                                                        For="@(() => pack.TotalSessions)"
+                                                                        Required="true"
+                                                                        RequiredError="Total sessions is required"
+                                                                        Min="1" />
+                                                    </MudItem>
+                                                    <MudItem xs="12" sm="6">
+                                                        <MudNumericField Label="Price (€)"
+                                                                        @bind-Value="pack.PriceEUR"
+                                                                        For="@(() => pack.PriceEUR)"
+                                                                        Adornment="Adornment.Start"
+                                                                        AdornmentText="€"
+                                                                        Required="true"
+                                                                        RequiredError="Price is required"
+                                                                        Min="0" />
+                                                    </MudItem>
+                                                    <MudItem xs="12">
+                                                        <MudButton Variant="Variant.Filled" Color="Color.Error"
+                                                                StartIcon="@Icons.Material.Filled.Delete"
+                                                                OnClick="@(() => ConfirmDeleteSessionPack(sessionType, pack.Id))">
+                                                            Delete Pack
+                                                        </MudButton>
+                                                    </MudItem>
+                                                </MudGrid>
+                                            </MudForm>
+                                        </MudCardContent>
+                                    </MudCard>
+                                }
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                        StartIcon="@Icons.Material.Filled.Add"
+                                        OnClick="@(() => AddNewSessionPack(sessionType))"
+                                        Class="mb-4"
+                                        Disabled="@(packPrices[sessionType].Count >= MAX_PACKS)">
+                                    Add New Pack
+                                </MudButton>
+                                @if (packPrices[sessionType].Count >= MAX_PACKS)
+                                {
+                                    <MudText Color="Color.Error">Maximum of @MAX_PACKS session packs reached.</MudText>
+                                }
+                            </MudItem>
 
-            <MudButton Class="mt-3" Color="Color.Secondary" Variant="Variant.Filled" OnClick="AddNewPrice">
-                Add Configuration Price
-            </MudButton>
+                            <!-- Subscriptions -->
+                            <MudItem xs="12">
+                                <MudText Typo="Typo.h6" Class="mb-2">@BookingType.Subscription.GetDisplayName()</MudText>
+                                @foreach (var subscription in subscriptionPrices[sessionType])
+                                {
+                                    <MudCard Class="mb-4">
+                                        <MudCardContent>
+                                            <MudForm @ref="subscriptionForms[(sessionType, subscription.Id)]">
+                                                <MudGrid>
+                                                    <MudItem xs="12" sm="6">
+                                                        <MudTextField Label="Subscription Name"
+                                                                    @bind-Value="subscription.Name"
+                                                                    For="@(() => subscription.Name)"
+                                                                    Required="true"
+                                                                    RequiredError="Name is required" />
+                                                    </MudItem>
+                                                    <MudItem xs="12" sm="6">
+                                                        <MudTextField Label="Subscription Description"
+                                                                    @bind-Value="subscription.Description"
+                                                                    For="@(() => subscription.Description)" />
+                                                    </MudItem>
+                                                    <MudItem xs="12" sm="6">
+                                                        <MudNumericField Label="Monthly Session Limit"
+                                                                        @bind-Value="subscription.MonthlyLimit"
+                                                                        For="@(() => subscription.MonthlyLimit)"
+                                                                        Required="true"
+                                                                        RequiredError="Monthly limit is required"
+                                                                        Min="1" />
+                                                    </MudItem>
+                                                    <MudItem xs="12" sm="6">
+                                                        <MudNumericField Label="Price (€)"
+                                                                        @bind-Value="subscription.PriceEUR"
+                                                                        For="@(() => subscription.PriceEUR)"
+                                                                        Adornment="Adornment.Start"
+                                                                        AdornmentText="€"
+                                                                        Required="true"
+                                                                        RequiredError="Price is required"
+                                                                        Min="0" />
+                                                        <MudTooltip Text="A Stripe price will be created if the price is greater than 0.">
+                                                            <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" />
+                                                        </MudTooltip>
+                                                    </MudItem>
+                                                    <MudItem xs="12">
+                                                        <MudButton Variant="Variant.Filled" Color="Color.Error"
+                                                                StartIcon="@Icons.Material.Filled.Delete"
+                                                                OnClick="@(() => ConfirmDeleteSubscription(sessionType, subscription.Id))">
+                                                            Delete Subscription
+                                                        </MudButton>
+                                                    </MudItem>
+                                                </MudGrid>
+                                            </MudForm>
+                                        </MudCardContent>
+                                    </MudCard>
+                                }
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                        StartIcon="@Icons.Material.Filled.Add"
+                                        OnClick="@(() => AddNewSubscription(sessionType))"
+                                        Class="mb-4"
+                                        Disabled="@(subscriptionPrices[sessionType].Count >= MAX_SUBSCRIPTIONS)">
+                                    Add New Subscription
+                                </MudButton>
+                                @if (subscriptionPrices[sessionType].Count >= MAX_SUBSCRIPTIONS)
+                                {
+                                    <MudText Color="Color.Error">Maximum of @MAX_SUBSCRIPTIONS subscriptions reached.</MudText>
+                                }
+                            </MudItem>
+
+                            <!-- Save Button -->
+                            <MudItem xs="12">
+                                <MudButton Variant="Variant.Filled"
+                                        Color="Color.Primary"
+                                        OnClick="@(() => SavePrices(sessionType))"
+                                        Class="mt-4">
+                                    Save
+                                </MudButton>
+                            </MudItem>
+                        </MudGrid>
+                    </MudTabPanel>
+                }
+            </MudTabs>
         </MudTabPanel>
-
-        <MudTabPanel Text="Session Packs">
-            <MudText Typo="Typo.h5" Class="mb-3">Manage Session Pack Definitions</MudText>
-
-            <MudTable Items="@sessionPackDefinitions" Hover="true">
-                <HeaderContent>
-                    <MudTh>Name</MudTh>
-                    <MudTh>Description</MudTh>
-                    <MudTh>Total Sessions</MudTh>
-                    <MudTh>Price (EUR)</MudTh>
-                    <MudTh></MudTh>
-                </HeaderContent>
-                <RowTemplate>
-                    <MudTd><MudTextField @bind-Value="context.Name" /></MudTd>
-                    <MudTd><MudTextField @bind-Value="context.Description" /></MudTd>
-                    <MudTd><MudNumericField T="int" @bind-Value="context.TotalSessions" /></MudTd>
-                    <MudTd><MudNumericField T="decimal" @bind-Value="context.PriceEUR" Adornment="Adornment.Start" AdornmentText="€" /></MudTd>
-                    <MudTd>
-                        <MudButton OnClick="() => SavePackDefinition(context)">Save</MudButton>
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => DeletePackDefinition(context.Id)" />
-                    </MudTd>
-                </RowTemplate>
-            </MudTable>
-
-            <MudButton Class="mt-3" OnClick="AddNewPackDefinition" Variant="Variant.Filled" Color="Color.Secondary">
-                Add New Pack
-            </MudButton>
-        </MudTabPanel>
-
-        <MudTabPanel Text="Subscription Plans">
-            <MudText Typo="Typo.h5" Class="mb-3">Manage Subscription Plans</MudText>
-
-            <MudTable Items="@subscriptionPlans" Hover="true">
-                <HeaderContent>
-                    <MudTh>Name</MudTh>
-                    <MudTh>Monthly Limit</MudTh>
-                    <MudTh>Price (EUR)</MudTh>
-                    <MudTh>Stripe ID</MudTh>
-                    <MudTh></MudTh>
-                </HeaderContent>
-                <RowTemplate>
-                    <MudTd>
-                        <MudTextField @bind-Value="context.Name" />
-                    </MudTd>
-                    <MudTd>
-                        <MudNumericField T="int" @bind-Value="context.MonthlySessionLimit" />
-                    </MudTd>
-                    <MudTd>
-                        <MudNumericField T="decimal" @bind-Value="context.PriceEUR" Adornment="Adornment.Start" AdornmentText="€" />
-                    </MudTd>
-                    <MudTd>
-                        <MudTextField @bind-Value="context.StripePriceId" />
-                    </MudTd>
-                    <MudTd>
-                        <MudButton Color="Color.Primary" OnClick="() => SavePlan(context)">Save</MudButton>
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => DeletePlan(context.Id)" />
-                    </MudTd>
-                </RowTemplate>
-            </MudTable>
-
-            <MudButton Class="mt-3" Variant="Variant.Filled" Color="Color.Secondary" OnClick="AddNewPlan">
-                Add New Plan
-            </MudButton>
-        </MudTabPanel>
-
     </MudTabs>
 </section>
 
 @code {
     private string pageTitle = "Admin Dashboard | Ítala Veloso";
-    private string adminName;
+    private string adminName = "Admin";
     private List<Session> nextSessions = new();
-    private AuthenticationState authState;
-    private List<Session> sessions;
-    private List<EmailSubscription> emailSubscriptions;
+    private List<Session> sessions = new();
+    private List<EmailSubscription> emailSubscriptions = new();
     private MudDataGrid<EmailSubscription> emailSubscriptionGrid;
     private MudCalendar calendar;
     private List<CalendarItem> calendarItems = new();
     private MudForm _busyForm;
-
-    private string loginError = string.Empty;
-    private string searchContactsString {get; set;}
-    private string searchEmailSubscriptionsString {get; set;}
+    private string searchContactsString = string.Empty;
+    private string searchEmailSubscriptionsString = string.Empty;
 
     private Func<Session, bool> quickFilterSessions => c =>
         string.IsNullOrEmpty(searchContactsString) ||
@@ -351,75 +417,118 @@
 
     private UnavailableTime _newUnavailableTime = new();
     private List<UnavailableTime> _adminUnavailableTimes = new();
-    private List<SessionPrice> sessionPrices = new();
-    private List<SessionPackDefinition> sessionPackDefinitions = new();
-    private List<SubscriptionPlan> subscriptionPlans = new();
+    private Dictionary<SessionType, MudForm> singleForms = new();
+    private Dictionary<(SessionType, int), MudForm> packForms = new();
+    private Dictionary<(SessionType, int), MudForm> subscriptionForms = new();
+    private Dictionary<SessionType, SessionPrice> singlePrices = new();
+    private Dictionary<SessionType, List<SessionPackPrice>> packPrices = new();
+    private Dictionary<SessionType, List<SubscriptionPrice>> subscriptionPrices = new();
+    private const int MAX_PACKS = 10;
+    private const int MAX_SUBSCRIPTIONS = 10;
 
     protected override async Task OnInitializedAsync()
     {
-        authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-        var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-
-        if (user.Identity is not null && user.Identity.IsAuthenticated)
+        try
         {
-            var identityUser = await UserManager.FindByNameAsync(user.Identity.Name);
-            adminName = identityUser?.UserName ?? "Admin";
-        }
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                var identityUser = await UserManager.FindByNameAsync(user.Identity.Name);
+                adminName = identityUser?.UserName ?? "Admin";
+            }
 
-        sessions = await SessionService.GetAllSessionsAsync() ?? new List<Session>();
-        emailSubscriptions = EmailSubscriptionService.GetAllEmailSubscriptions() ?? new List<EmailSubscription>();
-        calendarItems = sessions.Select(c => new CalendarItem
-        {
-            Start = c.PreferredDateTime,
-            End = c.PreferredDateTime.AddMinutes(45),
-            Text = $"{c.FullName} - {c.SessionCategory}"
-        }).ToList();
-        _adminUnavailableTimes = (await UnavailableTimeService.GetAllUnavailableTimesAsync()).ToList();
+            sessions = await SessionService.GetAllSessionsAsync() ?? new();
+            emailSubscriptions = EmailSubscriptionService.GetAllEmailSubscriptions() ?? new();
+            calendarItems = sessions.Select(c => new CalendarItem
+            {
+                Start = c.PreferredDateTime,
+                End = c.PreferredDateTime.AddMinutes(45),
+                Text = $"{c.FullName} - {c.SessionCategory}"
+            }).ToList();
+            _adminUnavailableTimes = (await UnavailableTimeService.GetAllUnavailableTimesAsync()).ToList();
 
-        nextSessions = sessions
+            nextSessions = sessions
                 .Where(s => s.CreatedAt >= DateTime.UtcNow)
                 .ToList();
 
-        sessionPrices = await SessionPriceService.GetAllAsync();
-        sessionPackDefinitions = await SessionPackDefinitionService.GetAllAsync();
-        subscriptionPlans = await SubscriptionPlanService.GetAllAsync();
+            foreach (var sessionType in Enum.GetValues(typeof(SessionType)).Cast<SessionType>())
+            {
+                singlePrices[sessionType] = await SessionPriceService.GetPriceForSessionTypeAsync(sessionType) 
+                    ?? new SessionPrice
+                    {
+                        SessionType = sessionType,
+                        PriceEUR = 0,
+                        LastUpdated = DateTime.UtcNow
+                    };
+                packPrices[sessionType] = (await SessionPackPriceService.GetPricesForSessionTypeAsync(sessionType))?.ToList() ?? new();
+                subscriptionPrices[sessionType] = (await SubscriptionPriceService.GetPricesForSessionTypeAsync(sessionType))?.ToList() ?? new();
 
-        StateHasChanged();
+                singleForms[sessionType] = new MudForm();
+                foreach (var pack in packPrices[sessionType])
+                {
+                    packForms[(sessionType, pack.Id)] = new MudForm();
+                }
+                foreach (var subscription in subscriptionPrices[sessionType])
+                {
+                    subscriptionForms[(sessionType, subscription.Id)] = new MudForm();
+                }
+            }
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error initializing dashboard: {ex.Message}", Severity.Error);
+        }
     }
 
     private async Task OnSessionClicked(CalendarItem item)
     {
-        var session = sessions.FirstOrDefault(s => 
-            s.PreferredDateTime == item.Start && 
-            item.Text.Contains(s.FullName));
-
-        if (session == null)
-            return;
-
-        var parameters = new DialogParameters
+        try
         {
-            { "Session", session }
-        };
+            var session = sessions.FirstOrDefault(s => 
+                s.PreferredDateTime == item.Start && 
+                item.Text.Contains(s.FullName));
 
-        var options = new DialogOptions 
-        { 
-            CloseButton = true, 
-            MaxWidth = MaxWidth.Medium, 
-            FullWidth = true 
-        };
+            if (session == null)
+                return;
 
-        await DialogService.ShowAsync<SessionDialog>("Session Details", parameters, options);
+            var parameters = new DialogParameters
+            {
+                { "Session", session }
+            };
+
+            var options = new DialogOptions 
+            { 
+                CloseButton = true, 
+                MaxWidth = MaxWidth.Medium, 
+                FullWidth = true 
+            };
+
+            await DialogService.ShowAsync<SessionDialog>("Session Details", parameters, options);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error opening session details: {ex.Message}", Severity.Error);
+        }
     }
 
     private async Task HandleAddUnavailability()
     {
-        await _busyForm.Validate();
+        try
+        {
+            await _busyForm.Validate();
+            if (!_busyForm.IsValid)
+                return;
 
-        if (!_busyForm.IsValid)
-            return;
-
-        await AddUnavailability();
+            await AddUnavailability();
+            Snackbar.Add("Unavailable time added successfully.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error adding unavailable time: {ex.Message}", Severity.Error);
+        }
     }
 
     private async Task AddUnavailability()
@@ -433,10 +542,9 @@
             await UnavailableTimeService.UpdateUnavailableTimeAsync(_newUnavailableTime);
         }
 
-        _newUnavailableTime = new(); // reset
+        _newUnavailableTime = new();
         _adminUnavailableTimes = (await UnavailableTimeService.GetAllUnavailableTimesAsync()).ToList();
     }
-
 
     private void StartEditUnavailability(UnavailableTime time)
     {
@@ -450,214 +558,326 @@
         };
     }
 
-    private async Task DeleteUnavailableTime(int id)
-    {
-        await UnavailableTimeService.DeleteUnavailableTimeAsync(id);
-        _adminUnavailableTimes = (await UnavailableTimeService.GetAllUnavailableTimesAsync()).ToList();
-    }
-
-    private IEnumerable<SessionType> GetAvailableSessionTypes(SessionPrice current)
-    {
-        var usedTypes = sessionPrices
-            .Where(p => p != current)
-            .Select(p => p.SessionType)
-            .ToHashSet();
-
-        return Enum.GetValues<SessionType>()
-            .Where(t => !usedTypes.Contains(t));
-    }
-
-    private async Task SavePrice(SessionPrice price)
-    {
-        try
-        {
-            await SessionPriceService.AddOrUpdateAsync(price);
-            Snackbar.Add("Price saved successfully!", Severity.Success);
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Error saving price.", Severity.Error);
-        }
-    }
-
-    private async Task DeletePrice(int id)
-    {
-        try
-        {
-            await SessionPriceService.DeleteAsync(id);
-            sessionPrices = await SessionPriceService.GetAllAsync();
-            Snackbar.Add("Price deleted.", Severity.Info);
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Error deleting price.", Severity.Error);
-        }
-    }
-
-    private void AddNewPrice()
-    {
-        var available = GetAvailableSessionTypes(null).ToList();
-
-        if (available.Any())
-        {
-            sessionPrices.Add(new SessionPrice
-            {
-                SessionType = available.First(),
-                PriceEUR = 0
-            });
-            Snackbar.Add("New session price added. Don’t forget to save!", Severity.Info);
-        }
-        else
-        {
-            Snackbar.Add("All session types already have prices configured.", Severity.Warning);
-        }
-    }
-
-    private Task OpenEmailDialogAsync()
+    private async Task ConfirmDeleteUnavailableTime(int id)
     {
         var parameters = new DialogParameters
         {
-            { "RecipientEmails", emailSubscriptionGrid.SelectedItems.Select(e => e.Email).ToList() }
+            { "ContentText", "Are you sure you want to delete this unavailable time?" },
+            { "ButtonText", "Delete" },
+            { "Color", Color.Error }
         };
 
-        var options = new DialogOptions 
-        { 
-            CloseButton = true,
-            CloseOnEscapeKey = true, 
-            MaxWidth = MaxWidth.Large, 
-            FullWidth = true
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Confirm Delete", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await DeleteUnavailableTime(id);
+        }
+    }
+
+    private async Task DeleteUnavailableTime(int id)
+    {
+        try
+        {
+            await UnavailableTimeService.DeleteUnavailableTimeAsync(id);
+            _adminUnavailableTimes = (await UnavailableTimeService.GetAllUnavailableTimesAsync()).ToList();
+            Snackbar.Add("Unavailable time deleted successfully.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error deleting unavailable time: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task AddNewSessionPack(SessionType sessionType)
+    {
+        try
+        {
+            if (packPrices[sessionType].Count >= MAX_PACKS)
+            {
+                Snackbar.Add($"Maximum number of session packs ({MAX_PACKS}) reached.", Severity.Error);
+                return;
+            }
+
+            var newPack = new SessionPackPrice
+            {
+                SessionType = sessionType,
+                Name = $"{sessionType.GetDisplayName()} Pack {packPrices[sessionType].Count + 1}",
+                Description = string.Empty,
+                TotalSessions = 5,
+                PriceEUR = 0,
+                LastUpdated = DateTime.UtcNow
+            };
+
+            await SessionPackPriceService.AddOrUpdateAsync(newPack);
+            packPrices[sessionType] = (await SessionPackPriceService.GetPricesForSessionTypeAsync(sessionType)).ToList();
+            packForms[(sessionType, newPack.Id)] = new MudForm();
+            Snackbar.Add("New session pack added.", Severity.Success);
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error adding session pack: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task AddNewSubscription(SessionType sessionType)
+    {
+        try
+        {
+            if (subscriptionPrices[sessionType].Count >= MAX_SUBSCRIPTIONS)
+            {
+                Snackbar.Add($"Maximum number of subscriptions ({MAX_SUBSCRIPTIONS}) reached.", Severity.Error);
+                return;
+            }
+
+            var newSubscription = new SubscriptionPrice
+            {
+                SessionType = sessionType,
+                Name = $"{sessionType.GetDisplayName()} Subscription {subscriptionPrices[sessionType].Count + 1}",
+                Description = string.Empty,
+                MonthlyLimit = 4,
+                PriceEUR = 0,
+                StripePriceId = null,
+                LastUpdated = DateTime.UtcNow
+            };
+
+            await SubscriptionPriceService.AddOrUpdateAsync(newSubscription);
+            subscriptionPrices[sessionType] = (await SubscriptionPriceService.GetPricesForSessionTypeAsync(sessionType)).ToList();
+            subscriptionForms[(sessionType, newSubscription.Id)] = new MudForm();
+            Snackbar.Add("New subscription added.", Severity.Success);
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error adding subscription: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task ConfirmDeleteSessionPack(SessionType sessionType, int packId)
+    {
+        var parameters = new DialogParameters
+        {
+            { "ContentText", "Are you sure you want to delete this session pack? This action cannot be undone." },
+            { "ButtonText", "Delete" },
+            { "Color", Color.Error }
         };
 
-        return DialogService.ShowAsync<SendEmailDialog>("Compose Email", parameters, options);
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Confirm Delete", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await DeleteSessionPack(sessionType, packId);
+        }
+    }
+
+    private async Task DeleteSessionPack(SessionType sessionType, int packId)
+    {
+        try
+        {
+            await SessionPackPriceService.DeleteAsync(packId);
+            packPrices[sessionType] = (await SessionPackPriceService.GetPricesForSessionTypeAsync(sessionType)).ToList();
+            packForms.Remove((sessionType, packId));
+            Snackbar.Add("Session pack deleted successfully.", Severity.Success);
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error deleting session pack: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task ConfirmDeleteSubscription(SessionType sessionType, int subscriptionId)
+    {
+        var parameters = new DialogParameters
+        {
+            { "ContentText", "Are you sure you want to delete this subscription? This will archive the associated Stripe price." },
+            { "ButtonText", "Delete" },
+            { "Color", Color.Error }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Confirm Delete", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await DeleteSubscription(sessionType, subscriptionId);
+        }
+    }
+
+    private async Task DeleteSubscription(SessionType sessionType, int subscriptionId)
+    {
+        try
+        {
+            await SubscriptionPriceService.DeleteAsync(subscriptionId);
+            subscriptionPrices[sessionType] = (await SubscriptionPriceService.GetPricesForSessionTypeAsync(sessionType)).ToList();
+            subscriptionForms.Remove((sessionType, subscriptionId));
+            Snackbar.Add("Subscription deleted successfully.", Severity.Success);
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error deleting subscription: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task SavePrices(SessionType sessionType)
+    {
+        try
+        {
+            await singleForms[sessionType].Validate();
+            foreach (var pack in packPrices[sessionType])
+            {
+                await packForms[(sessionType, pack.Id)].Validate();
+            }
+            foreach (var subscription in subscriptionPrices[sessionType])
+            {
+                await subscriptionForms[(sessionType, subscription.Id)].Validate();
+            }
+
+            if (!singleForms[sessionType].IsValid || 
+                packForms.Any(f => f.Key.Item1 == sessionType && !f.Value.IsValid) ||
+                subscriptionForms.Any(f => f.Key.Item1 == sessionType && !f.Value.IsValid))
+            {
+                Snackbar.Add("Please correct the errors in the form.", Severity.Error);
+                return;
+            }
+
+            singlePrices[sessionType].LastUpdated = DateTime.UtcNow;
+            await SessionPriceService.AddOrUpdateAsync(singlePrices[sessionType]);
+
+            foreach (var pack in packPrices[sessionType])
+            {
+                pack.LastUpdated = DateTime.UtcNow;
+                await SessionPackPriceService.AddOrUpdateAsync(pack);
+            }
+
+            foreach (var subscription in subscriptionPrices[sessionType])
+            {
+                subscription.LastUpdated = DateTime.UtcNow;
+                await SubscriptionPriceService.AddOrUpdateAsync(subscription);
+            }
+
+            Snackbar.Add($"Prices for {sessionType.GetDisplayName()} saved successfully.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error saving prices: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task OpenEmailDialogAsync()
+    {
+        try
+        {
+            var parameters = new DialogParameters
+            {
+                { "RecipientEmails", emailSubscriptionGrid.SelectedItems.Select(e => e.Email).ToList() }
+            };
+
+            var options = new DialogOptions 
+            { 
+                CloseButton = true,
+                CloseOnEscapeKey = true, 
+                MaxWidth = MaxWidth.Large, 
+                FullWidth = true 
+            };
+
+            var dialog = await DialogService.ShowAsync<SendEmailDialog>("Compose Email", parameters, options);
+            await dialog.Result;
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error opening email dialog: {ex.Message}", Severity.Error);
+        }
     }
 
     private async Task ExportContactsToExcel()
     {
-        using var workbook = new ClosedXML.Excel.XLWorkbook();
-        var worksheet = workbook.Worksheets.Add("Contacts");
-
-        worksheet.Cell(1, 1).Value = "Id";
-        worksheet.Cell(1, 2).Value = "FullName";
-        worksheet.Cell(1, 3).Value = "Email";
-        worksheet.Cell(1, 4).Value = "Session";
-        worksheet.Cell(1, 5).Value = "Message";
-        worksheet.Cell(1, 6).Value = "CreatedAt";
-
-        var filteredSessions = sessions.Where(quickFilterSessions).ToList();
-
-        for (int i = 0; i < filteredSessions.Count; i++)
+        try
         {
-            var contact = filteredSessions[i];
-            worksheet.Cell(i + 2, 1).Value = contact.Id;
-            worksheet.Cell(i + 2, 2).Value = contact.FullName;
-            worksheet.Cell(i + 2, 3).Value = contact.Email;
-            worksheet.Cell(i + 2, 4).Value = contact.SessionCategory.ToString();
-            worksheet.Cell(i + 2, 5).Value = contact.Message;
-            worksheet.Cell(i + 2, 6).Value = contact.CreatedAt.ToString("dd-MM-yyyy HH:mm:ss");
+            using var workbook = new ClosedXML.Excel.XLWorkbook();
+            var worksheet = workbook.Worksheets.Add("Contacts");
+
+            worksheet.Cell(1, 1).Value = "Id";
+            worksheet.Cell(1, 2).Value = "FullName";
+            worksheet.Cell(1, 3).Value = "Email";
+            worksheet.Cell(1, 4).Value = "Session";
+            worksheet.Cell(1, 5).Value = "Message";
+            worksheet.Cell(1, 6).Value = "CreatedAt";
+
+            var filteredSessions = sessions.Where(quickFilterSessions).ToList();
+
+            for (int i = 0; i < filteredSessions.Count; i++)
+            {
+                var contact = filteredSessions[i];
+                worksheet.Cell(i + 2, 1).Value = contact.Id;
+                worksheet.Cell(i + 2, 2).Value = contact.FullName;
+                worksheet.Cell(i + 2, 3).Value = contact.Email;
+                worksheet.Cell(i + 2, 4).Value = contact.SessionCategory.ToString();
+                worksheet.Cell(i + 2, 5).Value = contact.Message;
+                worksheet.Cell(i + 2, 6).Value = contact.CreatedAt.ToString("dd-MM-yyyy HH:mm:ss");
+            }
+
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+            stream.Seek(0, SeekOrigin.Begin);
+
+            var fileName = $"Contacts_{DateTime.Now:yyyyMMddHHmmss}.xlsx";
+            await JSRuntime.InvokeVoidAsync("saveAsFile", fileName, Convert.ToBase64String(stream.ToArray()));
+            Snackbar.Add("Contacts exported successfully.", Severity.Success);
         }
-
-        using var stream = new MemoryStream();
-        workbook.SaveAs(stream);
-        stream.Seek(0, SeekOrigin.Begin);
-
-        var fileName = $"Contacts_{DateTime.Now:yyyyMMddHHmmss}.xlsx";
-        await JSRuntime.InvokeVoidAsync("saveAsFile", fileName, Convert.ToBase64String(stream.ToArray()));
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error exporting contacts: {ex.Message}", Severity.Error);
+        }
     }
 
     private async Task ExportEmailSubscriptionsToExcel()
     {
-        using var workbook = new ClosedXML.Excel.XLWorkbook();
-        var worksheet = workbook.Worksheets.Add("EmailSubscriptions");
-
-        worksheet.Cell(1, 1).Value = "Id";
-        worksheet.Cell(1, 2).Value = "Name";
-        worksheet.Cell(1, 3).Value = "Email";
-        worksheet.Cell(1, 4).Value = "IsSubscribed";
-        worksheet.Cell(1, 5).Value = "SubscribedAt";
-        worksheet.Cell(1, 6).Value = "UnsubscribedAt";
-        worksheet.Cell(1, 7).Value = "CreatedAt";
-
-        var filteredEmailSubscriptions = emailSubscriptions.Where(quickFilterEmailSubscriptions).ToList();
-
-        for (int i = 0; i < filteredEmailSubscriptions.Count; i++)
+        try
         {
-            var subscription = filteredEmailSubscriptions[i];
-            worksheet.Cell(i + 2, 1).Value = subscription.Id;
-            worksheet.Cell(i + 2, 2).Value = subscription.Name;
-            worksheet.Cell(i + 2, 3).Value = subscription.Email;
-            worksheet.Cell(i + 2, 4).Value = subscription.IsSubscribed ? "Yes" : "No";
-            worksheet.Cell(i + 2, 5).Value = subscription.SubscribedAt.ToString("dd-MM-yyyy HH:mm:ss") ?? "N/A";
-            worksheet.Cell(i + 2, 6).Value = subscription.UnsubscribedAt?.ToString("dd-MM-yyyy HH:mm:ss") ?? "N/A";
-            worksheet.Cell(i + 2, 7).Value = subscription.CreatedAt.ToString("dd-MM-yyyy HH:mm:ss");
+            using var workbook = new ClosedXML.Excel.XLWorkbook();
+            var worksheet = workbook.Worksheets.Add("EmailSubscriptions");
+
+            worksheet.Cell(1, 1).Value = "Id";
+            worksheet.Cell(1, 2).Value = "Name";
+            worksheet.Cell(1, 3).Value = "Email";
+            worksheet.Cell(1, 4).Value = "IsSubscribed";
+            worksheet.Cell(1, 5).Value = "SubscribedAt";
+            worksheet.Cell(1, 6).Value = "UnsubscribedAt";
+            worksheet.Cell(1, 7).Value = "CreatedAt";
+
+            var filteredEmailSubscriptions = emailSubscriptions.Where(quickFilterEmailSubscriptions).ToList();
+
+            for (int i = 0; i < filteredEmailSubscriptions.Count; i++)
+            {
+                var subscription = filteredEmailSubscriptions[i];
+                worksheet.Cell(i + 2, 1).Value = subscription.Id;
+                worksheet.Cell(i + 2, 2).Value = subscription.Name;
+                worksheet.Cell(i + 2, 3).Value = subscription.Email;
+                worksheet.Cell(i + 2, 4).Value = subscription.IsSubscribed ? "Yes" : "No";
+                worksheet.Cell(i + 2, 5).Value = subscription.SubscribedAt.ToString("dd-MM-yyyy HH:mm:ss") ?? "N/A";
+                worksheet.Cell(i + 2, 6).Value = subscription.UnsubscribedAt?.ToString("dd-MM-yyyy HH:mm:ss") ?? "N/A";
+                worksheet.Cell(i + 2, 7).Value = subscription.CreatedAt.ToString("dd-MM-yyyy HH:mm:ss");
+            }
+
+            using var stream = new MemoryStream();
+            workbook.SaveAs(stream);
+            stream.Seek(0, SeekOrigin.Begin);
+
+            var fileName = $"EmailSubscriptions_{DateTime.Now:yyyyMMddHHmmss}.xlsx";
+            await JSRuntime.InvokeVoidAsync("saveAsFile", fileName, Convert.ToBase64String(stream.ToArray()));
+            Snackbar.Add("Email subscriptions exported successfully.", Severity.Success);
         }
-
-        using var stream = new MemoryStream();
-        workbook.SaveAs(stream);
-        stream.Seek(0, SeekOrigin.Begin);
-
-        var fileName = $"EmailSubscriptions_{DateTime.Now:yyyyMMddHHmmss}.xlsx";
-        await JSRuntime.InvokeVoidAsync("saveAsFile", fileName, Convert.ToBase64String(stream.ToArray()));
-    }
-
-    private void AddNewPackDefinition()
-    {
-        sessionPackDefinitions.Add(new SessionPackDefinition
+        catch (Exception ex)
         {
-            Name = "New Pack",
-            Description = "Enter description...",
-            TotalSessions = 5,
-            PriceEUR = 0
-        });
-
-        Snackbar.Add("New session pack definition added. Don’t forget to save!", Severity.Info);
-    }
-
-    private async Task SavePackDefinition(SessionPackDefinition pack)
-    {
-        if (pack.Id == 0)
-        {
-            await SessionPackDefinitionService.CreateAsync(pack);
-            Snackbar.Add("Session pack definition created.", Severity.Success);
+            Snackbar.Add($"Error exporting email subscriptions: {ex.Message}", Severity.Error);
         }
-        else
-        {
-            await SessionPackDefinitionService.UpdateAsync(pack);
-            Snackbar.Add("Session pack definition updated.", Severity.Success);
-        }
-
-        sessionPackDefinitions = await SessionPackDefinitionService.GetAllAsync();
-    }
-
-    private async Task DeletePackDefinition(int id)
-    {
-        await SessionPackDefinitionService.DeleteAsync(id);
-        sessionPackDefinitions = await SessionPackDefinitionService.GetAllAsync();
-        Snackbar.Add("Session pack definition deleted.", Severity.Info);
-    }
-
-    private async Task SavePlan(SubscriptionPlan plan)
-    {
-        await SubscriptionPlanService.AddOrUpdateAsync(plan);
-        Snackbar.Add("Subscription plan saved.", Severity.Success);
-        subscriptionPlans = await SubscriptionPlanService.GetAllAsync();
-    }
-
-    private async Task DeletePlan(int id)
-    {
-        await SubscriptionPlanService.DeleteAsync(id);
-        subscriptionPlans = await SubscriptionPlanService.GetAllAsync();
-        Snackbar.Add("Subscription plan deleted.", Severity.Info);
-    }
-
-    private void AddNewPlan()
-    {
-        subscriptionPlans.Add(new SubscriptionPlan
-        {
-            Name = "New Plan",
-            MonthlySessionLimit = 4,
-            PriceEUR = 0,
-            StripePriceId = ""
-        });
-        Snackbar.Add("New plan added. Don’t forget to save!", Severity.Info);
     }
 }

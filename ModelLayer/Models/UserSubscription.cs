@@ -9,6 +9,8 @@ namespace ModelLayer.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         public string UserId { get; set; } = string.Empty;
+        public int PriceId { get; set; }
+        public SubscriptionPrice Price { get; set; }
         public int SubscriptionPlanId { get; set; }
         public SubscriptionPlan? Plan { get; set; }
         public string StripeSubscriptionId { get; set; } = string.Empty;

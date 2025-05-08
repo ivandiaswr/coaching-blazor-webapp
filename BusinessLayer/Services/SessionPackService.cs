@@ -1,7 +1,6 @@
 using BusinessLayer.Services.Interfaces;
 using DataAccessLayer;
 using Microsoft.EntityFrameworkCore;
-using ModelLayer;
 using ModelLayer.Models;
 
 namespace BusinessLayer.Services
@@ -60,7 +59,7 @@ namespace BusinessLayer.Services
                     .FirstOrDefaultAsync();
             }
 
-            if (pack == null)
+            if (pack == null || pack.Price == null)
                 return false;
 
             pack.SessionsRemaining--;
@@ -89,6 +88,7 @@ namespace BusinessLayer.Services
         public async Task RestoreSession(string userId)
         {
             var userPack = await _context.SessionPacks
+                .Include(p => p.Price)
                 .Where(p => p.UserId == userId)
                 .OrderByDescending(p => p.PurchasedAt)
                 .FirstOrDefaultAsync();

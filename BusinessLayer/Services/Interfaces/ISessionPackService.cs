@@ -1,4 +1,4 @@
-using ModelLayer;
+using ModelLayer.Models;
 
 namespace BusinessLayer.Services.Interfaces
 {

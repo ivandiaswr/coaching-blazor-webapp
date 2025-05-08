@@ -91,6 +91,8 @@ builder.Services.AddScoped<ILogService, LogService>();
 builder.Services.AddScoped<IChatService, OpenRouterChatService>();
 builder.Services.AddScoped<IPaymentService, StripeService>();
 builder.Services.AddScoped<ISessionPriceService, SessionPriceService>();
+builder.Services.AddScoped<ISessionPackPriceService, SessionPackPriceService>();
+builder.Services.AddScoped<ISubscriptionPriceService, SubscriptionPriceService>();
 builder.Services.AddScoped<ISessionPackDefinitionService, SessionPackDefinitionService>();
 builder.Services.AddScoped<ISessionPackService, SessionPackService>();
 builder.Services.AddScoped<ISubscriptionPlanService, SubscriptionPlanService>();

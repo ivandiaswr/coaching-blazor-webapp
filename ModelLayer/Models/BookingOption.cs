@@ -13,5 +13,7 @@ namespace ModelLayer.Models
         public bool RequiresPurchase { get; set; } = false;
         public string? PlanId { get; set; }
         public int? PackId { get; set; }
+        public int? TotalSessions { get; set; }
+        public int? MonthlyLimit { get; set; }
     }
 }

@@ -44,13 +44,14 @@
 @inject ILogService LogService
 @inject IChatService ChatService
 @inject ISessionPriceService SessionPriceService
+@inject ISessionPackPriceService SessionPackPriceService
+@inject ISubscriptionPriceService SubscriptionPriceService
 @inject ISessionPackDefinitionService SessionPackDefinitionService
 @inject ISessionPackService SessionPackService
 @inject ISubscriptionPlanService SubscriptionPlanService
 @inject IUserSubscriptionService UserSubscriptionService
 @inject IPaymentService StripeService
+@inject IDialogService DialogService
 
 @using Stripe
 @inject IConfiguration Configuration
-
-@* @using Microsoft.EntityFrameworkCore *@

@@ -174,13 +174,25 @@
                                 };
 
                                 <MudCard Class="@($"option-card selected {typeClass} mb-4")">
-                                    <MudCardContent>
+                                   <MudCardContent>
                                         <MudText Typo="Typo.h6">@SelectedOption.Title</MudText>
                                         <MudText Typo="Typo.body2">@SelectedOption.Description</MudText>
                                         @if (SelectedOption.PriceEUR.HasValue && SelectedOption.RequiresPurchase)
                                         {
-                                            <MudText Typo="Typo.subtitle2" Color="Color.Primary">@SelectedOption.PriceEUR€</MudText>
-                                        } else {
+                                            <MudText Typo="Typo.subtitle2" Color="Color.Primary">
+                                                @SelectedOption.PriceEUR€ 
+                                                @if (SelectedOption.Type == BookingType.SessionPack && SelectedOption.TotalSessions.HasValue)
+                                                {
+                                                    <span>(@SelectedOption.TotalSessions sessions)</span>
+                                                }
+                                                else if (SelectedOption.Type == BookingType.Subscription && SelectedOption.MonthlyLimit.HasValue)
+                                                {
+                                                    <span>(@SelectedOption.MonthlyLimit sessions/month)</span>
+                                                }
+                                            </MudText>
+                                        }
+                                        else
+                                        {
                                             <MudText T="string" Color="Color.Success" aria-setsize="Size.Small">No payment required.</MudText>
                                         }
                                         <MudText Typo="Typo.caption" Color="Color.Info">Booking Option: <b>@SelectedOption.Type.GetDisplayName()</b></MudText>
@@ -249,22 +261,6 @@
             </MudGrid>
         </MudPaper>
     </MudTabPanel>
-
-    @* <MudTabPanel Text="Calendar" Icon="@Icons.Material.Filled.Event">
-        <MudPaper Class="upcoming-calendar-wrapper" Elevation="0">
-            <MudCalendar T="CalendarItem"
-                         Items="@calendarItems"
-                         Date="@DateTime.Today"
-                         View="CalendarView.Week"
-                         FirstDayOfWeek="DayOfWeek.Monday"
-                         StartHour="10"
-                         EndHour="21"
-                         SlotDuration="00:45:00"
-                         ShowTodayButton="true"
-                         ItemClicked="HandleCalendarClick"
-                         Class="mud-calendar-event" />
-        </MudPaper>
-    </MudTabPanel> *@
 
     <MudTabPanel Text="Sessions" Icon="@Icons.Material.Filled.ListAlt">
         <MudPaper class="sessions-wrapper" Elevation="0">
@@ -439,7 +435,6 @@
     </a>
 </div>
 
-
 @code {
     private string pageTitle = "User Dashboard | Ítala Veloso";
     private int selectedTab = 0;
@@ -493,8 +488,6 @@
     private List<BookingOption> BookingOptions = new();
     private BookingOption? SelectedOption = null;
 
-    [Inject] public IDialogService DialogService { get; set; } = default!;
-
     private IEnumerable<VideoSession> FilteredSessions => allSessions
         .Where(session =>
             (selectedFilter == "Upcoming" && session.ScheduledAt >= DateTime.UtcNow) ||
@@ -526,16 +519,14 @@
         catch (Exception ex)
         {
             await LogService.LogError("LoadFullName Error", ex.Message);
-            userFullName = "Guest"; // Fallback on error
+            userFullName = "Guest";
             Snackbar.Add("Failed to load user information. Using default greeting.", Severity.Warning);
         }
 
         await LoadSessions();
 
-        // Get subscription status
         await RefreshSubscriptionStatus();
 
-        // Get pack status
         remainingPackSessions = await SessionPackService.GetRemainingSessions(userId);
         hasValidPack = remainingPackSessions > 0;
 
@@ -583,7 +574,7 @@
             if (success)
             {
                 await RefreshSubscriptionStatus();
-                await LoadBookingOptions(); // Refresh booking options to reflect cancellation
+                await LoadBookingOptions();
                 Snackbar.Add("Subscription canceled successfully. You can use remaining sessions until the billing period ends.", Severity.Success);
             }
             else
@@ -606,64 +597,73 @@
     {
         BookingOptions.Clear();
 
-        var sessionPrice = await SessionPriceService.GetPriceForSessionTypeAsync(requestModel.SessionCategory);
-
-        BookingOptions.Add(new BookingOption
-        {
-            Id = Guid.NewGuid().ToString(),
-            Title = $"{requestModel.SessionCategory.GetDisplayName()}",
-            Description = "Book a one-time session without a subscription or pack.",
-            PriceEUR = sessionPrice?.PriceEUR,
-            Type = BookingType.SingleSession,
-            IsAvailable = sessionPrice != null,
-            RequiresPurchase = true
-        });
-
-        var subscriptionPlans = await SubscriptionPlanService.GetAllAsync();
-        foreach (var plan in subscriptionPlans)
+        var singleSessionPrice = await SessionPriceService.GetPriceForSessionTypeAsync(requestModel.SessionCategory);
+        if (singleSessionPrice != null)
         {
             BookingOptions.Add(new BookingOption
             {
                 Id = Guid.NewGuid().ToString(),
-                Title = plan.Name,
-                Description = plan.Description ?? "Monthly subscription plan.",
-                PriceEUR = plan.PriceEUR,
-                Type = BookingType.Subscription,
-                PlanId = plan.Id.ToString(),
+                Title = $"Single Session ({requestModel.SessionCategory.GetDisplayName()})",
+                Description = "Book a one-time session without a subscription or pack.",
+                PriceEUR = singleSessionPrice.PriceEUR,
+                Type = BookingType.SingleSession,
                 IsAvailable = true,
                 RequiresPurchase = true
             });
         }
 
-        var packDefinitions = await SessionPackDefinitionService.GetAllAsync();
-        foreach (var def in packDefinitions)
+        var packPrices = await SessionPackPriceService.GetPricesForSessionTypeAsync(requestModel.SessionCategory);
+        if (packPrices != null)
         {
-            BookingOptions.Add(new BookingOption
+            foreach (var packPrice in packPrices)
             {
-                Id = Guid.NewGuid().ToString(),
-                Title = def.Name,
-                Description = def.Description ?? $"{def.TotalSessions} sessions pack.",
-                PriceEUR = def.PriceEUR,
-                Type = BookingType.SessionPack,
-                PlanId = def.Id.ToString(),
-                IsAvailable = true,
-                RequiresPurchase = true
-            });
+                BookingOptions.Add(new BookingOption
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Title = packPrice.Name,
+                    Description = packPrice.Description ?? $"Includes {packPrice.TotalSessions} sessions.",
+                    PriceEUR = packPrice.PriceEUR,
+                    Type = BookingType.SessionPack,
+                    TotalSessions = packPrice.TotalSessions,
+                    IsAvailable = true,
+                    RequiresPurchase = true,
+                    PlanId = packPrice.Id.ToString()
+                });
+            }
+        }
+
+        var subscriptionPrices = await SubscriptionPriceService.GetPricesForSessionTypeAsync(requestModel.SessionCategory);
+        if (subscriptionPrices != null)
+        {
+            foreach (var subscriptionPrice in subscriptionPrices)
+            {
+                BookingOptions.Add(new BookingOption
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Title = subscriptionPrice.Name,
+                    Description = subscriptionPrice.Description ?? $"Up to {subscriptionPrice.MonthlyLimit} sessions per month.",
+                    PriceEUR = subscriptionPrice.PriceEUR,
+                    Type = BookingType.Subscription,
+                    MonthlyLimit = subscriptionPrice.MonthlyLimit,
+                    IsAvailable = true,
+                    RequiresPurchase = true,
+                    PlanId = subscriptionPrice.Id.ToString()
+                });
+            }
         }
 
         var userPacks = await SessionPackService.GetUserPacksAsync(userId);
         foreach (var pack in userPacks.Where(p => p.SessionsRemaining > 0))
         {
-            var def = packDefinitions.FirstOrDefault(d => d.Id == pack.DefinitionId);
-            if (def != null)
+            var price = pack.Price;
+            if (price != null)
             {
                 var option = new BookingOption
                 {
                     Id = Guid.NewGuid().ToString(),
-                    Title = $"Use {def.Name}",
+                    Title = $"Use {price.Name}",
                     Description = $"You have {pack.SessionsRemaining} sessions left.",
                     Type = BookingType.SessionPack,
-                    PlanId = def.Id.ToString(),
                     PackId = pack.Id,
                     IsAvailable = true,
                     RequiresPurchase = false
@@ -681,16 +681,15 @@
         var status = await UserSubscriptionService.GetStatusAsync(userId);
         if (status.HasActiveSubscription)
         {
-            var plan = subscriptionPlans.FirstOrDefault(p => p.Id.ToString() == status.PlanId);
-            if (plan != null)
+            var subscription = await UserSubscriptionService.GetActiveSubscriptionAsync(userId);
+            if (subscription?.Price != null)
             {
                 var option = new BookingOption
                 {
                     Id = Guid.NewGuid().ToString(),
-                    Title = $"Use {plan.Name}",
-                    Description = $"You’ve used {status.SessionsUsed} of {status.MonthlyLimit}.",
+                    Title = $"Use {subscription.Price.Name}",
+                    Description = $"You’ve used {status.SessionsUsed} of {status.MonthlyLimit} sessions this month.",
                     Type = BookingType.Subscription,
-                    PlanId = plan.Id.ToString(),
                     IsAvailable = status.Remaining > 0,
                     RequiresPurchase = false
                 };
@@ -721,40 +720,109 @@
     {
         requestModel.SessionCategory = newSessionType;
 
-        var sessionPrice = await SessionPriceService.GetPriceForSessionTypeAsync(newSessionType);
-        var existing = BookingOptions.FirstOrDefault(o => o.Type == BookingType.SingleSession && o.RequiresPurchase);
+        var singleSessionPrice = await SessionPriceService.GetPriceForSessionTypeAsync(newSessionType);
+        var packPrices = await SessionPackPriceService.GetPricesForSessionTypeAsync(newSessionType);
+        var subscriptionPrices = await SubscriptionPriceService.GetPricesForSessionTypeAsync(newSessionType);
 
-        var newOption = new BookingOption
+        if (singleSessionPrice == null)
         {
-            Id = existing?.Id ?? Guid.NewGuid().ToString(),
+            await LogService.LogError("HandleSessionTypeChange", $"No single session price available for {newSessionType.GetDisplayName()}");
+            Snackbar.Add($"No single session price available for {newSessionType.GetDisplayName()}. Please select another session type.", Severity.Warning);
+            return;
+        }
+
+        // Update Single Session
+        var existingSingle = BookingOptions.FirstOrDefault(o => o.Type == BookingType.SingleSession && o.RequiresPurchase);
+        var newSingleOption = new BookingOption
+        {
+            Id = existingSingle?.Id ?? Guid.NewGuid().ToString(),
             Title = $"Single Session ({newSessionType.GetDisplayName()})",
             Description = "Book a one-time session without a subscription or pack.",
-            PriceEUR = sessionPrice?.PriceEUR ?? 0,
+            PriceEUR = singleSessionPrice.PriceEUR,
             Type = BookingType.SingleSession,
-            IsAvailable = sessionPrice != null,
+            IsAvailable = true,
             RequiresPurchase = true
         };
-
-        if (existing != null)
+        if (existingSingle != null)
         {
-            var index = BookingOptions.IndexOf(existing);
-            BookingOptions[index] = newOption;
+            BookingOptions[BookingOptions.IndexOf(existingSingle)] = newSingleOption;
         }
         else
         {
-            BookingOptions.Insert(0, newOption);
+            BookingOptions.Insert(0, newSingleOption);
         }
 
+        // Update Session Packs
+        var existingPacks = BookingOptions.Where(o => o.Type == BookingType.SessionPack && o.RequiresPurchase).ToList();
+        foreach (var existingPack in existingPacks)
+        {
+            BookingOptions.Remove(existingPack);
+        }
+        if (packPrices != null)
+        {
+            foreach (var packPrice in packPrices)
+            {
+                BookingOptions.Add(new BookingOption
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Title = packPrice.Name,
+                    Description = packPrice.Description ?? $"Includes {packPrice.TotalSessions} sessions.",
+                    PriceEUR = packPrice.PriceEUR,
+                    Type = BookingType.SessionPack,
+                    TotalSessions = packPrice.TotalSessions,
+                    IsAvailable = true,
+                    RequiresPurchase = true,
+                    PlanId = packPrice.Id.ToString()
+                });
+            }
+        }
+
+        // Update Subscriptions
+        var existingSubscriptions = BookingOptions.Where(o => o.Type == BookingType.Subscription && o.RequiresPurchase).ToList();
+        foreach (var existingSubscription in existingSubscriptions)
+        {
+            BookingOptions.Remove(existingSubscription);
+        }
+        if (subscriptionPrices != null)
+        {
+            foreach (var subscriptionPrice in subscriptionPrices)
+            {
+                BookingOptions.Add(new BookingOption
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Title = subscriptionPrice.Name,
+                    Description = subscriptionPrice.Description ?? $"Up to {subscriptionPrice.MonthlyLimit} sessions per month.",
+                    PriceEUR = subscriptionPrice.PriceEUR,
+                    Type = BookingType.Subscription,
+                    MonthlyLimit = subscriptionPrice.MonthlyLimit,
+                    IsAvailable = true,
+                    RequiresPurchase = true,
+                    PlanId = subscriptionPrice.Id.ToString()
+                });
+            }
+        }
+
+        // Update SelectedOption
         if (SelectedOption?.Type == BookingType.SingleSession)
         {
-            SelectedOption = newOption;
-            selectedBookingOption = newOption.Type;
+            SelectedOption = newSingleOption;
+            selectedBookingOption = newSingleOption.Type;
+        }
+        else if (SelectedOption?.Type == BookingType.SessionPack && SelectedOption.RequiresPurchase && packPrices != null && packPrices.Any())
+        {
+            SelectedOption = BookingOptions.FirstOrDefault(o => o.Type == BookingType.SessionPack && o.RequiresPurchase);
+            selectedBookingOption = SelectedOption?.Type ?? BookingType.SingleSession;
+        }
+        else if (SelectedOption?.Type == BookingType.Subscription && SelectedOption.RequiresPurchase && subscriptionPrices != null && subscriptionPrices.Any())
+        {
+            SelectedOption = BookingOptions.FirstOrDefault(o => o.Type == BookingType.Subscription && o.RequiresPurchase);
+            selectedBookingOption = SelectedOption?.Type ?? BookingType.SingleSession;
         }
 
-        BookingOptions = new List<BookingOption>(BookingOptions); // Only triggers UI update if the list reference changes
+        BookingOptions = new List<BookingOption>(BookingOptions);
         StateHasChanged();
     }
-    
+
     private async Task LoadSessions()
     {
         allSessions = await VideoCallService.GetSessionsForUserAsync(userId);

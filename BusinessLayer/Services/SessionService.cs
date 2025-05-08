@@ -14,7 +14,7 @@ public class SessionService : ISessionService
     private readonly IEmailSubscriptionService _emailSubscriptionService;
     private readonly ILogService _logService;
 
-    public SessionService(CoachingDbContext context, 
+    public SessionService(CoachingDbContext context,
         IHelperService helperService,
         IEmailSubscriptionService emailSubscriptionService,
         ILogService logService)

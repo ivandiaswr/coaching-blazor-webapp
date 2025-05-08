@@ -1,8 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using ModelLayer.Models;
 
-namespace ModelLayer
+namespace ModelLayer.Models
 {
     public class SessionPack
     {
@@ -14,7 +13,10 @@ namespace ModelLayer
         public DateTime PurchasedAt { get; set; }
         public DateTime? ExpiresAt { get; set; }
 
-        public int DefinitionId { get; set; }
-        public SessionPackDefinition Definition { get; set; }
+        // public int DefinitionId { get; set; }
+        // public SessionPackDefinition Definition { get; set; }
+
+        public int PriceId { get; set; }
+        public SessionPackPrice Price { get; set; }
     }
 }

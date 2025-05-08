@@ -1,11 +1,19 @@
 @page "/payment-cancelled"
+@inject ISnackbar Snackbar
+
 <MudSnackbarProvider />
 
-<MudText Typo="Typo.h5">Payment Cancelled</MudText>
-<MudText>Your payment was cancelled. You can try booking again.</MudText>
-<MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => NavigationManager.NavigateTo("/UserDashboard"))">
-    Return to Dashboard
-</MudButton>
+<PageTitle>Payment Cancelled | Ítala Veloso</PageTitle>
+
+<section id="payment-cancelled">
+    <div class="cancelled-card">
+        <MudText Typo="Typo.h5" Class="cancelled-title">Payment Cancelled</MudText>
+        <MudText Class="cancelled-message">Your payment was cancelled. You can try booking again.</MudText>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => NavigationManager.NavigateTo("/UserDashboard"))" Class="return-button">
+            Return to Dashboard
+        </MudButton>
+    </div>
+</section>
 
 @code {
     protected override void OnInitialized()

@@ -1,32 +1,39 @@
 @page "/payment-success"
+@rendermode InteractiveServer
+
 <MudSnackbarProvider />
 
-<MudPaper Class="pa-4" Elevation="1">
-    <MudText Typo="Typo.h5" Class="mb-4">Processing Payment</MudText>
-    @if (isLoading)
-    {
-        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
-        <MudText>Verifying your payment...</MudText>
-    }
-    else if (isSuccess)
-    {
-        <MudAlert Severity="Severity.Success" Variant="Variant.Filled" Class="mb-4">
-            Payment successful! Your session is confirmed.
-        </MudAlert>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ReturnToDashboard">
-            Return to Dashboard
-        </MudButton>
-    }
-    else
-    {
-        <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mb-4">
-            @errorMessage
-        </MudAlert>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ReturnToDashboard">
-            Return to Dashboard
-        </MudButton>
-    }
-</MudPaper>
+<section id="payment-status">
+    <div class="payment-box">
+        <MudPaper Elevation="1" Class="pa-6 d-flex flex-column align-center text-center">
+            <MudText Typo="Typo.h5" Class="mb-4">Processing Payment</MudText>
+
+            @if (isLoading)
+            {
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                <MudText Class="mt-2">Verifying your payment...</MudText>
+            }
+            else if (isSuccess)
+            {
+                <MudAlert Severity="Severity.Success" Variant="Variant.Filled" Class="mb-4">
+                    Payment successful! Your session is confirmed.
+                </MudAlert>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ReturnToDashboard">
+                    Return to Dashboard
+                </MudButton>
+            }
+            else
+            {
+                <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mb-4">
+                    @errorMessage
+                </MudAlert>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ReturnToDashboard">
+                    Return to Dashboard
+                </MudButton>
+            }
+        </MudPaper>
+    </div>
+</section>
 
 @code {
     [SupplyParameterFromQuery(Name = "sessionId")]

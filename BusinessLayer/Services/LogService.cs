@@ -1,3 +1,4 @@
+using BusinessLayer.Services.Interfaces;
 using DataAccessLayer;
 
 public class LogService : ILogService
@@ -9,14 +10,14 @@ public class LogService : ILogService
         this._context = context;
     }
 
-    public async Task LogInfo(string message)
+    public async Task LogInfo(string message, string exception) 
     {
-        await SaveLog("Information", message);
+        await SaveLog("Information", message, exception);
     }
 
-    public async Task LogWarning(string message)
+    public async Task LogWarning(string message, string exception) 
     {
-        await SaveLog("Warning", message);
+        await SaveLog("Warning", message, exception);
     }
 
     public async Task LogError(string message, string exception)
