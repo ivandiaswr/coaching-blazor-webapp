@@ -2,12 +2,10 @@
     document.querySelector('.nav-ul').classList.toggle('active');
   });
 
-// Scroll to top function
 window.scrollToTop = function () {
     console.log("scrollToTop called");
     requestAnimationFrame(() => {
         try {
-            // Reset MudBlazor component scroll positions
             const scrollableContainers = document.querySelectorAll('.mud-table-container, .mud-grid, .mud-tab-panel, main');
             scrollableContainers.forEach(container => {
                 container.scrollTop = 0;
@@ -23,7 +21,6 @@ window.scrollToTop = function () {
     });
 };
 
-// Scroll to fragment function
 window.scrollToFragment = function () {
     console.log("scrollToFragment called");
     const fragment = window.location.hash;
@@ -50,46 +47,31 @@ window.scrollToFragment = function () {
     }
 };
 
-// Initialize MutationObserver to detect DOM changes in <main>
+let lastUrl = window.location.href;
+
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("DOMContentLoaded: Initializing MutationObserver");
-    
-    const mainElement = document.querySelector('main');
-    if (!mainElement) {
-        console.error("Main element not found");
-        return;
-    }
-
-    // Create MutationObserver
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            if (mutation.type === 'childList' || mutation.type === 'subtree') {
-                console.log("DOM changed in main, triggering scroll");
-                setTimeout(() => {
-                    const fragment = window.location.hash;
-                    if (fragment) {
-                        window.scrollToFragment();
-                    } else {
-                        window.scrollToTop();
-                    }
-                }, 100); // Delay to ensure DOM is fully updated
-            }
-        });
-    });
-
-    // Observe changes to <main> and its subtree
-    observer.observe(mainElement, {
-        childList: true,
-        subtree: true
-    });
-
-    // Initial scroll on page load
     setTimeout(() => {
         const fragment = window.location.hash;
         if (fragment) {
             window.scrollToFragment();
         } else {
             window.scrollToTop();
+        }
+    }, 200);
+
+    setInterval(() => {
+        const currentUrl = window.location.href;
+        if (currentUrl !== lastUrl) {
+            console.log(`URL changed from ${lastUrl} to ${currentUrl}`);
+            lastUrl = currentUrl;
+            setTimeout(() => {
+                const fragment = window.location.hash;
+                if (fragment) {
+                    window.scrollToFragment();
+                } else {
+                    window.scrollToTop();
+                }
+            }, 200);
         }
     }, 100);
 });

@@ -32,6 +32,10 @@
     margin: 0 auto 3rem auto;
 }
 
+.text-red {
+    color: red;
+}
+
 /* Calendar */
 .mud-calendar {
     background-color: var(--primary-white) !important;
