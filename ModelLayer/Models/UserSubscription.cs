@@ -12,7 +12,6 @@ namespace ModelLayer.Models
         public int PriceId { get; set; }
         public SubscriptionPrice Price { get; set; }
         public int SubscriptionPlanId { get; set; }
-        public SubscriptionPlan? Plan { get; set; }
         public string StripeSubscriptionId { get; set; } = string.Empty;
         public DateTime StartedAt { get; set; }
         public bool IsActive { get; set; } = true;

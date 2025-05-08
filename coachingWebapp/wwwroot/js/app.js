@@ -2,64 +2,97 @@
     document.querySelector('.nav-ul').classList.toggle('active');
   });
 
-window.scrollToFragment = () => {
-    const hash = window.location.hash;
-    if (hash) {
-        const element = document.getElementById(hash.substring(1));
-        if (element) {
-            element.scrollIntoView({ behavior: 'smooth' });
+// Scroll to top function
+window.scrollToTop = function () {
+    console.log("scrollToTop called");
+    requestAnimationFrame(() => {
+        try {
+            // Reset MudBlazor component scroll positions
+            const scrollableContainers = document.querySelectorAll('.mud-table-container, .mud-grid, .mud-tab-panel, main');
+            scrollableContainers.forEach(container => {
+                container.scrollTop = 0;
+            });
+            window.scrollTo({
+                top: 0,
+                left: 0,
+                behavior: 'smooth'
+            });
+        } catch (error) {
+            console.error("Error in scrollToTop:", error);
         }
-    }
-}
+    });
+};
 
-// Call login and logout APIs through JS so the cookies are set on client side and not on server side
-window.login = function (loginModel) {
-    return fetch('/api/account/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(loginModel)
-    })
-    .then(response => {
-        if (response.ok) {
-            return response.json().then(data => {
-                if (data.role === "Admin") {
-                    window.location.href = "/AdminDashboard";
+// Scroll to fragment function
+window.scrollToFragment = function () {
+    console.log("scrollToFragment called");
+    const fragment = window.location.hash;
+    if (fragment) {
+        requestAnimationFrame(() => {
+            try {
+                const element = document.querySelector(fragment);
+                if (element) {
+                    element.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
                 } else {
-                    window.location.href = "/UserDashboard";
+                    console.warn(`Fragment ${fragment} not found in DOM, scrolling to top`);
+                    window.scrollToTop();
                 }
-                return { success: true };
-            });
-        } else {
-            return response.text().then(text => {
-                let errorMsg = "Login failed.";
-                try {
-                    const parsed = JSON.parse(text);
-                    errorMsg = parsed.detail || text;
-                } catch {
-                    errorMsg = text;
-                }
-                return { success: false, error: errorMsg };
-            });
-        }
-    });
+            } catch (error) {
+                console.error("Error in scrollToFragment:", error);
+            }
+        });
+    } else {
+        console.log("No fragment, scrolling to top");
+        window.scrollToTop();
+    }
 };
 
-window.logout = function () {
-    return fetch('/api/account/logout', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    }).then(response => {
-        if (response.ok) {
-            window.location.href = '/';
-        } else {
-            return response.text().then(text => {
-                return { success: false, error: text };
-            });
-        }
+// Initialize MutationObserver to detect DOM changes in <main>
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("DOMContentLoaded: Initializing MutationObserver");
+    
+    const mainElement = document.querySelector('main');
+    if (!mainElement) {
+        console.error("Main element not found");
+        return;
+    }
+
+    // Create MutationObserver
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.type === 'childList' || mutation.type === 'subtree') {
+                console.log("DOM changed in main, triggering scroll");
+                setTimeout(() => {
+                    const fragment = window.location.hash;
+                    if (fragment) {
+                        window.scrollToFragment();
+                    } else {
+                        window.scrollToTop();
+                    }
+                }, 100); // Delay to ensure DOM is fully updated
+            }
+        });
     });
-};
+
+    // Observe changes to <main> and its subtree
+    observer.observe(mainElement, {
+        childList: true,
+        subtree: true
+    });
+
+    // Initial scroll on page load
+    setTimeout(() => {
+        const fragment = window.location.hash;
+        if (fragment) {
+            window.scrollToFragment();
+        } else {
+            window.scrollToTop();
+        }
+    }, 100);
+});
 
 function setTitle(title) {
     document.title = title;
@@ -129,3 +162,54 @@ window.scrollCalendarToHour = function (elementId, hour) {
 
     el.scrollTop = hour * estimatedPixelsPerHour;
 };
+
+
+// Call login and logout APIs through JS so the cookies are set on client side and not on server side
+window.login = function (loginModel) {
+    return fetch('/api/account/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(loginModel)
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.json().then(data => {
+                if (data.role === "Admin") {
+                    window.location.href = "/AdminDashboard";
+                } else {
+                    window.location.href = "/UserDashboard";
+                }
+                return { success: true };
+            });
+        } else {
+            return response.text().then(text => {
+                let errorMsg = "Login failed.";
+                try {
+                    const parsed = JSON.parse(text);
+                    errorMsg = parsed.detail || text;
+                } catch {
+                    errorMsg = text;
+                }
+                return { success: false, error: errorMsg };
+            });
+        }
+    });
+};
+
+window.logout = function () {
+    return fetch('/api/account/logout', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    }).then(response => {
+        if (response.ok) {
+            window.location.href = '/';
+        } else {
+            return response.text().then(text => {
+                return { success: false, error: text };
+            });
+        }
+    });
+};
+

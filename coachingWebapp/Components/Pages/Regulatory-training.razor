@@ -42,7 +42,7 @@
 
 @code {
     private string pageTitle = "Food Regulatory Training | Ítala Veloso";
-     private List<Topic> Topics { get; set; } = new List<Topic>
+    private List<Topic> Topics { get; set; } = new List<Topic>
     {
         new Topic {
             Id = 1,
@@ -57,9 +57,4 @@
             AltText = "Nutrition and Health Claims "
         }
     };
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        await ScrollService.ScrollToTop();
-    }
 }

@@ -113,14 +113,6 @@
     private bool showGiftOffer = false;
     private GiftCategory giftCategory;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            await ScrollService.ScrollToTop();
-        }
-    }
-
     private async Task GetGiftBySubscribeNewsLetter()
     {
         Logger.LogInformation("GetGiftBySubscribeNewsLetter method called");

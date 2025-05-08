@@ -157,15 +157,6 @@
             }
         };
 
-    protected override void OnInitialized()
-    {
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        await ScrollService.ScrollToTop();
-    }
-
     private async Task ToggleVideo(int testimonialId)
     {
         try

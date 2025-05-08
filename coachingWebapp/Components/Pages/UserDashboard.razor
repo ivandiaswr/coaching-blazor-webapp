@@ -180,14 +180,14 @@
                                         @if (SelectedOption.PriceEUR.HasValue && SelectedOption.RequiresPurchase)
                                         {
                                             <MudText Typo="Typo.subtitle2" Color="Color.Primary">
-                                                @SelectedOption.PriceEUR€ 
+                                                <b>@SelectedOption.PriceEUR€ </b> 
                                                 @if (SelectedOption.Type == BookingType.SessionPack && SelectedOption.TotalSessions.HasValue)
                                                 {
-                                                    <span>(@SelectedOption.TotalSessions sessions)</span>
+                                                    <span><b>(@SelectedOption.TotalSessions sessions)</b></span>
                                                 }
                                                 else if (SelectedOption.Type == BookingType.Subscription && SelectedOption.MonthlyLimit.HasValue)
                                                 {
-                                                    <span>(@SelectedOption.MonthlyLimit sessions/month)</span>
+                                                    <span><b>(@SelectedOption.MonthlyLimit sessions/month)</b></span>
                                                 }
                                             </MudText>
                                         }
@@ -223,7 +223,7 @@
 
                             <MudTextField Label="Message" 
                                           T="string" 
-                                          Lines="3" 
+                                          Lines="5" 
                                           @bind-Value="requestModel.Message"
                                           For="@(() => requestModel.Message)"
                                           Required="true"
@@ -252,8 +252,8 @@
                             <MudButton OnClick="OpenConfirmationDialog" 
                                        Variant="Variant.Filled" 
                                        Color="Color.Primary"
-                                       Class="pt-4 pb-4 mt-5">
-                                Confirm Informations
+                                       Class="pt-5 pb-4 mt-5">
+                                Confirm Information
                             </MudButton>
                         </MudForm>
                     </div>

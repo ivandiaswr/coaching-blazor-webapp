@@ -378,18 +378,6 @@
             await JSRuntime.InvokeVoidAsync("setTitle", pageTitle);
             currentTimeZoneDisplay = await JSRuntime.InvokeAsync<string>("eval", "Intl.DateTimeFormat().resolvedOptions().timeZone");
         }
-
-        if (canScroll)
-        {
-            if (NavigationManager.Uri.Contains('#'))
-            {
-                await ScrollService.ScrollToFragment();
-            }
-            else
-            {
-                await ScrollService.ScrollToTop();
-            }
-        }
     }
 
     #region ContactMessage
