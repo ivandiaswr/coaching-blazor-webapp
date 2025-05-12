@@ -18,5 +18,5 @@ public class UnavailableTime
     [MaxLength(100)]
     public string Reason { get; set; } = "Unavailable";
 
-    public bool IsRecurring { get; set; } = false;
+    public bool IsRecurring { get; set; }
 }

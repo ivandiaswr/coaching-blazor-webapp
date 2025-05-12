@@ -141,7 +141,7 @@
         }
 
         var uri = NavigationManager.Uri.ToLower();
-        isHomePage = uri.EndsWith("/") || uri.Contains("account") || uri.Contains("session");
+        isHomePage = !uri.Contains("dashboard");
         isDashboardPage = uri.Contains("dashboard");
     }
 }

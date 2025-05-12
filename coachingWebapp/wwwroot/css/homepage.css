@@ -113,7 +113,7 @@ a {
 }
 
 a:hover {
-  color: white;
+  color: var(--accent-orange-hover);
 }
 
 .btn-primary {

@@ -256,6 +256,7 @@
                             <MudButton OnClick="OpenConfirmationDialog" 
                                        Variant="Variant.Filled" 
                                        Color="Color.Primary"
+                                       Style="font-size: 1.1rem;"
                                        Class="pt-5 pb-4 mt-5">
                                 Confirm Information
                             </MudButton>
@@ -430,7 +431,7 @@
 </MudTabs>
 
 <div style="position: fixed; bottom: 22px; right: 22px; z-index: 1000;">
-    <a href="https://wa.me/351912345678"
+    <a href="https://wa.me/351961914194"
        target="_blank"
        aria-label="Contact Ítala via WhatsApp"
        title="Need help? Contact me on WhatsApp"
@@ -529,7 +530,6 @@
         }
 
         await LoadSessions();
-
         await RefreshSubscriptionStatus();
 
         remainingPackSessions = await SessionPackService.GetRemainingSessions(userId);

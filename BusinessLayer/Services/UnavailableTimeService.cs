@@ -16,6 +16,8 @@ public class UnavailableTimeService : IUnavailableTimeService
         if (unavailableTime == null)
             throw new ArgumentNullException(nameof(unavailableTime));
 
+        unavailableTime.IsRecurring = true;
+        
         _context.UnavailableTimes.Add(unavailableTime);
         await _context.SaveChangesAsync();
         return unavailableTime;
@@ -40,9 +42,11 @@ public class UnavailableTimeService : IUnavailableTimeService
         if (existing == null)
             throw new KeyNotFoundException("UnavailableTime not found");
 
+        existing.Date = DateTime.Now;
+        existing.DayOfWeek = unavailableTime.DayOfWeek;
         existing.StartTime = unavailableTime.StartTime;
         existing.EndTime = unavailableTime.EndTime;
-        existing.Reason = unavailableTime.Reason;
+        existing.IsRecurring = true;
 
         _context.UnavailableTimes.Update(existing);
         await _context.SaveChangesAsync();

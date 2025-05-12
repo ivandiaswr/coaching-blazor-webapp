@@ -11,7 +11,7 @@
 <section id="adminDashboard">
     <div class="dashboard-header">
         <div>
-            <h1><span class="highlight">Admin</span> Dashboard</h1>  
+            <h1><span class="highlight">Admin</span> Dashboard</h1>
         
             <MudPaper Class="dashboard-welcome" Elevation="1">
                 <MudText Typo="Typo.h5" Class="welcome-title">
@@ -31,10 +31,12 @@
 
     <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
         <MudTabPanel Text="Calendar">
-            <MudText Typo="Typo.h4">Sessions</MudText>
-            <MudCalendar @ref="calendar" Items="@calendarItems" ItemClicked="OnSessionClicked" />
+            <MudCalendar @ref="calendar" 
+                        Items="@calendarItems" 
+                        ItemClicked="OnSessionClicked" 
+                        ShowTodayButton="true"/>
 
-            <MudText Class="mt-3 mb-3" Typo="Typo.h4">Busy Time</MudText>
+            <MudText Class="mt-5 mb-5" Typo="Typo.h4">Unavailable Time</MudText>
             <MudGrid Class="mt-2" Gutter="GutterSize.Small">
                 <MudItem xs="12" sm="6">
                     <MudCard Class="p-4">
@@ -53,24 +55,32 @@
                                     </MudItem>
 
                                     <MudItem xs="6" sm="6">
-                                        <MudTimePicker Label="Start time" Dense="true" @bind-Time="_newUnavailableTime.StartTime"
-                                                    Required="true" RequiredError="Start time is required" />
+                                        <MudTimePicker Label="Start time" 
+                                                    Dense="true" 
+                                                    @bind-Time="_newUnavailableTime.StartTime"
+                                                    Required="true" 
+                                                    RequiredError="Start time is required" />
                                     </MudItem>
 
                                     <MudItem xs="6" sm="6">
-                                        <MudTimePicker Label="End time" Dense="true" @bind-Time="_newUnavailableTime.EndTime"
-                                                    Required="true" RequiredError="End time is required" />
+                                        <MudTimePicker Label="End time" 
+                                                    Dense="true" 
+                                                    @bind-Time="_newUnavailableTime.EndTime"
+                                                    Required="true" 
+                                                    RequiredError="End time is required" />
                                     </MudItem>
 
-                                    <MudItem xs="12">
-                                        <MudCheckBox T="bool" Label="Recurring weekly" @bind-Checked="_newUnavailableTime.IsRecurring" />
-                                    </MudItem>
+                                    @* <MudItem xs="12" Key="@renderKey.ToString()">
+                                        <MudCheckBox T="bool" 
+                                                    Label="Recurring weekly" 
+                                                    @bind-Checked="_newUnavailableTime.IsRecurring" /><MudText>IsRecurring: @_newUnavailableTime.IsRecurring</MudText>
+                                    </MudItem> *@
 
                                     <MudItem xs="12">
                                         <MudButton Variant="Variant.Filled" Color="Color.Primary"
                                                 StartIcon="@Icons.Material.Filled.Add"
                                                 OnClick="HandleAddUnavailability">
-                                            Add
+                                            @(IsEditing ? "Update" : "Add")
                                         </MudButton>
                                     </MudItem>
                                 </MudGrid>
@@ -124,32 +134,61 @@
         </MudTabPanel>
 
         <MudTabPanel Text="Sessions">
-            <MudDataGrid T="Session" Items="@sessions" Breakpoint="Breakpoint.Sm" MultiSelection="true" SortMode="SortMode.Multiple" Filterable="true"
-                         Hideable="true" QuickFilter="@quickFilterSessions">
+            <MudDataGrid T="Session"
+                        Items="@sessions"
+                        Hover="true"
+                        Bordered="true"
+                        Breakpoint="Breakpoint.Sm" 
+                        MultiSelection="true" 
+                        SortMode="SortMode.Multiple" 
+                        Filterable="true"
+                        Hideable="true" 
+                        QuickFilter="@quickFilterSessions">
                 <ToolBarContent>
-                    <MudText Typo="Typo.h4">Contacts</MudText>
-                    <MudSpacer />
-                    <MudTextField @bind-Value="searchContactsString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"></MudTextField>
-                    <MudTooltip Text="Export to Excel">
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ExportContactsToExcel">
-                            <i class="fa-solid fa-file-csv"></i>
-                        </MudButton>
-                    </MudTooltip>
+                    <MudText Typo="Typo.h4">Sessions</MudText>
+                     <div class="d-flex align-center ml-auto gap-2">            
+                        <MudTooltip Text="Export to Excel">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ExportContactsToExcel">
+                                <i class="fa-solid fa-file-csv"></i>
+                            </MudButton>
+                        </MudTooltip>
+                        <MudTextField @bind-Value="searchContactsString" 
+                                    Placeholder="Search" 
+                                    Adornment="Adornment.Start" 
+                                    Immediate="true"
+                                    AdornmentIcon="@Icons.Material.Filled.Search" 
+                                    IconSize="Size.Medium">
+                        </MudTextField>
+                    </div>
                 </ToolBarContent>
                 <Columns>
                     <SelectColumn T="Session" />
                     <PropertyColumn Property="x => x.Id" Title="Id" Sortable="true" Filterable="false" />
                     <PropertyColumn Property="x => x.FullName" Title="Name" Sortable="true" Filterable="true" />
                     <PropertyColumn Property="x => x.Email" Title="Email" Sortable="false" Filterable="true" />
-                    <PropertyColumn Property="x => x.SessionCategory" Title="Session" Sortable="true" Filterable="true" />
+                    <PropertyColumn Property="x => x.SessionCategory.GetDisplayName()" Title="Category" Sortable="true" Filterable="true" />
                     <PropertyColumn Property="x => x.Message" Title="Message" Sortable="false" Filterable="true">
                         <CellTemplate>
-                            <div style="overflow-y: auto; max-height: 60px; max-width: 450px; white-space: normal; word-wrap: break-word; padding: 0; margin: 0;">
-                                @context.Item.Message
-                            </div>
+                            <MudTooltip Text="@context.Item.Message">
+                                <div style="max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    @context.Item.Message
+                                </div>
+                            </MudTooltip>
                         </CellTemplate>
                     </PropertyColumn>
+                    <PropertyColumn Property="x => x.IsPaid" Title="Paid" Sortable="true" Filterable="false">
+                        <CellTemplate>
+                            @if (context.Item.IsPaid)
+                            {
+                                <span class="text-success"><i class="fas fa-check-circle"></i> Yes</span>
+                            }
+                            else
+                            {
+                                <span class="text-danger"><i class="fas fa-times-circle"></i> No</span>
+                            }
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.PaidAt" Title="PaidAt" Sortable="true" Filterable="false" />
                     <PropertyColumn Property="x => x.CreatedAt" Title="CreatedAt" Sortable="true" Filterable="false">
                         <CellTemplate>
                             @context.Item.CreatedAt.ToString("dd-MM-yyyy HH:mm:ss")
@@ -163,22 +202,38 @@
         </MudTabPanel>
 
         <MudTabPanel Text="Email Subscriptions">
-            <MudDataGrid T="EmailSubscription" Items="@emailSubscriptions" MultiSelection="true" SortMode="SortMode.Multiple" Filterable="true"
-                         Hideable="true" QuickFilter="@quickFilterEmailSubscriptions" @ref="emailSubscriptionGrid">
+            <MudDataGrid T="EmailSubscription" 
+                        Items="@emailSubscriptions" 
+                        Hover="true"
+                        Bordered="true"
+                        MultiSelection="true" 
+                        SortMode="SortMode.Multiple" 
+                        Filterable="true"
+                        Hideable="true" 
+                        QuickFilter="@quickFilterEmailSubscriptions" 
+                        @ref="emailSubscriptionGrid">
                 <ToolBarContent>
                     <MudText Typo="Typo.h4">Email Subscriptions</MudText>
-                    <MudSpacer />
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="@(!emailSubscriptionGrid.SelectedItems.Any())" OnClick="OpenEmailDialogAsync">
-                        Send Email
-                    </MudButton>
-                    <MudSpacer />
-                    <MudTextField @bind-Value="searchEmailSubscriptionsString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"></MudTextField>
-                    <MudTooltip Text="Export to Excel">
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ExportEmailSubscriptionsToExcel">
-                            <i class="fa-solid fa-file-csv"></i>
-                        </MudButton>
-                    </MudTooltip>
+                    <div class="d-flex align-center ml-auto gap-2">
+                        <MudTooltip Text="Export to Excel">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ExportEmailSubscriptionsToExcel">
+                                <i class="fa-solid fa-file-csv"></i>
+                            </MudButton>
+                        </MudTooltip>
+                        <MudTooltip Text="Send Emails">
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                                    Disabled="@(!emailSubscriptionGrid.SelectedItems.Any())"
+                                    OnClick="OpenEmailDialogAsync">
+                                <i class="fa-regular fa-paper-plane"></i>
+                            </MudButton>
+                        </MudTooltip>
+                        <MudTextField @bind-Value="searchEmailSubscriptionsString"
+                                    Placeholder="Search"
+                                    Adornment="Adornment.Start"
+                                    Immediate="true"
+                                    AdornmentIcon="@Icons.Material.Filled.Search"
+                                    IconSize="Size.Medium" />
+                    </div>
                 </ToolBarContent>
                 <Columns>
                     <SelectColumn T="EmailSubscription" />
@@ -216,7 +271,6 @@
         </MudTabPanel>
 
         <MudTabPanel Text="Pricing Configuration">
-            <MudText Typo="Typo.h5" Class="mb-4">Pricing Configuration</MudText>
             <MudTabs Elevation="1" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-4">
                 @foreach (var sessionType in Enum.GetValues(typeof(SessionType)).Cast<SessionType>())
                 {
@@ -244,7 +298,6 @@
                                 </MudCard>
                             </MudItem>
 
-                            <!-- Session Packs -->
                             <MudItem xs="12">
                                 <MudText Typo="Typo.h6" Class="mb-2">@BookingType.SessionPack.GetDisplayName()</MudText>
                                 @foreach (var pack in packPrices[sessionType])
@@ -308,7 +361,6 @@
                                 }
                             </MudItem>
 
-                            <!-- Subscriptions -->
                             <MudItem xs="12">
                                 <MudText Typo="Typo.h6" Class="mb-2">@BookingType.Subscription.GetDisplayName()</MudText>
                                 @foreach (var subscription in subscriptionPrices[sessionType])
@@ -375,7 +427,6 @@
                                 }
                             </MudItem>
 
-                            <!-- Save Button -->
                             <MudItem xs="12">
                                 <MudButton Variant="Variant.Filled"
                                         Color="Color.Primary"
@@ -394,7 +445,7 @@
 
 @code {
     private string pageTitle = "Admin Dashboard | Ítala Veloso";
-    private string adminName = "Admin";
+    private string adminName = "Ítala";
     private List<Session> nextSessions = new();
     private List<Session> sessions = new();
     private List<EmailSubscription> emailSubscriptions = new();
@@ -402,6 +453,9 @@
     private MudCalendar calendar;
     private List<CalendarItem> calendarItems = new();
     private MudForm _busyForm;
+    private bool IsEditing => _newUnavailableTime.Id != 0;
+    private int renderKey;
+
     private string searchContactsString = string.Empty;
     private string searchEmailSubscriptionsString = string.Empty;
 
@@ -409,12 +463,14 @@
         string.IsNullOrEmpty(searchContactsString) ||
         c.FullName.Contains(searchContactsString, StringComparison.OrdinalIgnoreCase) ||
         c.Email.Contains(searchContactsString, StringComparison.OrdinalIgnoreCase) ||
+        c.SessionCategory.ToString().Contains(searchContactsString, StringComparison.OrdinalIgnoreCase) ||
         c.Message.Contains(searchContactsString, StringComparison.OrdinalIgnoreCase);
 
     private Func<EmailSubscription, bool> quickFilterEmailSubscriptions => e =>
         string.IsNullOrEmpty(searchEmailSubscriptionsString) ||
         e.Name.Contains(searchEmailSubscriptionsString, StringComparison.OrdinalIgnoreCase) ||
-        e.Email.Contains(searchEmailSubscriptionsString, StringComparison.OrdinalIgnoreCase);
+        e.Email.Contains(searchEmailSubscriptionsString, StringComparison.OrdinalIgnoreCase) ||
+        (e.IsSubscribed ? "yes" : "no").Contains(searchEmailSubscriptionsString, StringComparison.OrdinalIgnoreCase);
 
     private UnavailableTime _newUnavailableTime = new();
     private List<UnavailableTime> _adminUnavailableTimes = new();
@@ -424,8 +480,8 @@
     private Dictionary<SessionType, SessionPrice> singlePrices = new();
     private Dictionary<SessionType, List<SessionPackPrice>> packPrices = new();
     private Dictionary<SessionType, List<SubscriptionPrice>> subscriptionPrices = new();
-    private const int MAX_PACKS = 10;
-    private const int MAX_SUBSCRIPTIONS = 10;
+    private const int MAX_PACKS = 5;
+    private const int MAX_SUBSCRIPTIONS = 5;
 
     protected override async Task OnInitializedAsync()
     {
@@ -436,7 +492,7 @@
             if (user.Identity?.IsAuthenticated == true)
             {
                 var identityUser = await UserManager.FindByNameAsync(user.Identity.Name);
-                adminName = identityUser?.UserName ?? "Admin";
+                @* adminName = identityUser?.UserName ?? adminName; *@
             }
 
             sessions = await SessionService.GetAllSessionsAsync() ?? new();
@@ -445,17 +501,17 @@
             {
                 Start = c.PreferredDateTime,
                 End = c.PreferredDateTime.AddMinutes(45),
-                Text = $"{c.FullName} - {c.SessionCategory}"
+                Text = $"{c.FullName}: {c.SessionCategory.GetDisplayName().Replace("Coaching", "").Replace("Food", "").Trim()}",
             }).ToList();
             _adminUnavailableTimes = (await UnavailableTimeService.GetAllUnavailableTimesAsync()).ToList();
 
             nextSessions = sessions
-                .Where(s => s.CreatedAt >= DateTime.UtcNow)
+                .Where(s => s.PreferredDateTime >= DateTime.UtcNow)
                 .ToList();
 
             foreach (var sessionType in Enum.GetValues(typeof(SessionType)).Cast<SessionType>())
             {
-                singlePrices[sessionType] = await SessionPriceService.GetPriceForSessionTypeAsync(sessionType) 
+                singlePrices[sessionType] = await SessionPriceService.GetPriceForSessionTypeAsync(sessionType)
                     ?? new SessionPrice
                     {
                         SessionType = sessionType,
@@ -493,7 +549,10 @@
                 item.Text.Contains(s.FullName));
 
             if (session == null)
+            {
+                Snackbar.Add("Session not found.", Severity.Error);
                 return;
+            }
 
             var parameters = new DialogParameters
             {
@@ -515,7 +574,7 @@
         }
     }
 
-    private async Task HandleAddUnavailability()
+   private async Task HandleAddUnavailability()
     {
         try
         {
@@ -524,27 +583,56 @@
                 return;
 
             await AddUnavailability();
-            Snackbar.Add("Unavailable time added successfully.", Severity.Success);
+
+            Snackbar.Add($"Unavailable time {(IsEditing ? "updated" : "added")} successfully.", Severity.Success);
+
+            if (_busyForm != null)
+            {
+                _busyForm.ResetValidation();
+            }
+
+            _adminUnavailableTimes = (await UnavailableTimeService.GetAllUnavailableTimesAsync()).ToList();
+
+            renderKey++;
+            StateHasChanged();
+
+            _newUnavailableTime = new UnavailableTime();
+
+            renderKey++;
+            StateHasChanged();
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error adding unavailable time: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Error {(IsEditing ? "updating" : "adding")} unavailable time: {ex.Message}", Severity.Error);
         }
+    }
+
+    private void OnRecurringChanged(bool value)
+    {
+        _newUnavailableTime.IsRecurring = value;
+        StateHasChanged();
     }
 
     private async Task AddUnavailability()
     {
-        if (_newUnavailableTime.Id == 0)
+        
+        var unavailabilityToSave = new UnavailableTime
         {
-            await UnavailableTimeService.CreateUnavailableTimeAsync(_newUnavailableTime);
+            Id = _newUnavailableTime.Id,
+            DayOfWeek = _newUnavailableTime.DayOfWeek,
+            StartTime = _newUnavailableTime.StartTime,
+            EndTime = _newUnavailableTime.EndTime,
+            IsRecurring = _newUnavailableTime.IsRecurring
+        };
+
+        if (unavailabilityToSave.Id == 0)
+        {
+            await UnavailableTimeService.CreateUnavailableTimeAsync(unavailabilityToSave);
         }
         else
         {
-            await UnavailableTimeService.UpdateUnavailableTimeAsync(_newUnavailableTime);
+            await UnavailableTimeService.UpdateUnavailableTimeAsync(unavailabilityToSave);
         }
-
-        _newUnavailableTime = new();
-        _adminUnavailableTimes = (await UnavailableTimeService.GetAllUnavailableTimesAsync()).ToList();
     }
 
     private void StartEditUnavailability(UnavailableTime time)
@@ -557,6 +645,15 @@
             EndTime = time.EndTime,
             IsRecurring = time.IsRecurring
         };
+
+        if (_busyForm != null)
+        {
+            _busyForm.ResetValidation();
+        }
+
+        renderKey++;
+
+        StateHasChanged();
     }
 
     private async Task ConfirmDeleteUnavailableTime(int id)
@@ -790,7 +887,20 @@
             };
 
             var dialog = await DialogService.ShowAsync<SendEmailDialog>("Compose Email", parameters, options);
-            await dialog.Result;
+            var result = await dialog.Result;
+
+            if (!result.Canceled)
+            {
+                bool success = (bool)result.Data;
+                if (success)
+                {
+                    Snackbar.Add("Emails sent successfully!", Severity.Success);
+                }
+                else
+                {
+                    Snackbar.Add("Something went wrong while sending emails.", Severity.Error);
+                }
+            }
         }
         catch (Exception ex)
         {

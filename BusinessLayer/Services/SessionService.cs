@@ -148,6 +148,7 @@ public class SessionService : ISessionService
         {
             var sessions = await _context.Sessions
                             .Include(s => s.VideoSession)
+                            .OrderByDescending(o => o.CreatedAt)
                             .ToListAsync();
 
             return sessions;

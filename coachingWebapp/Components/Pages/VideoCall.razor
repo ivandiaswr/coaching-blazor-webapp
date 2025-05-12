@@ -56,7 +56,7 @@
                     @if (!isCallActive)
                     {
                         <div class="session-video-overlay">
-                            <span class="overlay-text pulsing">Waiting for Ítala...</span>
+                            <span class="overlay-text pulsing"> Waiting for @(!isAdmin ? "Ítala" : "Client")...</span>
                         </div>
                     }
                     else if (isCallActive && !isRemoteConnected)

@@ -7,13 +7,22 @@
         <MudTextField Label="Body" @bind-Value="EmailBody" Required="true" Lines="25" TextArea="true" />
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="SendEmails" Color="Color.Primary" Variant="Variant.Filled" Disabled="@IsSending">Send</MudButton>
-        <MudButton OnClick="Cancel" Variant="Variant.Text">Cancel</MudButton>
+        <MudButton OnClick="Close" Variant="Variant.Text">Cancel</MudButton>
+        <MudButton OnClick="SendEmails" Color="Color.Primary" Variant="Variant.Filled" Disabled="@IsSending">
+            @if (IsSending)
+            {
+                <MudProgressCircular Size="Size.Small" Color="Color.Inherit" Indeterminate="true" />
+            }
+            else
+            {
+                <span>Send</span>
+            }
+        </MudButton>
     </DialogActions>
 </MudDialog>
 
 @code {
-    [Parameter] public EventCallback<DialogResult> OnDialogResult { get; set; }
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
     [Parameter] public List<string> RecipientEmails { get; set; }
     private string EmailSubject { get; set; }
     private string EmailBody { get; set; }
@@ -26,12 +35,11 @@
         try
         {
             await EmailSubscriptionService.SendCustomEmailAsync(RecipientEmails, EmailSubject, EmailBody);
-            await OnDialogResult.InvokeAsync(DialogResult.Ok(true));        
+            MudDialog.Close(DialogResult.Ok(true));      
         }
         catch (Exception ex)
         {
-           Console.WriteLine($"Error sending email: {ex.Message}");
-            await OnDialogResult.InvokeAsync(DialogResult.Ok(false));
+            MudDialog.Close(DialogResult.Ok(false));   
         }
         finally
         {
@@ -39,5 +47,5 @@
         }
     }
 
-    private async Task Cancel() => await OnDialogResult.InvokeAsync(DialogResult.Cancel());
+    private void Close() => MudDialog.Close(DialogResult.Cancel());
 }

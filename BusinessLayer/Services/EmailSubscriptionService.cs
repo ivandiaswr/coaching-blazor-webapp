@@ -30,7 +30,9 @@ public class EmailSubscriptionService : IEmailSubscriptionService
     {
         try
         {
-            var emailSubscription = _context.EmailSubscriptions.ToList();
+            var emailSubscription = _context.EmailSubscriptions
+            .OrderByDescending(o => o.SubscribedAt)
+            .ToList();
 
             return emailSubscription;
         }
@@ -351,6 +353,37 @@ public class EmailSubscriptionService : IEmailSubscriptionService
         {
             await _logService.LogError("SendCustomEmailAsync", ex.Message);
             throw;
+        }
+    }
+
+    public async Task<bool> SendSimpleEmailAsync(string email, string subject, string htmlBody)
+    {
+        var smtpServer = _helperService.GetConfigValue("SmtpSettings:Server");
+        var smtpPort = int.Parse(_helperService.GetConfigValue("SmtpSettings:Port") ?? "587");
+        var smtpUsername = _helperService.GetConfigValue("SmtpSettings:Username");
+        var smtpPassword = _helperService.GetConfigValue("SmtpSettings:Password");
+
+        var message = new MimeMessage();
+        message.From.Add(new MailboxAddress("Ítala Veloso", smtpUsername));
+        message.To.Add(new MailboxAddress("", email));
+        message.Subject = subject;
+
+        var builder = new BodyBuilder { HtmlBody = htmlBody };
+        message.Body = builder.ToMessageBody();
+
+        try
+        {
+            using var client = new SmtpClient();
+            await client.ConnectAsync(smtpServer, smtpPort, SecureSocketOptions.StartTls);
+            await client.AuthenticateAsync(smtpUsername, smtpPassword);
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            await _logService.LogError("SendSimpleEmailAsync", ex.Message);
+            return false;
         }
     }
 }

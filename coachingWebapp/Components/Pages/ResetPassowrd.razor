@@ -1,0 +1,72 @@
+@page "/reset-password"
+
+<PageTitle>Reset Password</PageTitle>
+
+<h3>Reset your password</h3>
+
+@if (!string.IsNullOrEmpty(resultMessage))
+{
+    <div class="alert @alertClass mt-3">@resultMessage</div>
+}
+else
+{
+    <EditForm Model="@model" OnValidSubmit="HandleResetPassword" class="w-50" FormName="resetPasswordForm">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <input type="hidden" @bind="model.Email" />
+        <input type="hidden" @bind="model.Token" />
+
+        <div class="form-group">
+            <label>New Password</label>
+            <InputText @bind-Value="model.Password" type="password" class="form-control" placeholder="New password" />
+            <ValidationMessage For="@(() => model.Password)" />
+        </div>
+
+        <div class="form-group mt-2">
+            <label>Confirm Password</label>
+            <InputText @bind-Value="model.ConfirmPassword" type="password" class="form-control" placeholder="Confirm password" />
+            <ValidationMessage For="@(() => model.ConfirmPassword)" />
+        </div>
+
+        <button class="btn btn-success mt-3">Reset Password</button>
+    </EditForm>
+}
+
+@code {
+    private ResetPasswordModel model = new();
+    private string resultMessage = string.Empty;
+    private string alertClass = "alert-info";
+
+    [Parameter] public string? email { get; set; }
+    [Parameter] public string? token { get; set; }
+
+    protected override void OnInitialized()
+    {
+        model.Email = email ?? "";
+        model.Token = token ?? "";
+    }
+
+    private async Task HandleResetPassword()
+    {
+        var user = await UserManager.FindByEmailAsync(model.Email);
+        if (user == null)
+        {
+            resultMessage = "Invalid request.";
+            alertClass = "alert-danger";
+            return;
+        }
+
+        var result = await UserManager.ResetPasswordAsync(user, model.Token, model.Password);
+        if (result.Succeeded)
+        {
+            resultMessage = "Your password has been reset successfully. You can now log in.";
+            alertClass = "alert-success";
+        }
+        else
+        {
+            resultMessage = string.Join("; ", result.Errors.Select(e => e.Description));
+            alertClass = "alert-danger";
+        }
+    }
+}
