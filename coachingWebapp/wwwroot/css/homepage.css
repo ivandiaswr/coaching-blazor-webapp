@@ -345,6 +345,7 @@ h1:focus {
   cursor: pointer;
 }
 
+.nav-ul .dashboard-btn,
 .nav-ul .account-btn,
 .nav-ul .login-btn {
     display: inline-flex;
@@ -354,6 +355,10 @@ h1:focus {
     padding: 8px 12px;
     border-radius: 5px;
     font-weight: 600;
+}
+
+.nav-ul .dashboard-btn {
+  color: var(--accent-orange)
 }
 
 @media screen and (max-width: 1200px) {
@@ -883,6 +888,7 @@ h1:focus {
   background-color: var(--accent-orange-hover);
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+  color: #ffffff;
 }
 
 .cta-text {

@@ -1,0 +1,182 @@
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6" Class="dialog-title">
+            <MudIcon Icon="@Icons.Material.Filled.Event" Class="mr-2" Size="Size.Small" />
+            Session Details
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (VideoSession != null && VideoSession.Session != null)
+        {
+            <MudPaper Class="pa-4 session-details-card" Elevation="2">
+                <MudGrid Spacing="3" Class="session-details-grid">
+                    <MudItem xs="12" sm="6" Class="session-detail-item">
+                        <MudText Typo="Typo.caption" Color="Color.Primary">Session Category</MudText>
+                        <MudText Typo="Typo.body1">@VideoSession.Session.SessionCategory.GetDisplayName()</MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" Class="session-detail-item">
+                        <MudText Typo="Typo.caption" Color="Color.Primary">Scheduled At</MudText>
+                        <MudText Typo="Typo.body1">@VideoSession.ScheduledAt.ToString("dd MMM yyyy HH:mm")</MudText>
+                    </MudItem>
+                    <MudItem xs="12" Class="session-detail-item">
+                        <MudText Typo="Typo.caption" Color="Color.Primary">Message</MudText>
+                        <MudText Typo="Typo.body2" Class="mt-1">
+                            @(string.IsNullOrEmpty(VideoSession.Session.Message) ? "No message provided." : VideoSession.Session.Message)
+                        </MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" Class="session-detail-item">
+                        <MudText Typo="Typo.caption" Color="Color.Primary">Status</MudText>
+                        <MudText Typo="Typo.body1">
+                            @if (VideoSession.EndedAt.HasValue)
+                            {
+                                <MudChip T="string" Color="Color.Success" Size="Size.Small">Completed</MudChip>
+                            }
+                            else if (DateTime.UtcNow < VideoSession.ScheduledAt)
+                            {
+                                <MudChip T="string" Color="Color.Info" Size="Size.Small">Scheduled</MudChip>
+                            }
+                            else if (DateTime.UtcNow >= VideoSession.ScheduledAt && DateTime.UtcNow <= VideoSession.ScheduledAt.AddMinutes(45))
+                            {
+                                <MudChip T="string" Color="Color.Error" Size="Size.Small">Missed</MudChip>
+                            }
+                            else
+                            {
+                                <MudChip T="string" Color="Color.Warning" Size="Size.Small">Ended</MudChip>
+                            }
+                        </MudText>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+        }
+        else
+        {
+            <MudText Typo="Typo.body1" Class="pa-4 text-center">
+                No session information available.
+            </MudText>
+        }
+    </DialogContent>
+    <DialogActions>
+        @if (VideoSession != null)
+        {
+            <MudAlert Severity="@GetAlertSeverity()" Class="ma-3" Variant="Variant.Filled" Dense="true">
+                @GetSessionStatusMessage()
+            </MudAlert>
+        }
+        <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="Cancel">Close</MudButton>
+        @if (CanJoinSession)
+        {
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.VideoCall"
+                       Class="go-to-session-btn"
+                       OnClick="JoinSession"
+                       AriaLabel="Join session call">
+                Join Call
+            </MudButton>
+        }
+        else
+        {
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Secondary"
+                       StartIcon="@Icons.Material.Filled.Chat"
+                       Href="https://wa.me/351961914194"
+                       Target="_blank"
+                       Class="contact-support-btn"
+                       AriaLabel="Contact support">
+                Contact Support
+            </MudButton>
+        }
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    public IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public VideoSession VideoSession { get; set; }
+
+    private bool CanJoinSession
+    {
+        get
+        {
+            if (VideoSession == null || !VideoSession.IsActive)
+                return false;
+
+            var now = DateTime.UtcNow;
+            var sessionStart = VideoSession.ScheduledAt;
+            var sessionEnd = sessionStart.AddMinutes(45);
+            var joinWindowStart = sessionStart.AddMinutes(-10);
+
+            return !VideoSession.EndedAt.HasValue && now >= joinWindowStart && now <= sessionEnd;
+        }
+    }
+
+    private Severity GetAlertSeverity()
+    {
+        if (VideoSession == null)
+            return Severity.Error;
+
+        var now = DateTime.UtcNow;
+        var sessionStart = VideoSession.ScheduledAt;
+        var sessionEnd = sessionStart.AddMinutes(45);
+        var joinWindowStart = sessionStart.AddMinutes(-10);
+
+        if (now < joinWindowStart)
+            return Severity.Info;
+        if (now > sessionEnd || VideoSession.EndedAt.HasValue)
+            return Severity.Warning;
+        return CanJoinSession ? Severity.Success : Severity.Error;
+    }
+
+    private string GetSessionStatusMessage()
+    {
+        if (VideoSession == null)
+            return "No session selected.";
+
+        var now = DateTime.UtcNow;
+        var sessionStart = VideoSession.ScheduledAt;
+        var sessionEnd = sessionStart.AddMinutes(45);
+        var joinWindowStart = sessionStart.AddMinutes(-10);
+
+        if (now < joinWindowStart)
+            return $"This session is scheduled for {sessionStart:dd MMM yyyy HH:mm}. You can join 10 minutes before it starts.";
+        if (now > sessionEnd || VideoSession.EndedAt.HasValue)
+            return "This session has ended. Contact support for details or to reschedule.";
+        return CanJoinSession ? "Session is ready to join!" : "This session was missed. Contact support to reschedule.";
+    }
+
+    private void JoinSession()
+    {
+        if (VideoSession == null || string.IsNullOrEmpty(VideoSession.SessionId))
+        {
+            Snackbar.Add("No session selected.", Severity.Error);
+            return;
+        }
+
+        var now = DateTime.UtcNow;
+        var sessionStart = VideoSession.ScheduledAt;
+        var sessionEnd = sessionStart.AddMinutes(45);
+        var joinWindowStart = sessionStart.AddMinutes(-10);
+
+        if (now < joinWindowStart)
+        {
+            Snackbar.Add($"The session hasn’t started yet. Please try again at {joinWindowStart:HH:mm}.", Severity.Warning);
+            return;
+        }
+
+        if (now > sessionEnd || VideoSession.EndedAt.HasValue)
+        {
+            Snackbar.Add("This session has ended.", Severity.Error);
+            return;
+        }
+
+        NavigationManager.NavigateTo($"/session/{VideoSession.SessionId}");
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}

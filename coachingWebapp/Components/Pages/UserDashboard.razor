@@ -326,17 +326,27 @@
                     <MudTd>
                         @if (context.IsActive && !context.EndedAt.HasValue && DateTime.UtcNow >= context.ScheduledAt.AddMinutes(-10) && DateTime.UtcNow <= context.ScheduledAt.AddMinutes(45))
                         {
-                            <MudButton Size="Size.Small" OnClick="@(() => JoinSession(context.SessionId))" Color="Color.Primary" AriaLabel="Join session call">
-                                Join Call
-                            </MudButton>
+                            <MudTooltip Text="Join session call">
+                                <MudButton Size="Size.Small" OnClick="@(() => JoinSession(context.SessionId))" Color="Color.Primary">
+                                    Join Call
+                                </MudButton>
+                            </MudTooltip>
                         }
                         else if (DateTime.UtcNow > context.ScheduledAt.AddMinutes(45) || context.EndedAt.HasValue)
                         {
-                            <MudText AriaLabel="Session ended">-</MudText>
+                            <MudTooltip Text="View session details">
+                                <MudButton Size="Size.Small" OnClick="@(() => OpenSessionDialog(context))" Color="Color.Secondary" Class="p-2">
+                                    View Details
+                                </MudButton>
+                            </MudTooltip>
                         }
                         else if (DateTime.UtcNow >= context.ScheduledAt && DateTime.UtcNow <= context.ScheduledAt.AddMinutes(45))
                         {
-                            <MudText AriaLabel="Session missed">-</MudText>
+                            <MudTooltip Text="View session details">
+                                <MudButton Size="Size.Small" OnClick="@(() => OpenSessionDialog(context))" Color="Color.Error">
+                                    View Details
+                                </MudButton>
+                            </MudTooltip>
                         }
                         else if (DateTime.UtcNow < context.ScheduledAt.AddMinutes(-10))
                         {
@@ -1117,6 +1127,24 @@
             await LogService.LogError("SubmitSessionRequest", ex.Message);
             Snackbar.Add("An error occurred while scheduling the session. Please try again.", Severity.Error);
         }
+    }
+
+    private async Task OpenSessionDialog(VideoSession session)
+    {
+        var parameters = new DialogParameters
+        {
+            { "VideoSession", session }
+        };
+
+        var options = new DialogOptions
+        {
+            CloseButton = true,
+            CloseOnEscapeKey = true,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true
+        };
+
+        await DialogService.ShowAsync<UserSessionDialog>("Session Details", parameters, options);
     }
 
     private void JoinSession(string sessionId)
