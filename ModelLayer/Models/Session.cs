@@ -17,14 +17,14 @@ public class Session
     [EmailAddress(ErrorMessage = "Please provide a valid email address.")]
     public string Email { get; set; } = string.Empty;
     [Required(ErrorMessage = "Please select a session.")]
-    public SessionType SessionCategory { get; set; } 
+    public SessionType SessionCategory { get; set; }
     public DateTime PreferredDateTime { get; set; }
     [NotMapped]
     [Required(ErrorMessage = "Please select a date and time for your session.")]
     public string PreferredDateTimeString { get; set; } = string.Empty;
     [Required(ErrorMessage = "Let us know what you'd like to discuss in the session.")]
     public string Message { get; set; } = string.Empty;
-    public DateTime CreatedAt { get; set; } 
+    public DateTime CreatedAt { get; set; }
     public bool IsSessionBooking { get; set; }
     public bool DiscoveryCall { get; set; }
 
@@ -32,6 +32,9 @@ public class Session
     public bool IsPaid { get; set; } = false;
     public string? StripeSessionId { get; set; }
     public DateTime PaidAt { get; set; }
+
+    public string PackId { get; set; } // New: Link to SessionPack
+    public bool IsPending { get; set; }
 
     public VideoSession? VideoSession { get; set; }
 

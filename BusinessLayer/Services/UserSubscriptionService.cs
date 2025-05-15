@@ -28,17 +28,17 @@ public class UserSubscriptionService : IUserSubscriptionService
         StripeConfiguration.ApiKey = _helperService.GetConfigValue("Stripe:SecretKey");
     }
 
-    public async Task<bool> RegisterMonthlyUsage(string userId)
+    public async Task<bool> RegisterMonthlyUsage(string userId, string subscriptionId)
     {
         try
         {
             var subscription = await _context.UserSubscriptions
                 .Include(s => s.Price)
-                .FirstOrDefaultAsync(s => s.UserId == userId && s.IsActive);
+                .FirstOrDefaultAsync(s => s.UserId == userId && s.IsActive && s.StripeSubscriptionId == subscriptionId);
 
             if (subscription == null || subscription.Price == null)
             {
-                await _logService.LogError("RegisterMonthlyUsage", $"No active subscription found for user: {userId}");
+                await _logService.LogError("RegisterMonthlyUsage", $"No active subscription found for user: {userId}, SubscriptionId: {subscriptionId}");
                 return false;
             }
 
@@ -53,7 +53,7 @@ public class UserSubscriptionService : IUserSubscriptionService
 
             if (subscription.SessionsUsedThisMonth >= subscription.Price.MonthlyLimit)
             {
-                await _logService.LogInfo("RegisterMonthlyUsage", $"Monthly limit reached for user: {userId}");
+                await _logService.LogInfo("RegisterMonthlyUsage", $"Monthly limit reached for user: {userId}, SubscriptionId: {subscriptionId}");
                 return false;
             }
 
@@ -74,12 +74,18 @@ public class UserSubscriptionService : IUserSubscriptionService
             .AnyAsync(s => s.UserId == userId && s.IsActive);
     }
 
-    public async Task<int> GetRemainingSessionsThisMonth(string userId)
+    public async Task<int> GetRemainingSessionsThisMonth(string userId, string? subscriptionId = null)
     {
-        var subscription = await _context.UserSubscriptions
+        var query = _context.UserSubscriptions
             .Include(s => s.Price)
-            .FirstOrDefaultAsync(s => s.UserId == userId && s.IsActive);
+            .Where(s => s.UserId == userId && s.IsActive);
 
+        if (!string.IsNullOrEmpty(subscriptionId))
+        {
+            query = query.Where(s => s.StripeSubscriptionId == subscriptionId);
+        }
+
+        var subscription = await query.FirstOrDefaultAsync();
         if (subscription == null || subscription.Price == null)
             return 0;
 
@@ -95,24 +101,14 @@ public class UserSubscriptionService : IUserSubscriptionService
         return Math.Max(0, subscription.Price.MonthlyLimit - subscription.SessionsUsedThisMonth);
     }
 
-    public async Task<SubscriptionStatusDto> GetStatusAsync(string userId)
+    public async Task<Dictionary<SessionType, SubscriptionStatusDto>> GetStatusAsync(string userId)
     {
-        try
-        {
-            var subscription = await _context.UserSubscriptions
-                .Include(s => s.Price)
-                .FirstOrDefaultAsync(s => s.UserId == userId && s.IsActive);
+        var subscriptions = await GetActiveSubscriptionsAsync(userId);
+        var result = new Dictionary<SessionType, SubscriptionStatusDto>();
 
-            if (subscription == null || subscription.Price == null)
-            {
-                return new SubscriptionStatusDto
-                {
-                    HasActiveSubscription = false,
-                    MonthlyLimit = 0,
-                    SessionsUsed = 0,
-                    PlanId = null
-                };
-            }
+        foreach (var subscription in subscriptions)
+        {
+            if (subscription.Price == null) continue;
 
             var stripeService = new SubscriptionService();
             var stripeSubscription = await stripeService.GetAsync(subscription.StripeSubscriptionId);
@@ -122,18 +118,6 @@ public class UserSubscriptionService : IUserSubscriptionService
                 var firstItem = stripeSubscription.Items.Data[0];
                 subscription.CurrentPeriodStart = firstItem.CurrentPeriodStart;
                 subscription.CurrentPeriodEnd = firstItem.CurrentPeriodEnd;
-                await _context.SaveChangesAsync();
-            }
-            else
-            {
-                await _logService.LogError("GetStatusAsync", $"No items found for StripeSubscriptionId: {subscription.StripeSubscriptionId}");
-                return new SubscriptionStatusDto
-                {
-                    HasActiveSubscription = false,
-                    MonthlyLimit = 0,
-                    SessionsUsed = 0,
-                    PlanId = subscription.PriceId.ToString()
-                };
             }
 
             var now = DateTime.UtcNow;
@@ -142,14 +126,13 @@ public class UserSubscriptionService : IUserSubscriptionService
             {
                 subscription.SessionsUsedThisMonth = 0;
                 subscription.CurrentPeriodStart = startOfMonth;
-                await _context.SaveChangesAsync();
             }
 
             var monthlyLimit = subscription.Price.MonthlyLimit;
             var sessionsUsed = subscription.SessionsUsedThisMonth;
             var remaining = Math.Max(0, monthlyLimit - sessionsUsed);
 
-            return new SubscriptionStatusDto
+            result[subscription.Price.SessionType] = new SubscriptionStatusDto
             {
                 HasActiveSubscription = true,
                 MonthlyLimit = monthlyLimit,
@@ -157,18 +140,28 @@ public class UserSubscriptionService : IUserSubscriptionService
                 PlanId = subscription.PriceId.ToString()
             };
         }
-        catch (Exception ex)
+
+        await _context.SaveChangesAsync();
+
+        if (!result.Any())
         {
-            await _logService.LogError("GetStatusAsync Error", ex.Message);
-            throw;
+            result[SessionType.lifeCoaching] = new SubscriptionStatusDto
+            {
+                HasActiveSubscription = false,
+                MonthlyLimit = 0,
+                SessionsUsed = 0,
+                PlanId = null
+            };
         }
+
+        return result;
     }
 
-    public async Task RollbackMonthlyUsage(string userId)
+    public async Task RollbackMonthlyUsage(string userId, string subscriptionId)
     {
         var subscription = await _context.UserSubscriptions
             .Include(s => s.Price)
-            .FirstOrDefaultAsync(s => s.UserId == userId && s.IsActive);
+            .FirstOrDefaultAsync(s => s.UserId == userId && s.IsActive && s.StripeSubscriptionId == subscriptionId);
 
         if (subscription == null || subscription.Price == null)
             return;
@@ -180,24 +173,25 @@ public class UserSubscriptionService : IUserSubscriptionService
         }
     }
 
-    public async Task<UserSubscription?> GetActiveSubscriptionAsync(string userId)
+    public async Task<List<UserSubscription>> GetActiveSubscriptionsAsync(string userId)
     {
         return await _context.UserSubscriptions
             .Include(s => s.Price)
-            .FirstOrDefaultAsync(s => s.UserId == userId && s.IsActive);
+            .Where(s => s.UserId == userId && s.IsActive)
+            .ToListAsync();
     }
 
-    public async Task<bool> CancelSubscriptionAsync(string userId)
+    public async Task<bool> CancelSubscriptionAsync(string userId, string subscriptionId)
     {
         try
         {
             var subscription = await _context.UserSubscriptions
                 .Include(s => s.Price)
-                .FirstOrDefaultAsync(s => s.UserId == userId && s.IsActive);
+                .FirstOrDefaultAsync(s => s.UserId == userId && s.IsActive && s.StripeSubscriptionId == subscriptionId);
 
             if (subscription == null || subscription.Price == null)
             {
-                await _logService.LogError("CancelSubscriptionAsync", $"No active subscription found for user: {userId}");
+                await _logService.LogError("CancelSubscriptionAsync", $"No active subscription found for user: {userId}, SubscriptionId: {subscriptionId}");
                 return false;
             }
 
@@ -220,7 +214,7 @@ public class UserSubscriptionService : IUserSubscriptionService
                 }
 
                 await _context.SaveChangesAsync();
-                await _logService.LogInfo("CancelSubscriptionAsync", $"Successfully canceled subscription for user: {userId}");
+                await _logService.LogInfo("CancelSubscriptionAsync", $"Successfully canceled subscription for user: {userId}, SubscriptionId: {subscriptionId}");
                 return true;
             }
 

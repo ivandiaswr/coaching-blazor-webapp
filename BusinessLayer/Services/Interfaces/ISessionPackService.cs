@@ -8,9 +8,11 @@ namespace BusinessLayer.Services.Interfaces
         Task CreateAsync(SessionPack pack);
         Task UpdateAsync(SessionPack pack);
         Task DeleteAsync(int id);
-        Task<bool> ConsumeSession(string userId, int? packId);
+        Task<bool> ConsumeSession(string userId, string packId);
+        Task<bool> RollbackSessionConsumption(string userId, string packId);
         Task<int> GetRemainingSessions(string userId);
         Task<List<SessionPack>> GetUserPacksAsync(string userId);
         Task RestoreSession(string userId);
+        Task<List<SessionPackPrice>> GetPricesForSessionTypeAsync(SessionType sessionType); 
     }
 }

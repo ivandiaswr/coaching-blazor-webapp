@@ -5,12 +5,12 @@ namespace BusinessLayer.Services.Interfaces
 {
     public interface IUserSubscriptionService
     {
-        Task<bool> RegisterMonthlyUsage(string userId);
+        Task<bool> RegisterMonthlyUsage(string userId, string subscriptionId);
         Task<bool> HasActiveSubscription(string userId);
-        Task<int> GetRemainingSessionsThisMonth(string userId);
-        Task<SubscriptionStatusDto> GetStatusAsync(string userId);
-        Task RollbackMonthlyUsage(string userId);
-        Task<UserSubscription?> GetActiveSubscriptionAsync(string userId);
-        Task<bool> CancelSubscriptionAsync(string userId);
+        Task<Dictionary<SessionType, SubscriptionStatusDto>> GetStatusAsync(string userId);
+         Task<int> GetRemainingSessionsThisMonth(string userId, string? subscriptionId = null);
+        Task<List<UserSubscription>> GetActiveSubscriptionsAsync(string userId);
+        Task RollbackMonthlyUsage(string userId, string subscriptionId);
+        Task<bool> CancelSubscriptionAsync(string userId, string subscriptionId);
     }
 }

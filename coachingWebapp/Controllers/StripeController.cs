@@ -19,19 +19,21 @@ namespace coachingWebapp.Controllers
         }
 
         [HttpPost("create-checkout-session")]
-        public async Task<IActionResult> CreateCheckoutSession([FromBody] Session session)
+        public async Task<IActionResult> CreateCheckoutSession([FromBody] CheckoutSessionRequest request)
         {
             try
             {
-                if (session == null)
+                if (request == null || request.Session == null)
                 {
-                    await _logService.LogError("CreateCheckoutSession", "Invalid session data provided.");
-                    return BadRequest(new { error = "Invalid session data provided." });
+                    await _logService.LogError("CreateCheckoutSession", "Invalid or missing request data.");
+                    return BadRequest(new { error = "Invalid or missing request data." });
                 }
 
-                var url = await _paymentService.CreateCheckoutSessionAsync(session);
-                
-                return Ok(new { url });
+                await _logService.LogInfo("CreateCheckoutSession", $"Received request: BookingType={request.BookingType}, PlanId={request.PlanId}, SessionId={request.Session.Id}");
+
+                var url = await _paymentService.CreateCheckoutSessionAsync(request);
+
+                return Ok(new ModelLayer.Models.DTOs.StripeResponse { Url = url });
             }
             catch (StripeException ex)
             {

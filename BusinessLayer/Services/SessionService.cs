@@ -32,9 +32,58 @@ public class SessionService : ISessionService
 
         try
         {
-            session.CreatedAt = DateTime.UtcNow;
-            session.IsSessionBooking = true;
-            session.UpdateFullName();
+            var existingSession = await _context.Sessions
+                .FirstOrDefaultAsync(s => s.Id == session.Id);
+
+            if (existingSession != null)
+            {
+                if (existingSession.IsPending)
+                {
+                    existingSession.IsPending = false;
+                    existingSession.Email = session.Email;
+                    existingSession.SessionCategory = session.SessionCategory;
+                    existingSession.Message = session.Message;
+                    existingSession.PreferredDateTime = session.PreferredDateTime;
+                    existingSession.DiscoveryCall = session.DiscoveryCall;
+                    existingSession.IsSessionBooking = session.IsSessionBooking;
+                    existingSession.FirstName = session.FirstName;
+                    existingSession.LastName = session.LastName;
+                    existingSession.FullName = session.FullName;
+                    existingSession.PackId = session.PackId;
+                    existingSession.IsPaid = session.IsPaid;
+                    existingSession.PaidAt = session.PaidAt;
+                    existingSession.UpdateFullName();
+                    _context.Sessions.Update(existingSession);
+                    await _logService.LogInfo("CreateSessionAsync", $"Confirmed pending session Id: {existingSession.Id}, UserId: {existingSession.Email}, PackId: {existingSession.PackId}");
+                }
+                else
+                {
+                    existingSession.Email = session.Email;
+                    existingSession.SessionCategory = session.SessionCategory;
+                    existingSession.Message = session.Message;
+                    existingSession.PreferredDateTime = session.PreferredDateTime;
+                    existingSession.DiscoveryCall = session.DiscoveryCall;
+                    existingSession.IsSessionBooking = session.IsSessionBooking;
+                    existingSession.FirstName = session.FirstName;
+                    existingSession.LastName = session.LastName;
+                    existingSession.FullName = session.FullName;
+                    existingSession.PackId = session.PackId;
+                    existingSession.IsPaid = session.IsPaid;
+                    existingSession.PaidAt = session.PaidAt;
+                    existingSession.UpdateFullName();
+                    _context.Sessions.Update(existingSession);
+                    await _logService.LogInfo("CreateSessionAsync", $"Updated session Id: {existingSession.Id}, UserId: {existingSession.Email}, PackId: {existingSession.PackId}");
+                }
+            }
+            else
+            {
+                session.CreatedAt = DateTime.UtcNow;
+                session.IsSessionBooking = true;
+                session.IsPending = false;
+                session.UpdateFullName();
+                _context.Sessions.Add(session);
+                await _logService.LogInfo("CreateSessionAsync", $"Created new session Id: {session.Id}, UserId: {session.Email}, PackId: {session.PackId}");
+            }
 
             var videoSession = new VideoSession
             {
@@ -42,20 +91,19 @@ public class SessionService : ISessionService
                 ScheduledAt = session.PreferredDateTime,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow,
-                Session = session 
+                Session = existingSession ?? session,
+                SessionRefId = existingSession?.Id ?? session.Id
             };
 
-            _context.Sessions.Add(session);
             _context.VideoSessions.Add(videoSession);
-
             await _context.SaveChangesAsync();
 
-            await SendSessionConfirmationEmailAsync(session, videoSession);
+            await SendSessionConfirmationEmailAsync(existingSession ?? session, videoSession);
+            return true;
         }
         catch (Exception ex)
         {
-            await _logService.LogError("Error during CreateSessionAsync", ex.Message);
-
+            await _logService.LogError("CreateSessionAsync", ex.Message);
             await _emailSubscriptionService.SendCustomEmailAsync(
                 new List<string>
                 {
@@ -65,11 +113,55 @@ public class SessionService : ISessionService
                 "Schedule Error",
                 $"Exception: {ex}<br>Message: {ex.Message}"
             );
-
             return false;
         }
+    }
 
-        return true;
+    public async Task CreatePendingSessionAsync(Session session)
+    {
+        if (session == null)
+        {
+            await _logService.LogError("CreatePendingSessionAsync", "Session object is null");
+            throw new ArgumentNullException(nameof(session));
+        }
+
+        try
+        {
+            session.CreatedAt = DateTime.UtcNow;
+            session.IsSessionBooking = true;
+            session.IsPending = true;
+            session.UpdateFullName();
+            _context.Sessions.Add(session);
+            await _context.SaveChangesAsync();
+            await _logService.LogInfo("CreatePendingSessionAsync", $"Created pending session Id: {session.Id}, UserId: {session.Email}, StripeSessionId: {session.StripeSessionId}, PackId: {session.PackId}");
+        }
+        catch (Exception ex)
+        {
+            await _logService.LogError("CreatePendingSessionAsync", ex.Message);
+            throw;
+        }
+    }
+
+    public async Task<Session> GetSessionByStripeSessionIdAsync(string stripeSessionId)
+    {
+        try
+        {
+            var session = await _context.Sessions
+                .Include(s => s.VideoSession)
+                .FirstOrDefaultAsync(s => s.StripeSessionId == stripeSessionId);
+
+            if (session == null)
+            {
+                await _logService.LogError("GetSessionByStripeSessionIdAsync", $"No session found for StripeSessionId: {stripeSessionId}");
+            }
+
+            return session;
+        }
+        catch (Exception ex)
+        {
+            await _logService.LogError("GetSessionByStripeSessionIdAsync", ex.Message);
+            throw;
+        }
     }
 
     public Session GetSessionById(int id)
@@ -78,7 +170,7 @@ public class SessionService : ISessionService
         {
             return _context.Sessions
                 .Include(s => s.VideoSession)
-                .FirstOrDefault(s => s.Id == id) 
+                .FirstOrDefault(s => s.Id == id)
                 ?? throw new InvalidOperationException($"Session with ID {id} not found.");
         }
         catch (Exception ex)
@@ -152,8 +244,8 @@ public class SessionService : ISessionService
                             .ToListAsync();
 
             return sessions;
-        } 
-        catch(Exception ex)
+        }
+        catch (Exception ex)
         {
             await _logService.LogError("GetAllSessionsAsync", ex.Message);
             throw;
@@ -170,11 +262,17 @@ public class SessionService : ISessionService
             .OrderByDescending(s => s.CreatedAt)
             .FirstOrDefaultAsync();
     }
-    
+
     public async Task<Session?> GetSessionByEmailAsync(string email)
     {
         return await _context.Sessions
             .FirstOrDefaultAsync(s => s.Email.ToLower() == email.ToLower());
+    }
+
+    public async Task<Session> GetPendingSessionByEmailAndPackAsync(string email, string packId)
+    {
+        return await _context.Sessions
+            .FirstOrDefaultAsync(s => s.Email == email && s.PackId == packId && s.IsPending);
     }
 
     public async Task SendEmailAsync(Session session)

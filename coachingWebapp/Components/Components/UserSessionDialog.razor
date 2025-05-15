@@ -35,13 +35,13 @@
                             {
                                 <MudChip T="string" Color="Color.Info" Size="Size.Small">Scheduled</MudChip>
                             }
-                            else if (DateTime.UtcNow >= VideoSession.ScheduledAt && DateTime.UtcNow <= VideoSession.ScheduledAt.AddMinutes(45))
+                            else if (!VideoSession.StartedAt.HasValue && !VideoSession.EndedAt.HasValue)
                             {
                                 <MudChip T="string" Color="Color.Error" Size="Size.Small">Missed</MudChip>
                             }
                             else
                             {
-                                <MudChip T="string" Color="Color.Warning" Size="Size.Small">Ended</MudChip>
+                                <MudChip T="string" Color="Color.Success" Size="Size.Small">Ended</MudChip>
                             }
                         </MudText>
                     </MudItem>
@@ -62,7 +62,7 @@
                 @GetSessionStatusMessage()
             </MudAlert>
         }
-        <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="Cancel">Close</MudButton>
+        @* <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="Cancel">Close</MudButton> *@
         @if (CanJoinSession)
         {
             <MudButton Variant="Variant.Filled"
@@ -77,8 +77,8 @@
         else
         {
             <MudButton Variant="Variant.Filled"
-                       Color="Color.Secondary"
-                       StartIcon="@Icons.Material.Filled.Chat"
+                       Color="Color.Primary"
+                       StartIcon="fa-brands fa-whatsapp"
                        Href="https://wa.me/351961914194"
                        Target="_blank"
                        Class="contact-support-btn"
@@ -142,8 +142,8 @@
         if (now < joinWindowStart)
             return $"This session is scheduled for {sessionStart:dd MMM yyyy HH:mm}. You can join 10 minutes before it starts.";
         if (now > sessionEnd || VideoSession.EndedAt.HasValue)
-            return "This session has ended. Contact support for details or to reschedule.";
-        return CanJoinSession ? "Session is ready to join!" : "This session was missed. Contact support to reschedule.";
+            return "This session has ended. Contact support for details.";
+        return CanJoinSession ? "Session is ready to join!" : "This session was missed. Contact support.";
     }
 
     private void JoinSession()
