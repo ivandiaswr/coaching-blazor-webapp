@@ -30,52 +30,52 @@
         </MudButton>
     }
 
-<MudCard Class="booking-option-card" Elevation="0">
-    <MudCardContent>
-        <MudText Typo="Typo.h6" Class="mb-4">Your Booking</MudText>
+    <MudCard Class="booking-option-card" Elevation="0">
+        <MudCardContent>
+            <MudText Typo="Typo.h6" Class="mb-4">Your Booking</MudText>
 
-        @if (activePacks.Any() || activeSubscriptions.Any())
-        {
-            @foreach (var pack in activePacks)
+            @if (activePacks.Any() || activeSubscriptions.Any())
             {
-                var packOption = BookingOptions.FirstOrDefault(o => o.Type == BookingType.SessionPack && o.PackId == pack.Id);
-                <MudPaper Class="pa-4 mb-4" Elevation="1" Square="true">
-                    <MudText Typo="Typo.body1" Class="mb-2">
-                        <strong>Session Pack (@(pack.Price?.SessionType.GetDisplayName() ?? "Unknown")):</strong> @(packOption?.Title ?? pack.Price?.Name ?? "Active Pack")
-                    </MudText>
-                    <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Class="mb-2">
-                        You have <strong>@pack.SessionsRemaining</strong> session(s) left in your pack. No payment needed.
-                    </MudAlert>
-                </MudPaper>
-            }
+                @foreach (var pack in activePacks)
+                {
+                    var packOption = BookingOptions.FirstOrDefault(o => o.Type == BookingType.SessionPack && o.PackId == pack.Id);
+                    <MudPaper Class="pa-4 mb-4" Elevation="1" Square="true">
+                        <MudText Typo="Typo.body1" Class="mb-2">
+                            <strong>Session Pack (@(pack.Price?.SessionType.GetDisplayName() ?? "Unknown")):</strong> @(packOption?.Title ?? pack.Price?.Name ?? "Active Pack")
+                        </MudText>
+                        <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Class="mb-2">
+                            You have <strong>@pack.SessionsRemaining</strong> session(s) left in your pack. No payment needed.
+                        </MudAlert>
+                    </MudPaper>
+                }
 
-            @foreach (var subscription in activeSubscriptions)
-            {
-                var subscriptionOption = BookingOptions.FirstOrDefault(o => o.Type == BookingType.Subscription && !o.RequiresPurchase && o.PlanId == subscription.StripeSubscriptionId);
-                var status = subscriptionStatuses.ContainsKey(subscription.Price?.SessionType ?? SessionType.lifeCoaching) 
-                    ? subscriptionStatuses[subscription.Price.SessionType] 
-                    : new SubscriptionStatusDto();
-                <MudPaper Class="pa-4 mb-4" Elevation="1" Square="true">
-                    <MudText Typo="Typo.body1" Class="mb-2">
-                        <strong>Subscription (@(subscription.Price?.SessionType.GetDisplayName() ?? "Unknown")):</strong> @(subscriptionOption?.Title ?? subscription.Price?.Name ?? "Active Subscription")
-                    </MudText>
-                    <MudAlert Severity="Severity.Success" Variant="Variant.Filled" Class="mb-2">
-                        You have <strong>@status.Remaining</strong> session(s) left this month (@status.SessionsUsed of @status.MonthlyLimit used).
-                    </MudAlert>
-                    <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="@(() => OpenCancellationDialog(subscription.StripeSubscriptionId))" Class="mt-2">
-                        Cancel Subscription
-                    </MudButton>
-                </MudPaper>
+                @foreach (var subscription in activeSubscriptions)
+                {
+                    var subscriptionOption = BookingOptions.FirstOrDefault(o => o.Type == BookingType.Subscription && !o.RequiresPurchase && o.PlanId == subscription.StripeSubscriptionId);
+                    var status = subscriptionStatuses.ContainsKey(subscription.Price?.SessionType ?? SessionType.lifeCoaching) 
+                        ? subscriptionStatuses[subscription.Price.SessionType] 
+                        : new SubscriptionStatusDto();
+                    <MudPaper Class="pa-4 mb-4" Elevation="1" Square="true">
+                        <MudText Typo="Typo.body1" Class="mb-2">
+                            <strong>Subscription (@(subscription.Price?.SessionType.GetDisplayName() ?? "Unknown")):</strong> @(subscriptionOption?.Title ?? subscription.Price?.Name ?? "Active Subscription")
+                        </MudText>
+                        <MudAlert Severity="Severity.Success" Variant="Variant.Filled" Class="mb-2">
+                            You have <strong>@status.Remaining</strong> session(s) left this month (@status.SessionsUsed of @status.MonthlyLimit used).
+                        </MudAlert>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="@(() => OpenCancellationDialog(subscription.StripeSubscriptionId))" Class="mt-2">
+                            Cancel Subscription
+                        </MudButton>
+                    </MudPaper>
+                }
             }
-        }
-        else
-        {
-            <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-2">
-                No active session pack or subscription. Book a session to get started!
-            </MudText>
-        }
-    </MudCardContent>
-</MudCard>
+            else
+            {
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-2">
+                    No active session pack or subscription. Book a session to get started!
+                </MudText>
+            }
+        </MudCardContent>
+    </MudCard>
 </MudPaper>
 
 <MudTabs @bind-ActivePanelIndex="selectedTab" Elevation="0">
@@ -237,7 +237,7 @@
                                 </MudAlert>
                             }
 
-                             <MudSelect Label="Session Type" 
+                             <MudSelect Label="Session Category" 
                                         T="SessionType"
                                         Value="requestModel.SessionCategory"
                                         For="@(() => requestModel.SessionCategory)"
@@ -1125,11 +1125,22 @@
                     }
 
                     await RefreshSessionPackStatus();
-                    Snackbar.Add($"Session scheduled! You have {remainingPackSessions} session(s) left in your pack.", Severity.Success);
+                    await LoadBookingOptions();
+                    var currentPack = activePacks.FirstOrDefault(p => p.Id == SelectedOption.PackId);
+                    if (currentPack != null && currentPack.SessionsRemaining > 0)
+                    {
+                        SelectedOption = BookingOptions.FirstOrDefault(o => o.Type == BookingType.SessionPack && o.PackId == SelectedOption.PackId);
+                    }
+                    else
+                    {
+                        var preferredOption = BookingOptions.FirstOrDefault(o => !o.RequiresPurchase && o.IsAvailable)
+                            ?? BookingOptions.FirstOrDefault(o => o.Type == BookingType.SingleSession && o.IsAvailable);
+                        SelectedOption = preferredOption;
+                        selectedBookingOption = preferredOption?.Type ?? BookingType.SingleSession;
+                    }
 
-                    selectedTab = 1;
-                    await LoadSessions();
-                    StateHasChanged();
+                    remainingPackSessions = activePacks.Sum(p => p.SessionsRemaining);         
+                    Snackbar.Add($"Session scheduled! You have {remainingPackSessions} session(s) left in your pack.", Severity.Success);
                 }
             }
             else if (SelectedOption.Type == BookingType.Subscription)
@@ -1189,6 +1200,22 @@
                     }
 
                     await RefreshSubscriptionStatus();
+                    await LoadBookingOptions();
+
+                    var status = subscriptionStatuses.ContainsKey(requestModel.SessionCategory) ? subscriptionStatuses[requestModel.SessionCategory] : new SubscriptionStatusDto();
+                    if (status.Remaining > 0)
+                    {
+                        SelectedOption = BookingOptions.FirstOrDefault(o => o.Type == BookingType.Subscription && o.PlanId == SelectedOption.PlanId);
+                    }
+                    else
+                    {
+                        var preferredOption = BookingOptions.FirstOrDefault(o => !o.RequiresPurchase && o.IsAvailable)
+                            ?? BookingOptions.FirstOrDefault(o => o.Type == BookingType.SingleSession && o.IsAvailable);
+                        SelectedOption = preferredOption;
+                        selectedBookingOption = preferredOption?.Type ?? BookingType.SingleSession;
+                    }
+
+                    remainingSubscriptionSessions = subscriptionStatuses.Sum(s => s.Value.Remaining);
                     Snackbar.Add($"Session scheduled! You have {remainingSubscriptionSessions} session(s) left this month.", Severity.Success);
                 }
             }
@@ -1217,7 +1244,6 @@
                     Snackbar.Add("Failed to initiate payment for single session. Please try again.", Severity.Error);
                     await LogService.LogError("SubmitSessionRequest", $"Response Status: {response.StatusCode}");
                 }
-                return;
             }
             else
             {
@@ -1229,8 +1255,9 @@
             requestModel.Message = string.Empty;
             requestModel.SessionCategory = SessionType.lifeCoaching;
             showSlotCalendar = false;
-            await LoadSessions();
+            selectedTab = 1;
             await LoadBookingOptions();
+            await LoadSessions();
             StateHasChanged();
         }
         catch (Exception ex)
