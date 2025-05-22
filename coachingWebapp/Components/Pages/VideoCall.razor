@@ -37,7 +37,7 @@
 
             <div class="video-container">
                 <div class="video-position">
-                    <video id="localVideo" autoplay playsinline muted class="video-element" @key="@("localVideo")" />
+                    <video id="localVideo" autoplay playsinline muted controls class="video-element" @key="@("localVideo")" />
                     @if (!isCallActive)
                     {
                         <div class="session-video-overlay">
@@ -52,7 +52,7 @@
                     }
                 </div>
                 <div class="video-position">
-                    <video id="remoteVideo" autoplay playsinline class="video-element" @key="@("remoteVideo")" />
+                    <video id="remoteVideo" autoplay playsinline controls class="video-element" @key="@("remoteVideo")" />
                     @if (!isCallActive)
                     {
                         <div class="session-video-overlay">
@@ -62,8 +62,8 @@
                     else if (isCallActive && !isRemoteConnected)
                     {
                         <div class="session-video-overlay">
-                            <span class="overlay-text pulsing">Ítala</span><br />
-                            <span class="overlay-subtext pulsing">(disconnected)</span>
+                            <span class="overlay-text pulsing">Waiting for @(!isAdmin ? "Ítala" : "Client")</span><br />
+                            <span class="overlay-subtext">(disconnected)</span>
                         </div>
                     }
                 </div>

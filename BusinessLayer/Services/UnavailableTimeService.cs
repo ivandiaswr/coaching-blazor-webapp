@@ -42,7 +42,6 @@ public class UnavailableTimeService : IUnavailableTimeService
         if (existing == null)
             throw new KeyNotFoundException("UnavailableTime not found");
 
-        existing.Date = DateTime.Now;
         existing.DayOfWeek = unavailableTime.DayOfWeek;
         existing.StartTime = unavailableTime.StartTime;
         existing.EndTime = unavailableTime.EndTime;

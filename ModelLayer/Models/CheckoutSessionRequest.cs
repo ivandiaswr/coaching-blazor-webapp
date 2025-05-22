@@ -6,6 +6,6 @@ namespace ModelLayer.Models
     {
         public Session Session { get; set; }
         public BookingType BookingType { get; set; }
-        public string PlanId { get; set; }
+        public string? PlanId { get; set; }
     }
 }

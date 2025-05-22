@@ -33,7 +33,7 @@ public class Session
     public string? StripeSessionId { get; set; }
     public DateTime PaidAt { get; set; }
 
-    public string PackId { get; set; } // New: Link to SessionPack
+    public string? PackId { get; set; }
     public bool IsPending { get; set; }
 
     public VideoSession? VideoSession { get; set; }

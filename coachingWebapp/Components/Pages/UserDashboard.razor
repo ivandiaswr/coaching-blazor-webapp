@@ -17,7 +17,7 @@
         var nextSession = UpcomingSessions.First();
         <MudText Typo="Typo.subtitle1" Class="mb-4">
             Your next session is scheduled for
-            <strong>@nextSession.ScheduledAt.ToString("MMMM dd 'at' HH:mm")</strong>. Get ready to take your next step!
+            <strong>@TimeZoneInfo.ConvertTimeFromUtc(nextSession.ScheduledAt, TimeZoneInfo.FindSystemTimeZoneById(userTimeZone)).ToString("MMMM dd 'at' HH:mm") (@userTimeZone)</strong>. Get ready to take your next step!
         </MudText>
     }
     else
@@ -333,7 +333,7 @@
                     <MudTh>Session</MudTh>
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd>@context.ScheduledAt.ToString("dd MMM yyyy - HH:mm")</MudTd>
+                    <MudTd>@TimeZoneInfo.ConvertTimeFromUtc(context.ScheduledAt, TimeZoneInfo.FindSystemTimeZoneById(userTimeZone)).ToString("dd MMM yyyy - HH:mm") (@userTimeZone)</MudTd>
                     <MudTd>
                         @if (context.EndedAt.HasValue)
                         {
@@ -538,10 +538,13 @@
             || session.Session?.SessionCategory.GetDisplayName()?.Contains(searchText, StringComparison.OrdinalIgnoreCase) == true)
         .OrderByDescending(session => session.ScheduledAt);
 
-    private string userTimeZone = TimeZoneInfo.Local.Id;
     private Dictionary<SessionType, SubscriptionStatusDto> subscriptionStatuses = new();
     private List<SessionPack> activePacks = new();
     private List<UserSubscription> activeSubscriptions = new();
+
+    private string userTimeZone = "UTC";
+    private string CurrentTimeZoneDisplay = "UTC";
+    private string? pendingNavigationUrl;
 
     protected override async Task OnInitializedAsync()
     {
@@ -566,6 +569,18 @@
             userFullName = "Guest";
         }
 
+        try
+        {
+            userTimeZone = await JSRuntime.InvokeAsync<string>("eval", "Intl.DateTimeFormat().resolvedOptions().timeZone");
+            CurrentTimeZoneDisplay = userTimeZone;
+        }
+        catch (Exception ex)
+        {
+            await LogService.LogError("TimeZoneDetection Error", ex.Message);
+            userTimeZone = "UTC";
+            CurrentTimeZoneDisplay = "UTC";
+        }
+
         await LoadSessions();
         await RefreshSessionPackStatus();
         await RefreshSubscriptionStatus();
@@ -587,20 +602,24 @@
                     await LogService.LogInfo("OnAfterRenderAsync", $"Processing payment success for StripeSessionId: {stripeSessionId}");
                     
                     var session = await SessionService.GetSessionByStripeSessionIdAsync(stripeSessionId);
-                    if (session != null && !session.IsPending)
+                    if (session != null && !session.IsPending && session.IsPaid)
                     {
                         await LogService.LogInfo("OnAfterRenderAsync", $"Session Id: {session.Id} already confirmed for StripeSessionId: {stripeSessionId}");
+                        await RefreshSessionPackStatus();
+                        await RefreshSubscriptionStatus();
+                        await LoadBookingOptions();
+                        Snackbar.Add("Payment successful! Your session has been scheduled.", Severity.Success);
+                        NavigationManager.NavigateTo("/UserDashboard", forceLoad: true);
+                        return;
                     }
-                    else
+
+                    var confirmed = await StripeService.ConfirmPaymentAsync(stripeSessionId);
+                    if (!confirmed)
                     {
-                        var confirmed = await StripeService.ConfirmPaymentAsync(stripeSessionId);
-                        if (!confirmed)
-                        {
-                            await LogService.LogError("OnAfterRenderAsync", $"Failed to confirm payment for StripeSessionId: {stripeSessionId}");
-                            Snackbar.Add("Failed to process payment. Please contact support.", Severity.Error);
-                            NavigationManager.NavigateTo("/payment-cancelled", forceLoad: true);
-                            return;
-                        }
+                        await LogService.LogError("OnAfterRenderAsync", $"Failed to confirm payment for StripeSessionId: {stripeSessionId}");
+                        Snackbar.Add("Failed to process payment. Please contact support.", Severity.Error);
+                        NavigationManager.NavigateTo("/payment-cancelled", forceLoad: true);
+                        return;
                     }
 
                     await RefreshSessionPackStatus();
@@ -611,14 +630,13 @@
                 }
             }
         }
-    }
 
-    private async Task HandleSlotSelected(DateTime slot)
-    {
-        selectedSlotString = slot.ToString("dd MMM yyyy - HH:mm");
-        requestModel.PreferredDateTime = slot;
-        showSlotCalendar = false;
-        StateHasChanged();
+        if (!string.IsNullOrEmpty(pendingNavigationUrl))
+        {
+            var url = pendingNavigationUrl;
+            pendingNavigationUrl = null;
+            NavigationManager.NavigateTo(url, true);
+        }
     }
 
    private async Task RefreshSessionPackStatus()
@@ -931,7 +949,7 @@
         {
             for (var time = workStartTime; time < workEndTime; time = time.Add(slotDuration))
             {
-                var slotStart = date.Date.Add(time);
+                var slotStart = date.Date.Add(time).ToUniversalTime();
                 var slotEnd = slotStart.Add(slotDuration);
 
                 if (slotStart <= DateTime.UtcNow.AddDays(2))
@@ -942,10 +960,12 @@
 
                 bool isWithinUnavailability = adminUnavailabilities.Any(u =>
                     (u.IsRecurring 
-                    && ((int)u.DayOfWeek + 1) % 7 == (int)slotStart.DayOfWeek
-                    && slotStart.TimeOfDay >= u.StartTime && slotStart.TimeOfDay < u.EndTime)
+                    && u.DayOfWeek == slotStart.DayOfWeek
+                    && slotStart.TimeOfDay >= u.StartTime 
+                    && slotStart.TimeOfDay < u.EndTime)
                     ||
-                    (!u.IsRecurring && u.Date == slotStart.Date 
+                    (!u.IsRecurring 
+                    && u.Date.Date == slotStart.Date 
                     && slotStart.TimeOfDay >= u.StartTime 
                     && slotStart.TimeOfDay < u.EndTime));
 
@@ -960,29 +980,39 @@
 
     private async Task HandleSlotSelected(string isoString)
     {
-        var date = DateTime.Parse(isoString);
-        selectedSlotString = date.ToString("yyyy-MM-ddTHH:mm");
-        requestModel.PreferredDateTimeString = selectedSlotString;
-
-        var sessionPrice = await SessionPriceService.GetPriceForSessionTypeAsync(requestModel.SessionCategory);
-        var singleSessionOption = BookingOptions.FirstOrDefault(o => o.Type == BookingType.SingleSession);
-        if (singleSessionOption != null)
+        try
         {
-            BookingOptions.Remove(singleSessionOption);
-            BookingOptions.Add(new BookingOption
-            {
-                Id = Guid.NewGuid().ToString(),
-                Title = $"Single Session ({requestModel.SessionCategory.GetDisplayName()})",
-                Description = "Book a one-time session without a subscription or pack.",
-                PriceEUR = sessionPrice?.PriceEUR,
-                Type = BookingType.SingleSession,
-                IsAvailable = sessionPrice != null,
-                RequiresPurchase = true
-            });
-        }
+            var date = DateTime.Parse(isoString);
+            var userTimeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(userTimeZone);
+            var utcDate = TimeZoneInfo.ConvertTimeToUtc(date, userTimeZoneInfo);
+            selectedSlotString = TimeZoneInfo.ConvertTimeFromUtc(utcDate, userTimeZoneInfo).ToString("dd MMM yyyy - HH:mm");
+            requestModel.PreferredDateTime = utcDate;
+            requestModel.PreferredDateTimeString = isoString;
 
-        showSlotCalendar = false;
-        StateHasChanged();
+            var sessionPrice = await SessionPriceService.GetPriceForSessionTypeAsync(requestModel.SessionCategory);
+            var singleSessionOption = BookingOptions.FirstOrDefault(o => o.Type == BookingType.SingleSession);
+            if (singleSessionOption != null)
+            {
+                BookingOptions.Remove(singleSessionOption);
+                BookingOptions.Add(new BookingOption
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Title = $"Single Session ({requestModel.SessionCategory.GetDisplayName()})",
+                    Description = "Book a one-time session without a subscription or pack.",
+                    PriceEUR = sessionPrice?.PriceEUR,
+                    Type = BookingType.SingleSession,
+                    IsAvailable = sessionPrice != null,
+                    RequiresPurchase = true
+                });
+            }
+
+            showSlotCalendar = false;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            await LogService.LogError("HandleSlotSelected Error", ex.Message);
+        }
     }
 
     private async Task OpenConfirmationDialog()
@@ -1030,7 +1060,13 @@
     private async Task SubmitSessionRequest()
     {
         var baseUrl = Configuration["AppSettings:BaseUrl"];
-        var scheduledAtLocal = DateTime.Parse(selectedSlotString);
+        string format = "dd MMM yyyy - HH:mm";
+        if (!DateTime.TryParseExact(selectedSlotString, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out var scheduledAtLocal))
+        {
+            await LogService.LogError("SubmitSessionRequest", $"Failed to parse date: {selectedSlotString}");
+            return;
+        }
+
         var scheduledAtUtc = TimeZoneInfo.ConvertTimeToUtc(scheduledAtLocal, TimeZoneInfo.FindSystemTimeZoneById(userTimeZone));
 
         var lastSession = await SessionService.GetLatestSessionByEmailAsync(userId);
@@ -1052,7 +1088,9 @@
             FirstName = lastSession?.FirstName ?? string.Empty,
             LastName = lastSession?.LastName ?? string.Empty,
             FullName = lastSession?.FullName ?? string.Empty,
-            DiscoveryCall = false
+            DiscoveryCall = false,
+            IsPaid = SelectedOption.Type != BookingType.SingleSession,
+            PackId = null
         };
 
         try
@@ -1085,7 +1123,8 @@
                         var data = await response.Content.ReadFromJsonAsync<ModelLayer.Models.DTOs.StripeResponse>();
                         session.StripeSessionId = data.SessionId;
                         await SessionService.CreatePendingSessionAsync(session);
-                        NavigationManager.NavigateTo(data!.Url, true);
+                        pendingNavigationUrl = data!.Url;
+                        StateHasChanged();
                     }
                     else
                     {
@@ -1111,6 +1150,7 @@
                     }
 
                     session.PackId = SelectedOption.PackId.ToString();
+                    session.IsPaid = true;
 
                     var created = await SessionService.CreateSessionAsync(session);
                     if (!created)
@@ -1126,6 +1166,7 @@
 
                     await RefreshSessionPackStatus();
                     await LoadBookingOptions();
+
                     var currentPack = activePacks.FirstOrDefault(p => p.Id == SelectedOption.PackId);
                     if (currentPack != null && currentPack.SessionsRemaining > 0)
                     {
@@ -1156,16 +1197,15 @@
 
                     checkoutRequest.Session.PackId = SelectedOption.PlanId;
 
-                    await LogService.LogError("SubmitSessionRequest", $"Request: {JsonSerializer.Serialize(checkoutRequest)}");
-
                     var response = await HttpClient.PostAsJsonAsync($"{baseUrl}/api/payments/create-checkout-session", checkoutRequest);
-
+                    
                     if (response.IsSuccessStatusCode)
                     {
                         var data = await response.Content.ReadFromJsonAsync<ModelLayer.Models.DTOs.StripeResponse>();
                         session.StripeSessionId = data.SessionId;
                         await SessionService.CreatePendingSessionAsync(session);
-                        NavigationManager.NavigateTo(data!.Url, true);
+                        pendingNavigationUrl = data!.Url;
+                        StateHasChanged();
                     }
                     else
                     {
@@ -1184,6 +1224,7 @@
                     }
 
                     session.PackId = SelectedOption.PlanId;
+                    session.IsPaid = true;
 
                     var success = await UserSubscriptionService.RegisterMonthlyUsage(userId, SelectedOption.PlanId);
                     if (!success)
@@ -1230,19 +1271,23 @@
                 var checkoutRequest = new CheckoutSessionRequest
                 {
                     Session = session,
-                    BookingType = SelectedOption.Type
+                    BookingType = SelectedOption.Type,
+                    PlanId = null
                 };
+
                 var response = await HttpClient.PostAsJsonAsync($"{baseUrl}/api/payments/create-checkout-session", checkoutRequest);
 
                 if (response.IsSuccessStatusCode)
                 {
                     var data = await response.Content.ReadFromJsonAsync<ModelLayer.Models.DTOs.StripeResponse>();
-                    NavigationManager.NavigateTo(data!.Url, true);
+                    pendingNavigationUrl = data!.Url;
+                    StateHasChanged();
                 }
                 else
-                {
+                { 
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    await LogService.LogError("SubmitSessionRequest", $"Response Status: {response.StatusCode}, Error: {errorContent}");
                     Snackbar.Add("Failed to initiate payment for single session. Please try again.", Severity.Error);
-                    await LogService.LogError("SubmitSessionRequest", $"Response Status: {response.StatusCode}");
                 }
             }
             else

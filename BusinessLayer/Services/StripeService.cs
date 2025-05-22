@@ -47,6 +47,33 @@ public class StripeService : IPaymentService
                 throw new ArgumentNullException(nameof(request.Session));
             }
 
+            if (bookingType == BookingType.SessionPack || bookingType == BookingType.Subscription)
+            {
+                if (string.IsNullOrEmpty(planId))
+                {
+                    await _logService.LogError("CreateCheckoutSessionAsync", "PlanId is required for SessionPack or Subscription bookings.");
+                    throw new ArgumentException("The PlanId field is required.");
+                }
+                if (bookingType == BookingType.SessionPack && string.IsNullOrEmpty(session.PackId))
+                {
+                    await _logService.LogError("CreateCheckoutSessionAsync", "PackId is required for SessionPack bookings.");
+                    throw new ArgumentException("The PackId field is required.");
+                }
+            }
+            else if (bookingType == BookingType.SingleSession)
+            {
+                if (!string.IsNullOrEmpty(planId))
+                {
+                    await _logService.LogError("CreateCheckoutSessionAsync", "PlanId should be null for SingleSession bookings.");
+                    throw new ArgumentException("The PlanId field should be null for SingleSession bookings.");
+                }
+                if (!string.IsNullOrEmpty(session.PackId))
+                {
+                    await _logService.LogError("CreateCheckoutSessionAsync", "PackId should be null for SingleSession bookings.");
+                    throw new ArgumentException("The PackId field should be null for SingleSession bookings.");
+                }
+            }
+
             await _logService.LogInfo("CreateCheckoutSessionAsync", $"Received session with Id: {session.Id}, StripeSessionId: {session.StripeSessionId}, BookingType: {bookingType}, PlanId: {planId}");
 
             if (bookingType == BookingType.SessionPack)
@@ -264,10 +291,21 @@ public class StripeService : IPaymentService
                 return false;
             }
 
-            var dbSession = await _context.Sessions
-                .FirstOrDefaultAsync(s => s.StripeSessionId == stripeSessionId && s.IsPending);
+            var dbSession = await _context.Sessions.FirstOrDefaultAsync(s => s.StripeSessionId == stripeSessionId);
 
             if (dbSession == null)
+            {
+                await _logService.LogError("ConfirmPaymentAsync", $"No session found for StripeSessionId: {stripeSessionId}");
+                return false;
+            }
+
+            if (!dbSession.IsPending && dbSession.IsPaid)
+            {
+                await _logService.LogInfo("ConfirmPaymentAsync", $"Session Id: {dbSession.Id} already confirmed for StripeSessionId: {stripeSessionId}");
+                return true;
+            }
+
+            if (!dbSession.IsPending)
             {
                 await _logService.LogError("ConfirmPaymentAsync", $"No pending session found for StripeSessionId: {stripeSessionId}");
                 return false;
@@ -383,6 +421,13 @@ public class StripeService : IPaymentService
                     return;
                 }
 
+                var dbSession = await _context.Sessions.FirstOrDefaultAsync(s => s.StripeSessionId == checkoutSession.Id);
+                if (dbSession != null && !dbSession.IsPending && dbSession.IsPaid)
+                {
+                    await _logService.LogInfo("HandleWebhookAsync", $"Session already confirmed for StripeSessionId: {checkoutSession.Id}");
+                    return;
+                }
+
                 var paymentConfirmed = await ConfirmPaymentAsync(checkoutSession.Id);
                 if (!paymentConfirmed)
                 {
@@ -390,8 +435,7 @@ public class StripeService : IPaymentService
                     return;
                 }
 
-                var dbSession = await _context.Sessions
-                    .FirstOrDefaultAsync(s => s.StripeSessionId == checkoutSession.Id);
+                dbSession = await _context.Sessions.FirstOrDefaultAsync(s => s.StripeSessionId == checkoutSession.Id);
                 if (dbSession == null)
                 {
                     await _logService.LogError("HandleWebhookAsync", $"Session not found for StripeSessionId: {checkoutSession.Id}");

@@ -18,9 +18,26 @@
                     Welcome back, @adminName!
                 </MudText>
 
-                <MudText Typo="Typo.subtitle1">
-                    Here's a quick overview of your responsibilities today.
-                </MudText>
+               @if (nextSessions.Any(s => s.VideoSession != null && s.VideoSession.ScheduledAt >= DateTime.UtcNow))
+                {
+                    var closestSession = nextSessions
+                        .Where(s => s.VideoSession != null && s.VideoSession.ScheduledAt >= DateTime.UtcNow)
+                        .OrderBy(s => s.VideoSession.ScheduledAt)
+                        .First();
+                    var sessionLocalTime = TimeZoneInfo.ConvertTimeFromUtc(closestSession.VideoSession.ScheduledAt, TimeZoneInfo.FindSystemTimeZoneById(adminTimeZone));
+                    var currentLocalTime = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(adminTimeZone));
+                    var isToday = sessionLocalTime.Date == currentLocalTime.Date;
+                    <MudText Typo="Typo.subtitle1" Class="mb-4">
+                        Your next session is scheduled for
+                        <strong>@(isToday ? $"Today at {sessionLocalTime:HH:mm}" : sessionLocalTime.ToString("MMMM dd 'at' HH:mm")) (@adminTimeZone)</strong>. Prepare to guide your client!
+                    </MudText>
+                }
+                else
+                {
+                    <MudText Typo="Typo.subtitle1" Class="mb-4">
+                        No upcoming sessions scheduled. Check back later or review past sessions.
+                    </MudText>
+                }
 
                 <MudStack Class="mt-4" Spacing="2">
                     <MudText Typo="Typo.body1">📅 <strong>@nextSessions.Count</strong> upcoming session(s) scheduled.</MudText>
@@ -33,7 +50,8 @@
         <MudTabPanel Text="Calendar">
             <MudCalendar @ref="calendar" 
                         Items="@calendarItems" 
-                        ItemClicked="OnSessionClicked" 
+                        ItemClicked="OnSessionClicked"
+                        View="CalendarView.Week"
                         ShowTodayButton="true"/>
 
             <MudText Class="mt-5 mb-5" Typo="Typo.h4">Unavailable Time</MudText>
@@ -99,7 +117,7 @@
                                 {
                                     <MudListItem Class="busy-time-entry">
                                         <div class="busy-time-info">
-                                            <strong>@time.DayOfWeek</strong>: @time.StartTime - @time.EndTime
+                                            <strong>@time.DayOfWeek</strong>: @time.StartTime - @time.EndTime (@adminTimeZone)
                                             @if (time.IsRecurring)
                                             {
                                                 <span class="ml-2 text-success d-inline-flex align-center">
@@ -188,10 +206,14 @@
                             }
                         </CellTemplate>
                     </PropertyColumn>
-                    <PropertyColumn Property="x => x.PaidAt" Title="PaidAt" Sortable="true" Filterable="false" />
                     <PropertyColumn Property="x => x.CreatedAt" Title="CreatedAt" Sortable="true" Filterable="false">
                         <CellTemplate>
-                            @context.Item.CreatedAt.ToString("dd-MM-yyyy HH:mm:ss")
+                            @TimeZoneInfo.ConvertTimeFromUtc(context.Item.CreatedAt, TimeZoneInfo.FindSystemTimeZoneById(adminTimeZone)).ToString("dd-MM-yyyy HH:mm:ss") (@adminTimeZone)
+                        </CellTemplate>
+                    </PropertyColumn>
+                    <PropertyColumn Property="x => x.PaidAt" Title="PaidAt" Sortable="true" Filterable="false">
+                        <CellTemplate>
+                            @TimeZoneInfo.ConvertTimeFromUtc(context.Item.PaidAt, TimeZoneInfo.FindSystemTimeZoneById(adminTimeZone)).ToString("dd-MM-yyyy HH:mm:ss") (@adminTimeZone)
                         </CellTemplate>
                     </PropertyColumn>
                 </Columns>
@@ -483,31 +505,33 @@
     private const int MAX_PACKS = 5;
     private const int MAX_SUBSCRIPTIONS = 5;
 
+    private string adminTimeZone = "Europe/London";
+
     protected override async Task OnInitializedAsync()
     {
         try
         {
             var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
             var user = authState.User;
+
             if (user.Identity?.IsAuthenticated == true)
             {
                 var identityUser = await UserManager.FindByNameAsync(user.Identity.Name);
                 @* adminName = identityUser?.UserName ?? adminName; *@
             }
 
+            var adminTimeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(adminTimeZone);
+
             sessions = await SessionService.GetAllSessionsAsync() ?? new();
             emailSubscriptions = EmailSubscriptionService.GetAllEmailSubscriptions() ?? new();
+            _adminUnavailableTimes = (await UnavailableTimeService.GetAllUnavailableTimesAsync()).ToList();
+            nextSessions = sessions.Where(s => s.PreferredDateTime >= DateTime.UtcNow).ToList();
             calendarItems = sessions.Select(c => new CalendarItem
             {
                 Start = c.PreferredDateTime,
                 End = c.PreferredDateTime.AddMinutes(45),
                 Text = $"{c.FullName}: {c.SessionCategory.GetDisplayName().Replace("Coaching", "").Replace("Food", "").Trim()}",
             }).ToList();
-            _adminUnavailableTimes = (await UnavailableTimeService.GetAllUnavailableTimesAsync()).ToList();
-
-            nextSessions = sessions
-                .Where(s => s.PreferredDateTime >= DateTime.UtcNow)
-                .ToList();
 
             foreach (var sessionType in Enum.GetValues(typeof(SessionType)).Cast<SessionType>())
             {
@@ -615,14 +639,16 @@
 
     private async Task AddUnavailability()
     {
-        
+        var adminTimeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(adminTimeZone);
+
         var unavailabilityToSave = new UnavailableTime
         {
             Id = _newUnavailableTime.Id,
             DayOfWeek = _newUnavailableTime.DayOfWeek,
             StartTime = _newUnavailableTime.StartTime,
             EndTime = _newUnavailableTime.EndTime,
-            IsRecurring = _newUnavailableTime.IsRecurring
+            IsRecurring = _newUnavailableTime.IsRecurring,
+            Date = _newUnavailableTime.IsRecurring ? DateTime.UtcNow.Date : TimeZoneInfo.ConvertTimeToUtc(_newUnavailableTime.Date, adminTimeZoneInfo).Date
         };
 
         if (unavailabilityToSave.Id == 0)

@@ -3,7 +3,7 @@
   });
 
 window.scrollToTop = function () {
-    console.log("scrollToTop called");
+    // console.log("scrollToTop called");
     requestAnimationFrame(() => {
         try {
             const scrollableContainers = document.querySelectorAll('.mud-table-container, .mud-grid, .mud-tab-panel, main');
@@ -22,7 +22,7 @@ window.scrollToTop = function () {
 };
 
 window.scrollToFragment = function () {
-    console.log("scrollToFragment called");
+    // console.log("scrollToFragment called");
     const fragment = window.location.hash;
     if (fragment) {
         requestAnimationFrame(() => {
