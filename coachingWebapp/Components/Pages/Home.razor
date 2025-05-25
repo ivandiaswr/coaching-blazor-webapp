@@ -18,7 +18,6 @@
         <div class="primary-services">
             <div class="services-grid featured">
                 <div class="service-card featured animate-on-scroll">
-                    <a href="/services/coaching/life-coaching" class="card-link">
                         <div class="card-header">
                             <div class="service-icon">
                                 <i class="fas fa-rocket"></i>
@@ -35,17 +34,18 @@
                                 <li><i class="fas fa-check"></i> Create a roadmap to ignite your future</li>
                             </ul>
                             <div class="button-container">
-                                <span class="btn-primary">
-                                    Start Your Journey
-                                    <i class="fas fa-arrow-right"></i>
-                                </span>
+                                <a href="/services/coaching/life-coaching" class="card-link">
+                                    <span class="btn-primary">
+                                        Start Your Life
+                                        <i class="fas fa-arrow-right"></i>
+                                    </span>
+                                </a>
                             </div>
                         </div>
-                     </a>
+                     
                 </div>
 
                 <div class="service-card featured animate-on-scroll">
-                    <a href="/services/coaching/career-coaching" class="card-link">
                         <div class="card-header">
                             <div class="service-icon">
                                 <i class="fas fa-chart-line"></i>
@@ -62,13 +62,14 @@
                                 <li><i class="fas fa-check"></i> Mentoring and Career Clarity</li>
                             </ul>
                             <div class="button-container">
-                                <span class="btn-primary">
-                                    Start Your Journey
-                                    <i class="fas fa-arrow-right"></i>
-                                </span>
+                                <a href="/services/coaching/career-coaching" class="card-link">
+                                    <span class="btn-primary">
+                                        Start Your Career
+                                        <i class="fas fa-arrow-right"></i>
+                                    </span>
+                                </a>
                             </div>
                         </div>
-                    </a>
                 </div>
             </div>
         </div>
@@ -188,7 +189,7 @@
             <div class="contact-wrapper">
                     <div class="content-grid">
                         <div class="form-section">
-                            <MudText Typo="Typo.h3" Align="Align.Center" Class="mb-4"><b><span class="highlight">Session</span> Schedule</b></MudText>
+                            <MudText Typo="Typo.h3" Align="Align.Center" Class="mb-4"><b>Schedule <span class="highlight">Discovery Call</span></b></MudText>
                             <MudForm @ref="sessionForm" Model="@session">
                                 <MudTextField Label="First Name"
                                               @bind-Value="session.FirstName"
