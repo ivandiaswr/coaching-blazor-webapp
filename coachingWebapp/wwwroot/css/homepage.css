@@ -18,7 +18,7 @@
 }
 
 html {
-  font-size: 16px;
+  font-size: 15px;
   font-family: 'Montserrat', Helvetica, Arial, sans-serif;
   margin: 0;
   padding: 0;
@@ -30,31 +30,31 @@ html {
 
 @media (min-width: 1920px) {
   html {
-    font-size: 15px;
+    font-size: 15px !important;;
   }
 }
 
 @media (max-width: 1600px) {
   html {
-    font-size: 14px;
+    font-size: 12px !important;;
   }
 }
 
 @media (max-width: 1200px) {
   html {
-    font-size: 13px;
+    font-size: 11px !important;
   }
 }
 
 @media (max-width: 768px) {
   html {
-    font-size: 12px;
+    font-size: 10px !important;;
   }
 }
 
 @media (max-width: 480px) {
   html {
-    font-size: 11px;
+    font-size: 9px !important;;
   }
 }
 
