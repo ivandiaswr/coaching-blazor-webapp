@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using ModelLayer.Models;
 
 namespace DataAccessLayer {
-    public class CoachingDbContext : IdentityDbContext<IdentityUser>
+    public class CoachingDbContext : IdentityDbContext<ApplicationUser>
     {
         public DbSet<EmailSubscription> EmailSubscriptions { get; set; }
         public DbSet<Session> Sessions { get; set; }

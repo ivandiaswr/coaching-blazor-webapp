@@ -13,6 +13,7 @@ using OpenTelemetry.Trace;
 using OpenTelemetry.Logs;
 using System.Globalization;
 using MudBlazor;
+using ModelLayer.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -62,7 +63,7 @@ builder.Services.AddDbContext<CoachingDbContext>(options =>
     // .EnableSensitiveDataLogging() // Only use in development
     // .EnableDetailedErrors());
 
-builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     {
         options.Password.RequireDigit = true;
         options.Password.RequireLowercase = true;

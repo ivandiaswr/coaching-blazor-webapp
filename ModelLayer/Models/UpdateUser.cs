@@ -5,23 +5,21 @@ namespace ModelLayer.Models
 {
     public class UpdateUser
     {
-        [Required(ErrorMessage = "Email is required.")]
-        [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
-        public string Email { get; set; }
+        [EmailAddress(ErrorMessage = "Invalid email address")]
+        public string Email { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Current password is required.")]
-        [MinLength(6, ErrorMessage = "Current password must be at least 6 characters.")]
-        [DataType(DataType.Password)]
-        public string CurrentPassword { get; set; }
+        public string FirstName { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "New password is required.")]
-        [MinLength(6, ErrorMessage = "New password must be at least 6 characters.")]
-        [DataType(DataType.Password)]
-        public string NewPassword { get; set; }
+        public string LastName { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Please confirm your new password.")]
-        [Compare(nameof(NewPassword), ErrorMessage = "Passwords do not match.")]
         [DataType(DataType.Password)]
-        public string ConfirmNewPassword { get; set; }
+        public string CurrentPassword { get; set; } = string.Empty;
+
+        [DataType(DataType.Password)]
+        public string NewPassword { get; set; } = string.Empty;
+
+        [DataType(DataType.Password)]
+        [Compare("NewPassword", ErrorMessage = "The new password and confirmation password do not match")]
+        public string ConfirmNewPassword { get; set; } = string.Empty;
     }
 }

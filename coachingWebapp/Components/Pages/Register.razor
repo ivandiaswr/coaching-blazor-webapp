@@ -1,72 +1,168 @@
 @page "/register"
 @rendermode InteractiveServer
 
-@inject UserManager<IdentityUser> UserManager
-@inject SignInManager<IdentityUser> SignInManager
-@inject NavigationManager NavigationManager
+<MudSnackbarProvider />
 
 <div class="register-container">
-    <h3 class="mb-4">Create Account</h3>
+    <MudText Typo="Typo.h4" Class="mb-4">Create Account</MudText>
 
-    <EditForm Model="@newUser" OnValidSubmit="HandleRegister">
-        <DataAnnotationsValidator />
+    <MudForm Model="@newUser" @ref="form" ValidationDelay="0" PreventDefault="true">
+        <MudTextField Label="First Name"
+                      @bind-Value="newUser.FirstName"
+                      For="@(() => newUser.FirstName)"
+                      Required="true"
+                      RequiredError="First name is required"
+                      Variant="Variant.Outlined"
+                      Class="mb-4" />
 
-        <div class="row g-3">
-            <div class="col-md-6">
-                <label for="firstName" class="form-label">First Name</label>
-                <InputText id="firstName" @bind-Value="newUser.FirstName" class="form-control" />
-            </div>
-            <div class="col-md-6">
-                <label for="lastName" class="form-label">Last Name</label>
-                <InputText id="lastName" @bind-Value="newUser.LastName" class="form-control" />
-            </div>
-            <div class="col-12">
-                <label for="email" class="form-label">Email</label>
-                <InputText id="email" @bind-Value="newUser.Email" type="email" class="form-control" />
-            </div>
-            <div class="col-md-6">
-                <label for="password" class="form-label">Password</label>
-                <InputText id="password" @bind-Value="newUser.Password" type="password" class="form-control" />
-            </div>
-            <div class="col-md-6">
-                <label for="confirmPassword" class="form-label">Confirm Password</label>
-                <InputText id="confirmPassword" @bind-Value="newUser.ConfirmPassword" type="password" class="form-control" />
-            </div>
-            <div class="col-12 d-grid">
-                <button type="submit" class="btn btn-orange mt-3">Register</button>
-            </div>
+        <MudTextField Label="Last Name"
+                      @bind-Value="newUser.LastName"
+                      For="@(() => newUser.LastName)"
+                      Required="true"
+                      RequiredError="Last name is required"
+                      Variant="Variant.Outlined"
+                      Class="mb-4" />
 
-            @if (!string.IsNullOrEmpty(ErrorMessage))
-            {
-                <div class="alert alert-danger">@ErrorMessage</div>
-            }
-        </div>
-    </EditForm>
+        <MudTextField Label="Email"
+                      @bind-Value="newUser.Email"
+                      For="@(() => newUser.Email)"
+                      InputType="InputType.Email"
+                      Required="true"
+                      RequiredError="Email is required"
+                      Variant="Variant.Outlined"
+                      Class="mb-4" />
+
+        <MudTextField Label="Password"
+                      @bind-Value="newUser.Password"
+                      For="@(() => newUser.Password)"
+                      InputType="InputType.Password"
+                      Required="true"
+                      RequiredError="Password is required"
+                      Variant="Variant.Outlined"
+                      Class="mb-4" />
+
+        <MudTextField Label="Confirm Password"
+                      @bind-Value="newUser.ConfirmPassword"
+                      For="@(() => newUser.ConfirmPassword)"
+                      InputType="InputType.Password"
+                      Required="true"
+                      RequiredError="Confirm password is required"
+                      Variant="Variant.Outlined"
+                      Class="mb-4" />
+
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.AccountCircle"
+                   Type="submit"
+                   Class="mt-4"
+                   Disabled="@isSubmitting"
+                   OnClick="HandleRegister">
+            Register
+        </MudButton>
+    </MudForm>
+
+    @if (!string.IsNullOrEmpty(debugMessage))
+    {
+        <MudText Color="Color.Error" Class="mt-4">@debugMessage</MudText>
+    }
 </div>
 
 @code {
     private RegisterUser newUser = new();
-    private string ErrorMessage;
+    private MudForm? form;
+    private bool isSubmitting = false;
+    private string? debugMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LogService.LogInfo("RegisterPage", "Register page initialized");
+    }
 
     private async Task HandleRegister()
     {
-        var user = new IdentityUser
+        if (form is null)
+        {
+            debugMessage = "Form reference is null.";
+            await LogService.LogError("HandleRegister", debugMessage);
+            Snackbar.Add(debugMessage, Severity.Error);
+            return;
+        }
+
+        isSubmitting = true;
+        debugMessage = null;
+        await LogService.LogInfo("HandleRegister", $"Starting registration for email: {newUser.Email}");
+
+        await form.Validate();
+        if (!form.IsValid)
+        {
+            isSubmitting = false;
+            debugMessage = "Form validation failed.";
+            await LogService.LogWarning("HandleRegister", debugMessage);
+            Snackbar.Add("Please correct the errors in the form.", Severity.Error);
+            return;
+        }
+
+        var existingUser = await UserManager.FindByEmailAsync(newUser.Email);
+        if (existingUser != null)
+        {
+            isSubmitting = false;
+            debugMessage = "Email already registered.";
+            await LogService.LogWarning("HandleRegister", $"Registration attempt with existing email: {newUser.Email}");
+            Snackbar.Add("This email is already registered. Please log in or click 'Forgot Password' on the login page to reset your password.", Severity.Error);
+            return;
+        }
+
+        var user = new ApplicationUser
         {
             UserName = newUser.Email,
-            Email = newUser.Email
+            Email = newUser.Email,
+            FirstName = newUser.FirstName,
+            LastName = newUser.LastName
         };
 
-        var result = await UserManager.CreateAsync(user, newUser.Password);
+        try
+        {
+            var result = await UserManager.CreateAsync(user, newUser.Password);
 
-        if (result.Succeeded)
-        {
-            await UserManager.AddToRoleAsync(user, "User");
-            await SignInManager.SignInAsync(user, isPersistent: false);
-            NavigationManager.NavigateTo("/UserDashboard");
+            if (result.Succeeded)
+            {
+                await LogService.LogInfo("HandleRegister", $"User {newUser.Email} created successfully");
+                await UserManager.AddToRoleAsync(user, "User");
+
+                var loginModel = new { Email = newUser.Email, Password = newUser.Password };
+                var loginResult = await JSRuntime.InvokeAsync<SessionResult>("login", loginModel);
+
+                if (loginResult.Success)
+                {
+                    await LogService.LogInfo("HandleRegister", $"Sign-in successful for {newUser.Email}");
+                    Snackbar.Add("Registration successful! Welcome!", Severity.Success);
+                    await LogService.LogInfo("HandleRegister", $"Navigating to /UserDashboard for {newUser.Email}");
+                    await JSRuntime.InvokeVoidAsync("window.location.assign", "/UserDashboard");
+                }
+                else
+                {
+                    debugMessage = loginResult.Error ?? "Sign-in failed after registration.";
+                    await LogService.LogError("HandleRegister", $"Sign-in failed for {newUser.Email}: {debugMessage}");
+                    Snackbar.Add(debugMessage, Severity.Error);
+                }
+            }
+            else
+            {
+                var errorMessage = string.Join(", ", result.Errors.Select(e => e.Description));
+                debugMessage = $"Registration failed: {errorMessage}";
+                await LogService.LogError("HandleRegister", $"Failed to register user {newUser.Email}: {errorMessage}");
+                Snackbar.Add("Something went wrong during registration. Please check your details and try again.", Severity.Error);
+            }
         }
-        else
+        catch (Exception ex)
         {
-            ErrorMessage = string.Join(" ", result.Errors.Select(e => e.Description));
+            debugMessage = $"Unexpected error: {ex.Message}";
+            await LogService.LogError("HandleRegister", $"Unexpected error during registration for {newUser.Email}: {ex.Message}");
+            Snackbar.Add("An unexpected error occurred during registration. Please try again.", Severity.Error);
+        }
+        finally
+        {
+            isSubmitting = false;
         }
     }
 }

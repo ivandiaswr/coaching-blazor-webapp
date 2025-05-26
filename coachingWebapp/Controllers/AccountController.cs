@@ -3,15 +3,16 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using ModelLayer.Models;
 
 [Route("api/[controller]")]
 [ApiController]
 public class AccountController : ControllerBase
 {
-    private readonly SignInManager<IdentityUser> _signInManager;
+    private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly ILogService _logService;
 
-    public AccountController(SignInManager<IdentityUser> signInManager, ILogService logService)
+    public AccountController(SignInManager<ApplicationUser> signInManager, ILogService logService)
     {
         _signInManager = signInManager;
         this._logService = logService;
