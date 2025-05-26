@@ -112,26 +112,33 @@
                                 <MudItem xs="12" md="4">
                                     <MudStack Spacing="2">
                                         <MudText Typo="Typo.h6">Session Packs</MudText>
-                                        @foreach (var option in BookingOptions.Where(o => o.Type == BookingType.SessionPack))
+                                        @if (!BookingOptions.Any(o => o.Type == BookingType.SessionPack))
                                         {
-                                            var cardStyle = $"cursor:{(option.IsAvailable ? "pointer" : "not-allowed")};opacity:{(option.IsAvailable ? "1" : "0.6")}";
-                                            <MudCard 
-                                                Class="@($"option-card session-pack {(SelectedOption?.Id == option.Id ? "selected" : "")}")"
-                                                Style="@cardStyle"
-                                                @onclick="() => SelectBookingOption(option)">
-                                                <MudCardContent>
-                                                    <MudText Typo="Typo.h6">@option.Title</MudText>
-                                                    <MudText Typo="Typo.body2">@option.Description</MudText>
-                                                    @if (option.RequiresPurchase)
-                                                    {
-                                                        <MudText Typo="Typo.subtitle2" Color="Color.Primary">@option.PriceEUR€</MudText>
-                                                    }
-                                                    else
-                                                    {
-                                                        <MudText Typo="Typo.subtitle2" Color="Color.Success">No payment required</MudText>
-                                                    }
-                                                </MudCardContent>
-                                            </MudCard>
+                                            <MudText Typo="Typo.body2" Color="Color.Warning">No pack options available.</MudText>
+                                        }
+                                        else 
+                                        {
+                                            @foreach (var option in BookingOptions.Where(o => o.Type == BookingType.SessionPack))
+                                            {
+                                                var cardStyle = $"cursor:{(option.IsAvailable ? "pointer" : "not-allowed")};opacity:{(option.IsAvailable ? "1" : "0.6")}";
+                                                <MudCard 
+                                                    Class="@($"option-card session-pack {(SelectedOption?.Id == option.Id ? "selected" : "")}")"
+                                                    Style="@cardStyle"
+                                                    @onclick="() => SelectBookingOption(option)">
+                                                    <MudCardContent>
+                                                        <MudText Typo="Typo.h6">@option.Title</MudText>
+                                                        <MudText Typo="Typo.body2">@option.Description</MudText>
+                                                        @if (option.RequiresPurchase)
+                                                        {
+                                                            <MudText Typo="Typo.subtitle2" Color="Color.Primary">@option.PriceEUR€</MudText>
+                                                        }
+                                                        else
+                                                        {
+                                                            <MudText Typo="Typo.subtitle2" Color="Color.Success">No payment required</MudText>
+                                                        }
+                                                    </MudCardContent>
+                                                </MudCard>
+                                            }
                                         }
                                     </MudStack>
                                 </MudItem>
