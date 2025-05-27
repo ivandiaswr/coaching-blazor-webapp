@@ -1278,6 +1278,8 @@
                     BookingType = SelectedOption.Type,
                     PlanId = null
                 };
+                
+                await LogService.LogWarning("SubmitSessionRequest", $"baseUrl: {baseUrl}, checkoutRequest: {System.Text.Json.JsonSerializer.Serialize(checkoutRequest)}");
 
                 var response = await HttpClient.PostAsJsonAsync($"{baseUrl}/api/payments/create-checkout-session", checkoutRequest);
 
