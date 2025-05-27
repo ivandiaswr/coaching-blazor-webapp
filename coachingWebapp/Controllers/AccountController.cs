@@ -23,6 +23,13 @@ public class AccountController : ControllerBase
     {
         try
         {
+            var user = await _signInManager.UserManager.FindByEmailAsync(loginModel.Email);
+            if (user == null)
+            {
+                await _logService.LogWarning("Login", $"No account found for email: {loginModel.Email}");
+                return BadRequest("No account exists with this email.");
+            }
+
             var result = await _signInManager.PasswordSignInAsync(
                 loginModel.Email,
                 loginModel.Password,
@@ -32,7 +39,6 @@ public class AccountController : ControllerBase
 
             if (result.Succeeded)
             {
-                var user = await _signInManager.UserManager.FindByEmailAsync(loginModel.Email);
                 var principal = await _signInManager.CreateUserPrincipalAsync(user);
 
                 await HttpContext.SignInAsync(
@@ -51,28 +57,28 @@ public class AccountController : ControllerBase
             }
             else if (result.IsLockedOut)
             {
-                await _logService.LogError("Login", "IsLockedOut");
+                await _logService.LogError("Login", $"Account locked out for email: {loginModel.Email}");
                 return BadRequest("Your account is locked. Please try again later.");
             }
             else if (result.IsNotAllowed)
             {
-                await _logService.LogError("Login", "IsNotAllowed");
+                await _logService.LogError("Login", $"Login not allowed for email: {loginModel.Email}");
                 return BadRequest("Login is not allowed. Please confirm your email.");
             }
             else if (result.RequiresTwoFactor)
             {
-                await _logService.LogError("Login", "RequiresTwoFactor");
+                await _logService.LogError("Login", $"Two-factor authentication required for email: {loginModel.Email}");
                 return BadRequest("Two-factor authentication required. Please complete the process.");
             }
             else
             {
-                await _logService.LogError("Login", $"Global error invalid login attempt");
-                return BadRequest("Invalid login attempt.");
+                await _logService.LogWarning("Login", $"Invalid password attempt for email: {loginModel.Email}");
+                return BadRequest("Invalid password.");
             }
         } 
         catch(Exception ex)
         {
-            await _logService.LogError("Login", ex.Message);
+            await _logService.LogError("Login", $"Exception during login for email: {loginModel.Email}. Error: {ex.Message}");
             return Problem(title: "Login failed", detail: ex.Message, statusCode: 500);
         }
     }

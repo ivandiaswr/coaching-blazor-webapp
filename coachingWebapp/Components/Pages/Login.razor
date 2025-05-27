@@ -1,5 +1,7 @@
 @page "/login"
 @rendermode InteractiveServer
+@inject IJSRuntime JSRuntime
+@inject LogService LogService
 
 <PageTitle>@pageTitle</PageTitle>
 
@@ -37,7 +39,13 @@
 
         @if (!string.IsNullOrEmpty(loginError))
         {
-            <div class="alert alert-danger mt-3" role="alert">@loginError</div>
+            <div class="alert alert-danger mt-3" role="alert">
+                @loginError
+                @if (loginError.Contains("No account exists"))
+                {
+                    <p class="mt-2">Need an account? <a href="/register">Register here</a>.</p>
+                }
+            </div>
         }
     </EditForm>
 </section>
@@ -57,22 +65,30 @@
 
         try
         {
+            await LogService.LogInfo("HandleLogin", $"Starting login attempt for email: {loginModel.Email}");
             var result = await JSRuntime.InvokeAsync<SessionResult>("login", loginModel);
 
             if (!result.Success)
             {
                 loginError = result.Error ?? "Invalid email or password.";
+                await LogService.LogWarning("HandleLogin", $"Login failed for email: {loginModel.Email}. Error: {loginError}");
+            }
+            else
+            {
+                await LogService.LogInfo("HandleLogin", $"Successful login for email: {loginModel.Email}");
             }
         }
         catch (Exception ex)
         {
             loginError = "An error occurred during login. Please try again.";
+            await LogService.LogError("HandleLogin", $"Login error for email: {loginModel.Email}. Exception: {ex.Message}");
             Console.WriteLine($"Login error: {ex.Message}");
         }
         finally
         {
             isSubmitting = false;
             StateHasChanged();
+            await LogService.LogInfo("HandleLogin", $"Login attempt completed for email: {loginModel.Email}");
         }
     }
-} 
+}
