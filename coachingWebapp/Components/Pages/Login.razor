@@ -1,7 +1,5 @@
 @page "/login"
 @rendermode InteractiveServer
-@inject IJSRuntime JSRuntime
-@inject LogService LogService
 
 <PageTitle>@pageTitle</PageTitle>
 
@@ -82,7 +80,6 @@
         {
             loginError = "An error occurred during login. Please try again.";
             await LogService.LogError("HandleLogin", $"Login error for email: {loginModel.Email}. Exception: {ex.Message}");
-            Console.WriteLine($"Login error: {ex.Message}");
         }
         finally
         {
