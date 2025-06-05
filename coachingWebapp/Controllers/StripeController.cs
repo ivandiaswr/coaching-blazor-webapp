@@ -29,7 +29,13 @@ namespace coachingWebapp.Controllers
                     return BadRequest(new { error = "Invalid or missing request data." });
                 }
 
-                await _logService.LogInfo("CreateCheckoutSession", $"Received request: BookingType={request.BookingType}, PlanId={request.PlanId}, SessionId={request.Session.Id}");
+                if (string.IsNullOrEmpty(request.Currency) || !IsStripeSupportedCurrency(request.Currency))
+                {
+                    await _logService.LogWarning("CreateCheckoutSession", $"Invalid or unsupported currency: {request.Currency}. Falling back to GBP.");
+                    request.Currency = "GBP";
+                }
+
+                await _logService.LogInfo("CreateCheckoutSession", $"Received request: BookingType={request.BookingType}, PlanId={request.PlanId}, SessionId={request.Session.Id}, Currency={request.Currency}, Price={request.Price}");
 
                 var url = await _paymentService.CreateCheckoutSessionAsync(request);
 
@@ -97,6 +103,26 @@ namespace coachingWebapp.Controllers
                 await _logService.LogError("Webhook Error", ex.Message);
                 return StatusCode(500, new { error = "An error occurred while processing the webhook." });
             }
+        }
+
+        private bool IsStripeSupportedCurrency(string currency)
+        {
+            var supportedCurrencies = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "AED", "AFN", "ALL", "AMD", "ANG", "AOA", "ARS", "AUD", "AWG", "AZN", "BAM", "BBD", "BDT", "BGN",
+                "BHD", "BIF", "BMD", "BND", "BOB", "BRL", "BSD", "BTN", "BWP", "BYN", "BZD", "CAD", "CDF", "CHF",
+                "CLP", "CNY", "COP", "CRC", "CUP", "CVE", "CZK", "DJF", "DKK", "DOP", "DZD", "EGP", "ERN", "ETB",
+                "EUR", "FJD", "FKP", "FOK", "GBP", "GEL", "GGP", "GHS", "GIP", "GMD", "GNF", "GTQ", "GYD", "HKD",
+                "HNL", "HRK", "HTG", "HUF", "IDR", "ILS", "IMP", "INR", "IQD", "IRR", "ISK", "JEP", "JMD", "JOD",
+                "JPY", "KES", "KGS", "KHR", "KID", "KMF", "KRW", "KWD", "KYD", "KZT", "LAK", "LBP", "LKR", "LRD",
+                "LSL", "LYD", "MAD", "MDL", "MGA", "MKD", "MMK", "MNT", "MOP", "MRU", "MUR", "MVR", "MWK", "MXN",
+                "MYR", "MZN", "NAD", "NGN", "NIO", "NOK", "NPR", "NZD", "OMR", "PAB", "PEN", "PGK", "PHP", "PKR",
+                "PLN", "PYG", "QAR", "RON", "RSD", "RUB", "RWF", "SAR", "SBD", "SCR", "SDG", "SEK", "SGD", "SHP",
+                "SLE", "SOS", "SRD", "SSP", "STN", "SYP", "SZL", "THB", "TJS", "TMT", "TND", "TOP", "TRY", "TTD",
+                "TVD", "TWD", "TZS", "UAH", "UGX", "USD", "UYU", "UZS", "VES", "VND", "VUV", "WST", "XAF", "XCD",
+                "XOF", "XPF", "YER", "ZAR", "ZMW"
+            };
+            return supportedCurrencies.Contains(currency.ToUpper());
         }
     }
 }

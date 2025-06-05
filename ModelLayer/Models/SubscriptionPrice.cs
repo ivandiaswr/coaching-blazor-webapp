@@ -15,7 +15,9 @@ namespace ModelLayer.Models
         [Range(1, int.MaxValue)]
         public int MonthlyLimit { get; set; }
         [Range(0, double.MaxValue)]
-        public decimal PriceEUR { get; set; }
+        public decimal PriceGBP { get; set; }
+        public decimal? PriceConverted { get; set; }
+        public string Currency { get; set; } = "GBP";
         public string? StripePriceId { get; set; }
         public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
     }

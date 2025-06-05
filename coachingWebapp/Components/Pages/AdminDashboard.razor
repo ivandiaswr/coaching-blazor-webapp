@@ -305,11 +305,11 @@
                                         <MudForm @ref="singleForms[sessionType]">
                                             <MudGrid>
                                                 <MudItem xs="12" sm="6">
-                                                    <MudNumericField Label="Price (€)"
-                                                                    @bind-Value="singlePrices[sessionType].PriceEUR"
-                                                                    For="@(() => singlePrices[sessionType].PriceEUR)"
+                                                    <MudNumericField Label="Price (£)"
+                                                                    @bind-Value="singlePrices[sessionType].PriceGBP"
+                                                                    For="@(() => singlePrices[sessionType].PriceGBP)"
                                                                     Adornment="Adornment.Start"
-                                                                    AdornmentText="€"
+                                                                    AdornmentText="£"
                                                                     Required="true"
                                                                     RequiredError="Price is required"
                                                                     Min="0" />
@@ -349,11 +349,11 @@
                                                                         Min="1" />
                                                     </MudItem>
                                                     <MudItem xs="12" sm="6">
-                                                        <MudNumericField Label="Price (€)"
-                                                                        @bind-Value="pack.PriceEUR"
-                                                                        For="@(() => pack.PriceEUR)"
+                                                        <MudNumericField Label="Price (£)"
+                                                                        @bind-Value="pack.PriceGBP"
+                                                                        For="@(() => pack.PriceGBP)"
                                                                         Adornment="Adornment.Start"
-                                                                        AdornmentText="€"
+                                                                        AdornmentText="£"
                                                                         Required="true"
                                                                         RequiredError="Price is required"
                                                                         Min="0" />
@@ -412,11 +412,11 @@
                                                                         Min="1" />
                                                     </MudItem>
                                                     <MudItem xs="12" sm="6">
-                                                        <MudNumericField Label="Price (€)"
-                                                                        @bind-Value="subscription.PriceEUR"
-                                                                        For="@(() => subscription.PriceEUR)"
+                                                        <MudNumericField Label="Price (£)"
+                                                                        @bind-Value="subscription.PriceGBP"
+                                                                        For="@(() => subscription.PriceGBP)"
                                                                         Adornment="Adornment.Start"
-                                                                        AdornmentText="€"
+                                                                        AdornmentText="£"
                                                                         Required="true"
                                                                         RequiredError="Price is required"
                                                                         Min="0" />
@@ -539,7 +539,7 @@
                     ?? new SessionPrice
                     {
                         SessionType = sessionType,
-                        PriceEUR = 0,
+                        PriceGBP = 0,
                         LastUpdated = DateTime.UtcNow
                     };
                 packPrices[sessionType] = (await SessionPackPriceService.GetPricesForSessionTypeAsync(sessionType))?.ToList() ?? new();
@@ -731,7 +731,7 @@
                 Name = $"{sessionType.GetDisplayName()} Pack {packPrices[sessionType].Count + 1}",
                 Description = string.Empty,
                 TotalSessions = 5,
-                PriceEUR = 0,
+                PriceGBP = 0,
                 LastUpdated = DateTime.UtcNow
             };
 
@@ -763,7 +763,7 @@
                 Name = $"{sessionType.GetDisplayName()} Subscription {subscriptionPrices[sessionType].Count + 1}",
                 Description = string.Empty,
                 MonthlyLimit = 4,
-                PriceEUR = 0,
+                PriceGBP = 0,
                 StripePriceId = null,
                 LastUpdated = DateTime.UtcNow
             };

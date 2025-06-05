@@ -79,7 +79,7 @@ namespace BusinessLayer.Services
                         existing.Name = price.Name;
                         existing.Description = price.Description;
                         existing.TotalSessions = price.TotalSessions;
-                        existing.PriceEUR = price.PriceEUR;
+                        existing.PriceGBP = price.PriceGBP;
                         existing.SessionType = price.SessionType;
                         existing.LastUpdated = DateTime.UtcNow;
                         _context.SessionPackPrices.Update(existing);

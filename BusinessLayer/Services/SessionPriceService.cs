@@ -25,7 +25,7 @@ namespace BusinessLayer.Services
             var existing = await GetBySessionTypeAsync(price.SessionType);
             if (existing != null)
             {
-                existing.PriceEUR = price.PriceEUR;
+                existing.PriceGBP = price.PriceGBP;
                 existing.LastUpdated = DateTime.UtcNow;
             }
             else

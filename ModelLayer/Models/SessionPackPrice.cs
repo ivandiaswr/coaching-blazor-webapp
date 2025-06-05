@@ -15,7 +15,8 @@ namespace ModelLayer.Models
         [Range(1, int.MaxValue)]
         public int TotalSessions { get; set; }
         [Range(0, double.MaxValue)]
-        public decimal PriceEUR { get; set; }
+        public decimal PriceGBP { get; set; }
+        public string Currency { get; } = "GBP";
         public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
     }
 }

@@ -83,121 +83,121 @@
         <MudPaper Class="booking-tab-wrapper p-4" Elevation="0">
             <MudGrid GutterSize="32px">
                 <MudItem xs="12" md="6">
-                        <div class="booking-options-grid">
-                            <MudGrid Class="mt-4" GutterSize="16px">
-                                <MudItem xs="12" md="4">
-                                    <MudStack Spacing="2">
-                                        <MudText Typo="Typo.h6">Single Session</MudText>
-                                        @foreach (var option in BookingOptions.Where(o => o.Type == BookingType.SingleSession))
+                    <div class="booking-options-grid">
+                        <MudGrid Class="mt-4" GutterSize="16px">
+                            <MudItem xs="12" md="4">
+                                <MudStack Spacing="2">
+                                    <MudText Typo="Typo.h6">Single Session</MudText>
+                                    @foreach (var option in BookingOptions.Where(o => o.Type == BookingType.SingleSession))
+                                    {
+                                        var cardStyle = $"cursor:{(option.IsAvailable ? "pointer" : "not-allowed")};opacity:{(option.IsAvailable ? "1" : "0.6")}";
+                                        <MudCard 
+                                            Class="@($"option-card single-session {(SelectedOption?.Id == option.Id ? "selected" : "")}")"
+                                            Style="@cardStyle"
+                                            @onclick="() => SelectBookingOption(option)">
+                                            <MudCardContent>
+                                                <MudText Typo="Typo.h6">@option.Title</MudText>
+                                                <MudText Typo="Typo.body2">@option.Description</MudText>
+                                                <MudText Typo="Typo.subtitle2" Color="Color.Primary">@FormatPrice(option.PriceConverted ?? 0, option.Currency)</MudText>
+                                                @if (!option.IsAvailable && option.RequiresPurchase)
+                                                {
+                                                    <MudText Typo="Typo.caption" Color="Color.Error">Unavailable</MudText>
+                                                }
+                                            </MudCardContent>
+                                        </MudCard>
+                                    }
+                                </MudStack>
+                            </MudItem>
+
+                            <MudItem xs="12" md="4">
+                                <MudStack Spacing="2">
+                                    <MudText Typo="Typo.h6">Session Packs</MudText>
+                                    @if (!BookingOptions.Any(o => o.Type == BookingType.SessionPack))
+                                    {
+                                        <MudText Typo="Typo.body2" Color="Color.Warning">No pack options available.</MudText>
+                                    }
+                                    else 
+                                    {
+                                        @foreach (var option in BookingOptions.Where(o => o.Type == BookingType.SessionPack))
                                         {
                                             var cardStyle = $"cursor:{(option.IsAvailable ? "pointer" : "not-allowed")};opacity:{(option.IsAvailable ? "1" : "0.6")}";
                                             <MudCard 
-                                                Class="@($"option-card single-session {(SelectedOption?.Id == option.Id ? "selected" : "")}")"
+                                                Class="@($"option-card session-pack {(SelectedOption?.Id == option.Id ? "selected" : "")}")"
                                                 Style="@cardStyle"
                                                 @onclick="() => SelectBookingOption(option)">
                                                 <MudCardContent>
                                                     <MudText Typo="Typo.h6">@option.Title</MudText>
                                                     <MudText Typo="Typo.body2">@option.Description</MudText>
-                                                    <MudText Typo="Typo.subtitle2" Color="Color.Primary">@option.PriceEUR€</MudText>
-                                                    @if (!option.IsAvailable && option.RequiresPurchase)
+                                                    @if (option.RequiresPurchase)
                                                     {
-                                                        <MudText Typo="Typo.caption" Color="Color.Error">Unavailable</MudText>
+                                                        <MudText Typo="Typo.subtitle2" Color="Color.Primary">@FormatPrice(option.PriceConverted ?? 0, option.Currency)</MudText>
+                                                    }
+                                                    else
+                                                    {
+                                                        <MudText Typo="Typo.subtitle2" Color="Color.Success">No payment required</MudText>
                                                     }
                                                 </MudCardContent>
                                             </MudCard>
                                         }
-                                    </MudStack>
-                                </MudItem>
+                                    }
+                                </MudStack>
+                            </MudItem>
 
-                                <MudItem xs="12" md="4">
-                                    <MudStack Spacing="2">
-                                        <MudText Typo="Typo.h6">Session Packs</MudText>
-                                        @if (!BookingOptions.Any(o => o.Type == BookingType.SessionPack))
+                            <MudItem xs="12" md="4">
+                                <MudStack Spacing="2">
+                                    <MudText Typo="Typo.h6">Subscriptions</MudText>
+                                    @{
+                                        var subOptions = BookingOptions
+                                            .Where(o => o.Type == BookingType.Subscription && o.RequiresPurchase && o.PriceConverted.HasValue)
+                                            .ToList();
+                                        var highestSubPrice = subOptions.Any() ? subOptions.Max(o => o.PriceConverted ?? 0) : 0;
+                                    }
+                                    @if (!BookingOptions.Any(o => o.Type == BookingType.Subscription))
+                                    {
+                                        <MudText Typo="Typo.body2" Color="Color.Warning">No subscription options available.</MudText>
+                                    }
+                                    else
+                                    {
+                                        @foreach (var option in BookingOptions.Where(o => o.Type == BookingType.Subscription))
                                         {
-                                            <MudText Typo="Typo.body2" Color="Color.Warning">No pack options available.</MudText>
+                                            var isRecommended = option.RequiresPurchase && (option.PriceConverted ?? 0) == highestSubPrice && highestSubPrice > 0;
+                                            var cardStyle = $"cursor:{(option.IsAvailable ? "pointer" : "not-allowed")};opacity:{(option.IsAvailable ? "1" : "0.6")}";
+                                            <MudCard 
+                                                Class="@($"option-card subscription {(SelectedOption?.Id == option.Id ? "selected" : "")}")"
+                                                Style="@cardStyle"
+                                                @onclick="() => SelectBookingOption(option)">
+                                                <MudCardContent>
+                                                    @if (isRecommended)
+                                                    {
+                                                        <MudChip T="string" Color="Color.Warning" Variant="Variant.Filled" Size="Size.Small" Class="mb-3">
+                                                            Recommended
+                                                        </MudChip>
+                                                    }
+                                                    <MudText Typo="Typo.h6">@option.Title</MudText>
+                                                    <MudText Typo="Typo.body2">@option.Description</MudText>
+                                                    @if (option.RequiresPurchase)
+                                                    {
+                                                        <MudText Typo="Typo.subtitle2" Color="Color.Primary">@FormatPrice(option.PriceConverted ?? 0, option.Currency)</MudText>
+                                                    }
+                                                    else
+                                                    {
+                                                        <MudText Typo="Typo.subtitle2" Color="Color.Success">No payment required</MudText>
+                                                    }
+                                                </MudCardContent>
+                                            </MudCard>
                                         }
-                                        else 
-                                        {
-                                            @foreach (var option in BookingOptions.Where(o => o.Type == BookingType.SessionPack))
-                                            {
-                                                var cardStyle = $"cursor:{(option.IsAvailable ? "pointer" : "not-allowed")};opacity:{(option.IsAvailable ? "1" : "0.6")}";
-                                                <MudCard 
-                                                    Class="@($"option-card session-pack {(SelectedOption?.Id == option.Id ? "selected" : "")}")"
-                                                    Style="@cardStyle"
-                                                    @onclick="() => SelectBookingOption(option)">
-                                                    <MudCardContent>
-                                                        <MudText Typo="Typo.h6">@option.Title</MudText>
-                                                        <MudText Typo="Typo.body2">@option.Description</MudText>
-                                                        @if (option.RequiresPurchase)
-                                                        {
-                                                            <MudText Typo="Typo.subtitle2" Color="Color.Primary">@option.PriceEUR€</MudText>
-                                                        }
-                                                        else
-                                                        {
-                                                            <MudText Typo="Typo.subtitle2" Color="Color.Success">No payment required</MudText>
-                                                        }
-                                                    </MudCardContent>
-                                                </MudCard>
-                                            }
-                                        }
-                                    </MudStack>
-                                </MudItem>
-
-                                <MudItem xs="12" md="4">
-                                    <MudStack Spacing="2">
-                                        <MudText Typo="Typo.h6">Subscriptions</MudText>
-                                        @{
-                                            var subOptions = BookingOptions
-                                                .Where(o => o.Type == BookingType.Subscription && o.RequiresPurchase && o.PriceEUR.HasValue)
-                                                .ToList();
-                                            var highestSubPrice = subOptions.Any() ? subOptions.Max(o => o.PriceEUR ?? 0) : 0;
-                                        }
-                                        @if (!BookingOptions.Any(o => o.Type == BookingType.Subscription))
-                                        {
-                                            <MudText Typo="Typo.body2" Color="Color.Warning">No subscription options available.</MudText>
-                                        }
-                                        else
-                                        {
-                                            @foreach (var option in BookingOptions.Where(o => o.Type == BookingType.Subscription))
-                                            {
-                                                var isRecommended = option.RequiresPurchase && (option.PriceEUR ?? 0) == highestSubPrice && highestSubPrice > 0;
-                                                var cardStyle = $"cursor:{(option.IsAvailable ? "pointer" : "not-allowed")};opacity:{(option.IsAvailable ? "1" : "0.6")}";
-                                                <MudCard 
-                                                    Class="@($"option-card subscription {(SelectedOption?.Id == option.Id ? "selected" : "")}")"
-                                                    Style="@cardStyle"
-                                                    @onclick="() => SelectBookingOption(option)">
-                                                    <MudCardContent>
-                                                        @if (isRecommended)
-                                                        {
-                                                            <MudChip T="string" Color="Color.Warning" Variant="Variant.Filled" Size="Size.Small" Class="mb-3">
-                                                                Recommended
-                                                            </MudChip>
-                                                        }
-                                                        <MudText Typo="Typo.h6">@option.Title</MudText>
-                                                        <MudText Typo="Typo.body2">@option.Description</MudText>
-                                                        @if (option.RequiresPurchase)
-                                                        {
-                                                            <MudText Typo="Typo.subtitle2" Color="Color.Primary">@option.PriceEUR€</MudText>
-                                                        }
-                                                        else
-                                                        {
-                                                            <MudText Typo="Typo.subtitle2" Color="Color.Success">No payment required</MudText>
-                                                        }
-                                                    </MudCardContent>
-                                                </MudCard>
-                                            }
-                                        }
+                                    }
                                 </MudStack>
                             </MudItem>
                         </MudGrid>
                     </div>
                 </MudItem>
 
-                <MudItem xs="12" md="6">
+                <MudItem xs="12" md="6" Elevation="0">
                     <div class="user-dashboard-request">
                         <MudForm @ref="requestForm" Model="@requestModel">
                             <MudText Typo="Typo.subtitle1"
-                                        Class=@($"mb-2 {(showValidationErrors && (SelectedOption == null || string.IsNullOrEmpty(selectedSlotString)) ? "text-red" : "")}")>
+                                     Class=@($"mb-2 {(showValidationErrors && (SelectedOption == null || string.IsNullOrEmpty(selectedSlotString)) ? "text-red" : "")}")>
                                 Selected booking option*
                             </MudText>
 
@@ -212,13 +212,13 @@
                                 };
 
                                 <MudCard Class="@($"option-card selected {typeClass} mb-4")">
-                                   <MudCardContent>
+                                    <MudCardContent>
                                         <MudText Typo="Typo.h6">@SelectedOption.Title</MudText>
                                         <MudText Typo="Typo.body2">@SelectedOption.Description</MudText>
-                                        @if (SelectedOption.PriceEUR.HasValue && SelectedOption.RequiresPurchase)
+                                        @if (SelectedOption.PriceConverted.HasValue && SelectedOption.RequiresPurchase)
                                         {
                                             <MudText Typo="Typo.subtitle2" Color="Color.Primary">
-                                                <b>@SelectedOption.PriceEUR€ </b> 
+                                                <b>@FormatPrice(SelectedOption.PriceConverted.Value, SelectedOption.Currency)</b> 
                                                 @if (SelectedOption.Type == BookingType.SessionPack && SelectedOption.TotalSessions.HasValue)
                                                 {
                                                     <span><b>(@SelectedOption.TotalSessions sessions)</b></span>
@@ -244,20 +244,20 @@
                                 </MudAlert>
                             }
 
-                             <MudSelect Label="Session Category" 
-                                        T="SessionType"
-                                        Value="requestModel.SessionCategory"
-                                        For="@(() => requestModel.SessionCategory)"
-                                        ValueChanged="@(value => HandleSessionTypeChange(value))"
-                                        Required="true"
-                                        RequiredError="Session type is required">
-                                    @foreach (var type in Enum.GetValues(typeof(SessionType)).Cast<SessionType>())
-                                    {
-                                        <MudSelectItem Value="@type">
-                                            @((type.GetType().GetField(type.ToString())?.GetCustomAttributes(typeof(DisplayAttribute), false).FirstOrDefault() as DisplayAttribute)?.Name ?? type.ToString())
-                                        </MudSelectItem>
-                                    }
-                                </MudSelect>
+                            <MudSelect Label="Session Category" 
+                                       T="SessionType"
+                                       Value="requestModel.SessionCategory"
+                                       For="@(() => requestModel.SessionCategory)"
+                                       ValueChanged="@(value => HandleSessionTypeChange(value))"
+                                       Required="true"
+                                       RequiredError="Session type is required">
+                                @foreach (var type in Enum.GetValues(typeof(SessionType)).Cast<SessionType>())
+                                {
+                                    <MudSelectItem Value="@type">
+                                        @((type.GetType().GetField(type.ToString())?.GetCustomAttributes(typeof(DisplayAttribute), false).FirstOrDefault() as DisplayAttribute)?.Name ?? type.ToString())
+                                    </MudSelectItem>
+                                }
+                            </MudSelect>
 
                             <MudTextField Label="Message" 
                                           T="string" 
@@ -304,35 +304,35 @@
     <MudTabPanel Text="Sessions" Icon="@Icons.Material.Filled.ListAlt">
         <MudPaper class="sessions-wrapper" Elevation="0">
             <MudStack Row="true" 
-                    Justify="@Justify.Center" 
-                    AlignItems="@AlignItems.Center" 
-                    Spacing="3" 
-                    Class="session-filters-wrapper mb-5">
+                Justify="@Justify.Center" 
+                AlignItems="@AlignItems.Center" 
+                Spacing="3" 
+                Class="session-filters-wrapper mb-5">
                 <MudSelect T="string" 
-                        Label="Filter" 
-                        Value="selectedFilter"
-                        ValueChanged="OnFilterChanged"
-                        Dense="true">
+                            Label="Filter" 
+                            Value="selectedFilter"
+                            ValueChanged="OnFilterChanged"
+                            Dense="true">
                     <MudSelectItem Value="@("Upcoming")">Upcoming</MudSelectItem>
                     <MudSelectItem Value="@("Past")">Past</MudSelectItem>
                     <MudSelectItem Value="@("All")">All</MudSelectItem>
                 </MudSelect>
 
                 <MudTextField Label="Search"
-                        Value="searchText"
-                        ValueChanged="@(EventCallback.Factory.Create<string>(this, OnSearchChanged))"
-                        Placeholder="Search by type..."
-                        Immediate="true"
-                        Adornment="Adornment.Start"
-                        AdornmentIcon="@Icons.Material.Filled.Search" />
+                                Value="@searchText"
+                                ValueChanged="@(EventCallback.Factory.Create<string>(this, OnSearchChanged))"
+                                Placeholder="Search by type..."
+                                Immediate="true"
+                                Adornment="Adornment.Start"
+                                AdornmentIcon="@Icons.Material.Filled.Search" />
             </MudStack>
 
             <MudTable @ref="serverTable"
-                    T="VideoSession"
-                    Hover="true"
-                    Striped="true"
-                    Bordered="true"
-                    ServerData="@(async (TableState state, CancellationToken cancellationToken) => await LoadServerData(state, CancellationToken.None))">
+                        T="VideoSession"
+                        Hover="true"
+                        Striped="true"
+                        Bordered="true"
+                        ServerData="@(async (TableState state, CancellationToken cancellationToken) => await LoadServerData(state, CancellationToken.None))">
                 <HeaderContent>
                     <MudTh>Date</MudTh>
                     <MudTh>Status</MudTh>
@@ -401,9 +401,9 @@
             <MudStack Spacing="3">
                 <div class="d-flex justify-end">
                     <MudButton OnClick="ClearChat" 
-                               Class="clear-chat-button" 
-                               StartIcon="@Icons.Material.Filled.Clear" 
-                               Size="Size.Small">
+                                Class="clear-chat-button" 
+                                StartIcon="@Icons.Material.Filled.Clear" 
+                                Size="Size.Small">
                         Clear Chat
                     </MudButton>
                 </div>
@@ -456,17 +456,17 @@
                 </div>
                 <MudForm Class="chat-input-form">
                     <MudTextField InputRef="@chatInputRef"
-                                  @bind-Value="newMessage" 
-                                  Placeholder="How can Ítala help you?" 
-                                  Immediate="true" 
-                                  OnKeyDown="@(async (KeyboardEventArgs e) => { if (e.Key == "Enter" && !isSending) await SendMessage(); })" 
-                                  Disabled="isSending" 
-                                  Variant="Variant.Outlined" 
-                                  Adornment="Adornment.End" 
-                                  AdornmentIcon="@Icons.Material.Filled.Send" 
-                                  AdornmentColor="Color.Primary" 
-                                  OnAdornmentClick="SendMessage" 
-                                  Class="chat-input" />
+                                    @bind-Value="newMessage" 
+                                    Placeholder="How can Ítala help you?" 
+                                    Immediate="true" 
+                                    OnKeyDown="@(async (KeyboardEventArgs e) => { if (e.Key == "Enter" && !isSending) await SendMessage(); })" 
+                                    Disabled="isSending" 
+                                    Variant="Variant.Outlined" 
+                                    Adornment="Adornment.End" 
+                                    AdornmentIcon="@Icons.Material.Filled.Send" 
+                                    AdornmentColor="Color.Primary" 
+                                    OnAdornmentClick="SendMessage" 
+                                    Class="chat-input" />
                 </MudForm>
             </MudStack>
         </MudPaper>
@@ -474,11 +474,11 @@
 </MudTabs>
 
 <div style="position: fixed; bottom: 22px; right: 22px; z-index: 1000;">
-    <a href="https://wa.me/351961914194"
-       target="_blank"
-       aria-label="Contact Ítala via WhatsApp"
-       title="Need help? Contact me on WhatsApp"
-       style="display: flex; align-items: center; justify-content: center; background-color: #25D366; border-radius: 50%; width: 42px; height: 42px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); text-decoration: none;">
+    <a href="https://wa.me/00447732296421"
+        target="_blank"
+        aria-label="Contact Ítala via WhatsApp"
+        title="Need help? Contact me on WhatsApp"
+        style="display: flex; align-items: center; justify-content: center; background-color: #25D366; border-radius: 50%; width: 42px; height: 42px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); text-decoration: none;">
         <i class="fa-brands fa-whatsapp" style="color: white; font-size: 24px;"></i>
     </a>
 </div>
@@ -550,6 +550,7 @@
     private string userTimeZone = "UTC";
     private string CurrentTimeZoneDisplay = "UTC";
     private string? pendingNavigationUrl;
+    private string userCurrency = "GBP";
 
     protected override async Task OnInitializedAsync()
     {
@@ -586,6 +587,7 @@
             CurrentTimeZoneDisplay = "UTC";
         }
 
+        userCurrency = await DetectUserCurrency();
         await LoadSessions();
         await RefreshSessionPackStatus();
         await RefreshSubscriptionStatus();
@@ -739,15 +741,20 @@
 
             var sessionType = requestModel.SessionCategory;
 
+            userCurrency = await DetectUserCurrency();
+
             var singleSessionPrice = await SessionPriceService.GetPriceForSessionTypeAsync(sessionType);
             if (singleSessionPrice != null)
             {
+                var convertedPrice = await CurrencyConversionService.ConvertPrice(singleSessionPrice.PriceGBP, userCurrency);
                 BookingOptions.Add(new BookingOption
                 {
                     Id = Guid.NewGuid().ToString(),
                     Title = $"Single Session ({sessionType.GetDisplayName()})",
                     Description = "Book a one-time session without a subscription or pack.",
-                    PriceEUR = singleSessionPrice.PriceEUR,
+                    PriceGBP = singleSessionPrice.PriceGBP,
+                    PriceConverted = convertedPrice,
+                    Currency = userCurrency,
                     Type = BookingType.SingleSession,
                     IsAvailable = true,
                     RequiresPurchase = true
@@ -759,12 +766,15 @@
             {
                 foreach (var packPrice in packPrices)
                 {
+                    var convertedPrice = await CurrencyConversionService.ConvertPrice(packPrice.PriceGBP, userCurrency);
                     BookingOptions.Add(new BookingOption
                     {
                         Id = Guid.NewGuid().ToString(),
                         Title = packPrice.Name,
                         Description = packPrice.Description ?? $"Includes {packPrice.TotalSessions} sessions.",
-                        PriceEUR = packPrice.PriceEUR,
+                        PriceGBP = packPrice.PriceGBP,
+                        PriceConverted = convertedPrice,
+                        Currency = userCurrency,
                         Type = BookingType.SessionPack,
                         TotalSessions = packPrice.TotalSessions,
                         IsAvailable = true,
@@ -779,12 +789,15 @@
             {
                 foreach (var subscriptionPrice in subscriptionPrices)
                 {
+                    var convertedPrice = await CurrencyConversionService.ConvertPrice(subscriptionPrice.PriceGBP, userCurrency);
                     BookingOptions.Add(new BookingOption
                     {
                         Id = Guid.NewGuid().ToString(),
                         Title = subscriptionPrice.Name,
                         Description = subscriptionPrice.Description ?? $"Up to {subscriptionPrice.MonthlyLimit} sessions per month.",
-                        PriceEUR = subscriptionPrice.PriceEUR,
+                        PriceGBP = subscriptionPrice.PriceGBP,
+                        PriceConverted = convertedPrice,
+                        Currency = userCurrency,
                         Type = BookingType.Subscription,
                         MonthlyLimit = subscriptionPrice.MonthlyLimit,
                         IsAvailable = true,
@@ -800,11 +813,15 @@
                 var price = pack.Price;
                 if (price != null)
                 {
+                    var convertedPrice = await CurrencyConversionService.ConvertPrice(price.PriceGBP, userCurrency);
                     var option = new BookingOption
                     {
                         Id = Guid.NewGuid().ToString(),
                         Title = $"Use {price.Name}",
                         Description = $"You have {pack.SessionsRemaining} sessions left.",
+                        PriceGBP = price.PriceGBP,
+                        PriceConverted = convertedPrice,
+                        Currency = userCurrency,
                         Type = BookingType.SessionPack,
                         PackId = pack.Id,
                         IsAvailable = true,
@@ -824,11 +841,16 @@
             foreach (var subscription in subscriptions.Where(s => s.Price?.SessionType == sessionType))
             {
                 var status = subscriptionStatuses.ContainsKey(sessionType) ? subscriptionStatuses[sessionType] : new SubscriptionStatusDto();
+                var convertedPrice = await CurrencyConversionService.ConvertPrice(subscription.Price.PriceGBP, userCurrency);
+
                 var option = new BookingOption
                 {
                     Id = Guid.NewGuid().ToString(),
                     Title = $"Use {subscription.Price.Name}",
                     Description = $"You’ve used {status.SessionsUsed} of {subscription.Price.MonthlyLimit} sessions this month.",
+                    PriceGBP = subscription.Price.PriceGBP,
+                    PriceConverted = convertedPrice,
+                    Currency = userCurrency,
                     Type = BookingType.Subscription,
                     IsAvailable = status.Remaining > 0,
                     RequiresPurchase = false,
@@ -853,6 +875,21 @@
         }
     }
 
+    private string FormatPrice(decimal price, string currency)
+    {
+        var cultureMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "GBP", "en-GB" }, { "EUR", "fr-FR" }, { "USD", "en-US" }, { "JPY", "ja-JP" },
+            { "CAD", "en-CA" }, { "AUD", "en-AU" }, { "BRL", "pt-BR" }, { "MXN", "es-MX" },
+            { "CNY", "zh-CN" }, { "HKD", "zh-HK" }, { "SGD", "en-SG" }, { "MYR", "ms-MY" },
+            { "THB", "th-TH" }, { "IDR", "id-ID" }, { "PHP", "fil-PH" }, { "AED", "ar-AE" },
+            { "SAR", "ar-SA" }, { "INR", "hi-IN" }, { "ZAR", "en-ZA" }, { "NGN", "en-NG" }
+        };
+
+        var culture = cultureMap.TryGetValue(currency, out var cultureCode) ? CultureInfo.GetCultureInfo(cultureCode) : CultureInfo.InvariantCulture;
+        return price.ToString("C", culture);
+    }
+
     private async Task SelectBookingOption(BookingOption option)
     {
         if (option.IsAvailable)
@@ -871,7 +908,7 @@
         selectedBookingOption = BookingType.SingleSession;
 
         var singleSessionPrice = await SessionPriceService.GetPriceForSessionTypeAsync(newSessionType);
-        var packPrices = await SessionPackPriceService.GetPricesForSessionTypeAsync(newSessionType);
+        var packPrices = await SessionPackService.GetPricesForSessionTypeAsync(newSessionType);
         var subscriptionPrices = await SubscriptionPriceService.GetPricesForSessionTypeAsync(newSessionType);
 
         if (singleSessionPrice == null)
@@ -999,12 +1036,15 @@
             if (singleSessionOption != null)
             {
                 BookingOptions.Remove(singleSessionOption);
+                var convertedPrice = await CurrencyConversionService.ConvertPrice(sessionPrice.PriceGBP, userCurrency);
                 BookingOptions.Add(new BookingOption
                 {
                     Id = Guid.NewGuid().ToString(),
                     Title = $"Single Session ({requestModel.SessionCategory.GetDisplayName()})",
                     Description = "Book a one-time session without a subscription or pack.",
-                    PriceEUR = sessionPrice?.PriceEUR,
+                    PriceGBP = sessionPrice.PriceGBP,
+                    PriceConverted = convertedPrice,
+                    Currency = userCurrency,
                     Type = BookingType.SingleSession,
                     IsAvailable = sessionPrice != null,
                     RequiresPurchase = true
@@ -1115,7 +1155,8 @@
                     {
                         Session = session,
                         BookingType = SelectedOption.Type,
-                        PlanId = SelectedOption.PlanId
+                        PlanId = SelectedOption.PlanId,
+                        Currency = SelectedOption.Currency ?? "GBP"
                     };
 
                     checkoutRequest.Session.PackId = SelectedOption.PlanId;
@@ -1134,7 +1175,10 @@
                     {
                         var errorContent = await response.Content.ReadAsStringAsync();
                         await LogService.LogError("SubmitSessionRequest", $"Response Status: {response.StatusCode}, Error: {errorContent}");
-                        Snackbar.Add("Failed to initiate payment for session pack. Please try again.", Severity.Error);
+                        var errorMessage = response.StatusCode == System.Net.HttpStatusCode.BadRequest
+                            ? "Invalid payment request. Please check your selection."
+                            : "Payment service unavailable. Please try again later.";
+                        Snackbar.Add(errorMessage, Severity.Error);
                     }
                     return;
                 }
@@ -1196,7 +1240,8 @@
                     {
                         Session = session,
                         BookingType = SelectedOption.Type,
-                        PlanId = SelectedOption.PlanId
+                        PlanId = SelectedOption.PlanId,
+                        Currency = SelectedOption.Currency ?? "GBP"
                     };
 
                     checkoutRequest.Session.PackId = SelectedOption.PlanId;
@@ -1215,7 +1260,10 @@
                     {
                         var errorContent = await response.Content.ReadAsStringAsync();
                         await LogService.LogError("SubmitSessionRequest", $"Response Status: {response.StatusCode}, Error: {errorContent}");
-                        Snackbar.Add("Failed to initiate payment for subscription. Please try again.", Severity.Error);
+                        var errorMessage = response.StatusCode == System.Net.HttpStatusCode.BadRequest
+                            ? "Invalid payment request. Please check your selection."
+                            : "Payment service unavailable. Please try again later.";
+                        Snackbar.Add(errorMessage, Severity.Error);
                     }
                     return;
                 }
@@ -1276,7 +1324,8 @@
                 {
                     Session = session,
                     BookingType = SelectedOption.Type,
-                    PlanId = null
+                    PlanId = null,
+                    Currency = SelectedOption.Currency ?? "GBP"
                 };
                 
                 await LogService.LogWarning("SubmitSessionRequest", $"baseUrl: {baseUrl}, checkoutRequest: {System.Text.Json.JsonSerializer.Serialize(checkoutRequest)}");
@@ -1293,7 +1342,10 @@
                 { 
                     var errorContent = await response.Content.ReadAsStringAsync();
                     await LogService.LogError("SubmitSessionRequest", $"Response Status: {response.StatusCode}, Error: {errorContent}");
-                    Snackbar.Add("Failed to initiate payment for single session. Please try again.", Severity.Error);
+                    var errorMessage = response.StatusCode == System.Net.HttpStatusCode.BadRequest
+                        ? "Invalid payment request. Please check your selection."
+                        : "Payment service unavailable. Please try again later.";
+                    Snackbar.Add(errorMessage, Severity.Error);
                 }
             }
             else
@@ -1316,6 +1368,148 @@
             await LogService.LogError("SubmitSessionRequest", ex.Message);
             Snackbar.Add("An error occurred while scheduling the session. Please try again.", Severity.Error);
         }
+    }
+
+    private async Task<string> DetectUserCurrency()
+    {
+        try
+        {
+            var timeZone = await JSRuntime.InvokeAsync<string>("eval", "Intl.DateTimeFormat().resolvedOptions().timeZone");
+            var currency = MapTimeZoneToCurrency(timeZone);
+
+            if (IsStripeSupportedCurrency(currency))
+            {
+                await LogService.LogInfo("DetectUserCurrency", $"Detected currency: {currency} for time zone: {timeZone}");
+                return currency;
+            }
+            else
+            {
+                await LogService.LogWarning("DetectUserCurrency", $"Unsupported currency {currency} detected for time zone: {timeZone}. Falling back to GBP.");
+                Snackbar.Add("Your local currency is not supported. Prices will be shown in GBP.", Severity.Info);
+                return "GBP";
+            }
+
+            return "GBP";
+        }
+        catch (Exception ex)
+        {
+            await LogService.LogError("DetectUserCurrency Error", ex.Message);
+            return "GBP";
+        }
+    }
+
+    private string MapTimeZoneToCurrency(string timeZone)
+    {
+        var currencyMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            // North America
+            { "America/New_York", "USD" },
+            { "America/Chicago", "USD" },
+            { "America/Denver", "USD" },
+            { "America/Los_Angeles", "USD" },
+            { "America/Anchorage", "USD" },
+            { "America/Honolulu", "USD" },
+            { "America/Toronto", "CAD" },
+            { "America/Vancouver", "CAD" },
+            { "America/Mexico_City", "MXN" },
+            { "America/Havana", "CUP" },
+            { "America/Jamaica", "JMD" },
+
+            // South America
+            { "America/Sao_Paulo", "BRL" },
+            { "America/Buenos_Aires", "ARS" },
+            { "America/Santiago", "CLP" },
+            { "America/Bogota", "COP" },
+            { "America/Lima", "PEN" },
+            { "America/Caracas", "VES" },
+
+            // Europe
+            { "Europe/London", "GBP" },
+            { "Europe/Dublin", "EUR" },
+            { "Europe/Paris", "EUR" },
+            { "Europe/Berlin", "EUR" },
+            { "Europe/Amsterdam", "EUR" },
+            { "Europe/Brussels", "EUR" },
+            { "Europe/Madrid", "EUR" },
+            { "Europe/Rome", "EUR" },
+            { "Europe/Lisbon", "EUR" },
+            { "Europe/Athens", "EUR" },
+            { "Europe/Helsinki", "EUR" },
+            { "Europe/Stockholm", "SEK" },
+            { "Europe/Oslo", "NOK" },
+            { "Europe/Copenhagen", "DKK" },
+            { "Europe/Warsaw", "PLN" },
+            { "Europe/Prague", "CZK" },
+            { "Europe/Budapest", "HUF" },
+            { "Europe/Moscow", "RUB" },
+            { "Europe/Istanbul", "TRY" },
+            { "Europe/Kiev", "UAH" },
+
+            // Africa
+            { "Africa/Johannesburg", "ZAR" },
+            { "Africa/Lagos", "NGN" },
+            { "Africa/Cairo", "EGP" },
+            { "Africa/Nairobi", "KES" },
+            { "Africa/Algiers", "DZD" },
+            { "Africa/Accra", "GHS" },
+
+            // Asia
+            { "Asia/Tokyo", "JPY" },
+            { "Asia/Seoul", "KRW" },
+            { "Asia/Shanghai", "CNY" },
+            { "Asia/Hong_Kong", "HKD" },
+            { "Asia/Singapore", "SGD" },
+            { "Asia/Kuala_Lumpur", "MYR" },
+            { "Asia/Bangkok", "THB" },
+            { "Asia/Jakarta", "IDR" },
+            { "Asia/Manila", "PHP" },
+            { "Asia/Ho_Chi_Minh", "VND" },
+            { "Asia/Dubai", "AED" },
+            { "Asia/Riyadh", "SAR" },
+            { "Asia/Tehran", "IRR" },
+            { "Asia/Karachi", "PKR" },
+            { "Asia/Kolkata", "INR" },
+            { "Asia/Kathmandu", "NPR" },
+            { "Asia/Dhaka", "BDT" },
+            { "Asia/Colombo", "LKR" },
+
+            // Australia and Oceania
+            { "Australia/Sydney", "AUD" },
+            { "Australia/Melbourne", "AUD" },
+            { "Australia/Perth", "AUD" },
+            { "Australia/Auckland", "NZD" },
+            { "Pacific/Fiji", "FJD" },
+            { "Pacific/Guam", "USD" },
+            { "Pacific/Port_Moresby", "PGK" },
+
+            // Others
+            { "Atlantic/Reykjavik", "ISK" },
+            { "Pacific/Tahiti", "XPF" },
+            { "Antarctica/McMurdo", "NZD" },
+        };
+
+        return currencyMap.TryGetValue(timeZone, out var currency) ? currency : "GBP";
+    }
+
+    private bool IsStripeSupportedCurrency(string currency)
+    {
+        var supportedCurrencies = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "AED", "AFN", "ALL", "AMD", "ANG", "AOA", "ARS", "AUD", "AWG", "AZN", "BAM", "BBD", "BDT", "BGN",
+            "BHD", "BIF", "BMD", "BND", "BOB", "BRL", "BSD", "BTN", "BWP", "BYN", "BZD", "CAD", "CDF", "CHF",
+            "CLP", "CNY", "COP", "CRC", "CUP", "CVE", "CZK", "DJF", "DKK", "DOP", "DZD", "EGP", "ERN", "ETB",
+            "EUR", "FJD", "FKP", "FOK", "GBP", "GEL", "GGP", "GHS", "GIP", "GMD", "GNF", "GTQ", "GYD", "HKD",
+            "HNL", "HRK", "HTG", "HUF", "IDR", "ILS", "IMP", "INR", "IQD", "IRR", "ISK", "JEP", "JMD", "JOD",
+            "JPY", "KES", "KGS", "KHR", "KID", "KMF", "KRW", "KWD", "KYD", "KZT", "LAK", "LBP", "LKR", "LRD",
+            "LSL", "LYD", "MAD", "MDL", "MGA", "MKD", "MMK", "MNT", "MOP", "MRU", "MUR", "MVR", "MWK", "MXN",
+            "MYR", "MZN", "NAD", "NGN", "NIO", "NOK", "NPR", "NZD", "OMR", "PAB", "PEN", "PGK", "PHP", "PKR",
+            "PLN", "PYG", "QAR", "RON", "RSD", "RUB", "RWF", "SAR", "SBD", "SCR", "SDG", "SEK", "SGD", "SHP",
+            "SLE", "SOS", "SRD", "SSP", "STN", "SYP", "SZL", "THB", "TJS", "TMT", "TND", "TOP", "TRY", "TTD",
+            "TVD", "TWD", "TZS", "UAH", "UGX", "USD", "UYU", "UZS", "VES", "VND", "VUV", "WST", "XAF", "XCD",
+            "XOF", "XPF", "YER", "ZAR", "ZMW"
+        };
+
+        return supportedCurrencies.Contains(currency.ToUpper());
     }
 
     private async Task OpenSessionDialog(VideoSession session)

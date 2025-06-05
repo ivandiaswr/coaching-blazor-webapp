@@ -19,7 +19,7 @@
                 <MudText Typo="Typo.subtitle2"><b>Option:</b> @SelectedOption?.Title</MudText>
                 <MudText Typo="Typo.body2"><b>Description:</b> @SelectedOption?.Description</MudText>
                 <MudText Typo="Typo.body2"><b>Date & Time:</b> @SelectedDateTime</MudText>
-                <MudText Typo="Typo.body2"><b>Price:</b> @((SelectedOption?.PriceEUR.HasValue == true && SelectedOption?.RequiresPurchase == true ? $"{SelectedOption.PriceEUR}€" : "Included"))</MudText>
+                <MudText Typo="Typo.body2"><b>Price:</b> @((SelectedOption?.PriceGBP.HasValue == true && SelectedOption?.RequiresPurchase == true ? $"{SelectedOption.PriceGBP}{SelectedOption.Currency}" : "Included"))</MudText>
                 <MudText Typo="Typo.body2"><b>Payment Method:</b> @(SelectedOption?.RequiresPurchase == true ? "Stripe" : "None (Using available sessions)")</MudText>
             </MudPaper>
         </MudStack>

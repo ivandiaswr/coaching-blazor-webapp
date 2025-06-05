@@ -95,6 +95,7 @@ builder.Services.AddScoped<ISessionPackPriceService, SessionPackPriceService>();
 builder.Services.AddScoped<ISubscriptionPriceService, SubscriptionPriceService>();
 builder.Services.AddScoped<ISessionPackService, SessionPackService>();
 builder.Services.AddScoped<IUserSubscriptionService, UserSubscriptionService>();
+builder.Services.AddScoped<ICurrencyConversionService, CurrencyConversionService>();
 
 builder.Services.AddSingleton<LogProcessor>();
 

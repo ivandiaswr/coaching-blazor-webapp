@@ -16,13 +16,15 @@ public class StripeService : IPaymentService
     private readonly IHelperService _helperService;
     private readonly ISessionService _sessionService;
     private readonly ISessionPackService _sessionPackService;
+    private readonly ICurrencyConversionService _currencyConversionService;
 
-    public StripeService(IConfiguration configuration, 
-        CoachingDbContext context, 
-        ILogService logService, 
-        IHelperService helperService, 
+    public StripeService(IConfiguration configuration,
+        CoachingDbContext context,
+        ILogService logService,
+        IHelperService helperService,
         ISessionService sessionService,
-        ISessionPackService sessionPackService)
+        ISessionPackService sessionPackService,
+        ICurrencyConversionService currencyConversionService)
     {
         _configuration = configuration;
         _context = context;
@@ -30,6 +32,7 @@ public class StripeService : IPaymentService
         _helperService = helperService;
         _sessionService = sessionService;
         _sessionPackService = sessionPackService;
+        _currencyConversionService = currencyConversionService;
         StripeConfiguration.ApiKey = _helperService.GetConfigValue("Stripe:SecretKey");
     }
 
@@ -40,6 +43,14 @@ public class StripeService : IPaymentService
             var session = request.Session;
             var bookingType = request.BookingType;
             var planId = request.PlanId;
+            var userCurrency = request.Currency?.ToUpper() ?? "GBP";
+
+            // Validate currency
+            if (!IsStripeSupportedCurrency(userCurrency))
+            {
+                await _logService.LogWarning("CreateCheckoutSessionAsync", $"Unsupported currency: {userCurrency}. Falling back to GBP.");
+                userCurrency = "GBP";
+            }
 
             if (session == null)
             {
@@ -74,7 +85,7 @@ public class StripeService : IPaymentService
                 }
             }
 
-            await _logService.LogInfo("CreateCheckoutSessionAsync", $"Received session with Id: {session.Id}, StripeSessionId: {session.StripeSessionId}, BookingType: {bookingType}, PlanId: {planId}");
+            await _logService.LogInfo("CreateCheckoutSessionAsync", $"Received session with Id: {session.Id}, StripeSessionId: {session.StripeSessionId}, BookingType: {bookingType}, PlanId: {planId}, Currency: {userCurrency}");
 
             if (bookingType == BookingType.SessionPack)
             {
@@ -86,7 +97,7 @@ public class StripeService : IPaymentService
                     throw new InvalidOperationException($"A pending session already exists (ID: {existingPendingSession.Id}). Please complete or cancel the existing payment.");
                 }
             }
-            
+
             if (session.Id == 0)
             {
                 session.IsPending = true;
@@ -128,6 +139,8 @@ public class StripeService : IPaymentService
                     throw new Exception("Session pack price not found.");
                 }
 
+                var priceInUserCurrency = await _currencyConversionService.ConvertPrice(packPrice.PriceGBP, userCurrency);
+
                 options = new SessionCreateOptions
                 {
                     PaymentMethodTypes = new List<string> { "card" },
@@ -137,12 +150,12 @@ public class StripeService : IPaymentService
                         {
                             PriceData = new SessionLineItemPriceDataOptions
                             {
-                                Currency = "eur",
+                                Currency = userCurrency.ToLower(),
                                 ProductData = new SessionLineItemPriceDataProductDataOptions
                                 {
                                     Name = $"Session Pack: {packPrice.Name}",
                                 },
-                                UnitAmountDecimal = (long)(packPrice.PriceEUR * 100),
+                                UnitAmountDecimal = (long)(priceInUserCurrency * 100),
                             },
                             Quantity = 1,
                         },
@@ -154,7 +167,8 @@ public class StripeService : IPaymentService
                     {
                         { "SessionId", session.Id.ToString() },
                         { "BookingType", bookingType.ToString() },
-                        { "PlanId", planId }
+                        { "PlanId", planId },
+                        { "Currency", userCurrency }
                     }
                 };
             }
@@ -175,6 +189,15 @@ public class StripeService : IPaymentService
                     throw new Exception("Subscription price not found.");
                 }
 
+                var priceInUserCurrency = await _currencyConversionService.ConvertPrice(subscriptionPrice.PriceGBP, userCurrency);
+
+                var stripePriceId = await CreateOrUpdateSubscriptionPriceAsync(
+                    $"Subscription: {subscriptionPrice.Name}",
+                    priceInUserCurrency,
+                    subscriptionPrice.SessionType.ToString(),
+                    userCurrency
+                );
+
                 options = new SessionCreateOptions
                 {
                     PaymentMethodTypes = new List<string> { "card" },
@@ -182,7 +205,7 @@ public class StripeService : IPaymentService
                     {
                         new SessionLineItemOptions
                         {
-                            Price = subscriptionPrice.StripePriceId,
+                            Price = stripePriceId,
                             Quantity = 1,
                         },
                     },
@@ -193,7 +216,8 @@ public class StripeService : IPaymentService
                     {
                         { "SessionId", session.Id.ToString() },
                         { "BookingType", bookingType.ToString() },
-                        { "PlanId", planId }
+                        { "PlanId", planId },
+                        { "Currency", userCurrency }
                     }
                 };
             }
@@ -208,6 +232,8 @@ public class StripeService : IPaymentService
                     throw new Exception("Service price not found.");
                 }
 
+                var priceInUserCurrency = await _currencyConversionService.ConvertPrice(servicePrice.PriceGBP, userCurrency);
+
                 options = new SessionCreateOptions
                 {
                     PaymentMethodTypes = new List<string> { "card" },
@@ -217,12 +243,12 @@ public class StripeService : IPaymentService
                         {
                             PriceData = new SessionLineItemPriceDataOptions
                             {
-                                Currency = "eur",
+                                Currency = userCurrency.ToLower(),
                                 ProductData = new SessionLineItemPriceDataProductDataOptions
                                 {
                                     Name = $"Coaching Session: {session.SessionCategory}",
                                 },
-                                UnitAmountDecimal = (long)(servicePrice.PriceEUR * 100),
+                                UnitAmountDecimal = (long)(priceInUserCurrency * 100),
                             },
                             Quantity = 1,
                         },
@@ -233,7 +259,8 @@ public class StripeService : IPaymentService
                     Metadata = new Dictionary<string, string>
                     {
                         { "SessionId", session.Id.ToString() },
-                        { "BookingType", bookingType.ToString() }
+                        { "BookingType", bookingType.ToString() },
+                        { "Currency", userCurrency }
                     }
                 };
             }
@@ -251,7 +278,7 @@ public class StripeService : IPaymentService
                 session.StripeSessionId = stripeSession.Id;
                 _context.Sessions.Update(session);
                 await _context.SaveChangesAsync();
-                await _logService.LogInfo("CreateCheckoutSessionAsync", $"Updated session Id: {session.Id} with StripeSessionId: {stripeSession.Id}");
+                await _logService.LogInfo("CreateCheckoutSessionAsync", $"Updated session Id: {session.Id} with StripeSessionId: {stripeSession.Id}, Currency: {userCurrency}");
             }
             catch (DbUpdateException ex)
             {
@@ -313,6 +340,7 @@ public class StripeService : IPaymentService
 
             var bookingTypeStr = stripeSession.Metadata.TryGetValue("BookingType", out var bt) ? bt : null;
             var planId = stripeSession.Metadata.TryGetValue("PlanId", out var pid) ? pid : null;
+            var currency = stripeSession.Metadata.TryGetValue("Currency", out var curr) ? curr : "GBP";
             var bookingType = Enum.TryParse<BookingType>(bookingTypeStr, out var parsedType) ? parsedType : BookingType.SingleSession;
 
             string packId = null;
@@ -345,7 +373,7 @@ public class StripeService : IPaymentService
 
                 await _sessionPackService.CreateAsync(sessionPack);
                 packId = sessionPack.Id.ToString();
-                await _logService.LogInfo("ConfirmPaymentAsync", $"Created SessionPack for UserId: {sessionPack.UserId}, PackId: {sessionPack.Id}, SessionsRemaining: {sessionPack.SessionsRemaining}");
+                await _logService.LogInfo("ConfirmPaymentAsync", $"Created SessionPack for UserId: {sessionPack.UserId}, PackId: {sessionPack.Id}, SessionsRemaining: {sessionPack.SessionsRemaining}, Currency: {currency}");
 
                 var success = await _sessionPackService.ConsumeSession(dbSession.Email, packId);
                 if (!success)
@@ -387,14 +415,14 @@ public class StripeService : IPaymentService
 
                 _context.UserSubscriptions.Add(userSubscription);
                 await _context.SaveChangesAsync();
-                await _logService.LogInfo("ConfirmPaymentAsync", $"Created UserSubscription for UserId: {userSubscription.UserId}, SubscriptionId: {userSubscription.StripeSubscriptionId}, SessionsUsedThisMonth: {userSubscription.SessionsUsedThisMonth}");
+                await _logService.LogInfo("ConfirmPaymentAsync", $"Created UserSubscription for UserId: {userSubscription.UserId}, SubscriptionId: {userSubscription.StripeSubscriptionId}, SessionsUsedThisMonth: {userSubscription.SessionsUsedThisMonth}, Currency: {currency}");
             }
 
             dbSession.IsPaid = true;
             dbSession.PaidAt = DateTime.UtcNow;
-            dbSession.PackId = packId; //
+            dbSession.PackId = packId;
             await _sessionService.CreateSessionAsync(dbSession);
-            await _logService.LogInfo("ConfirmPaymentAsync", $"Confirmed session Id: {dbSession.Id}, UserId: {dbSession.Email}, StripeSessionId: {stripeSessionId}, PackId: {dbSession.PackId}");
+            await _logService.LogInfo("ConfirmPaymentAsync", $"Confirmed session Id: {dbSession.Id}, UserId: {dbSession.Email}, StripeSessionId: {stripeSessionId}, PackId: {dbSession.PackId}, Currency: {currency}");
 
             return true;
         }
@@ -462,19 +490,18 @@ public class StripeService : IPaymentService
         }
     }
 
-    public async Task<string> CreateOrUpdateSubscriptionPriceAsync(string productName, decimal amount, string sessionType)
+    public async Task<string> CreateOrUpdateSubscriptionPriceAsync(string productName, decimal amount, string sessionType, string currency = "GBP")
     {
         try
         {
-            await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync", $"Processing price for {productName}, €{amount}, SessionType: {sessionType}");
+            await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync", $"Processing price for {productName}, Amount: {amount}, Currency: {currency}, SessionType: {sessionType}");
 
             SubscriptionPrice existingPrice = null;
 
-            // Check if a Price already exists for this SessionType
             if (Enum.TryParse<SessionType>(sessionType, out var parsedSessionType))
             {
                 existingPrice = await _context.SubscriptionPrices
-                    .FirstOrDefaultAsync(sp => sp.SessionType == parsedSessionType && !string.IsNullOrEmpty(sp.StripePriceId));
+                    .FirstOrDefaultAsync(sp => sp.SessionType == parsedSessionType && sp.Currency == currency && !string.IsNullOrEmpty(sp.StripePriceId));
             }
             else
             {
@@ -485,43 +512,62 @@ public class StripeService : IPaymentService
             {
                 var priceService = new PriceService();
                 var stripePrice = await priceService.GetAsync(existingPrice.StripePriceId);
-                if (stripePrice.UnitAmountDecimal == (long)(amount * 100))
+                if (stripePrice.UnitAmountDecimal == (long)(amount * 100) && stripePrice.Currency.ToUpper() == currency.ToUpper())
                 {
-                    await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync", $"Existing Price ID: {existingPrice.StripePriceId} matches amount €{amount}");
+                    await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync", $"Existing Price ID: {existingPrice.StripePriceId} matches amount {amount} {currency}");
                     return existingPrice.StripePriceId;
                 }
                 else
                 {
-                    await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync", $"Amount changed from €{stripePrice.UnitAmountDecimal / 100} to €{amount}. Creating new Price.");
+                    await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync", $"Amount or currency changed from {stripePrice.UnitAmountDecimal / 100} {stripePrice.Currency} to {amount} {currency}. Creating new Price.");
                 }
             }
 
-            // Create new Product
             var productService = new ProductService();
             var productOptions = new ProductCreateOptions
             {
                 Name = productName,
-                Description = $"Subscription for {sessionType}",
-                Metadata = new Dictionary<string, string> { { "SessionType", sessionType } }
+                Description = $"Subscription for {sessionType} in {currency}",
+                Metadata = new Dictionary<string, string>
+                {
+                    { "SessionType", sessionType },
+                    { "Currency", currency }
+                }
             };
             var product = await productService.CreateAsync(productOptions);
 
-            // Create new Price
             var priceServiceCreate = new PriceService();
             var priceOptions = new PriceCreateOptions
             {
                 UnitAmount = (long)(amount * 100),
-                Currency = "eur",
+                Currency = currency.ToLower(),
                 Recurring = new PriceRecurringOptions
                 {
                     Interval = "month"
                 },
                 Product = product.Id,
-                Metadata = new Dictionary<string, string> { { "SessionType", sessionType } }
+                Metadata = new Dictionary<string, string>
+                {
+                    { "SessionType", sessionType },
+                    { "Currency", currency }
+                }
             };
             var price = await priceServiceCreate.CreateAsync(priceOptions);
 
-            await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync", $"Created Price ID: {price.Id} for Product: {productName}, Amount: €{amount}");
+            // Update SubscriptionPrice in database
+            var subscriptionPrice = new SubscriptionPrice
+            {
+                SessionType = parsedSessionType,
+                Name = productName,
+                PriceGBP = amount, // Store GBP equivalent if needed for reference
+                Currency = currency,
+                StripePriceId = price.Id,
+                MonthlyLimit = existingPrice?.MonthlyLimit ?? 1 // Preserve existing limit or default
+            };
+            _context.SubscriptionPrices.Add(subscriptionPrice);
+            await _context.SaveChangesAsync();
+
+            await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync", $"Created Price ID: {price.Id} for Product: {productName}, Amount: {amount} {currency}");
             return price.Id;
         }
         catch (StripeException ex)
@@ -534,5 +580,25 @@ public class StripeService : IPaymentService
             await _logService.LogError("CreateOrUpdateSubscriptionPriceAsync Error", ex.Message);
             throw;
         }
+    }
+
+    private bool IsStripeSupportedCurrency(string currency)
+    {
+        var supportedCurrencies = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "AED", "AFN", "ALL", "AMD", "ANG", "AOA", "ARS", "AUD", "AWG", "AZN", "BAM", "BBD", "BDT", "BGN",
+            "BHD", "BIF", "BMD", "BND", "BOB", "BRL", "BSD", "BTN", "BWP", "BYN", "BZD", "CAD", "CDF", "CHF",
+            "CLP", "CNY", "COP", "CRC", "CUP", "CVE", "CZK", "DJF", "DKK", "DOP", "DZD", "EGP", "ERN", "ETB",
+            "EUR", "FJD", "FKP", "FOK", "GBP", "GEL", "GGP", "GHS", "GIP", "GMD", "GNF", "GTQ", "GYD", "HKD",
+            "HNL", "HRK", "HTG", "HUF", "IDR", "ILS", "IMP", "INR", "IQD", "IRR", "ISK", "JEP", "JMD", "JOD",
+            "JPY", "KES", "KGS", "KHR", "KID", "KMF", "KRW", "KWD", "KYD", "KZT", "LAK", "LBP", "LKR", "LRD",
+            "LSL", "LYD", "MAD", "MDL", "MGA", "MKD", "MMK", "MNT", "MOP", "MRU", "MUR", "MVR", "MWK", "MXN",
+            "MYR", "MZN", "NAD", "NGN", "NIO", "NOK", "NPR", "NZD", "OMR", "PAB", "PEN", "PGK", "PHP", "PKR",
+            "PLN", "PYG", "QAR", "RON", "RSD", "RUB", "RWF", "SAR", "SBD", "SCR", "SDG", "SEK", "SGD", "SHP",
+            "SLE", "SOS", "SRD", "SSP", "STN", "SYP", "SZL", "THB", "TJS", "TMT", "TND", "TOP", "TRY", "TTD",
+            "TVD", "TWD", "TZS", "UAH", "UGX", "USD", "UYU", "UZS", "VES", "VND", "VUV", "WST", "XAF", "XCD",
+            "XOF", "XPF", "YER", "ZAR", "ZMW"
+        };
+        return supportedCurrencies.Contains(currency.ToUpper());
     }
 }

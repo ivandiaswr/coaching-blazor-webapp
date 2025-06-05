@@ -70,12 +70,12 @@ namespace BusinessLayer.Services
                 await _logService.LogInfo("SubscriptionPriceService.AddOrUpdateAsync", $"Processing subscription price for SessionType: {price.SessionType}, ID: {price.Id}");
                 string stripePriceId = price.StripePriceId;
 
-                // Create or update Stripe Price if PriceEUR is set
-                if (price.PriceEUR > 0)
+                // Create or update Stripe Price if PriceGBP is set
+                if (price.PriceGBP > 0)
                 {
                     stripePriceId = await _paymentService.CreateOrUpdateSubscriptionPriceAsync(
                         price.Name,
-                        price.PriceEUR,
+                        price.PriceGBP,
                         price.SessionType.ToString());
                 }
 
@@ -94,7 +94,7 @@ namespace BusinessLayer.Services
                         existing.Name = price.Name;
                         existing.Description = price.Description;
                         existing.MonthlyLimit = price.MonthlyLimit;
-                        existing.PriceEUR = price.PriceEUR;
+                        existing.PriceGBP = price.PriceGBP;
                         existing.SessionType = price.SessionType;
                         existing.StripePriceId = stripePriceId;
                         existing.LastUpdated = DateTime.UtcNow;
