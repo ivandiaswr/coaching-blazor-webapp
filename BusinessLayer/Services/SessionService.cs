@@ -32,7 +32,10 @@ public class SessionService : ISessionService
 
         try
         {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
             var existingSession = await _context.Sessions
+                .Include(s => s.VideoSession)
                 .FirstOrDefaultAsync(s => s.Id == session.Id);
 
             if (existingSession != null)
@@ -85,20 +88,31 @@ public class SessionService : ISessionService
                 await _logService.LogInfo("CreateSessionAsync", $"Created new session Id: {session.Id}, UserId: {session.Email}, PackId: {session.PackId}");
             }
 
-            var videoSession = new VideoSession
+            var targetSession = existingSession ?? session;
+
+            if (targetSession.VideoSession == null)
             {
-                UserId = session.Email,
-                ScheduledAt = session.PreferredDateTime,
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                Session = existingSession ?? session,
-                SessionRefId = existingSession?.Id ?? session.Id
-            };
+                var videoSession = new VideoSession
+                {
+                    UserId = targetSession.Email,
+                    ScheduledAt = targetSession.PreferredDateTime,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    Session = targetSession,
+                    SessionRefId = targetSession.Id
+                };
 
-            _context.VideoSessions.Add(videoSession);
+                _context.VideoSessions.Add(videoSession);
+            }
+            else
+            {
+                await _logService.LogInfo("CreateSessionAsync", $"VideoSession already exists for session Id: {targetSession.Id}, VideoSession Id: {targetSession.VideoSession.Id}");
+            }
+
             await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
 
-            await SendSessionConfirmationEmailAsync(existingSession ?? session, videoSession);
+            await SendSessionConfirmationEmailAsync(targetSession, targetSession.VideoSession ?? await _context.VideoSessions.FirstAsync(vs => vs.SessionRefId == targetSession.Id));
             return true;
         }
         catch (Exception ex)
@@ -206,7 +220,6 @@ public class SessionService : ISessionService
             throw;
         }
     }
-
 
     public void DeleteSession(int id)
     {

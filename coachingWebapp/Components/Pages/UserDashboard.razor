@@ -221,11 +221,11 @@
                                                 <b>@FormatPrice(SelectedOption.PriceConverted.Value, SelectedOption.Currency)</b> 
                                                 @if (SelectedOption.Type == BookingType.SessionPack && SelectedOption.TotalSessions.HasValue)
                                                 {
-                                                    <span><b>(@SelectedOption.TotalSessions sessions)</b></span>
+                                                    <span><b> (@SelectedOption.TotalSessions sessions)</b></span>
                                                 }
                                                 else if (SelectedOption.Type == BookingType.Subscription && SelectedOption.MonthlyLimit.HasValue)
                                                 {
-                                                    <span><b>(@SelectedOption.MonthlyLimit sessions/month)</b></span>
+                                                    <span><b> (@SelectedOption.MonthlyLimit sessions/month)</b></span>
                                                 }
                                             </MudText>
                                         }
@@ -577,23 +577,9 @@
             userFullName = "Guest";
         }
 
-        try
-        {
-            userTimeZone = await JSRuntime.InvokeAsync<string>("eval", "Intl.DateTimeFormat().resolvedOptions().timeZone");
-            CurrentTimeZoneDisplay = userTimeZone;
-        }
-        catch (Exception ex)
-        {
-            await LogService.LogError("TimeZoneDetection Error", ex.Message);
-            userTimeZone = "UTC";
-            CurrentTimeZoneDisplay = "UTC";
-        }
-
-        userCurrency = await DetectUserCurrency();
         await LoadSessions();
         await RefreshSessionPackStatus();
         await RefreshSubscriptionStatus();
-        await LoadBookingOptions();
         StateHasChanged();
     }
 
@@ -601,6 +587,21 @@
     {
         if (firstRender)
         {
+            try
+            {
+                userTimeZone = await JSRuntime.InvokeAsync<string>("eval", "Intl.DateTimeFormat().resolvedOptions().timeZone");
+                CurrentTimeZoneDisplay = userTimeZone;
+            }
+            catch (Exception ex)
+            {
+                await LogService.LogError("TimeZoneDetection Error", ex.Message);
+                userTimeZone = "UTC";
+                CurrentTimeZoneDisplay = "UTC";
+            }
+
+            userCurrency = await DetectUserCurrency();
+            await LoadBookingOptions();
+
             var uri = new Uri(NavigationManager.Uri);
             if (uri.AbsolutePath.EndsWith("/payment-success"))
             {
@@ -611,9 +612,9 @@
                     await LogService.LogInfo("OnAfterRenderAsync", $"Processing payment success for StripeSessionId: {stripeSessionId}");
                     
                     var session = await SessionService.GetSessionByStripeSessionIdAsync(stripeSessionId);
-                    if (session != null && !session.IsPending && session.IsPaid)
+                    if (session != null && !session.IsPending && session.IsPaid && session.VideoSession != null)
                     {
-                        await LogService.LogInfo("OnAfterRenderAsync", $"Session Id: {session.Id} already confirmed for StripeSessionId: {stripeSessionId}");
+                        await LogService.LogInfo("OnAfterRenderAsync", $"Session Id: {session.Id} already confirmed with VideoSession for StripeSessionId: {stripeSessionId}");
                         await RefreshSessionPackStatus();
                         await RefreshSubscriptionStatus();
                         await LoadBookingOptions();
@@ -749,6 +750,11 @@
             if (singleSessionPrice != null)
             {
                 var convertedPrice = await CurrencyConversionService.ConvertPrice(singleSessionPrice.PriceGBP, userCurrency);
+                var finalCurrency = convertedPrice == singleSessionPrice.PriceGBP && !string.Equals(userCurrency, "GBP", StringComparison.OrdinalIgnoreCase) ? "GBP" : userCurrency;
+                if (finalCurrency == "GBP" && !string.Equals(userCurrency, "GBP", StringComparison.OrdinalIgnoreCase))
+                {
+                    Snackbar.Add($"Unable to convert to {userCurrency}. Prices are shown in GBP.", Severity.Info);
+                }
                 BookingOptions.Add(new BookingOption
                 {
                     Id = Guid.NewGuid().ToString(),
@@ -756,7 +762,7 @@
                     Description = "Book a one-time session without a subscription or pack.",
                     PriceGBP = singleSessionPrice.PriceGBP,
                     PriceConverted = convertedPrice,
-                    Currency = userCurrency,
+                    Currency = finalCurrency,
                     Type = BookingType.SingleSession,
                     IsAvailable = true,
                     RequiresPurchase = true
@@ -769,6 +775,11 @@
                 foreach (var packPrice in packPrices)
                 {
                     var convertedPrice = await CurrencyConversionService.ConvertPrice(packPrice.PriceGBP, userCurrency);
+                    var finalCurrency = convertedPrice == packPrice.PriceGBP && !string.Equals(userCurrency, "GBP", StringComparison.OrdinalIgnoreCase) ? "GBP" : userCurrency;
+                    if (finalCurrency == "GBP" && !string.Equals(userCurrency, "GBP", StringComparison.OrdinalIgnoreCase))
+                    {
+                        Snackbar.Add($"Unable to convert to {userCurrency}. Prices are shown in GBP.", Severity.Info);
+                    }
                     BookingOptions.Add(new BookingOption
                     {
                         Id = Guid.NewGuid().ToString(),
@@ -776,7 +787,7 @@
                         Description = packPrice.Description ?? $"Includes {packPrice.TotalSessions} sessions.",
                         PriceGBP = packPrice.PriceGBP,
                         PriceConverted = convertedPrice,
-                        Currency = userCurrency,
+                        Currency = finalCurrency,
                         Type = BookingType.SessionPack,
                         TotalSessions = packPrice.TotalSessions,
                         IsAvailable = true,
@@ -792,6 +803,11 @@
                 foreach (var subscriptionPrice in subscriptionPrices)
                 {
                     var convertedPrice = await CurrencyConversionService.ConvertPrice(subscriptionPrice.PriceGBP, userCurrency);
+                    var finalCurrency = convertedPrice == subscriptionPrice.PriceGBP && !string.Equals(userCurrency, "GBP", StringComparison.OrdinalIgnoreCase) ? "GBP" : userCurrency;
+                    if (finalCurrency == "GBP" && !string.Equals(userCurrency, "GBP", StringComparison.OrdinalIgnoreCase))
+                    {
+                        Snackbar.Add($"Unable to convert to {userCurrency}. Prices are shown in GBP.", Severity.Info);
+                    }
                     BookingOptions.Add(new BookingOption
                     {
                         Id = Guid.NewGuid().ToString(),
@@ -799,7 +815,7 @@
                         Description = subscriptionPrice.Description ?? $"Up to {subscriptionPrice.MonthlyLimit} sessions per month.",
                         PriceGBP = subscriptionPrice.PriceGBP,
                         PriceConverted = convertedPrice,
-                        Currency = userCurrency,
+                        Currency = finalCurrency,
                         Type = BookingType.Subscription,
                         MonthlyLimit = subscriptionPrice.MonthlyLimit,
                         IsAvailable = true,
@@ -816,6 +832,11 @@
                 if (price != null)
                 {
                     var convertedPrice = await CurrencyConversionService.ConvertPrice(price.PriceGBP, userCurrency);
+                    var finalCurrency = convertedPrice == price.PriceGBP && !string.Equals(userCurrency, "GBP", StringComparison.OrdinalIgnoreCase) ? "GBP" : userCurrency;
+                    if (finalCurrency == "GBP" && !string.Equals(userCurrency, "GBP", StringComparison.OrdinalIgnoreCase))
+                    {
+                        Snackbar.Add($"Unable to convert to {userCurrency}. Prices are shown in GBP.", Severity.Info);
+                    }
                     var option = new BookingOption
                     {
                         Id = Guid.NewGuid().ToString(),
@@ -823,7 +844,7 @@
                         Description = $"You have {pack.SessionsRemaining} sessions left.",
                         PriceGBP = price.PriceGBP,
                         PriceConverted = convertedPrice,
-                        Currency = userCurrency,
+                        Currency = finalCurrency,
                         Type = BookingType.SessionPack,
                         PackId = pack.Id,
                         IsAvailable = true,
@@ -844,7 +865,11 @@
             {
                 var status = subscriptionStatuses.ContainsKey(sessionType) ? subscriptionStatuses[sessionType] : new SubscriptionStatusDto();
                 var convertedPrice = await CurrencyConversionService.ConvertPrice(subscription.Price.PriceGBP, userCurrency);
-
+                var finalCurrency = convertedPrice == subscription.Price.PriceGBP && !string.Equals(userCurrency, "GBP", StringComparison.OrdinalIgnoreCase) ? "GBP" : userCurrency;
+                if (finalCurrency == "GBP" && !string.Equals(userCurrency, "GBP", StringComparison.OrdinalIgnoreCase))
+                {
+                    Snackbar.Add($"Unable to convert to {userCurrency}. Prices are shown in GBP.", Severity.Info);
+                }
                 var option = new BookingOption
                 {
                     Id = Guid.NewGuid().ToString(),
@@ -852,7 +877,7 @@
                     Description = $"You’ve used {status.SessionsUsed} of {subscription.Price.MonthlyLimit} sessions this month.",
                     PriceGBP = subscription.Price.PriceGBP,
                     PriceConverted = convertedPrice,
-                    Currency = userCurrency,
+                    Currency = finalCurrency,
                     Type = BookingType.Subscription,
                     IsAvailable = status.Remaining > 0,
                     RequiresPurchase = false,
@@ -867,7 +892,7 @@
                 }
             }
 
-            await LogService.LogInfo("LoadBookingOptions", $"Loaded {BookingOptions.Count} booking options for UserId: {userId}, SessionType: {sessionType}");
+            await LogService.LogInfo("LoadBookingOptions", $"Loaded {BookingOptions.Count} booking options for UserId: {userId}, SessionType: {sessionType}, Currency: {userCurrency}");
             StateHasChanged();
         }
         catch (Exception ex)

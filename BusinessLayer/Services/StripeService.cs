@@ -45,7 +45,6 @@ public class StripeService : IPaymentService
             var planId = request.PlanId;
             var userCurrency = request.Currency?.ToUpper() ?? "GBP";
 
-            // Validate currency
             if (!IsStripeSupportedCurrency(userCurrency))
             {
                 await _logService.LogWarning("CreateCheckoutSessionAsync", $"Unsupported currency: {userCurrency}. Falling back to GBP.");
@@ -87,15 +86,13 @@ public class StripeService : IPaymentService
 
             await _logService.LogInfo("CreateCheckoutSessionAsync", $"Received session with Id: {session.Id}, StripeSessionId: {session.StripeSessionId}, BookingType: {bookingType}, PlanId: {planId}, Currency: {userCurrency}");
 
-            if (bookingType == BookingType.SessionPack)
+            var existingPendingSession = await _context.Sessions
+                .FirstOrDefaultAsync(s => s.Email == session.Email && s.IsPending && 
+                                    (bookingType == BookingType.SingleSession || s.PackId == planId));
+            if (existingPendingSession != null)
             {
-                var existingPendingSession = await _context.Sessions
-                    .FirstOrDefaultAsync(s => s.Email == session.Email && s.PackId == planId && s.IsPending);
-                if (existingPendingSession != null)
-                {
-                    await _logService.LogWarning("CreateCheckoutSessionAsync", $"Pending session already exists for Email: {session.Email}, PackId: {planId}, SessionId: {existingPendingSession.Id}");
-                    throw new InvalidOperationException($"A pending session already exists (ID: {existingPendingSession.Id}). Please complete or cancel the existing payment.");
-                }
+                await _logService.LogWarning("CreateCheckoutSessionAsync", $"Pending session already exists for Email: {session.Email}, Id: {existingPendingSession.Id}, BookingType: {bookingType}, PlanId: {planId}");
+                throw new InvalidOperationException($"A pending session already exists (ID: {existingPendingSession.Id}). Please complete or cancel the existing payment.");
             }
 
             if (session.Id == 0)
@@ -318,7 +315,11 @@ public class StripeService : IPaymentService
                 return false;
             }
 
-            var dbSession = await _context.Sessions.FirstOrDefaultAsync(s => s.StripeSessionId == stripeSessionId);
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            var dbSession = await _context.Sessions
+                .Include(s => s.VideoSession)
+                .FirstOrDefaultAsync(s => s.StripeSessionId == stripeSessionId);
 
             if (dbSession == null)
             {
@@ -326,16 +327,18 @@ public class StripeService : IPaymentService
                 return false;
             }
 
-            if (!dbSession.IsPending && dbSession.IsPaid)
+            if (!dbSession.IsPending && dbSession.IsPaid && dbSession.VideoSession != null)
             {
-                await _logService.LogInfo("ConfirmPaymentAsync", $"Session Id: {dbSession.Id} already confirmed for StripeSessionId: {stripeSessionId}");
+                await _logService.LogInfo("ConfirmPaymentAsync", $"Session Id: {dbSession.Id} already confirmed with VideoSession for StripeSessionId: {stripeSessionId}");
+                await transaction.CommitAsync();
                 return true;
             }
 
-            if (!dbSession.IsPending)
+            if (dbSession.IsPending && dbSession.VideoSession != null)
             {
-                await _logService.LogError("ConfirmPaymentAsync", $"No pending session found for StripeSessionId: {stripeSessionId}");
-                return false;
+                await _logService.LogWarning("ConfirmPaymentAsync", $"Pending session Id: {dbSession.Id} already has VideoSession for StripeSessionId: {stripeSessionId}");
+                await transaction.CommitAsync();
+                return true;
             }
 
             var bookingTypeStr = stripeSession.Metadata.TryGetValue("BookingType", out var bt) ? bt : null;
@@ -421,7 +424,24 @@ public class StripeService : IPaymentService
             dbSession.IsPaid = true;
             dbSession.PaidAt = DateTime.UtcNow;
             dbSession.PackId = packId;
-            await _sessionService.CreateSessionAsync(dbSession);
+            dbSession.IsPending = false;
+
+            if (dbSession.VideoSession == null)
+            {
+                var videoSession = new VideoSession
+                {
+                    UserId = dbSession.Email,
+                    ScheduledAt = dbSession.PreferredDateTime,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    Session = dbSession,
+                    SessionRefId = dbSession.Id
+                };
+                _context.VideoSessions.Add(videoSession);
+            }
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
             await _logService.LogInfo("ConfirmPaymentAsync", $"Confirmed session Id: {dbSession.Id}, UserId: {dbSession.Email}, StripeSessionId: {stripeSessionId}, PackId: {dbSession.PackId}, Currency: {currency}");
 
             return true;
