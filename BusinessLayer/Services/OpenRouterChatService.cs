@@ -25,35 +25,26 @@ namespace BusinessLayer.Services
             _logService = logService;
 
             _resources = new List<(string[] Keywords, ChatResource Resource, double Weight)>
-            {
-                (
-                    new[] { "inner peace", "mindfulness", "calm", "clarity", "resilience", "self-discovery" },
-                    new ChatResource 
-                    { 
-                        Name = "Find Your Calm, Shape Your Power: A 30-Day Inner Peace Challenge", 
-                        Url = "/resources/free#gift1" 
-                    },
-                    0.8
-                ),
-                (
-                    new[] { "goals", "success", "focus", "planning", "2025", "motivation" },
-                    new ChatResource 
-                    { 
-                        Name = "Master Your 2025: Focused, Fresh, and Fearless", 
-                        Url = "/resources/free#gift2" 
-                    },
-                    0.7
-                ),
-                (
-                    new[] { "self-discovery", "personal growth", "transformation", "challenge" },
-                    new ChatResource 
-                    { 
-                        Name = "30 Days Self Discovery Challenge Playlist", 
-                        Url = "/resources/free#video-section" 
-                    },
-                    0.6
-                )
-            };
+                {
+                    (
+                        new[] { "inner peace", "mindfulness", "calm", "clarity", "resilience", "self-discovery" },
+                        new ChatResource 
+                        { 
+                            Name = "Find Your Calm, Shape Your Power: A 30-Day Inner Peace Challenge", 
+                            Url = "/Files/file1.pdf"
+                        },
+                        0.8
+                    ),
+                    (
+                        new[] { "goals", "success", "focus", "planning", "2025", "motivation" },
+                        new ChatResource 
+                        { 
+                            Name = "Master Your 2025: Focused, Fresh, and Fearless", 
+                            Url = "/Files/file2.pdf"
+                        },
+                        0.7
+                    )
+                };
         }
 
         public List<ChatResource> GetResources(string message)
@@ -68,12 +59,21 @@ namespace BusinessLayer.Services
                 }
             }
 
-            return matchedResources
+            var selectedResources = matchedResources
                 .Where(r => _random.NextDouble() < r.Weight)
                 .Select(r => r.Resource)
                 .Distinct()
                 .Take(1)
                 .ToList();
+
+            if (selectedResources.Any())
+            {
+                var resourceText = "\n\nYou might find this helpful (click to download PDF):\n" + 
+                                string.Join("\n", selectedResources.Select(r => $"* {r.Name}"));
+                _logService.LogInfo("ResourceSuggestion", $"Suggested resources: {string.Join(", ", selectedResources.Select(r => r.Name))}");
+            }
+
+            return selectedResources;
         }
 
         public async Task<ChatMessage> SendMessageAsync(List<ChatMessage> conversationHistory, string userMessage)
@@ -87,8 +87,9 @@ namespace BusinessLayer.Services
                         content = @"You are Ítala, a certified life and career coach with a warm, empathetic, and practical approach. 
                         Your mission is to empower clients through mindfulness, resilience, and actionable steps toward personal growth. 
                         Focus on clarity, purpose, and transformation, inspired by your 30-Day Inner Peace Challenge and 2025 success guides. 
-                        When relevant, subtly suggest exploring your free resources at /resources/free, but only if it fits the conversation naturally. 
-                        Always end with an encouraging call to action, inviting users to email jostic@italaveloso.com or book a session for deeper support."                        }
+                        When relevant, subtly suggest exploring your free resources, but only if it fits the conversation naturally. 
+                        Always end with an encouraging call to action, inviting users to email jostic@italaveloso.com or book a session for deeper support."
+                    }
                 };
 
                 if (conversationHistory.Count > 5)
@@ -148,15 +149,17 @@ namespace BusinessLayer.Services
 
                 if (string.IsNullOrWhiteSpace(text))
                 {
-                    text = "I’m here to help, but I couldn’t generate a response. Let’s try again or explore my free resources at /resources/free.";
+                    text = "I’m here to help, but I couldn’t generate a response. Let’s try again or explore my free resources.";
                 }
 
                 var resources = GetResources(userMessage);
                 if (resources.Any())
                 {
-                    await _logService.LogInfo("ResourceSuggestion", $"Suggested resources: {string.Join(", ", resources.Select(r => r.Name))}");
-                    var resourceText = "\n\nYou might find these helpful:\n" + string.Join("\n", resources.Select(r => $"* [{r.Name}]({r.Url})"));
+                    // Append resource names to the response text
+                    var resourceText = "\n\nYou might find this helpful (click to download PDF):\n" + 
+                                    string.Join("\n", resources.Select(r => $"* {r.Name}"));
                     text += resourceText;
+                    await _logService.LogInfo("ResourceSuggestion", $"Suggested resources: {string.Join(", ", resources.Select(r => r.Name))}");
                 }
 
                 return new ChatMessage

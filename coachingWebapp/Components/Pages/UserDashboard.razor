@@ -401,9 +401,9 @@
             <MudStack Spacing="3">
                 <div class="d-flex justify-end">
                     <MudButton OnClick="ClearChat" 
-                                Class="clear-chat-button" 
-                                StartIcon="@Icons.Material.Filled.Clear" 
-                                Size="Size.Small">
+                            Class="clear-chat-button" 
+                            StartIcon="@Icons.Material.Filled.Clear" 
+                            Size="Size.Small">
                         Clear Chat
                     </MudButton>
                 </div>
@@ -419,13 +419,15 @@
                                     </MudAvatar>
                                 }
                                 <div>
-                                    <MudText Typo="Typo.body2" Class="message-text">@message.Text</MudText>
+                                    <MudText Typo="Typo.body2" Class="message-text">@((MarkupString)message.Text.Replace("\n", "<br>"))</MudText>
                                     @if (message.Resources?.Any() == true)
                                     {
                                         <MudText Typo="Typo.caption">Resources:</MudText>
                                         foreach (var resource in message.Resources)
                                         {
-                                            <MudLink Href="@resource.Url" Target="_blank" Class="d-block">@resource.Name</MudLink>
+                                            <MudLink Class="d-block" @onclick="@(() => DownloadResource(resource.Url, resource.Name))">
+                                                @resource.Name (Download PDF)
+                                            </MudLink>
                                         }
                                     }
                                     <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-1">
@@ -456,17 +458,17 @@
                 </div>
                 <MudForm Class="chat-input-form">
                     <MudTextField InputRef="@chatInputRef"
-                                    @bind-Value="newMessage" 
-                                    Placeholder="How can Ítala help you?" 
-                                    Immediate="true" 
-                                    OnKeyDown="@(async (KeyboardEventArgs e) => { if (e.Key == "Enter" && !isSending) await SendMessage(); })" 
-                                    Disabled="isSending" 
-                                    Variant="Variant.Outlined" 
-                                    Adornment="Adornment.End" 
-                                    AdornmentIcon="@Icons.Material.Filled.Send" 
-                                    AdornmentColor="Color.Primary" 
-                                    OnAdornmentClick="SendMessage" 
-                                    Class="chat-input" />
+                                @bind-Value="newMessage" 
+                                Placeholder="How can Ítala help you?" 
+                                Immediate="true" 
+                                OnKeyDown="@(async (KeyboardEventArgs e) => { if (e.Key == "Enter" && !isSending) await SendMessage(); })" 
+                                Disabled="isSending" 
+                                Variant="Variant.Outlined" 
+                                Adornment="Adornment.End" 
+                                AdornmentIcon="@Icons.Material.Filled.Send" 
+                                AdornmentColor="Color.Primary" 
+                                OnAdornmentClick="SendMessage" 
+                                Class="chat-input" />
                 </MudForm>
             </MudStack>
         </MudPaper>
@@ -1688,6 +1690,31 @@
                 Items = new List<VideoSession>(),
                 TotalItems = 0
             };
+        }
+    }
+
+    private async Task DownloadResource(string url, string name)
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("downloadFile", url, name, DotNetObjectReference.Create(this));
+        }
+        catch (JSException ex)
+        {
+            Snackbar.Add($"Failed to download {name}: {ex.Message}", Severity.Error);
+        }
+    }
+
+    [JSInvokable]
+    public void HandleDownloadResult(string error)
+    {
+        if (error != null)
+        {
+            Snackbar.Add($"Download failed: {error}", Severity.Error);
+        }
+        else
+        {
+            Snackbar.Add("Download started successfully.", Severity.Success);
         }
     }
 

@@ -252,7 +252,7 @@
 }
 
 .ai-chat-messages {
-  height: 400px;
+  height: 600px;
   width: 100%;
   overflow-y: auto;
   box-sizing: border-box;
@@ -270,6 +270,7 @@
   margin-bottom: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   width: fit-content;
+  font-size: small;
 }
 
 .ai-chat-messages .bot-message {
@@ -305,7 +306,7 @@
   background-color: #ff6200 !important;
   border-radius: 20px;
   padding: 4px 12px;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   transition: background-color 0.2s ease-in-out;
 }
 

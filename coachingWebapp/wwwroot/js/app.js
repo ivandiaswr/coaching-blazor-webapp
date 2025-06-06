@@ -104,6 +104,23 @@ function downloadGift(url) {
     document.body.removeChild(link);
 }
 
+window.downloadFile = function(url, fileName, callback) {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    link.onerror = function() {
+        callback('File not found or inaccessible.');
+    };
+    link.onclick = function() {
+        setTimeout(() => {
+            callback(null); // Success
+        }, 1000);
+    };
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
 window.focusElement = (elementRef) => {
     const container = document.querySelector(`[data-blazor-id="${elementRef.id}"]`);
     if (container) {
