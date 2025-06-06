@@ -4,7 +4,7 @@ namespace BusinessLayer.Services.Interfaces;
 
 public interface ISessionService
 {
-    Task<List<Session>> GetAllSessionsAsync();
+    Task<List<Session>> GetAllSessionsAsync(bool includePending = false);
     Task CreatePendingSessionAsync(Session session);
     Task<Session> GetSessionByStripeSessionIdAsync(string stripeSessionId);
     Session GetSessionById(int id);

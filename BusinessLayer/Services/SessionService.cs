@@ -247,20 +247,29 @@ public class SessionService : ISessionService
         }
     }
 
-    public async Task<List<Session>> GetAllSessionsAsync()
+    public async Task<List<Session>> GetAllSessionsAsync(bool includePending = false)
     {
         try
         {
-            var sessions = await _context.Sessions
-                            .Include(s => s.VideoSession)
-                            .OrderByDescending(o => o.CreatedAt)
-                            .ToListAsync();
+            var query = _context.Sessions
+                .Include(s => s.VideoSession)
+                .AsQueryable();
 
+            if (!includePending)
+            {
+                query = query.Where(s => !s.IsPending);
+            }
+
+            var sessions = await query
+                .OrderByDescending(o => o.CreatedAt)
+                .ToListAsync();
+
+            await _logService.LogInfo("GetAllSessionsAsync", $"Retrieved {sessions.Count} sessions (IncludePending: {includePending}).");
             return sessions;
         }
         catch (Exception ex)
         {
-            await _logService.LogError("GetAllSessionsAsync", ex.Message);
+            await _logService.LogError("GetAllSessionsAsync", $"Exception: {ex.Message}, StackTrace: {ex.StackTrace}");
             throw;
         }
     }

@@ -280,12 +280,12 @@
                             </MudPaper>
 
                             <Calendar @bind-IsVisible="showSlotCalendar"
-                                      OnSlotSelected="HandleSlotSelected"
-                                      CurrentTimeZoneDisplay="@userTimeZone"
-                                      Slots="@AvailableSlots"
-                                      BusyTimes="@BusyTimes"
-                                      AdminUnavailabilities="@Unavailabilities"
-                                      FirstAvailableDate="@firstAvailableDate" />
+                                OnSlotSelected="HandleSlotSelected"
+                                CurrentTimeZoneDisplay="@userTimeZone"
+                                AvailableSlots="@AvailableSlots"
+                                BusyTimes="@BusyTimes"
+                                AdminUnavailabilities="@Unavailabilities"
+                                FirstAvailableDate="@firstAvailableDate" />
 
                             <MudButton OnClick="OpenConfirmationDialog" 
                                        Variant="Variant.Filled" 
@@ -549,6 +549,7 @@
     private List<SessionPack> activePacks = new();
     private List<UserSubscription> activeSubscriptions = new();
 
+    private List<DateTime> availableSlots = new();
     private string userTimeZone = "UTC";
     private string CurrentTimeZoneDisplay = "UTC";
     private string? pendingNavigationUrl;
@@ -590,24 +591,39 @@
             try
             {
                 userTimeZone = await JSRuntime.InvokeAsync<string>("eval", "Intl.DateTimeFormat().resolvedOptions().timeZone");
-                CurrentTimeZoneDisplay = userTimeZone;
+                try
+                {
+                    TimeZoneInfo.FindSystemTimeZoneById(userTimeZone);
+                    await LogService.LogInfo("TimeZoneDetection", $"Detected user time zone: {userTimeZone}");
+                    CurrentTimeZoneDisplay = userTimeZone;
+                }
+                catch (TimeZoneNotFoundException)
+                {
+                    await LogService.LogWarning("TimeZoneDetection", $"Invalid time zone: {userTimeZone}. Falling back to UTC.");
+                    userTimeZone = "UTC";
+                    CurrentTimeZoneDisplay = "UTC";
+                }
             }
             catch (Exception ex)
             {
-                await LogService.LogError("TimeZoneDetection Error", ex.Message);
+                await LogService.LogError("TimeZoneDetection Error", $"Exception: {ex.Message}");
                 userTimeZone = "UTC";
                 CurrentTimeZoneDisplay = "UTC";
             }
 
             userCurrency = await DetectUserCurrency();
             await LoadBookingOptions();
+            await LoadAvailableSlots();
+        }
 
-            var uri = new Uri(NavigationManager.Uri);
-            if (uri.AbsolutePath.EndsWith("/payment-success"))
+        var uri = new Uri(NavigationManager.Uri);
+        if (uri.AbsolutePath.EndsWith("/payment-success"))
+        {
+            var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+            var stripeSessionId = query["sessionId"];
+            if (!string.IsNullOrEmpty(stripeSessionId))
             {
-                var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
-                var stripeSessionId = query["sessionId"];
-                if (!string.IsNullOrEmpty(stripeSessionId))
+                try
                 {
                     await LogService.LogInfo("OnAfterRenderAsync", $"Processing payment success for StripeSessionId: {stripeSessionId}");
                     
@@ -618,6 +634,7 @@
                         await RefreshSessionPackStatus();
                         await RefreshSubscriptionStatus();
                         await LoadBookingOptions();
+                        await LoadAvailableSlots(); // Refresh slots after confirmation
                         Snackbar.Add("Payment successful! Your session has been scheduled.", Severity.Success);
                         NavigationManager.NavigateTo("/UserDashboard", forceLoad: true);
                         return;
@@ -635,8 +652,14 @@
                     await RefreshSessionPackStatus();
                     await RefreshSubscriptionStatus();
                     await LoadBookingOptions();
+                    await LoadAvailableSlots(); // Refresh slots after confirmation
                     Snackbar.Add("Payment successful! Your session has been scheduled.", Severity.Success);
                     NavigationManager.NavigateTo("/UserDashboard", forceLoad: true);
+                }
+                catch (Exception ex)
+                {
+                    await LogService.LogError("OnAfterRenderAsync", $"Error processing payment: {ex.Message}");
+                    Snackbar.Add("An error occurred while processing payment. Please contact support.", Severity.Error);
                 }
             }
         }
@@ -718,7 +741,7 @@
             {
                 await RefreshSubscriptionStatus();
                 await LoadBookingOptions();
-                Snackbar.Add("Subscription canceled successfully. You can use remaining sessions until the billing period ends.", Severity.Success);
+                Snackbar.Add("Subscription canceled successfully.", Severity.Success);
             }
             else
             {
@@ -977,31 +1000,13 @@
 
     private async Task ToggleCalendar()
     {
-        try
+        showSlotCalendar = !showSlotCalendar;
+        if (showSlotCalendar)
         {
-            showSlotCalendar = !showSlotCalendar;
+            await LoadAvailableSlots();
 
-            var startDate = DateTime.UtcNow.Date.AddDays(2);
-            var sessions = await SessionService.GetAllSessionsAsync() ?? new List<Session>();
-            BusyTimes = sessions
-                .Where(c => c.PreferredDateTime != default && c.PreferredDateTime > DateTime.UtcNow.AddDays(2))
-                .Select(c => (
-                    Start: new DateTimeOffset(c.PreferredDateTime, TimeSpan.Zero),
-                    End: new DateTimeOffset(c.PreferredDateTime.AddMinutes(45), TimeSpan.Zero)
-                ))
-                .ToList();
+            await LogService.LogInfo("ToggleCalendar", $"Passing to Calendar: {availableSlots.Count} slots, {BusyTimes.Count} busy times, {Unavailabilities.Count} unavailabilities, FirstAvailableDate: {firstAvailableDate?.ToString("yyyy-MM-dd HH:mm UTC") ?? "null"}");
 
-            Unavailabilities = (await UnavailableTimeService.GetAllUnavailableTimesAsync()).ToList();
-            AvailableSlots = GenerateAvailableSlots(startDate, BusyTimes, Unavailabilities);
-            firstAvailableDate = AvailableSlots.Any() ? AvailableSlots.Min() : DateTime.Now;
-        }
-        catch (Exception ex)
-        {
-            await LogService.LogError("ToggleCalendar Error", ex.Message);
-            Snackbar.Add("Failed to load calendar. Please try again.", Severity.Error);
-        }
-        finally
-        {
             StateHasChanged();
         }
     }
@@ -1013,38 +1018,123 @@
         var workStartTime = new TimeSpan(10, 0, 0);
         var workEndTime = new TimeSpan(21, 0, 0);
         var slotDuration = TimeSpan.FromMinutes(45);
+        var adminTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Europe/London");
+
+        startDate = startDate.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(startDate, DateTimeKind.Utc) : startDate.ToUniversalTime();
+
+        LogService.LogInfo("GenerateAvailableSlots", $"Processing slots from {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd} UTC with {busyTimes.Count} busy times: {string.Join("; ", busyTimes.Select(b => $"{b.Start.UtcDateTime:yyyy-MM-dd HH:mm} to {b.End.UtcDateTime:yyyy-MM-dd HH:mm} UTC"))}");
 
         for (var date = startDate; date <= endDate; date = date.AddDays(1))
         {
             for (var time = workStartTime; time < workEndTime; time = time.Add(slotDuration))
             {
-                var slotStart = date.Date.Add(time).ToUniversalTime();
+                var slotStart = date.Date.Add(time);
                 var slotEnd = slotStart.Add(slotDuration);
 
                 if (slotStart <= DateTime.UtcNow.AddDays(2))
+                {
+                    //LogService.LogInfo("GenerateAvailableSlots", $"Skipping slot {slotStart:yyyy-MM-dd HH:mm} UTC: within 2 days of {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC.");
                     continue;
+                }
 
                 bool isBusy = busyTimes.Any(busy =>
-                    slotStart < busy.End.LocalDateTime && slotEnd > busy.Start.LocalDateTime);
+                {
+                    var busyStart = busy.Start.UtcDateTime;
+                    var busyEnd = busy.End.UtcDateTime;
+                    bool overlaps = slotStart < busyEnd && slotEnd > busyStart;
+                    if (overlaps)
+                    {
+                        //LogService.LogInfo("GenerateAvailableSlots", $"Slot {slotStart:yyyy-MM-dd HH:mm} UTC overlaps with busy time {busyStart:yyyy-MM-dd HH:mm} to {busyEnd:yyyy-MM-dd HH:mm} UTC.");
+                    }
+                    return overlaps;
+                });
 
                 bool isWithinUnavailability = adminUnavailabilities.Any(u =>
-                    (u.IsRecurring 
-                    && u.DayOfWeek == slotStart.DayOfWeek
-                    && slotStart.TimeOfDay >= u.StartTime 
-                    && slotStart.TimeOfDay < u.EndTime)
-                    ||
-                    (!u.IsRecurring 
-                    && u.Date.Date == slotStart.Date 
-                    && slotStart.TimeOfDay >= u.StartTime 
-                    && slotStart.TimeOfDay < u.EndTime));
+                {
+                    var bstDateTime = new DateTime(slotStart.Year, slotStart.Month, slotStart.Day, u.StartTime.Value.Hours, u.StartTime.Value.Minutes, u.StartTime.Value.Seconds, DateTimeKind.Unspecified);
+                    var bstEndDateTime = new DateTime(slotStart.Year, slotStart.Month, slotStart.Day, u.EndTime.Value.Hours, u.EndTime.Value.Minutes, u.EndTime.Value.Seconds, DateTimeKind.Unspecified);
+                    var utcStart = TimeZoneInfo.ConvertTimeToUtc(bstDateTime, adminTimeZone);
+                    var utcEnd = TimeZoneInfo.ConvertTimeToUtc(bstEndDateTime, adminTimeZone);
+
+                    bool isUnavailable;
+                    if (u.IsRecurring)
+                    {
+                        isUnavailable = u.DayOfWeek == slotStart.DayOfWeek && slotStart >= utcStart && slotStart < utcEnd;
+                    }
+                    else
+                    {
+                        var uDateUtc = TimeZoneInfo.ConvertTimeToUtc(u.Date, adminTimeZone);
+                        isUnavailable = uDateUtc.Date == slotStart.Date && slotStart >= utcStart && slotStart < utcEnd;
+                    }
+
+                    if (isUnavailable)
+                    {
+                        //LogService.LogInfo("GenerateAvailableSlots", $"Slot {slotStart:yyyy-MM-dd HH:mm} UTC blocked by unavailability: {(u.IsRecurring ? $"Recurring on {u.DayOfWeek}" : $"On {u.Date:yyyy-MM-dd}")} from {u.StartTime} to {u.EndTime} BST ({utcStart:HH:mm} to {utcEnd:HH:mm} UTC).");
+                    }
+                    return isUnavailable;
+                });
 
                 if (!isBusy && !isWithinUnavailability)
                 {
+                    //LogService.LogInfo("GenerateAvailableSlots", $"Adding available slot {slotStart:yyyy-MM-dd HH:mm} UTC.");
                     slots.Add(slotStart);
                 }
             }
         }
+
+        LogService.LogInfo("GenerateAvailableSlots", $"Generated {slots.Count} available slots from {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd} UTC.");
         return slots;
+    }
+
+    private async Task LoadAvailableSlots()
+    {
+        try
+        {
+            await LogService.LogInfo("LoadAvailableSlots", "Starting slot load...");
+            var startDate = DateTime.UtcNow.Date.AddDays(2);
+            var sessions = await SessionService.GetAllSessionsAsync(false) ?? new List<Session>();
+            var busyTimes = sessions
+                .Where(c => c != null && c.PreferredDateTime != default && c.PreferredDateTime > DateTime.UtcNow.AddDays(2))
+                .Select(c => (
+                    Start: new DateTimeOffset(c.PreferredDateTime, TimeSpan.Zero),
+                    End: new DateTimeOffset(c.PreferredDateTime.AddMinutes(45), TimeSpan.Zero)
+                ))
+                .ToList();
+            var adminUnavailabilities = (await UnavailableTimeService.GetAllUnavailableTimesAsync())?.ToList() ?? new List<UnavailableTime>();
+
+            AvailableSlots = GenerateAvailableSlots(startDate, busyTimes, adminUnavailabilities);
+            BusyTimes = busyTimes;
+            Unavailabilities = adminUnavailabilities;
+            firstAvailableDate = AvailableSlots.Any() ? AvailableSlots.Min() : DateTime.UtcNow.AddDays(2);
+
+            await LogService.LogInfo("LoadAvailableSlots", $"Loaded {AvailableSlots.Count} available slots. Sessions: {sessions.Count}, Busy times: {BusyTimes.Count}, Unavailabilities: {Unavailabilities.Count}.");
+        }
+        catch (Exception ex)
+        {
+            await LogService.LogError("LoadAvailableSlots Error", $"Exception: {ex.Message}, StackTrace: {ex.StackTrace}");
+            Snackbar.Add("Failed to load available slots.", Severity.Error);
+            AvailableSlots = new List<DateTime>();
+            BusyTimes = new List<(DateTimeOffset, DateTimeOffset)>();
+            Unavailabilities = new List<UnavailableTime>();
+        }
+        finally
+        {
+            StateHasChanged();
+        }
+}
+
+    private string FormatSlotTime(DateTime slotUtc)
+    {
+        try
+        {
+            var timeZone = TimeZoneInfo.FindSystemTimeZoneById(userTimeZone);
+            var localTime = TimeZoneInfo.ConvertTimeFromUtc(slotUtc, timeZone);
+            return localTime.ToString("ddd, MMM dd, yyyy HH:mm", CultureInfo.InvariantCulture);
+        }
+        catch
+        {
+            return slotUtc.ToString("ddd, MMM dd, yyyy HH:mm 'UTC'", CultureInfo.InvariantCulture);
+        }
     }
 
     private async Task HandleSlotSelected(string isoString)
@@ -1054,6 +1144,15 @@
             var date = DateTime.Parse(isoString);
             var userTimeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(userTimeZone);
             var utcDate = TimeZoneInfo.ConvertTimeToUtc(date, userTimeZoneInfo);
+            
+            if (!AvailableSlots.Any(s => s == utcDate))
+            {
+                await LogService.LogWarning("HandleSlotSelected", $"Selected slot {utcDate:yyyy-MM-dd HH:mm} UTC is not in AvailableSlots.");
+                Snackbar.Add("Selected time slot is no longer available. Please choose another.", Severity.Warning);
+                await LoadAvailableSlots();
+                return;
+            }
+
             selectedSlotString = TimeZoneInfo.ConvertTimeFromUtc(utcDate, userTimeZoneInfo).ToString("dd MMM yyyy - HH:mm");
             requestModel.PreferredDateTime = utcDate;
             requestModel.PreferredDateTimeString = isoString;
@@ -1079,11 +1178,13 @@
             }
 
             showSlotCalendar = false;
+            await LogService.LogInfo("HandleSlotSelected", $"Selected slot {utcDate:yyyy-MM-dd HH:mm} UTC ({selectedSlotString} {userTimeZone}).");
             StateHasChanged();
         }
         catch (Exception ex)
         {
             await LogService.LogError("HandleSlotSelected Error", ex.Message);
+            Snackbar.Add("Failed to select time slot. Please try again.", Severity.Error);
         }
     }
 
@@ -1136,6 +1237,7 @@
         if (!DateTime.TryParseExact(selectedSlotString, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out var scheduledAtLocal))
         {
             await LogService.LogError("SubmitSessionRequest", $"Failed to parse date: {selectedSlotString}");
+            Snackbar.Add("Invalid date format. Please select a valid time slot.", Severity.Error);
             return;
         }
 
@@ -1166,6 +1268,8 @@
 
         try
         {
+            await LogService.LogInfo("SubmitSessionRequest", $"Attempting to schedule session at {scheduledAtUtc:yyyy-MM-dd HH:mm} UTC, Type: {SelectedOption.Type}, PlanId: {SelectedOption.PlanId}, PackId: {SelectedOption.PackId}, User: {userId}");
+
             if (SelectedOption.Type == BookingType.SessionPack)
             {
                 if (SelectedOption.RequiresPurchase)
@@ -1173,7 +1277,7 @@
                     var existingPendingSession = await SessionService.GetPendingSessionByEmailAndPackAsync(session.Email, SelectedOption.PlanId);
                     if (existingPendingSession != null)
                     {
-                        await LogService.LogWarning("SubmitSessionRequest", $"Pending session already exists for Email: {session.Email}, PackId: {SelectedOption.PlanId}, SessionId: {existingPendingSession.Id}");
+                        await LogService.LogWarning("SubmitSessionRequest", $"Pending session exists for Email: {session.Email}, PackId: {SelectedOption.PlanId}, SessionId: {existingPendingSession.Id}");
                         Snackbar.Add("A pending session already exists. Please complete or cancel the existing payment.", Severity.Warning);
                         return;
                     }
@@ -1195,17 +1299,15 @@
                         var data = await response.Content.ReadFromJsonAsync<ModelLayer.Models.DTOs.StripeResponse>();
                         session.StripeSessionId = data.SessionId;
                         await SessionService.CreatePendingSessionAsync(session);
+                        await LogService.LogInfo("SubmitSessionRequest", $"Created pending session with StripeSessionId: {data.SessionId}, Redirecting to: {data.Url}");
                         pendingNavigationUrl = data!.Url;
                         StateHasChanged();
                     }
                     else
                     {
                         var errorContent = await response.Content.ReadAsStringAsync();
-                        await LogService.LogError("SubmitSessionRequest", $"Response Status: {response.StatusCode}, Error: {errorContent}");
-                        var errorMessage = response.StatusCode == System.Net.HttpStatusCode.BadRequest
-                            ? "Invalid payment request. Please check your selection."
-                            : "Payment service unavailable. Please try again later.";
-                        Snackbar.Add(errorMessage, Severity.Error);
+                        await LogService.LogError("SubmitSessionRequest", $"Checkout failed. Status: {response.StatusCode}, Error: {errorContent}");
+                        Snackbar.Add("Failed to initiate payment. Please try again.", Severity.Error);
                     }
                     return;
                 }
@@ -1213,6 +1315,7 @@
                 {
                     if (remainingPackSessions <= 0)
                     {
+                        await LogService.LogWarning("SubmitSessionRequest", $"No remaining sessions in pack for User: {userId}, PackId: {SelectedOption.PackId}");
                         Snackbar.Add("No remaining sessions in your pack. Please purchase a new pack or select another option.", Severity.Error);
                         return;
                     }
@@ -1220,6 +1323,7 @@
                     var success = await SessionPackService.ConsumeSession(userId, SelectedOption.PackId.ToString());
                     if (!success)
                     {
+                        await LogService.LogError("SubmitSessionRequest", $"Failed to consume session for PackId: {SelectedOption.PackId}, User: {userId}");
                         Snackbar.Add("Failed to consume a session from your pack.", Severity.Error);
                         return;
                     }
@@ -1231,13 +1335,12 @@
                     if (!created)
                     {
                         var rollbackSuccess = await SessionPackService.RollbackSessionConsumption(userId, SelectedOption.PackId.ToString());
-                        if (!rollbackSuccess)
-                        {
-                            await LogService.LogError("SubmitSessionRequest", $"Failed to rollback session consumption for PackId: {SelectedOption.PackId}, UserId: {userId}");
-                        }
+                        await LogService.LogError("SubmitSessionRequest", $"Failed to create session. Rollback {(rollbackSuccess ? "succeeded" : "failed")} for PackId: {SelectedOption.PackId}, User: {userId}");
                         Snackbar.Add("Failed to schedule session. Please try again.", Severity.Error);
                         return;
                     }
+
+                    await LogService.LogInfo("SubmitSessionRequest", $"Session scheduled successfully at {scheduledAtUtc:yyyy-MM-dd HH:mm} UTC with PackId: {SelectedOption.PackId}");
 
                     await RefreshSessionPackStatus();
                     await LoadBookingOptions();
@@ -1255,7 +1358,7 @@
                         selectedBookingOption = preferredOption?.Type ?? BookingType.SingleSession;
                     }
 
-                    remainingPackSessions = activePacks.Sum(p => p.SessionsRemaining);         
+                    remainingPackSessions = activePacks.Sum(p => p.SessionsRemaining);
                     Snackbar.Add($"Session scheduled! You have {remainingPackSessions} session(s) left in your pack.", Severity.Success);
                 }
             }
@@ -1274,23 +1377,21 @@
                     checkoutRequest.Session.PackId = SelectedOption.PlanId;
 
                     var response = await HttpClient.PostAsJsonAsync($"{baseUrl}/api/payments/create-checkout-session", checkoutRequest);
-                    
+
                     if (response.IsSuccessStatusCode)
                     {
                         var data = await response.Content.ReadFromJsonAsync<ModelLayer.Models.DTOs.StripeResponse>();
                         session.StripeSessionId = data.SessionId;
                         await SessionService.CreatePendingSessionAsync(session);
+                        await LogService.LogInfo("SubmitSessionRequest", $"Created pending session with StripeSessionId: {data.SessionId}, Redirecting to: {data.Url}");
                         pendingNavigationUrl = data!.Url;
                         StateHasChanged();
                     }
                     else
                     {
                         var errorContent = await response.Content.ReadAsStringAsync();
-                        await LogService.LogError("SubmitSessionRequest", $"Response Status: {response.StatusCode}, Error: {errorContent}");
-                        var errorMessage = response.StatusCode == System.Net.HttpStatusCode.BadRequest
-                            ? "Invalid payment request. Please check your selection."
-                            : "Payment service unavailable. Please try again later.";
-                        Snackbar.Add(errorMessage, Severity.Error);
+                        await LogService.LogError("SubmitSessionRequest", $"Checkout failed. Status: {response.StatusCode}, Error: {errorContent}");
+                        Snackbar.Add("Failed to initiate payment. Please try again.", Severity.Error);
                     }
                     return;
                 }
@@ -1298,6 +1399,7 @@
                 {
                     if (remainingSubscriptionSessions <= 0)
                     {
+                        await LogService.LogWarning("SubmitSessionRequest", $"No remaining subscription sessions for User: {userId}, PlanId: {SelectedOption.PlanId}");
                         Snackbar.Add("Monthly session limit reached. Please select another option or wait until next month.", Severity.Error);
                         return;
                     }
@@ -1308,6 +1410,7 @@
                     var success = await UserSubscriptionService.RegisterMonthlyUsage(userId, SelectedOption.PlanId);
                     if (!success)
                     {
+                        await LogService.LogError("SubmitSessionRequest", $"Failed to register monthly usage for PlanId: {SelectedOption.PlanId}, User: {userId}");
                         Snackbar.Add("Failed to register session usage. Monthly limit may have been reached.", Severity.Error);
                         return;
                     }
@@ -1315,9 +1418,12 @@
                     var created = await SessionService.CreateSessionAsync(session);
                     if (!created)
                     {
+                        await LogService.LogError("SubmitSessionRequest", $"Failed to create session for PlanId: {SelectedOption.PlanId}, User: {userId}");
                         Snackbar.Add("Failed to schedule session. Please try again.", Severity.Error);
                         return;
                     }
+
+                    await LogService.LogInfo("SubmitSessionRequest", $"Session scheduled successfully at {scheduledAtUtc:yyyy-MM-dd HH:mm} UTC with PlanId: {SelectedOption.PlanId}");
 
                     await RefreshSubscriptionStatus();
                     await LoadBookingOptions();
@@ -1343,6 +1449,7 @@
             {
                 if (!SelectedOption.IsAvailable)
                 {
+                    await LogService.LogWarning("SubmitSessionRequest", $"Single session not available for SessionType: {requestModel.SessionCategory}, User: {userId}");
                     Snackbar.Add("Single session not available for this session type.", Severity.Error);
                     return;
                 }
@@ -1354,29 +1461,31 @@
                     PlanId = null,
                     Currency = SelectedOption.Currency ?? "GBP"
                 };
-                
-                await LogService.LogWarning("SubmitSessionRequest", $"baseUrl: {baseUrl}, checkoutRequest: {System.Text.Json.JsonSerializer.Serialize(checkoutRequest)}");
+
+                await LogService.LogInfo("SubmitSessionRequest", $"Creating checkout for single session at {scheduledAtUtc:yyyy-MM-dd HH:mm} UTC, Currency: {checkoutRequest.Currency}");
 
                 var response = await HttpClient.PostAsJsonAsync($"{baseUrl}/api/payments/create-checkout-session", checkoutRequest);
 
                 if (response.IsSuccessStatusCode)
                 {
                     var data = await response.Content.ReadFromJsonAsync<ModelLayer.Models.DTOs.StripeResponse>();
+                    session.StripeSessionId = data.SessionId;
+                    await SessionService.CreatePendingSessionAsync(session);
+                    await LogService.LogInfo("SubmitSessionRequest", $"Created pending session with StripeSessionId: {data.SessionId}, Redirecting to: {data.Url}");
                     pendingNavigationUrl = data!.Url;
                     StateHasChanged();
                 }
                 else
-                { 
+                {
                     var errorContent = await response.Content.ReadAsStringAsync();
-                    await LogService.LogError("SubmitSessionRequest", $"Response Status: {response.StatusCode}, Error: {errorContent}");
-                    var errorMessage = response.StatusCode == System.Net.HttpStatusCode.BadRequest
-                        ? "Invalid payment request. Please check your selection."
-                        : "Payment service unavailable. Please try again later.";
-                    Snackbar.Add(errorMessage, Severity.Error);
+                    await LogService.LogError("SubmitSessionRequest", $"Checkout failed. Status: {response.StatusCode}, Error: {errorContent}");
+                    Snackbar.Add("Failed to initiate payment. Please try again.", Severity.Error);
                 }
+                return;
             }
             else
             {
+                await LogService.LogError("SubmitSessionRequest", $"Invalid booking option: {SelectedOption.Type}, User: {userId}");
                 Snackbar.Add("Invalid booking option selected.", Severity.Error);
                 return;
             }
@@ -1386,13 +1495,14 @@
             requestModel.SessionCategory = SessionType.lifeCoaching;
             showSlotCalendar = false;
             selectedTab = 1;
-            await LoadBookingOptions();
             await LoadSessions();
+            await LoadAvailableSlots();
+            await LogService.LogInfo("SubmitSessionRequest", $"Form reset and slots refreshed after scheduling.");
             StateHasChanged();
         }
         catch (Exception ex)
         {
-            await LogService.LogError("SubmitSessionRequest", ex.Message);
+            await LogService.LogError("SubmitSessionRequest", $"Error scheduling session: {ex.Message}");
             Snackbar.Add("An error occurred while scheduling the session. Please try again.", Severity.Error);
         }
     }

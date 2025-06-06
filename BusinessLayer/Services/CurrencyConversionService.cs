@@ -1,4 +1,6 @@
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using BusinessLayer.Services.Interfaces;
 using Microsoft.Extensions.Configuration;
 
@@ -37,24 +39,25 @@ namespace BusinessLayer.Services
                 return priceGBP;
             }
 
-            if (DateTime.UtcNow > _lastUpdated.AddHours(24) || !_exchangeRates.ContainsKey(targetCurrency.ToUpper()))
+
+            if (DateTime.UtcNow > _lastUpdated.AddHours(24) || !_exchangeRates.ContainsKey(targetCurrency))
             {
                 await FetchExchangeRates();
             }
 
-            if (_exchangeRates.TryGetValue(targetCurrency.ToUpper(), out var rate))
+            if (_exchangeRates.TryGetValue(targetCurrency, out var rate))
             {
                 var isZeroDecimal = new[] { "BIF", "CLP", "DJF", "GNF", "JPY", "KMF", "KRW", "MGA", "PYG", "RWF", "UGX", "VND", "VUV", "XAF", "XOF", "XPF" }
-                    .Contains(targetCurrency.ToUpper());
+                    .Contains(targetCurrency, StringComparer.OrdinalIgnoreCase);
                 var convertedPrice = isZeroDecimal ? Math.Round(priceGBP * rate) : Math.Round(priceGBP * rate, 2);
-                await _logService.LogInfo("ConvertPrice", $"Converted {priceGBP} GBP to {convertedPrice} {targetCurrency} using rate {rate}.");
+                await _logService.LogInfo("ConvertPrice", $"Converted {priceGBP} GBP to {convertedPrice} {targetCurrency} using API rate {rate}.");
                 return convertedPrice;
             }
 
-            if (_fallbackRates.TryGetValue(targetCurrency.ToUpper(), out var fallbackRate))
+            if (_fallbackRates.TryGetValue(targetCurrency, out var fallbackRate))
             {
                 var isZeroDecimal = new[] { "BIF", "CLP", "DJF", "GNF", "JPY", "KMF", "KRW", "MGA", "PYG", "RWF", "UGX", "VND", "VUV", "XAF", "XOF", "XPF" }
-                    .Contains(targetCurrency.ToUpper());
+                    .Contains(targetCurrency, StringComparer.OrdinalIgnoreCase);
                 var convertedPrice = isZeroDecimal ? Math.Round(priceGBP * fallbackRate) : Math.Round(priceGBP * fallbackRate, 2);
                 await _logService.LogWarning("ConvertPrice", $"No API exchange rate for {targetCurrency}. Used fallback rate {fallbackRate}. Converted {priceGBP} GBP to {convertedPrice} {targetCurrency}.");
                 return convertedPrice;
@@ -72,40 +75,56 @@ namespace BusinessLayer.Services
                 if (string.IsNullOrEmpty(apiKey))
                 {
                     await _logService.LogError("FetchExchangeRates", "ExchangeRateApi:ApiKey is missing in configuration.");
-                    _exchangeRates = new Dictionary<string, decimal>();
+                    _exchangeRates.Clear();
                     return;
                 }
 
+                await _logService.LogInfo("FetchExchangeRates", $"Fetching exchange rates with API key ending in {apiKey[^4..]}");
                 var response = await _httpClient.GetAsync($"https://v6.exchangerate-api.com/v6/{apiKey}/latest/GBP");
                 if (!response.IsSuccessStatusCode)
                 {
-                    await _logService.LogError("FetchExchangeRates", $"HTTP error: {response.StatusCode}, Reason: {await response.Content.ReadAsStringAsync()}");
-                    _exchangeRates = new Dictionary<string, decimal>();
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    await _logService.LogError("FetchExchangeRates", $"HTTP error: {response.StatusCode}, Reason: {errorContent}");
+                    _exchangeRates.Clear();
                     return;
                 }
 
-                var exchangeResponse = await response.Content.ReadFromJsonAsync<ExchangeRateResponse>();
+                var jsonResponse = await response.Content.ReadAsStringAsync();
+                await _logService.LogInfo("FetchExchangeRates", $"Raw API response: {jsonResponse}");
+
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    Converters = { new DecimalConverter() }
+                };
+                var exchangeResponse = JsonSerializer.Deserialize<ExchangeRateResponse>(jsonResponse, options);
+
                 if (exchangeResponse?.ConversionRates != null && exchangeResponse.ConversionRates.Any())
                 {
-                    _exchangeRates = exchangeResponse.ConversionRates;
+                    _exchangeRates = new Dictionary<string, decimal>(exchangeResponse.ConversionRates, StringComparer.OrdinalIgnoreCase);
                     _lastUpdated = DateTime.UtcNow;
                     await _logService.LogInfo("FetchExchangeRates", $"Exchange rates updated successfully. Rates: {string.Join(", ", _exchangeRates.Select(r => $"{r.Key}: {r.Value}"))}");
                 }
                 else
                 {
                     await _logService.LogError("FetchExchangeRates", "Invalid or empty exchange rate response.");
-                    _exchangeRates = new Dictionary<string, decimal>();
+                    _exchangeRates.Clear();
                 }
+            }
+            catch (JsonException ex)
+            {
+                await _logService.LogError("FetchExchangeRates", $"JSON deserialization failed: {ex.Message}, Line: {ex.LineNumber}, Path: {ex.Path}");
+                _exchangeRates.Clear();
             }
             catch (HttpRequestException ex)
             {
                 await _logService.LogError("FetchExchangeRates", $"HTTP request failed: {ex.Message}, StatusCode: {ex.StatusCode}, InnerException: {ex.InnerException?.Message}");
-                _exchangeRates = new Dictionary<string, decimal>();
+                _exchangeRates.Clear();
             }
             catch (Exception ex)
             {
                 await _logService.LogError("FetchExchangeRates", $"Unexpected error: {ex.Message}, StackTrace: {ex.StackTrace}");
-                _exchangeRates = new Dictionary<string, decimal>();
+                _exchangeRates.Clear();
             }
         }
 
@@ -114,9 +133,41 @@ namespace BusinessLayer.Services
             return FetchExchangeRates();
         }
     }
-}
 
-public class ExchangeRateResponse
-{
-    public Dictionary<string, decimal> ConversionRates { get; set; }
+    public class ExchangeRateResponse
+    {
+        [JsonPropertyName("conversion_rates")]
+        public Dictionary<string, decimal> ConversionRates { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    }
+
+    public class DecimalConverter : JsonConverter<decimal>
+    {
+        public override decimal Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            if (reader.TokenType == JsonTokenType.Number)
+            {
+                if (reader.TryGetDecimal(out var value))
+                {
+                    return value;
+                }
+                if (reader.TryGetDouble(out var doubleValue))
+                {
+                    return (decimal)doubleValue;
+                }
+            }
+            else if (reader.TokenType == JsonTokenType.String)
+            {
+                if (decimal.TryParse(reader.GetString(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var value))
+                {
+                    return value;
+                }
+            }
+            throw new JsonException($"Unable to convert JSON token {reader.TokenType} to decimal.");
+        }
+
+        public override void Write(Utf8JsonWriter writer, decimal value, JsonSerializerOptions options)
+        {
+            writer.WriteNumberValue(value);
+        }
+    }
 }

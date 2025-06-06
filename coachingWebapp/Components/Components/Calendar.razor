@@ -10,22 +10,35 @@
         @if (IsTimeZoneValid)
         {
             <MudCalendar T="CalendarItem"
-                         @ref="calendar"
-                         Items="@calendarItems"
-                         View="@CurrentView"
-                         Date="@InitialDate"
-                         ShowTodayButton="true"
-                         SlotDuration="00:45:00"
-                         StartHour="10"
-                         EndHour="21"
-                         lang="en"
-                         id="calendar-scroll-target"
-                         ItemClicked="OnSlotClicked"
-                         Class="responsive-calendar" />
+                @ref="calendar"
+                Items="@calendarItems"
+                View="@CurrentView"
+                StartDate="@InitialDateTime"
+                ShowTodayButton="true"
+                SlotDuration="00:45:00"
+                StartHour="0"
+                EndHour="23"
+                lang="en"
+                id="calendarEventTarget"
+                ItemClicked="OnSlotClicked"
+                Class="responsive-calendar" />
         }
         else
         {
-            <MudText>Loading calendar...</MudText>
+            <MudText>Invalid time zone: @CurrentTimeZoneDisplay. Using UTC.</MudText>
+            <MudCalendar T="CalendarItem"
+                @ref="calendar"
+                Items="@calendarItems"
+                View="@CurrentView"
+                StartDate="@InitialDateTime"
+                ShowTodayButton="true"
+                SlotDuration="00:45:00"
+                StartHour="0"
+                EndHour="23"
+                lang="en"
+                id="calendarEventTarget"
+                ItemClicked="OnSlotClicked"
+                Class="responsive-calendar" />
         }
     </div>
 </div>
@@ -33,7 +46,7 @@
 @code {
     [Parameter] public bool IsVisible { get; set; }
     [Parameter] public EventCallback<bool> IsVisibleChanged { get; set; }
-    [Parameter] public List<DateTime> Slots { get; set; } = new();
+    [Parameter] public List<DateTime> AvailableSlots { get; set; } = new();
     [Parameter] public List<(DateTimeOffset Start, DateTimeOffset End)> BusyTimes { get; set; } = new();
     [Parameter] public List<UnavailableTime> AdminUnavailabilities { get; set; } = new();
     [Parameter] public DateTime? FirstAvailableDate { get; set; }
@@ -44,18 +57,32 @@
 
     private MudCalendar calendar;
     private List<CalendarItem> calendarItems = new();
-    private DateTime InitialDate => FirstAvailableDate ?? DateTime.UtcNow;
+    private DateTime InitialDateTime => FirstAvailableDate?.ToUniversalTime() ?? DateTime.UtcNow.AddDays(2);
     private CalendarView CurrentView => WindowWidth <= 1024 ? CalendarView.Day : CalendarView.Week;
     private int WindowWidth { get; set; } = 1920;
 
     protected override void OnParametersSet()
     {
         calendarItems.Clear();
+        TimeZoneInfo userTimeZoneInfo;
 
-        try 
+        try
         {
-            var userTimeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(CurrentTimeZoneDisplay);
+            userTimeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(CurrentTimeZoneDisplay);
             IsTimeZoneValid = true;
+            LogService.LogInfo("Calendar.OnParametersSet", $"Using time zone: {CurrentTimeZoneDisplay}");
+        }
+        catch (TimeZoneNotFoundException ex)
+        {
+            LogService.LogError("Calendar.OnParametersSet", $"Invalid time zone: {CurrentTimeZoneDisplay}. Falling back to UTC. Exception: {ex.Message}");
+            userTimeZoneInfo = TimeZoneInfo.Utc;
+            IsTimeZoneValid = false;
+            CurrentTimeZoneDisplay = "UTC";
+        }
+
+        try
+        {
+            LogService.LogInfo("Calendar.OnParametersSet", $"Processing {AvailableSlots.Count} slots, {BusyTimes.Count} busy times, {AdminUnavailabilities.Count} unavailabilities.");
 
             foreach (var busy in BusyTimes)
             {
@@ -67,7 +94,7 @@
                 });
             }
 
-            foreach (var slot in Slots)
+            foreach (var slot in AvailableSlots)
             {
                 calendarItems.Add(new CalendarItem
                 {
@@ -77,8 +104,15 @@
                 });
             }
 
+            var adminTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Europe/London");
             foreach (var unavailable in AdminUnavailabilities)
             {
+                if (unavailable.StartTime == null || unavailable.EndTime == null)
+                {
+                    LogService.LogWarning("Calendar.OnParametersSet", $"Skipping unavailability with null StartTime/EndTime: {(unavailable.IsRecurring ? $"Recurring {unavailable.DayOfWeek}" : $"Date {unavailable.Date:yyyy-MM-dd}")}");
+                    continue;
+                }
+
                 if (unavailable.IsRecurring)
                 {
                     var startDate = (FirstAvailableDate ?? DateTime.UtcNow).Date;
@@ -87,35 +121,40 @@
                     {
                         if (date.DayOfWeek == unavailable.DayOfWeek)
                         {
-                            var start = date.Add(unavailable.StartTime ?? TimeSpan.Zero);
-                            var end = date.Add(unavailable.EndTime ?? TimeSpan.Zero);
+                            var bstStart = new DateTime(date.Year, date.Month, date.Day, unavailable.StartTime.Value.Hours, unavailable.StartTime.Value.Minutes, 0, DateTimeKind.Unspecified);
+                            var bstEnd = new DateTime(date.Year, date.Month, date.Day, unavailable.EndTime.Value.Hours, unavailable.EndTime.Value.Minutes, 0, DateTimeKind.Unspecified);
+                            var utcStart = TimeZoneInfo.ConvertTimeToUtc(bstStart, adminTimeZone);
+                            var utcEnd = TimeZoneInfo.ConvertTimeToUtc(bstEnd, adminTimeZone);
                             calendarItems.Add(new CalendarItem
                             {
-                                Start = TimeZoneInfo.ConvertTimeFromUtc(start, userTimeZoneInfo),
-                                End = TimeZoneInfo.ConvertTimeFromUtc(end, userTimeZoneInfo),
-                                Text = "🔴 " + unavailable.Reason
+                                Start = TimeZoneInfo.ConvertTimeFromUtc(utcStart, userTimeZoneInfo),
+                                End = TimeZoneInfo.ConvertTimeFromUtc(utcEnd, userTimeZoneInfo),
+                                Text = "🔴 " + (unavailable.Reason ?? "Unavailable")
                             });
                         }
                     }
                 }
                 else
                 {
-                    var start = unavailable.Date.Add(unavailable.StartTime ?? TimeSpan.Zero);
-                    var end = unavailable.Date.Add(unavailable.EndTime ?? TimeSpan.Zero);
-
+                    var bstStart = new DateTime(unavailable.Date.Year, unavailable.Date.Month, unavailable.Date.Day, unavailable.StartTime.Value.Hours, unavailable.StartTime.Value.Minutes, 0, DateTimeKind.Unspecified);
+                    var bstEnd = new DateTime(unavailable.Date.Year, unavailable.Date.Month, unavailable.Date.Day, unavailable.EndTime.Value.Hours, unavailable.EndTime.Value.Minutes, 0, DateTimeKind.Unspecified);
+                    var utcStart = TimeZoneInfo.ConvertTimeToUtc(bstStart, adminTimeZone);
+                    var utcEnd = TimeZoneInfo.ConvertTimeToUtc(bstEnd, adminTimeZone);
                     calendarItems.Add(new CalendarItem
                     {
-                        Start = TimeZoneInfo.ConvertTimeFromUtc(start, userTimeZoneInfo),
-                        End = TimeZoneInfo.ConvertTimeFromUtc(end, userTimeZoneInfo),
-                        Text = "🔴 " + unavailable.Reason
+                        Start = TimeZoneInfo.ConvertTimeFromUtc(utcStart, userTimeZoneInfo),
+                        End = TimeZoneInfo.ConvertTimeFromUtc(utcEnd, userTimeZoneInfo),
+                        Text = "🔴 " + (unavailable.Reason ?? "Unavailable")
                     });
                 }
             }
+
+            LogService.LogInfo("Calendar.OnParametersSet", $"Populated {calendarItems.Count} calendar items: {calendarItems.Count(c => c.Text.Contains("Available"))} available, {calendarItems.Count(c => c.Text.Contains("Busy"))} busy, {calendarItems.Count(c => c.Text.Contains("🔴"))} unavailable.");
         }
-        catch (TimeZoneNotFoundException ex)
+        catch (Exception ex)
         {
-            IsTimeZoneValid = false;
-            LogService.LogError("Invalid TimeZone in Calendar", ex.Message);
+            LogService.LogError("Calendar.OnParametersSet", $"Error populating calendar items: {ex.Message}, StackTrace: {ex.StackTrace}");
+            calendarItems.Clear();
         }
     }
 
@@ -130,11 +169,11 @@
 
         try
         {
-            await JSRuntime.InvokeVoidAsync("scrollCalendarToHour", "calendar-scroll-target", 10);
+            await JSRuntime.InvokeVoidAsync("scrollCalendarToHour", "calendarEventTarget", 10);
         }
         catch (Exception ex)
         {
-            await LogService.LogError("ScrollCalendarToHour JS Error", ex.Message);
+            await LogService.LogError("ScrollCalendarToHour JS Error", $"Exception: {ex.Message}");
         }
     }
 
@@ -142,7 +181,7 @@
     {
         if (item.Text.Contains("Available"))
         {
-            await OnSlotSelected.InvokeAsync(item.Start.ToString("o")); // ISO string in the user time zone
+            await OnSlotSelected.InvokeAsync(item.Start.ToString("o"));
         }
 
         await OnEventClick.InvokeAsync(item);
