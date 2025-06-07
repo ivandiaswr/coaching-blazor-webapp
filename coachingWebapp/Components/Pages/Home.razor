@@ -187,145 +187,146 @@
     <div class="contact-container">
         <div class="contact-form-container">
             <div class="contact-wrapper">
-                    <div class="content-grid">
-                        <div class="form-section">
-                            <MudText Typo="Typo.h3" Align="Align.Center" Class="mb-4"><b>Schedule <span class="highlight">Discovery Call</span></b></MudText>
-                            <MudForm @ref="sessionForm" Model="@session">
-                                <MudTextField Label="First Name"
-                                              @bind-Value="session.FirstName"
-                                              For="@(() => session.FirstName)"
-                                              Placeholder="First Name"
-                                              Class="mb-4"
-                                              Required="true"
-                                              RequiredError="First name is required" />
+                <div class="content-grid">
+                    <div class="form-section">
+                        <MudText Typo="Typo.h3" Align="Align.Center" Class="mb-4"><b>Schedule <span class="highlight">Discovery Call</span></b></MudText>
+                        <MudForm @ref="sessionForm" Model="@session">
+                            <MudTextField Label="First Name"
+                                          @bind-Value="session.FirstName"
+                                          For="@(() => session.FirstName)"
+                                          Placeholder="First Name"
+                                          Class="mb-4"
+                                          Required="true"
+                                          RequiredError="First name is required" />
 
-                                <MudTextField Label="Last Name"
-                                              @bind-Value="session.LastName"
-                                              For="@(() => session.LastName)"
-                                              Placeholder="Last Name"
-                                              Class="mb-4"
-                                              Required="true"
-                                              RequiredError="Last name is required" />
+                            <MudTextField Label="Last Name"
+                                          @bind-Value="session.LastName"
+                                          For="@(() => session.LastName)"
+                                          Placeholder="Last Name"
+                                          Class="mb-4"
+                                          Required="true"
+                                          RequiredError="Last name is required" />
 
-                                <MudTextField Label="Email"
-                                              @bind-Value="session.Email"
-                                              For="@(() => session.Email)"
-                                              Placeholder="Your Email"
-                                              Class="mb-4"
-                                              InputType="InputType.Email"
-                                              Required="true"
-                                              RequiredError="A valid email is required" />
+                            <MudTextField Label="Email"
+                                          @bind-Value="session.Email"
+                                          For="@(() => session.Email)"
+                                          Placeholder="Your Email"
+                                          Class="mb-4"
+                                          InputType="InputType.Email"
+                                          Required="true"
+                                          RequiredError="A valid email is required" />
 
-                                <MudSelect T="SessionType" PopoverClass="custom-popper"
-                                        Label="Session Category"
-                                        @bind-Value="session.SessionCategory"
-                                        For="@(() => session.SessionCategory)"
-                                        Class="mb-4">
-                                        @foreach (var type in Enum.GetValues(typeof(SessionType)).Cast<SessionType>())
-                                        {
-                                            <MudSelectItem Value="@type">
-                                                @((type.GetType().GetField(type.ToString())?.GetCustomAttributes(typeof(DisplayAttribute), false).FirstOrDefault() as DisplayAttribute)?.Name ?? type.ToString())
-                                            </MudSelectItem>
-                                        }
-                                </MudSelect>
-
-                                <MudPaper Class="hoverable-input mb-4" @onclick="ToggleCalendar" Style="cursor: pointer;">
-                                    <MudTextField Label="Preferred Date"
-                                                  Value="@session.PreferredDateTimeString"
-                                                  For="@(() => session.PreferredDateTimeString)"
-                                                  ReadOnly="true"
-                                                  Adornment="Adornment.End"
-                                                  AdornmentIcon="@Icons.Material.Filled.CalendarMonth"
-                                                  Placeholder="Preferred date for the session" />
-                                </MudPaper>
-
-                                @if (showTimeSlots)
+                            <MudSelect T="SessionType" PopoverClass="custom-popper"
+                                       Label="Session Category"
+                                       @bind-Value="session.SessionCategory"
+                                       For="@(() => session.SessionCategory)"
+                                       Class="mb-4">
+                                @foreach (var type in Enum.GetValues(typeof(SessionType)).Cast<SessionType>())
                                 {
-                                    <Calendar @bind-IsVisible="showTimeSlots"
-                                            Slots="availableSlots"
-                                            BusyTimes="busyTimesConverted"
-                                            FirstAvailableDate="firstAvailableDate"
-                                            CurrentTimeZoneDisplay="@currentTimeZoneDisplay"
-                                            AdminUnavailabilities="adminUnavailabilities"
-                                            OnSlotSelected="HandleSlotSelected" />
+                                    <MudSelectItem Value="@type">
+                                        @((type.GetType().GetField(type.ToString())?.GetCustomAttributes(typeof(DisplayAttribute), false).FirstOrDefault() as DisplayAttribute)?.Name ?? type.ToString())
+                                    </MudSelectItem>
                                 }
+                            </MudSelect>
 
-                                <MudTextField Label="Message"
-                                              @bind-Value="session.Message"
-                                              For="@(() => session.Message)"
-                                              Lines="6"
-                                              Placeholder="Share what's on your mind..."
-                                              Class="mb-4" />
+                            <MudPaper Class="hoverable-input mb-4" @onclick="ToggleCalendarAsync" Style="cursor: pointer;">
+                                <MudTextField Label="Preferred Date & Time"
+                                              Value="@session.PreferredDateTimeString"
+                                              For="@(() => session.PreferredDateTimeString)"
+                                              ReadOnly="true"
+                                              Adornment="Adornment.End"
+                                              AdornmentIcon="@Icons.Material.Filled.CalendarMonth"
+                                              Placeholder="Select date and time"
+                                              Required="true"
+                                              RequiredError="Preferred date and time are required" />
+                            </MudPaper>
 
-                                <div class="form-status mb-4">
-                                    @if (isLoggingIn)
+                            @if (showTimeSlots)
+                            {
+                                <Calendar @bind-IsVisible="showTimeSlots"
+                                          OnSlotSelected="HandleSlotSelectedAsync"
+                                          CurrentTimeZoneDisplay="@userTimeZoneDisplay"
+                                          AvailableSlots="@availableSlots"
+                                          BusyTimes="@busyTimes"
+                                          AdminUnavailabilities="@adminUnavailabilities"
+                                          FirstAvailableDate="@firstAvailableDate" />
+                            }
+
+                            <MudTextField Label="Message"
+                                          @bind-Value="session.Message"
+                                          For="@(() => session.Message)"
+                                          Lines="6"
+                                          Placeholder="Share what's on your mind"
+                                          Class="mb-4" />
+
+                            <div class="form-status mb-4">
+                                @if (isLoggingIn)
+                                {
+                                    <MudProgressCircular Color="Color.Primary" Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                                    <MudText>Scheduling your session. Please wait...</MudText>
+                                }
+                                else
+                                {
+                                    <MudText Color="@(isSuccess ? Color.Success : Color.Error)">
+                                        @sessionStatus
+                                    </MudText>
+                                    @if (!isSuccess && sessionStatus.Contains("create an account"))
                                     {
-                                        <MudProgressCircular Color="Color.Primary" Size="Size.Small" Indeterminate="true" Class="mr-2" />
-                                        <MudText>Scheduling your session. Please wait...</MudText>
+                                        <MudButton Variant="Variant.Filled"
+                                                   Color="Color.Secondary"
+                                                   Href="/register"
+                                                   Class="mt-2">
+                                            Create an Account
+                                        </MudButton>
                                     }
-                                    else
-                                    {
-                                        <MudText Color="@(isSuccess ? Color.Success : Color.Error)">
-                                            @sessionFormStatus
-                                        </MudText>
+                                }
+                            </div>
 
-                                        @if (!isSuccess && sessionFormStatus.Contains("create an account"))
-                                            {
-                                                <MudButton Variant="Variant.Filled"
-                                                        Color="Color.Secondary"
-                                                        Href="/register"
-                                                        Class="mt-2">
-                                                    Create an Account
-                                                </MudButton>
-                                            }
-                                    }
-                                </div>
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       StartIcon="@Icons.Material.Filled.CalendarToday"
+                                       Type="submit"
+                                       Disabled="@isLoggingIn"
+                                       Class="mb-4 book-submit-button"
+                                       OnClick="CreateSessionAsync">
+                                Book Your Free Discovery Call
+                            </MudButton>
 
-                                <MudButton Variant="Variant.Filled"
-                                           Color="Color.Primary"
-                                           StartIcon="@Icons.Material.Filled.CalendarToday"
-                                           Type="submit"
-                                           Disabled="@isLoggingIn"
-                                           Class="mb-4 book-submit-button"
-                                           OnClick="CreateSessionAsync">
-                                    Book Your Free Discovery Call
-                                </MudButton>
+                            <MudText Typo="Typo.caption" Class="privacy-notice">
+                                By signing up, you’re agreeing to receive marketing emails from Ítala Veloso. You can unsubscribe at any time. For more details, check out our
+                                <a Href="/privacy-policy">Privacy Policy</a> and
+                                <a Href="/terms-and-conditions">Terms & Conditions</a>.
+                            </MudText>
+                        </MudForm>
+                    </div>
 
-                                <MudText Typo="Typo.caption" Class="privacy-notice">
-                                    By signing up, you’re agreeing to receive marketing emails from Ítala Veloso. You can unsubscribe at any time. For more details, check out our
-                                    <a Href="/privacy-policy">Privacy Policy</a> and
-                                    <a Href="/terms-and-conditions">Terms & Conditions</a>.
-                                </MudText>
-                            </MudForm>
-                        </div>
-
-                        <div class="right-content">
-                            <div class="video-header-container">
-                                <video autoplay muted loop playsinline preload="auto" class="video-header">
-                                    <source src="https://italaveloso.com/Videos/adventure.mp4" type="video/mp4">
-                                    Your browser does not support the video tag mp4.
-                                </video>
-                                <div class="contact-video-overlay">
-                                    <div class="contact-header">
-                                        <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Class="header-icon" />
-                                        <MudText Typo="Typo.h5">Begin Your Self-Discovery Journey Today</MudText>
-                                        <MudText Typo="Typo.body2" Class="contact-subtitle">Transform your life, your profession, your destiny</MudText>
-                                    </div>
+                    <div class="right-content">
+                        <div class="video-header-container">
+                            <video autoplay muted loop playsinline preload="auto" class="video-header">
+                                <source src="https://italaveloso.com/Videos/adventure.mp4" type="video/mp4">
+                                Your browser does not support the video tag mp4.
+                            </video>
+                            <div class="contact-video-overlay">
+                                <div class="contact-header">
+                                    <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Class="header-icon" />
+                                    <MudText Typo="Typo.h5">Begin Your Self-Discovery Journey Today</MudText>
+                                    <MudText Typo="Typo.body2" Class="contact-subtitle">Transform your life, your profession, your destiny</MudText>
                                 </div>
                             </div>
-                            <div class="benefits-section">
-                                <div class="benefits-content">
-                                    <MudText Typo="Typo.h6" Class="mb-2">Your Path to Growth</MudText>
-                                    <MudList T="string">
-                                        <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" Class="benefits-icon">Live a Purpose-Driven Life</MudListItem>
-                                        <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" Class="benefits-icon">Get Clear and Focused Goals</MudListItem>
-                                        <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" Class="benefits-icon">Change every area of your Life</MudListItem>
-                                        <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" Class="benefits-icon">1:1 and Group Life Coaching Sessions</MudListItem>
-                                    </MudList>
-                                    <MudText Typo="Typo.caption" Class="benefits-note">A confidential commitment to yourself, for self-development, growth and expansion</MudText>
-                                </div>
+                        </div>
+                        <div class="benefits-section">
+                            <div class="benefits-content">
+                                <MudText Typo="Typo.h6" Class="mb-2">Your Path to Growth</MudText>
+                                <MudList T="string">
+                                    <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" Class="benefits-icon">Live a Purpose-Driven Life</MudListItem>
+                                    <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" Class="benefits-icon">Get Clear and Focused Goals</MudListItem>
+                                    <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" Class="benefits-icon">Change every area of your Life</MudListItem>
+                                    <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" Class="benefits-icon">1:1 and Group Life Coaching Sessions</MudListItem>
+                                </MudList>
+                                <MudText Typo="Typo.caption" Class="benefits-note">A confidential commitment to yourself, for self-development, growth and expansion</MudText>
                             </div>
                         </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -362,17 +363,15 @@
             Role = "- Oral Health Backoffice Assistant"
         }
     };
-    private string sessionFormStatus = string.Empty;
-    private bool canScroll = true;
+    private string sessionStatus = string.Empty;
     private bool showTimeSlots = false;
     private List<DateTime> availableSlots = new();
-    private List<(DateTimeOffset Start, DateTimeOffset End)> busyTimesConverted = new();
+    private List<(DateTimeOffset, DateTimeOffset)> busyTimes = new();
     private List<UnavailableTime> adminUnavailabilities { get; set; } = new();
     private DateTime? firstAvailableDate = null;
     private bool isLoggingIn = false;
     private bool isCalendarLoading = false;
-    private string currentTimeZoneDisplay = "UTC";
-    private bool isTimeZoneDetected = true;
+    private string userTimeZoneDisplay = "UTC";
     private MudForm sessionForm;
     private bool isSuccess = false;
 
@@ -382,13 +381,23 @@
         {
             try
             {
-                currentTimeZoneDisplay = await JSRuntime.InvokeAsync<string>("eval", "Intl.DateTimeFormat().resolvedOptions().timeZone");
-            }
+                    userTimeZoneDisplay = await JSRuntime.InvokeAsync<string>("eval", "Intl.DateTimeFormat().resolvedOptions().timeZone");
+                    try
+                    {
+                        TimeZoneInfo.FindSystemTimeZoneById(userTimeZoneDisplay);
+                        await LogService.LogInfo("TimeZoneDetection", $"Detected user timezone: {userTimeZoneDisplay}");
+                    }
+                    catch (TimeZoneNotFoundException)
+                    {
+                        await LogService.LogWarning("TimeZoneDetection", $"Invalid time zone: {userTimeZoneDisplay}. Falling back to UTC.");
+                        userTimeZoneDisplay = "UTC";
+                    }
+                }
             catch (Exception ex)
-            {
-                await LogService.LogError("TimeZoneDetection Error", ex.Message);
-                currentTimeZoneDisplay = "UTC";
-            }
+                {
+                await LogService.LogError("TimeZoneDetection Error", $"Exception: {ex.Message}");
+                userTimeZoneDisplay = "UTC";
+                }
 
             await JSRuntime.InvokeVoidAsync("setTitle", pageTitle);
             StateHasChanged();
@@ -398,22 +407,22 @@
     #region ContactMessage
     private async Task CreateSessionAsync()
     {
-        await sessionForm.Validate();
-        if (!sessionForm.IsValid)
+        await sessionForm?.Validate();
+        if (!sessionForm?.IsValid ?? true)
         {
             return;
         }
 
         try
         {
-            isLoggingIn = true; 
-            sessionFormStatus = string.Empty;
+            isLoggingIn = true;
+            sessionStatus = string.Empty;
             StateHasChanged();
 
             var existingSession = await SessionService.GetSessionByEmailAsync(session.Email);
             if (existingSession != null)
             {
-                sessionFormStatus = "This email has already been used for a discovery call or is registered. Please create an account or log in to continue.";
+                sessionStatus = "This email has already been used for a discovery call or is registered. Please create an account or log in to continue.";
                 isSuccess = false;
                 isLoggingIn = false;
                 StateHasChanged();
@@ -423,70 +432,81 @@
             session.DiscoveryCall = true;
             var result = await SessionService.CreateSessionAsync(session);
             
-            sessionFormStatus = result 
-            ? "Thank you for your message. Meeting scheduled. We'll get back to you soon!" 
-            : "Sending contact information failed. Please try again or contact support.";
+            sessionStatus = result 
+                ? "Thank you for your message. Meeting scheduled. We'll confirm soon!"
+                : "Failed to schedule session. Please try again or contact support.";
             isSuccess = result;
 
-            if (result) 
+            if (result)
             {
-                @* UserMetrics.RecordSessionBooking("booked", userId); *@
                 session.UpdateFullName();
-                result = await EmailSubscriptionService.SubscriptionAsync(new EmailSubscription { Name = session.FullName, Email = session.Email });
+                var subscriptionResult = await EmailSubscriptionService.SubscriptionAsync(new EmailSubscription { Name = session.FullName, Email = session.Email });
                 session = new Session();
+                await LoadAvailableSlotsAsync();
             }            
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
-            await LogService.LogError("Error during CreateSessionAsync", ex.Message);
-            sessionFormStatus = "An error occurred. Please try again later.";
+            await LogService.LogError("CreateSessionAsync Error", ex.Message);
+            sessionStatus = "An error occurred. Please try again later.";
+            isSuccess = false;
         }
         finally 
         {
-            isLoggingIn = false; 
+            isLoggingIn = false;
             StateHasChanged();
         }
     }
     
-    private async Task ToggleCalendar()
+    private async Task ToggleCalendarAsync()
     {
         if (isCalendarLoading)
-        {
             return;
-        }
 
         isCalendarLoading = true;
         showTimeSlots = !showTimeSlots;
+        if (showTimeSlots)
+        {
+            await LoadAvailableSlotsAsync();
+            await LogService.LogInfo("ToggleCalendarAsync", $"Passing to Calendar: {availableSlots.Count} slots, {busyTimes.Count} busy times, {adminUnavailabilities.Count} unavailabilities, FirstAvailableDate: {firstAvailableDate?.ToString("yyyy-MM-dd HH:mm UTC") ?? "null"}");
+        }
+        isCalendarLoading = false;
+        StateHasChanged();
+    }
 
-        var startDate = DateTime.UtcNow.Date.AddDays(2);
-        var endDate = startDate.AddDays(25);
-
+    private async Task LoadAvailableSlotsAsync()
+    {
         try
         {
-            var sessions = await SessionService.GetAllSessionsAsync() ?? new List<Session>();
-            busyTimesConverted = sessions
-                .Where(c => c.PreferredDateTime != default && c.PreferredDateTime > DateTime.UtcNow.AddDays(2))
+            await LogService.LogInfo("LoadAvailableSlots", "Starting slot load...");
+            var startDate = DateTime.UtcNow.Date.AddDays(2);
+            var sessions = await SessionService.GetAllSessionsAsync(false) ?? new List<Session>();
+            var busyTimes = sessions
+                .Where(c => c != null && c.PreferredDateTime != default && c.PreferredDateTime > DateTime.UtcNow.AddDays(2))
                 .Select(c => (
                     Start: new DateTimeOffset(c.PreferredDateTime, TimeSpan.Zero),
                     End: new DateTimeOffset(c.PreferredDateTime.AddMinutes(45), TimeSpan.Zero)
                 ))
                 .ToList();
+            var adminUnavailabilities = (await UnavailableTimeService.GetAllUnavailableTimesAsync())?.ToList() ?? new List<UnavailableTime>();
 
-            adminUnavailabilities = (await UnavailableTimeService.GetAllUnavailableTimesAsync()).ToList();
+            availableSlots = GenerateAvailableSlots(startDate, busyTimes, adminUnavailabilities);
+            this.busyTimes = busyTimes;
+            this.adminUnavailabilities = adminUnavailabilities;
+            firstAvailableDate = availableSlots.Any() ? availableSlots.Min() : DateTime.UtcNow.AddDays(2);
 
-            availableSlots = GenerateAvailableSlots(DateTime.UtcNow.Date.AddDays(2), busyTimesConverted, adminUnavailabilities);
-            firstAvailableDate = availableSlots.Any() ? availableSlots.Min() : DateTime.Now;
+            await LogService.LogInfo("LoadAvailableSlots", $"Loaded {availableSlots.Count} available slots. Sessions: {sessions.Count}, Busy times: {busyTimes.Count}, Unavail: {adminUnavailabilities.Count}.");
         }
         catch (Exception ex)
         {
-            await LogService.LogError("Failed to refresh calendar data", ex.Message);
+            await LogService.LogError("LoadAvailableSlots Error", $"Exception: {ex.Message}, StackTrace: {ex.StackTrace}");
+            Snackbar.Add("Failed to load available slots.", Severity.Error);
             availableSlots = new List<DateTime>();
-            busyTimesConverted = new List<(DateTimeOffset Start, DateTimeOffset End)>();
-            firstAvailableDate = DateTime.Now;
+            busyTimes = new List<(DateTimeOffset, DateTimeOffset)>();
+            adminUnavailabilities = new List<UnavailableTime>();
         }
         finally
         {
-            isCalendarLoading = false;
             StateHasChanged();
         }
     }
@@ -498,58 +518,102 @@
         var workStartTime = new TimeSpan(10, 0, 0);
         var workEndTime = new TimeSpan(21, 0, 0);
         var slotDuration = TimeSpan.FromMinutes(45);
+        var adminTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Europe/London");
+
+        startDate = startDate.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(startDate, DateTimeKind.Utc) : startDate.ToUniversalTime();
+
+        LogService.LogInfo("GenerateAvailableSlots", $"Processing slots from {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd} UTC with {busyTimes.Count} busy times: {string.Join("; ", busyTimes.Select(b => $"{b.Start.UtcDateTime:yyyy-MM-dd HH:mm} to {b.End.UtcDateTime:yyyy-MM-dd HH:mm} UTC"))}");
 
         for (var date = startDate; date <= endDate; date = date.AddDays(1))
         {
-            @* if (date.DayOfWeek == DayOfWeek.Sunday)
-                continue; *@
-
             for (var time = workStartTime; time < workEndTime; time = time.Add(slotDuration))
             {
-                var slotStart = date.Date.Add(time).ToUniversalTime();
+                var slotStart = date.Date.Add(time);
                 var slotEnd = slotStart.Add(slotDuration);
 
                 if (slotStart <= DateTime.UtcNow.AddDays(2))
-                continue;
+                {
+                    //LogService.LogInfo("GenerateAvailableSlots", $"Skipping slot {slotStart:yyyy-MM-dd HH:mm} UTC: within 2 days of {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC.");
+                    continue;
+                }
 
-                bool isBusy = busyTimes.Any(busy => slotStart < busy.End.LocalDateTime && slotEnd > busy.Start.LocalDateTime);
+                bool isBusy = busyTimes.Any(busy =>
+                {
+                    var busyStart = busy.Start.UtcDateTime;
+                    var busyEnd = busy.End.UtcDateTime;
+                    bool overlaps = slotStart < busyEnd && slotEnd > busyStart;
+                    if (overlaps)
+                    {
+                        //LogService.LogInfo("GenerateAvailableSlots", $"Slot {slotStart:yyyy-MM-dd HH:mm} UTC overlaps with busy time {busyStart:yyyy-MM-dd HH:mm} to {busyEnd:yyyy-MM-dd HH:mm} UTC.");
+                    }
+                    return overlaps;
+                });
 
                 bool isWithinUnavailability = adminUnavailabilities.Any(u =>
-                    (u.IsRecurring 
-                    && u.DayOfWeek == slotStart.DayOfWeek 
-                    && slotStart.TimeOfDay >= u.StartTime 
-                    && slotStart.TimeOfDay < u.EndTime)
-                    ||
-                    (!u.IsRecurring 
-                    && u.Date.Date == slotStart.Date 
-                    && slotStart.TimeOfDay >= u.StartTime 
-                    && slotStart.TimeOfDay < u.EndTime));
+                {
+                    var bstDateTime = new DateTime(slotStart.Year, slotStart.Month, slotStart.Day, u.StartTime.Value.Hours, u.StartTime.Value.Minutes, u.StartTime.Value.Seconds, DateTimeKind.Unspecified);
+                    var bstEndDateTime = new DateTime(slotStart.Year, slotStart.Month, slotStart.Day, u.EndTime.Value.Hours, u.EndTime.Value.Minutes, u.EndTime.Value.Seconds, DateTimeKind.Unspecified);
+                    var utcStart = TimeZoneInfo.ConvertTimeToUtc(bstDateTime, adminTimeZone);
+                    var utcEnd = TimeZoneInfo.ConvertTimeToUtc(bstEndDateTime, adminTimeZone);
+
+                    bool isUnavailable;
+                    if (u.IsRecurring)
+                    {
+                        isUnavailable = u.DayOfWeek == slotStart.DayOfWeek && slotStart >= utcStart && slotStart < utcEnd;
+                    }
+                    else
+                    {
+                        var uDateUtc = TimeZoneInfo.ConvertTimeToUtc(u.Date, adminTimeZone);
+                        isUnavailable = uDateUtc.Date == slotStart.Date && slotStart >= utcStart && slotStart < utcEnd;
+                    }
+
+                    if (isUnavailable)
+                    {
+                        //LogService.LogInfo("GenerateAvailableSlots", $"Slot {slotStart:yyyy-MM-dd HH:mm} UTC blocked by unavailability: {(u.IsRecurring ? $"Recurring on {u.DayOfWeek}" : $"On {u.Date:yyyy-MM-dd}")} from {u.StartTime} to {u.EndTime} BST ({utcStart:HH:mm} to {utcEnd:HH:mm} UTC).");
+                    }
+                    return isUnavailable;
+                });
 
                 if (!isBusy && !isWithinUnavailability)
                 {
+                    //LogService.LogInfo("GenerateAvailableSlots", $"Adding available slot {slotStart:yyyy-MM-dd HH:mm} UTC.");
                     slots.Add(slotStart);
                 }
             }
         }
+
+        LogService.LogInfo("GenerateAvailableSlots", $"Generated {slots.Count} available slots from {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd} UTC.");
         return slots;
     }
 
-    private async Task HandleSlotSelected(string selectedSlot)
+    private async Task HandleSlotSelectedAsync(string isoString)
     {
         try
         {
-            var slot = DateTime.Parse(selectedSlot, null, System.Globalization.DateTimeStyles.RoundtripKind);
-            var userTimeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(currentTimeZoneDisplay);
-            var utcSlot = TimeZoneInfo.ConvertTimeToUtc(slot, userTimeZoneInfo);
-            session.PreferredDateTime = utcSlot;
-            session.PreferredDateTimeString = slot.ToString("dd/MM/yyyy HH:mm") + $" ({currentTimeZoneDisplay})";
+            var date = DateTime.Parse(isoString);
+            var userTimeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(userTimeZoneDisplay);
+            var utcDate = TimeZoneInfo.ConvertTimeToUtc(date, userTimeZoneInfo);
+
+            if (!availableSlots.Any(s => s == utcDate))
+            {
+                await LogService.LogWarning("HandleSlotSelected", $"Selected slot {utcDate:yyyy-MM-dd HH:mm} UTC is not in availableSlots.");
+                Snackbar.Add("Selected time slot is no longer available. Please choose another.", Severity.Warning);
+                await LoadAvailableSlotsAsync();
+                return;
+            }
+
+            session.PreferredDateTime = utcDate;
+            session.PreferredDateTimeString = TimeZoneInfo.ConvertTimeFromUtc(utcDate, userTimeZoneInfo).ToString("dd MMM yyyy - HH:mm") + $" ({userTimeZoneDisplay})";
             showTimeSlots = false;
+
+            await LogService.LogInfo("HandleSlotSelected", $"Selected slot: {utcDate:yyyy-MM-dd HH:mm} UTC ({session.PreferredDateTimeString}).");
             StateHasChanged();
         }
         catch (Exception ex)
         {
             await LogService.LogError("HandleSlotSelected Error", ex.Message);
-            sessionFormStatus = "Error selecting slot. Please try again.";
+            sessionStatus = "Failed to select time slot. Please try again.";
+            isSuccess = false;
             StateHasChanged();
         }
     }
@@ -564,8 +628,6 @@
 
     public async Task ToggleVideo(int testimonialId)
     {
-        canScroll = false;
-
         try
         {        
             var currentTestimonial = testimonials.First(t => t.Id == testimonialId);
@@ -589,7 +651,6 @@
             await LogService.LogError("Error on ToggleVideo", ex.Message);
         }
         
-        canScroll = false;
         StateHasChanged();        
     }
 
