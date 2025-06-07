@@ -1,21 +1,95 @@
-<MudDialog>
+<MudDialog Class="email-dialog">
     <TitleContent>
-        Compose Email
+        <MudText Typo="Typo.h6">Compose Email</MudText>
     </TitleContent>
     <DialogContent>
-        <MudTextField Label="Subject" @bind-Value="EmailSubject" Required="true" />
-        <MudTextField Label="Body" @bind-Value="EmailBody" Required="true" Lines="25" TextArea="true" />
+        <MudForm @ref="_form">
+            <MudTextField Label="Subject" 
+                         @bind-Value="EmailSubject" 
+                         Required="true" 
+                         RequiredError="Subject is required" 
+                         Variant="Variant.Outlined" 
+                         Margin="Margin.Dense" />
+
+            <MudTextField Label="Body" 
+                         @bind-Value="EmailBody" 
+                         Required="true" 
+                         RequiredError="Body is required" 
+                         Lines="10" 
+                         Variant="Variant.Outlined" 
+                         Margin="Margin.Dense" 
+                         TextArea="true" 
+                         HelperText="Use line breaks or formatting as needed. Full control over the text structure." />
+
+            <MudCard Class="mt-3">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">Attachments</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudFileUpload T="IBrowserFile" 
+                                  FilesChanged="@HandleFilesChanged"
+                                  Accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                  MaximumFileCount="3"
+                                  MaximumFileSize="5242880">
+                        <ActivatorContent>
+                            <MudButton HtmlTag="label"
+                                      Variant="Variant.Filled"
+                                      Color="Color.Primary"
+                                      StartIcon="@Icons.Material.Filled.UploadFile"
+                                      Size="Size.Small"
+                                      Style="display: block !important; visibility: visible !important;">
+                                Select Files
+                            </MudButton>
+                        </ActivatorContent>
+                    </MudFileUpload>
+
+                    @if (SelectedFiles.Any())
+                    {
+                        <MudList T="string" Dense="true" Class="mt-2">
+                            @foreach (var file in SelectedFiles)
+                            {
+                                <MudListItem>
+                                    <div class="d-flex align-center justify-space-between">
+                                        <MudText Typo="Typo.body2">@file.Name (@((file.Size / 1024).ToString("N0")) KB)</MudText>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                                      Color="Color.Error"
+                                                      Size="Size.Small"
+                                                      OnClick="@(() => RemoveFile(file))" />
+                                    </div>
+                                </MudListItem>
+                            }
+                        </MudList>
+                    }
+                    else
+                    {
+                        <MudText Color="Color.Info" Typo="Typo.caption" Class="mt-1">
+                            No files selected. Max: 3 files, 5MB each. Allowed: PDF, DOC, DOCX, JPG, PNG.
+                        </MudText>
+                    }
+                </MudCardContent>
+            </MudCard>
+        </MudForm>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="Close" Variant="Variant.Text">Cancel</MudButton>
-        <MudButton OnClick="SendEmails" Color="Color.Primary" Variant="Variant.Filled" Disabled="@IsSending">
+        <MudButton OnClick="Close" 
+                  Variant="Variant.Text" 
+                  Disabled="@IsSending">
+            Cancel
+        </MudButton>
+        <MudButton OnClick="SendEmails" 
+                  Color="Color.Primary" 
+                  Variant="Variant.Filled" 
+                  Disabled="@(IsSending || !IsValid)">
             @if (IsSending)
             {
                 <MudProgressCircular Size="Size.Small" Color="Color.Inherit" Indeterminate="true" />
+                <MudText Class="ml-1">Sending...</MudText>
             }
             else
             {
-                <span>Send</span>
+                <MudText>Send</MudText>
             }
         </MudButton>
     </DialogActions>
@@ -26,24 +100,97 @@
     [Parameter] public List<string> RecipientEmails { get; set; }
     private string EmailSubject { get; set; }
     private string EmailBody { get; set; }
-    private bool IsSending { get; set; } = false;
+    private bool IsSending { get; set; }
+    private List<IBrowserFile> SelectedFiles { get; set; } = new();
+    private MudForm _form;
+    private bool IsValid => !string.IsNullOrWhiteSpace(EmailSubject) && 
+                           !string.IsNullOrWhiteSpace(EmailBody) && 
+                           SelectedFiles.All(f => f.Size <= 5242880);
+
+    private async Task HandleFilesChanged(IBrowserFile file)
+    {
+        if (SelectedFiles.Count >= 3)
+        {
+            Snackbar.Add("Maximum of 3 files allowed.", Severity.Error);
+            return;
+        }
+
+        if (file.Size > 5242880)
+        {
+            Snackbar.Add($"File '{file.Name}' exceeds 5MB limit.", Severity.Error);
+            return;
+        }
+
+        var allowedExtensions = new[] { ".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png" };
+        var extension = Path.GetExtension(file.Name).ToLowerInvariant();
+        if (!allowedExtensions.Contains(extension))
+        {
+            Snackbar.Add($"File '{file.Name}' has an invalid type. Allowed: PDF, DOC, DOCX, JPG, PNG.", Severity.Error);
+            return;
+        }
+
+        SelectedFiles.Add(file);
+        await _form.Validate();
+        StateHasChanged();
+    }
+
+    private void RemoveFile(IBrowserFile file)
+    {
+        SelectedFiles.Remove(file);
+        StateHasChanged();
+    }
 
     private async Task SendEmails()
     {
+        await _form.Validate();
+        if (!_form.IsValid)
+        {
+            Snackbar.Add("Please correct the form errors.", Severity.Error);
+            return;
+        }
+
         IsSending = true;
+        StateHasChanged();
 
         try
         {
-            await EmailSubscriptionService.SendCustomEmailAsync(RecipientEmails, EmailSubject, EmailBody);
-            MudDialog.Close(DialogResult.Ok(true));      
+            var attachments = new List<(string Name, Stream Content, string ContentType)>();
+            foreach (var file in SelectedFiles)
+            {
+                // Open the original stream
+                var originalStream = file.OpenReadStream(maxAllowedSize: 5242880);
+                var memoryStream = new MemoryStream();
+                await originalStream.CopyToAsync(memoryStream);
+                memoryStream.Position = 0; // Reset to start
+                originalStream.Dispose(); // Dispose the original stream after copying
+                attachments.Add((file.Name, memoryStream, file.ContentType));
+            }
+
+            await EmailSubscriptionService.SendCustomEmailAsync(
+                RecipientEmails, 
+                EmailSubject, 
+                EmailBody, 
+                attachments
+            );
+
+            // Dispose memory streams after email sending is confirmed
+            foreach (var attachment in attachments)
+            {
+                attachment.Content.Dispose();
+            }
+
+            Snackbar.Add("Emails sent successfully!", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(true));
         }
         catch (Exception ex)
         {
-            MudDialog.Close(DialogResult.Ok(false));   
+            Snackbar.Add($"Error sending emails: {ex.Message}", Severity.Error);
+            MudDialog.Close(DialogResult.Ok(false));
         }
         finally
         {
             IsSending = false;
+            StateHasChanged();
         }
     }
 

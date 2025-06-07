@@ -282,9 +282,9 @@ public class EmailSubscriptionService : IEmailSubscriptionService
         }
     }
 
-    public async Task<bool> SendCustomEmailAsync(List<string> recipientEmails, string subject, string body)
+    public async Task<bool> SendCustomEmailAsync(List<string> recipients, string subject, string body, List<(string Name, Stream Content, string ContentType)> attachments = null)
     {
-        if (recipientEmails == null || !recipientEmails.Any())
+        if (!recipients?.Any() ?? true)
             throw new ArgumentException("Recipient list is empty.");
         if (string.IsNullOrWhiteSpace(subject))
             throw new ArgumentException("Email subject is required.");
@@ -292,67 +292,89 @@ public class EmailSubscriptionService : IEmailSubscriptionService
             throw new ArgumentException("Email body is required.");
 
         var smtpServer = _helperService.GetConfigValue("SmtpSettings:Server");
-        var smtpPort = int.Parse(_helperService.GetConfigValue("SmtpSettings:Port") ?? "");
+        var smtpPort = int.Parse(_helperService.GetConfigValue("SmtpSettings:Port") ?? "587");
         var smtpUsername = _helperService.GetConfigValue("SmtpSettings:Username");
         var smtpPassword = _helperService.GetConfigValue("SmtpSettings:Password");
 
         if (string.IsNullOrWhiteSpace(smtpServer) || string.IsNullOrWhiteSpace(smtpUsername) || string.IsNullOrWhiteSpace(smtpPassword))
         {
-            await _logService.LogError("SendCustomEmailAsync", $"SMTP settings are not properly configured. Server: {smtpServer}, Username: {smtpUsername}, Password: {(smtpPassword != null ? smtpPassword : null)}");
-            throw new InvalidOperationException($"SMTP settings are not properly configured. Server: {smtpServer}, Username: {smtpUsername}, Password: {(smtpPassword != null ? "****" : null)}");
+            await _logService.LogError("SendCustomEmailAsync", $"SMTP settings are not properly configured.");
+            throw new InvalidOperationException("SMTP settings are not properly configured.");
         }
 
-        var message = new MimeMessage();
-        message.From.Add(new MailboxAddress("Ítala Veloso", smtpUsername));
-        message.Subject = subject;
-
         using var client = new SmtpClient();
-
         try
         {
             await client.ConnectAsync(smtpServer, smtpPort, SecureSocketOptions.StartTls);
             await client.AuthenticateAsync(smtpUsername, smtpPassword);
 
-            foreach (var email in recipientEmails)
+            foreach (var email in recipients)
             {
-                // Generate Unsubscribe Token
-                var token = _securityService.GenerateUnsubscribeToken(email);
-                string unsubscribeUrl = $"{_helperService.GetConfigValue("AppSettings:BaseUrl")}/unsubscribe?email={Uri.EscapeDataString(email)}&token={Uri.EscapeDataString(token)}";
+                var message = new MimeMessage();
+                message.From.Add(new MailboxAddress("Ítala Veloso", smtpUsername));
+                message.To.Add(MailboxAddress.Parse(email));
+                message.Subject = subject;
 
-                var emailSubscription = await _context.EmailSubscriptions.FirstOrDefaultAsync(e => e.Email == email);
+                var token = _securityService.GenerateUnsubscribeToken(email);
+                string unsubscribeUrl = $"{_helperService.GetConfigValue("AppSettings:BaseUrl")}/unsubscribe?email={Uri.EscapeDataString(email)}&token={token}";
+
+                var emailSubscription = await _context.EmailSubscriptions
+                    .FirstOrDefaultAsync(e => e.Email == email);
 
                 var builder = new BodyBuilder
                 {
                     HtmlBody = $@"
-                        <div style='font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #333;'>
-                            <p>Dear {(string.IsNullOrWhiteSpace(emailSubscription?.Name) ? "Subscriber" : emailSubscription?.Name)},</p>
-
-                            <p>{body.Replace("\n", "<br>")}</p>
-
+                        <div style='font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6;'>
+                            <p>Dear {(string.IsNullOrWhiteSpace(emailSubscription?.Name) ? "Subscriber" : emailSubscription.Name)}</p>
+                            <p>{body.Replace("\n", "<br />")}</p>
                             <hr style='border: none; border-top: 1px solid #ccc; margin: 20px 0;' />
                             <p style='font-size: 8px; color: #666;'>
-                                You are receiving this email because you subscribed to our updates. 
-                                If you wish to unsubscribe, please click <a href='{unsubscribeUrl}' style='color: #0066cc; text-decoration: none;'>unsubscribe</a>.
+                                You are receiving this email because you subscribed to updates. 
+                                If you wish to unsubscribe, click <a href='{unsubscribeUrl}' style='color: #0066cc; text-decoration: none;'>unsubscribe</a>.
                             </p>
                         </div>"
                 };
 
-                message.Body = builder.ToMessageBody();
+                if (attachments?.Any() ?? false)
+                {
+                    foreach (var attachment in attachments)
+                    {
+                        var mimeType = attachment.ContentType.Split('/')[0];
+                        var mimeSubtype = attachment.ContentType.Split('/')[1];
 
-                message.To.Clear();
-                message.To.Add(MailboxAddress.Parse(email));
-                
+                        var mimePart = new MimePart(mimeType, mimeSubtype)
+                        {
+                            Content = new MimeContent(attachment.Content),
+                            ContentDisposition = new ContentDisposition(ContentDisposition.Attachment),
+                            ContentTransferEncoding = ContentEncoding.Base64,
+                            FileName = attachment.Name
+                        };
+
+                        builder.Attachments.Add(mimePart);
+                    }
+                }
+
+                message.Body = builder.ToMessageBody();
                 await client.SendAsync(message);
             }
 
             await client.DisconnectAsync(true);
-
             return true;
         }
         catch (Exception ex)
         {
             await _logService.LogError("SendCustomEmailAsync", ex.Message);
-            throw;
+            return false;
+        }
+        finally
+        {
+            if (attachments != null)
+            {
+                foreach (var attachment in attachments)
+                {
+                    attachment.Content?.Dispose();
+                }
+            }
         }
     }
 

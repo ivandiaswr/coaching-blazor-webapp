@@ -194,3 +194,102 @@
 .go-to-session-btn:hover {
     background-color: var(--accent-orange-hover, #e55a00) !important;
 }
+
+
+/* Send Email Popup */
+/* Custom styling for the email dialog */
+.email-dialog .mud-dialog-content {
+    padding: 16px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+}
+
+.email-dialog .mud-text-field-outlined {
+    margin-bottom: 12px;
+}
+
+.email-dialog .mud-text-field-outlined .mud-input-control {
+    border-color: #d0d0d0;
+    border-radius: 4px;
+}
+
+.email-dialog .mud-textarea {
+    min-height: 100px !important;
+    resize: vertical;
+}
+
+.email-dialog .mud-card {
+    margin-top: 12px;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.email-dialog .mud-card-content {
+    padding: 12px;
+}
+
+.email-dialog .mud-file-upload {
+    margin-bottom: 8px;
+}
+
+.email-dialog .mud-button {
+    min-width: 100px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.email-dialog .mud-button.mud-primary {
+    background-color: #1976d2;
+    color: white;
+}
+
+.email-dialog .mud-button.mud-primary:hover {
+    background-color: #1565c0;
+}
+
+.email-dialog .mud-button.mud-filled {
+    background-color: #ff5722;
+    color: white;
+}
+
+.email-dialog .mud-button.mud-filled:hover {
+    background-color: #e64a19;
+}
+
+.email-dialog .mud-file-upload-button {
+    background-color: #ff5722;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    min-width: 120px;
+    text-transform: none;
+}
+
+.email-dialog .mud-file-upload-button:hover {
+    background-color: #e64a19;
+}
+
+.email-dialog .mud-icon-button {
+    padding: 4px;
+}
+
+.email-dialog .mud-list-item {
+    padding: 4px 8px;
+}
+
+.email-dialog .mud-text.mud-info {
+    margin-top: 4px;
+    font-size: 12px;
+}
+
+.email-dialog .mud-dialog-actions {
+    padding: 8px;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.email-dialog .mud-progress-circular {
+    margin-right: 4px;
+}

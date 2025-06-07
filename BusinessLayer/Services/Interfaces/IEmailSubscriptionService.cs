@@ -7,7 +7,7 @@ namespace BusinessLayer.Services.Interfaces {
         Task<bool> SubscriptionAsync(EmailSubscription emailSubscription);
         Task<bool> UnsubscribeAsync(string email);
         Task<bool> SubscriptionGiftAsync(EmailSubscription emailSubscription);
-        Task<bool> SendCustomEmailAsync(List<string> recipientEmails, string subject, string body);
+        Task<bool> SendCustomEmailAsync(List<string> recipients, string subject, string body, List<(string Name, Stream Content, string ContentType)> attachments = null);
         Task<bool> SendSimpleEmailAsync(string email, string subject, string htmlBody);
     }
 }
