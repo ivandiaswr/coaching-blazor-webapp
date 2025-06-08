@@ -157,30 +157,36 @@
             var attachments = new List<(string Name, Stream Content, string ContentType)>();
             foreach (var file in SelectedFiles)
             {
-                // Open the original stream
                 var originalStream = file.OpenReadStream(maxAllowedSize: 5242880);
                 var memoryStream = new MemoryStream();
                 await originalStream.CopyToAsync(memoryStream);
-                memoryStream.Position = 0; // Reset to start
-                originalStream.Dispose(); // Dispose the original stream after copying
+                memoryStream.Position = 0;
+                originalStream.Dispose();
                 attachments.Add((file.Name, memoryStream, file.ContentType));
             }
 
-            await EmailSubscriptionService.SendCustomEmailAsync(
+            bool success = await EmailSubscriptionService.SendCustomEmailAsync(
                 RecipientEmails, 
                 EmailSubject, 
                 EmailBody, 
                 attachments
             );
 
-            // Dispose memory streams after email sending is confirmed
             foreach (var attachment in attachments)
             {
                 attachment.Content.Dispose();
             }
 
-            Snackbar.Add("Emails sent successfully!", Severity.Success);
-            MudDialog.Close(DialogResult.Ok(true));
+            if (success)
+            {
+                Snackbar.Add("Emails sent successfully!", Severity.Success);
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                Snackbar.Add("Failed to send emails. Please check your settings.", Severity.Error);
+                MudDialog.Close(DialogResult.Ok(false));
+            }
         }
         catch (Exception ex)
         {
