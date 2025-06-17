@@ -84,24 +84,24 @@ public class StripeService : IPaymentService
                 }
             }
 
-            await _logService.LogInfo("CreateCheckoutSessionAsync", $"Received session with Id: {session.Id}, StripeSessionId: {session.StripeSessionId}, BookingType: {bookingType}, PlanId: {planId}, Currency: {userCurrency}");
+            await _logService.LogInfo("CreateCheckoutSessionAsync", 
+                $"Received session with Id: {session.Id}, Email: {session.Email}, StripeSessionId: {session.StripeSessionId}, BookingType: {bookingType}, PlanId: {planId}, Currency: {userCurrency}, SessionCategory: {session.SessionCategory}, PreferredDateTime: {session.PreferredDateTime}");
 
-            await CleanupStalePendingSessionsAsync(session.Email, bookingType, planId);
+            await CleanupStalePendingSessionsAsync(session.Email, bookingType, planId, session.SessionCategory.ToString(), session.PreferredDateTime);
 
             var existingPendingSession = await _context.Sessions
-                .FirstOrDefaultAsync(s => s.Email == session.Email && s.IsPending &&
-                                    (bookingType == BookingType.SingleSession || s.PackId == planId));
+                .FirstOrDefaultAsync(s => s.Email == session.Email &&
+                                         s.IsPending &&
+                                         s.SessionCategory.ToString() == session.SessionCategory.ToString() &&
+                                         s.PreferredDateTime == session.PreferredDateTime &&
+                                         (bookingType == BookingType.SingleSession || s.PackId == planId));
+
             if (existingPendingSession != null)
             {
-                var stripeSessionService = new SessionService();
-                var stripeSessionPending = await stripeSessionService.GetAsync(existingPendingSession.StripeSessionId);
-                if (stripeSessionPending != null && stripeSessionPending.Status == "open")
+                if (string.IsNullOrEmpty(existingPendingSession.StripeSessionId))
                 {
-                    await _logService.LogInfo("CreateCheckoutSessionAsync", $"Returning existing checkout URL for pending session Id: {existingPendingSession.Id}");
-                    return stripeSessionPending.Url;
-                }
-                else
-                {
+                    await _logService.LogWarning("CreateCheckoutSessionAsync", 
+                        $"Pending session Id: {existingPendingSession.Id} has no StripeSessionId. Canceling and creating new session.");
                     using var transaction = await _context.Database.BeginTransactionAsync();
                     try
                     {
@@ -109,13 +109,73 @@ public class StripeService : IPaymentService
                         _context.Sessions.Update(existingPendingSession);
                         await _context.SaveChangesAsync();
                         await transaction.CommitAsync();
-                        await _logService.LogInfo("CreateCheckoutSessionAsync", $"Canceled stale pending session Id: {existingPendingSession.Id}");
+                        await _logService.LogInfo("CreateCheckoutSessionAsync", 
+                            $"Canceled invalid pending session Id: {existingPendingSession.Id} due to missing StripeSessionId.");
                     }
                     catch (Exception ex)
                     {
                         await transaction.RollbackAsync();
-                        await _logService.LogError("CreateCheckoutSessionAsync", $"Failed to cancel stale pending session Id: {existingPendingSession.Id}. Error: {ex.Message}");
+                        await _logService.LogError("CreateCheckoutSessionAsync", 
+                            $"Failed to cancel invalid pending session Id: {existingPendingSession.Id}. Error: {ex.Message}");
                         throw;
+                    }
+                }
+                else
+                {
+                    try
+                    {
+                        var stripeSessionService = new SessionService();
+                        var stripeSessionPending = await stripeSessionService.GetAsync(existingPendingSession.StripeSessionId);
+                        if (stripeSessionPending != null && stripeSessionPending.Status == "open")
+                        {
+                            await _logService.LogInfo("CreateCheckoutSessionAsync", 
+                                $"Returning existing checkout URL for pending session Id: {existingPendingSession.Id}, StripeSessionId: {existingPendingSession.StripeSessionId}");
+                            return stripeSessionPending.Url;
+                        }
+                        else
+                        {
+                            await _logService.LogWarning("CreateCheckoutSessionAsync", 
+                                $"Pending session Id: {existingPendingSession.Id}, StripeSessionId: {existingPendingSession.StripeSessionId} is not open. Canceling and creating new session.");
+                            using var transaction = await _context.Database.BeginTransactionAsync();
+                            try
+                            {
+                                existingPendingSession.IsPending = false;
+                                _context.Sessions.Update(existingPendingSession);
+                                await _context.SaveChangesAsync();
+                                await transaction.CommitAsync();
+                                await _logService.LogInfo("CreateCheckoutSessionAsync", 
+                                    $"Canceled stale pending session Id: {existingPendingSession.Id}");
+                            }
+                            catch (Exception ex)
+                            {
+                                await transaction.RollbackAsync();
+                                await _logService.LogError("CreateCheckoutSessionAsync", 
+                                    $"Failed to cancel stale pending session Id: {existingPendingSession.Id}. Error: {ex.Message}");
+                                throw;
+                            }
+                        }
+                    }
+                    catch (StripeException ex)
+                    {
+                        await _logService.LogError("CreateCheckoutSessionAsync Stripe Error", 
+                            $"Failed to retrieve Stripe session for SessionId: {existingPendingSession.Id}, StripeSessionId: {existingPendingSession.StripeSessionId}. Error: {ex.Message}");
+                        using var transaction = await _context.Database.BeginTransactionAsync();
+                        try
+                        {
+                            existingPendingSession.IsPending = false;
+                            _context.Sessions.Update(existingPendingSession);
+                            await _context.SaveChangesAsync();
+                            await transaction.CommitAsync();
+                            await _logService.LogInfo("CreateCheckoutSessionAsync", 
+                                $"Canceled invalid pending session Id: {existingPendingSession.Id} due to Stripe error.");
+                        }
+                        catch (Exception ex2)
+                        {
+                            await transaction.RollbackAsync();
+                            await _logService.LogError("CreateCheckoutSessionAsync", 
+                                $"Failed to cancel invalid pending session Id: {existingPendingSession.Id}. Error: {ex2.Message}");
+                            throw;
+                        }
                     }
                 }
             }
@@ -126,22 +186,27 @@ public class StripeService : IPaymentService
                 if (session.Id == 0)
                 {
                     session.IsPending = true;
+                    session.PaidAt = default;
                     await _sessionService.CreatePendingSessionAsync(session);
-                    await _logService.LogInfo("CreateCheckoutSessionAsync", $"Created new pending session with Id: {session.Id}");
+                    await _logService.LogInfo("CreateCheckoutSessionAsync", 
+                        $"Created new pending session with Id: {session.Id}, Email: {session.Email}, PreferredDateTime: {session.PreferredDateTime}");
                 }
                 else
                 {
                     var existingSession = await _context.Sessions.FirstOrDefaultAsync(s => s.Id == session.Id);
                     if (existingSession == null)
                     {
-                        await _logService.LogWarning("CreateCheckoutSessionAsync", $"Session has non-zero Id: {session.Id} but does not exist in database. Creating new pending session.");
+                        await _logService.LogWarning("CreateCheckoutSessionAsync", 
+                            $"Session has non-zero Id: {session.Id} but does not exist in database. Creating new pending session.");
                         session.Id = 0;
                         session.IsPending = true;
+                        session.PaidAt = default;
                         await _sessionService.CreatePendingSessionAsync(session);
                     }
                     else
                     {
-                        await _logService.LogInfo("CreateCheckoutSessionAsync", $"Session already exists with Id: {existingSession.Id}. Using existing pending session.");
+                        await _logService.LogInfo("CreateCheckoutSessionAsync", 
+                            $"Session already exists with Id: {existingSession.Id}. Using existing pending session.");
                         session = existingSession;
                     }
                 }
@@ -263,7 +328,7 @@ public class StripeService : IPaymentService
 
                     if (servicePrice == null)
                     {
-                        await _logService.LogError("CreateCheckoutSessionAsync", $"No price found for session type {session.SessionCategory}");
+                        await _logService.LogError("CreateCheckoutSessionAsync", $"No price found for session category {session.SessionCategory}");
                         throw new Exception("Service price not found.");
                     }
 
@@ -317,25 +382,29 @@ public class StripeService : IPaymentService
                 _context.Sessions.Update(session);
                 await _context.SaveChangesAsync();
                 await sessionTransaction.CommitAsync();
-                await _logService.LogInfo("CreateCheckoutSessionAsync", $"Updated session Id: {session.Id} with StripeSessionId: {stripeSession.Id}, Currency: {userCurrency}");
+                await _logService.LogInfo("CreateCheckoutSessionAsync", 
+                    $"Updated session Id: {session.Id} with StripeSessionId: {stripeSession.Id}, Currency: {userCurrency}, PreferredDateTime: {session.PreferredDateTime}");
 
                 return stripeSession.Url;
             }
             catch (Exception ex)
             {
                 await sessionTransaction.RollbackAsync();
-                await _logService.LogError("CreateCheckoutSessionAsync", $"Failed to create session Id: {session.Id} with StripeSessionId. Error: {ex.Message}");
+                await _logService.LogError("CreateCheckoutSessionAsync", 
+                    $"Failed to create session Id: {session.Id} with StripeSessionId. Error: {ex.Message}");
                 throw;
             }
         }
         catch (StripeException ex)
         {
-            await _logService.LogError("CreateCheckoutSessionAsync Stripe Error", $"Error: {ex.Message}, StripeError: {ex.StripeError?.Message}");
+            await _logService.LogError("CreateCheckoutSessionAsync Stripe Error", 
+                $"Error: {ex.Message}, StripeError: {ex.StripeError?.Message}");
             throw new Exception("Failed to create Stripe checkout session.");
         }
         catch (DbUpdateException ex) when (ex.InnerException is SqliteException sqliteEx && sqliteEx.SqliteErrorCode == 19)
         {
-            await _logService.LogError("CreateCheckoutSessionAsync", $"UNIQUE constraint failed: {sqliteEx.Message}, Session Id: {request.Session?.Id}");
+            await _logService.LogError("CreateCheckoutSessionAsync", 
+                $"UNIQUE constraint failed: {sqliteEx.Message}, Session Id: {request.Session?.Id}");
             throw new Exception("Failed to create session due to duplicate Id.");
         }
         catch (Exception ex)
@@ -418,12 +487,14 @@ public class StripeService : IPaymentService
 
                 await _sessionPackService.CreateAsync(sessionPack);
                 packId = sessionPack.Id.ToString();
-                await _logService.LogInfo("ConfirmPaymentAsync", $"Created SessionPack for UserId: {sessionPack.UserId}, PackId: {sessionPack.Id}, SessionsRemaining: {sessionPack.SessionsRemaining}, Currency: {currency}");
+                await _logService.LogInfo("ConfirmPaymentAsync", 
+                    $"Created SessionPack for UserId: {sessionPack.UserId}, PackId: {sessionPack.Id}, SessionsRemaining: {sessionPack.SessionsRemaining}, Currency: {currency}");
 
                 var success = await _sessionPackService.ConsumeSession(dbSession.Email, packId);
                 if (!success)
                 {
-                    await _logService.LogError("ConfirmPaymentAsync", $"Failed to deduct session from pack for UserId: {dbSession.Email}, PackId: {packId}");
+                    await _logService.LogError("ConfirmPaymentAsync", 
+                        $"Failed to deduct session from pack for UserId: {dbSession.Email}, PackId: {packId}");
                     return false;
                 }
             }
@@ -450,7 +521,8 @@ public class StripeService : IPaymentService
                     var stripePrice = await priceService.GetAsync(subscriptionPrice.StripePriceId);
                     if (!stripePrice.Active)
                     {
-                        await _logService.LogError("ConfirmPaymentAsync", $"Stripe price ID: {subscriptionPrice.StripePriceId} is inactive for PlanId: {planId}");
+                        await _logService.LogError("ConfirmPaymentAsync", 
+                            $"Stripe price ID: {subscriptionPrice.StripePriceId} is inactive for PlanId: {planId}");
                         return false;
                     }
                 }
@@ -471,7 +543,8 @@ public class StripeService : IPaymentService
 
                 _context.UserSubscriptions.Add(userSubscription);
                 await _context.SaveChangesAsync();
-                await _logService.LogInfo("ConfirmPaymentAsync", $"Created UserSubscription for UserId: {userSubscription.UserId}, SubscriptionId: {userSubscription.StripeSubscriptionId}");
+                await _logService.LogInfo("ConfirmPaymentAsync", 
+                    $"Created UserSubscription for UserId: {userSubscription.UserId}, SubscriptionId: {userSubscription.StripeSubscriptionId}");
             }
 
             dbSession.IsPaid = true;
@@ -495,14 +568,16 @@ public class StripeService : IPaymentService
 
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
-            await _logService.LogInfo("ConfirmPaymentAsync", $"Confirmed session Id: {dbSession.Id}, UserId: {dbSession.Email}, StripeSessionId: {stripeSessionId}, PackId: {dbSession.PackId}, Currency: {currency}");
+            await _logService.LogInfo("ConfirmPaymentAsync", 
+                $"Confirmed session Id: {dbSession.Id}, UserId: {dbSession.Email}, StripeSessionId: {stripeSessionId}, PackId: {dbSession.PackId}, Currency: {currency}");
 
             return true;
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            await _logService.LogError("ConfirmPaymentAsync Error", $"Failed to confirm payment for StripeSessionId: {stripeSessionId}. Error: {ex.Message}");
+            await _logService.LogError("ConfirmPaymentAsync Error", 
+                $"Failed to confirm payment for StripeSessionId: {stripeSessionId}. Error: {ex.Message}");
             return false;
         }
     }
@@ -588,7 +663,8 @@ public class StripeService : IPaymentService
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync", $"Processing price for {productName}, Amount: {amount}, Currency: {currency}, SessionType: {sessionType}");
+            await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync", 
+                $"Processing price for {productName}, Amount: {amount}, Currency: {currency}, SessionType: {sessionType}");
 
             SubscriptionPrice? existingPrice = null;
 
@@ -608,13 +684,15 @@ public class StripeService : IPaymentService
                 var stripePrice = await priceService.GetAsync(existingPrice.StripePriceId);
                 if (stripePrice.Active && stripePrice.UnitAmountDecimal == (long)(amount * 100) && stripePrice.Currency.ToUpper() == currency.ToUpper())
                 {
-                    await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync", $"Using existing active Price ID: {existingPrice.StripePriceId}");
+                    await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync", 
+                        $"Using existing active Price ID: {existingPrice.StripePriceId}");
                     await transaction.CommitAsync();
                     return existingPrice.StripePriceId;
                 }
                 else
                 {
-                    await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync", $"Existing price ID: {existingPrice.StripePriceId} is inactive or mismatched. Creating new Price.");
+                    await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync", 
+                        $"Existing price ID: {existingPrice.StripePriceId} is inactive or mismatched. Creating new Price.");
                 }
             }
 
@@ -662,33 +740,39 @@ public class StripeService : IPaymentService
             await _context.SaveChangesAsync();
 
             await transaction.CommitAsync();
-            await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync", $"Created Price ID: {price.Id} for Product: {productName}, Amount: {amount} {currency}");
+            await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync", 
+                $"Created Price ID: {price.Id} for Product: {productName}, Amount: {amount} {currency}");
             return price.Id;
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            await _logService.LogError("CreateOrUpdateSubscriptionPriceAsync", $"Failed to create or update price for {productName}. Error: {ex.Message}");
+            await _logService.LogError("CreateOrUpdateSubscriptionPriceAsync", 
+                $"Failed to create or update price for {productName}. Error: {ex.Message}");
             throw;
         }
     }
 
-    public async Task CleanupStalePendingSessionsAsync(string userEmail, BookingType bookingType, string planId)
+    public async Task CleanupStalePendingSessionsAsync(string userEmail, BookingType bookingType, string planId, string sessionCategory, DateTime preferredDateTime)
     {
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
             var staleThreshold = DateTime.UtcNow.AddHours(-24);
             var staleSessions = await _context.Sessions
-                .Where(s => s.Email == userEmail && s.IsPending && s.CreatedAt < staleThreshold
-                            && (bookingType == BookingType.SingleSession || s.PackId == planId))
+                .Where(s => s.Email == userEmail &&
+                            s.IsPending &&
+                            (s.CreatedAt < staleThreshold || string.IsNullOrEmpty(s.StripeSessionId) ||
+                             (s.SessionCategory.ToString() == sessionCategory && s.PreferredDateTime == preferredDateTime)) &&
+                            (bookingType == BookingType.SingleSession || s.PackId == planId))
                 .ToListAsync();
 
             foreach (var session in staleSessions)
             {
                 session.IsPending = false;
                 _context.Sessions.Update(session);
-                await _logService.LogInfo("CleanupStalePendingSessionsAsync", $"Canceled stale pending session Id: {session.Id} for User: {userEmail}, BookingType: {bookingType}, PlanId: {planId}");
+                await _logService.LogInfo("CleanupStalePendingSessionsAsync", 
+                    $"Canceled stale or duplicate pending session Id: {session.Id} for User: {userEmail}, BookingType: {bookingType}, PlanId: {planId}, StripeSessionId: {session.StripeSessionId ?? "null"}, SessionCategory: {session.SessionCategory}, PreferredDateTime: {session.PreferredDateTime}");
             }
 
             await _context.SaveChangesAsync();
@@ -697,7 +781,8 @@ public class StripeService : IPaymentService
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            await _logService.LogError("CleanupStalePendingSessionsAsync Error", $"Failed to cleanup stale sessions for User: {userEmail}. Error: {ex.Message}");
+            await _logService.LogError("CleanupStalePendingSessionsAsync Error", 
+                $"Failed to cleanup stale sessions for User: {userEmail}, BookingType: {bookingType}, PlanId: {planId}. Error: {ex.Message}");
         }
     }
 

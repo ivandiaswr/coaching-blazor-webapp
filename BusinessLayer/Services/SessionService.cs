@@ -133,25 +133,52 @@ public class SessionService : ISessionService
 
     public async Task CreatePendingSessionAsync(Session session)
     {
-        if (session == null)
-        {
-            await _logService.LogError("CreatePendingSessionAsync", "Session object is null");
-            throw new ArgumentNullException(nameof(session));
-        }
-
         try
         {
-            session.CreatedAt = DateTime.UtcNow;
-            session.IsSessionBooking = true;
+            if (session == null)
+            {
+                await _logService.LogError("CreatePendingSessionAsync", "Session object is null.");
+                throw new ArgumentNullException(nameof(session));
+            }
+
+            var existingPendingSession = await _context.Sessions
+                .FirstOrDefaultAsync(s => s.Email == session.Email &&
+                                        s.IsPending &&
+                                        s.SessionCategory == session.SessionCategory &&
+                                        s.PreferredDateTime == session.PreferredDateTime &&
+                                        (string.IsNullOrEmpty(session.PackId) ? s.PackId == null : s.PackId == session.PackId));
+
+            if (existingPendingSession != null)
+            {
+                await _logService.LogWarning("CreatePendingSessionAsync", 
+                    $"Duplicate pending session found for Email: {session.Email}, SessionId: {existingPendingSession.Id}, SessionCategory: {existingPendingSession.SessionCategory}, PreferredDateTime: {existingPendingSession.PreferredDateTime}, PackId: {existingPendingSession.PackId}");
+                throw new InvalidOperationException($"A pending session already exists (SessionId: {existingPendingSession.Id}).");
+            }
+
             session.IsPending = true;
-            session.UpdateFullName();
+            session.CreatedAt = DateTime.UtcNow;
+            session.PaidAt = default;
+
+            if (string.IsNullOrEmpty(session.StripeSessionId))
+            {
+                await _logService.LogInfo("CreatePendingSessionAsync", 
+                    $"Creating pending session without StripeSessionId for Email: {session.Email}");
+            }
+            else
+            {
+                await _logService.LogInfo("CreatePendingSessionAsync", 
+                    $"Creating pending session with StripeSessionId: {session.StripeSessionId} for Email: {session.Email}");
+            }
+
             _context.Sessions.Add(session);
             await _context.SaveChangesAsync();
-            await _logService.LogInfo("CreatePendingSessionAsync", $"Created pending session Id: {session.Id}, UserId: {session.Email}, StripeSessionId: {session.StripeSessionId}, PackId: {session.PackId}");
+            await _logService.LogInfo("CreatePendingSessionAsync", 
+                $"Created pending session with Id: {session.Id}, Email: {session.Email}, SessionCategory: {session.SessionCategory}, PreferredDateTime: {session.PreferredDateTime}");
         }
         catch (Exception ex)
         {
-            await _logService.LogError("CreatePendingSessionAsync", ex.Message);
+            await _logService.LogError("CreatePendingSessionAsync Error", 
+                $"Failed to create pending session for Email: {session?.Email}. Error: {ex.Message}");
             throw;
         }
     }
@@ -291,10 +318,31 @@ public class SessionService : ISessionService
             .FirstOrDefaultAsync(s => s.Email.ToLower() == email.ToLower());
     }
 
-    public async Task<Session> GetPendingSessionByEmailAndPackAsync(string email, string packId)
+    public async Task<Session> GetPendingSessionByEmailAndPackAsync(string email, string packId, SessionType sessionCategory, DateTime preferredDateTime)
     {
-        return await _context.Sessions
-            .FirstOrDefaultAsync(s => s.Email == email && s.PackId == packId && s.IsPending);
+        try
+        {
+            var session = await _context.Sessions
+                .FirstOrDefaultAsync(s => s.Email == email &&
+                                        s.IsPending &&
+                                        s.SessionCategory == sessionCategory &&
+                                        s.PreferredDateTime == preferredDateTime &&
+                                        (string.IsNullOrEmpty(packId) ? s.PackId == null : s.PackId == packId));
+
+            if (session != null)
+            {
+                await _logService.LogInfo("GetPendingSessionByEmailAndPackAsync", 
+                    $"Found pending session Id: {session.Id} for Email: {email}, SessionCategory: {sessionCategory}, PreferredDateTime: {preferredDateTime}, PackId: {packId}");
+            }
+
+            return session;
+        }
+        catch (Exception ex)
+        {
+            await _logService.LogError("GetPendingSessionByEmailAndPackAsync", 
+                $"Error querying pending session for Email: {email}, PackId: {packId}. Error: {ex.Message}");
+            throw;
+        }
     }
 
     public async Task SendEmailAsync(Session session)

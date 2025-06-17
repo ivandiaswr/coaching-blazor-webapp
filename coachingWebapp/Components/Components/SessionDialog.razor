@@ -192,7 +192,7 @@
         var joinWindowStart = sessionStart.AddMinutes(-10);
 
         if (now < sessionStart)
-            return $"This session is scheduled for {sessionStart:dd MMM yyyy HH:mm}. You can join 10 minutes before it starts.";
+            return $"This session is scheduled for {sessionStart:dd MMM yyyy HH:mm}. You can join here 10 minutes before it starts.";
         else if (now < joinWindowStart)
             return $"The session hasn’t started yet. Please try again at {joinWindowStart:HH:mm}.";
         else if (now > sessionEnd)
@@ -216,7 +216,7 @@
 
         if (now < sessionStart)
         {
-            Snackbar.Add($"This session is scheduled for {sessionStart:dd MMM yyyy HH:mm}. You can join 10 minutes before it starts.", Severity.Warning);
+            Snackbar.Add($"This session is scheduled for {sessionStart:dd MMM yyyy HH:mm}. You can join jere 10 minutes before it starts.", Severity.Warning);
             return;
         }
         else if (now > sessionEnd)

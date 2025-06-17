@@ -13,7 +13,7 @@ public interface ISessionService
     void DeleteSession(int id);
     Task<Session?> GetLatestSessionByEmailAsync(string email);
     Task<Session?> GetSessionByEmailAsync(string email);
-    Task<Session> GetPendingSessionByEmailAndPackAsync(string email, string packId);
+    Task<Session> GetPendingSessionByEmailAndPackAsync(string email, string packId, SessionType sessionCategory, DateTime preferredDateTime);
 
     // Email    
     Task SendEmailAsync(Session contact);

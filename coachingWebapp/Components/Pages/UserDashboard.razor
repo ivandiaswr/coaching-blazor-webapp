@@ -288,11 +288,20 @@
                                 FirstAvailableDate="@firstAvailableDate" />
 
                             <MudButton OnClick="OpenConfirmationDialog" 
-                                       Variant="Variant.Filled" 
-                                       Color="Color.Primary"
-                                       Style="font-size: 1.1rem;"
-                                       Class="pt-5 pb-4 mt-5">
-                                Confirm Information
+                                    Variant="Variant.Filled" 
+                                    Color="Color.Primary"
+                                    Disabled="@isSubmitting"
+                                    Style="font-size: 1.1rem;"
+                                    Class="pt-5 pb-4 mt-5">
+                                @if (isSubmitting)
+                                {
+                                    <MudProgressCircular Color="Color.Primary" Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                                    <span>Processing...</span>
+                                }
+                                else
+                                {
+                                    <span>Confirm Information</span>
+                                }
                             </MudButton>
                         </MudForm>
                     </div>
@@ -554,6 +563,7 @@
     private string CurrentTimeZoneDisplay = "UTC";
     private string? pendingNavigationUrl;
     private string userCurrency = "GBP";
+    private bool isSubmitting = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -1280,238 +1290,85 @@
 
     private async Task SubmitSessionRequest()
     {
-        var baseUrl = Configuration["AppSettings:BaseUrl"];
-        string format = "dd MMM yyyy - HH:mm";
-        if (!DateTime.TryParseExact(selectedSlotString, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out var scheduledAtLocal))
+        if (isSubmitting)
         {
-            await LogService.LogError("SubmitSessionRequest", $"Failed to parse date: {selectedSlotString}");
-            Snackbar.Add("Invalid date format. Please select a valid time slot.", Severity.Error);
+            await LogService.LogWarning("SubmitSessionRequest", "Submission already in progress.");
+            Snackbar.Add("A submission is already in progress. Please wait.", Severity.Warning);
             return;
         }
 
-        var scheduledAtUtc = TimeZoneInfo.ConvertTimeToUtc(scheduledAtLocal, TimeZoneInfo.FindSystemTimeZoneById(userTimeZone));
-
-        var user = await UserManager.FindByEmailAsync(userId);
-        if (user == null)
-        {
-            await LogService.LogError("SubmitSessionRequest", $"User not found in AspNetUsers. Email: {userId}");
-            Snackbar.Add("User account not found. Please contact support.", Severity.Error);
-            return;
-        }
-
-        var session = new Session
-        {
-            Id = 0,
-            PreferredDateTime = scheduledAtUtc,
-            PreferredDateTimeString = requestModel.PreferredDateTimeString,
-            SessionCategory = requestModel.SessionCategory,
-            Message = requestModel.Message ?? string.Empty,
-            Email = userId,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            FullName = user.FullName,
-            DiscoveryCall = false,
-            IsPaid = SelectedOption.Type != BookingType.SingleSession,
-            PackId = null
-        };
+        isSubmitting = true;
+        StateHasChanged();
 
         try
         {
-            await LogService.LogInfo("SubmitSessionRequest", $"Attempting to schedule session at {scheduledAtUtc:yyyy-MM-dd HH:mm} UTC, Type: {SelectedOption.Type}, PlanId: {SelectedOption.PlanId}, PackId: {SelectedOption.PackId}, User: {userId}");
-
-            if (SelectedOption.Type == BookingType.SessionPack)
+            var baseUrl = Configuration["AppSettings:BaseUrl"];
+            string format = "dd MMM yyyy - HH:mm";
+            if (!DateTime.TryParseExact(selectedSlotString, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out var scheduledAtLocal))
             {
-                if (SelectedOption.RequiresPurchase)
-                {
-                    var existingPendingSession = await SessionService.GetPendingSessionByEmailAndPackAsync(session.Email, SelectedOption.PlanId);
-                    if (existingPendingSession != null)
-                    {
-                        await LogService.LogWarning("SubmitSessionRequest", $"Pending session exists for Email: {session.Email}, PackId: {SelectedOption.PlanId}, SessionId: {existingPendingSession.Id}");
-                        Snackbar.Add("A pending session already exists. Please complete or cancel the existing payment.", Severity.Warning);
-                        return;
-                    }
-
-                    var checkoutRequest = new CheckoutSessionRequest
-                    {
-                        Session = session,
-                        BookingType = SelectedOption.Type,
-                        PlanId = SelectedOption.PlanId,
-                        Currency = SelectedOption.Currency ?? "GBP"
-                    };
-
-                    checkoutRequest.Session.PackId = SelectedOption.PlanId;
-
-                    var response = await HttpClient.PostAsJsonAsync($"{baseUrl}/api/payments/create-checkout-session", checkoutRequest);
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var data = await response.Content.ReadFromJsonAsync<ModelLayer.Models.DTOs.StripeResponse>();
-                        session.StripeSessionId = data.SessionId;
-                        await SessionService.CreatePendingSessionAsync(session);
-                        await LogService.LogInfo("SubmitSessionRequest", $"Created pending session with StripeSessionId: {data.SessionId}, Redirecting to: {data.Url}");
-                        pendingNavigationUrl = data!.Url;
-                        StateHasChanged();
-                    }
-                    else
-                    {
-                        var errorContent = await response.Content.ReadAsStringAsync();
-                        await LogService.LogError("SubmitSessionRequest", $"Checkout failed. Status: {response.StatusCode}, Error: {errorContent}");
-                        Snackbar.Add("Failed to initiate payment. Please try again.", Severity.Error);
-                    }
-                    return;
-                }
-                else
-                {
-                    if (remainingPackSessions <= 0)
-                    {
-                        await LogService.LogWarning("SubmitSessionRequest", $"No remaining sessions in pack for User: {userId}, PackId: {SelectedOption.PackId}");
-                        Snackbar.Add("No remaining sessions in your pack. Please purchase a new pack or select another option.", Severity.Error);
-                        return;
-                    }
-
-                    var success = await SessionPackService.ConsumeSession(userId, SelectedOption.PackId.ToString());
-                    if (!success)
-                    {
-                        await LogService.LogError("SubmitSessionRequest", $"Failed to consume session for PackId: {SelectedOption.PackId}, User: {userId}");
-                        Snackbar.Add("Failed to consume a session from your pack.", Severity.Error);
-                        return;
-                    }
-
-                    session.PackId = SelectedOption.PackId.ToString();
-                    session.IsPaid = true;
-
-                    var created = await SessionService.CreateSessionAsync(session);
-                    if (!created)
-                    {
-                        var rollbackSuccess = await SessionPackService.RollbackSessionConsumption(userId, SelectedOption.PackId.ToString());
-                        await LogService.LogError("SubmitSessionRequest", $"Failed to create session. Rollback {(rollbackSuccess ? "succeeded" : "failed")} for PackId: {SelectedOption.PackId}, User: {userId}");
-                        Snackbar.Add("Failed to schedule session. Please try again.", Severity.Error);
-                        return;
-                    }
-
-                    await LogService.LogInfo("SubmitSessionRequest", $"Session scheduled successfully at {scheduledAtUtc:yyyy-MM-dd HH:mm} UTC with PackId: {SelectedOption.PackId}");
-
-                    await RefreshSessionPackStatus();
-                    await LoadBookingOptions();
-
-                    var currentPack = activePacks.FirstOrDefault(p => p.Id == SelectedOption.PackId);
-                    if (currentPack != null && currentPack.SessionsRemaining > 0)
-                    {
-                        SelectedOption = BookingOptions.FirstOrDefault(o => o.Type == BookingType.SessionPack && o.PackId == SelectedOption.PackId);
-                    }
-                    else
-                    {
-                        var preferredOption = BookingOptions.FirstOrDefault(o => !o.RequiresPurchase && o.IsAvailable)
-                            ?? BookingOptions.FirstOrDefault(o => o.Type == BookingType.SingleSession && o.IsAvailable);
-                        SelectedOption = preferredOption;
-                        selectedBookingOption = preferredOption?.Type ?? BookingType.SingleSession;
-                    }
-
-                    remainingPackSessions = activePacks.Sum(p => p.SessionsRemaining);
-                    Snackbar.Add($"Session scheduled! You have {remainingPackSessions} session(s) left in your pack.", Severity.Success);
-                }
+                await LogService.LogError("SubmitSessionRequest", $"Failed to parse date: {selectedSlotString}");
+                Snackbar.Add("Invalid date format. Please select a valid time slot.", Severity.Error);
+                return;
             }
-            else if (SelectedOption.Type == BookingType.Subscription)
+
+            var scheduledAtUtc = TimeZoneInfo.ConvertTimeToUtc(scheduledAtLocal, TimeZoneInfo.FindSystemTimeZoneById(userTimeZone));
+
+            var user = await UserManager.FindByEmailAsync(userId);
+            if (user == null)
             {
-                if (SelectedOption.RequiresPurchase)
-                {
-                    var checkoutRequest = new CheckoutSessionRequest
-                    {
-                        Session = session,
-                        BookingType = SelectedOption.Type,
-                        PlanId = SelectedOption.PlanId,
-                        Currency = SelectedOption.Currency ?? "GBP"
-                    };
-
-                    checkoutRequest.Session.PackId = SelectedOption.PlanId;
-
-                    var response = await HttpClient.PostAsJsonAsync($"{baseUrl}/api/payments/create-checkout-session", checkoutRequest);
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var data = await response.Content.ReadFromJsonAsync<ModelLayer.Models.DTOs.StripeResponse>();
-                        session.StripeSessionId = data.SessionId;
-                        await SessionService.CreatePendingSessionAsync(session);
-                        await LogService.LogInfo("SubmitSessionRequest", $"Created pending session with StripeSessionId: {data.SessionId}, Redirecting to: {data.Url}");
-                        pendingNavigationUrl = data!.Url;
-                        StateHasChanged();
-                    }
-                    else
-                    {
-                        var errorContent = await response.Content.ReadAsStringAsync();
-                        await LogService.LogError("SubmitSessionRequest", $"Checkout failed. Status: {response.StatusCode}, Error: {errorContent}");
-                        Snackbar.Add("Failed to initiate payment. Please try again.", Severity.Error);
-                    }
-                    return;
-                }
-                else
-                {
-                    if (remainingSubscriptionSessions <= 0)
-                    {
-                        await LogService.LogWarning("SubmitSessionRequest", $"No remaining subscription sessions for User: {userId}, PlanId: {SelectedOption.PlanId}");
-                        Snackbar.Add("Monthly session limit reached. Please select another option or wait until next month.", Severity.Error);
-                        return;
-                    }
-
-                    session.PackId = SelectedOption.PlanId;
-                    session.IsPaid = true;
-
-                    var success = await UserSubscriptionService.RegisterMonthlyUsage(userId, SelectedOption.PlanId);
-                    if (!success)
-                    {
-                        await LogService.LogError("SubmitSessionRequest", $"Failed to register monthly usage for PlanId: {SelectedOption.PlanId}, User: {userId}");
-                        Snackbar.Add("Failed to register session usage. Monthly limit may have been reached.", Severity.Error);
-                        return;
-                    }
-
-                    var created = await SessionService.CreateSessionAsync(session);
-                    if (!created)
-                    {
-                        await LogService.LogError("SubmitSessionRequest", $"Failed to create session for PlanId: {SelectedOption.PlanId}, User: {userId}");
-                        Snackbar.Add("Failed to schedule session. Please try again.", Severity.Error);
-                        return;
-                    }
-
-                    await LogService.LogInfo("SubmitSessionRequest", $"Session scheduled successfully at {scheduledAtUtc:yyyy-MM-dd HH:mm} UTC with PlanId: {SelectedOption.PlanId}");
-
-                    await RefreshSubscriptionStatus();
-                    await LoadBookingOptions();
-
-                    var status = subscriptionStatuses.ContainsKey(requestModel.SessionCategory) ? subscriptionStatuses[requestModel.SessionCategory] : new SubscriptionStatusDto();
-                    if (status.Remaining > 0)
-                    {
-                        SelectedOption = BookingOptions.FirstOrDefault(o => o.Type == BookingType.Subscription && o.PlanId == SelectedOption.PlanId);
-                    }
-                    else
-                    {
-                        var preferredOption = BookingOptions.FirstOrDefault(o => !o.RequiresPurchase && o.IsAvailable)
-                            ?? BookingOptions.FirstOrDefault(o => o.Type == BookingType.SingleSession && o.IsAvailable);
-                        SelectedOption = preferredOption;
-                        selectedBookingOption = preferredOption?.Type ?? BookingType.SingleSession;
-                    }
-
-                    remainingSubscriptionSessions = subscriptionStatuses.Sum(s => s.Value.Remaining);
-                    Snackbar.Add($"Session scheduled! You have {remainingSubscriptionSessions} session(s) left this month.", Severity.Success);
-                }
+                await LogService.LogError("SubmitSessionRequest", $"User not found in AspNetUsers. Email: {userId}");
+                Snackbar.Add("User account not found. Please contact support.", Severity.Error);
+                return;
             }
-            else if (SelectedOption.Type == BookingType.SingleSession)
-            {
-                if (!SelectedOption.IsAvailable)
-                {
-                    await LogService.LogWarning("SubmitSessionRequest", $"Single session not available for SessionType: {requestModel.SessionCategory}, User: {userId}");
-                    Snackbar.Add("Single session not available for this session type.", Severity.Error);
-                    return;
-                }
 
+            var session = new Session
+            {
+                Id = 0,
+                PreferredDateTime = scheduledAtUtc,
+                PreferredDateTimeString = requestModel.PreferredDateTimeString,
+                SessionCategory = requestModel.SessionCategory,
+                Message = requestModel.Message ?? string.Empty,
+                Email = userId,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                FullName = user.FullName,
+                DiscoveryCall = false,
+                IsPaid = !SelectedOption.RequiresPurchase,
+                PackId = SelectedOption.Type == BookingType.SessionPack && !SelectedOption.RequiresPurchase ? SelectedOption.PackId.ToString() : null
+            };
+
+            var existingPendingSession = await SessionService.GetPendingSessionByEmailAndPackAsync(
+                session.Email, 
+                SelectedOption.Type == BookingType.SingleSession ? null : SelectedOption.PlanId ?? SelectedOption.PackId.ToString(),
+                requestModel.SessionCategory,
+                scheduledAtUtc
+            );
+
+            if (existingPendingSession != null)
+            {
+                await LogService.LogWarning("SubmitSessionRequest", 
+                    $"Pending session exists for Email: {session.Email}, SessionId: {existingPendingSession.Id}, SessionCategory: {existingPendingSession.SessionCategory}, PreferredDateTime: {existingPendingSession.PreferredDateTime}");
+                Snackbar.Add("A pending session already exists for this time and category. Please complete or cancel the existing payment.", Severity.Warning);
+                return;
+            }
+
+            await LogService.LogInfo("SubmitSessionRequest", 
+                $"Attempting to schedule session at {scheduledAtUtc:yyyy-MM-dd HH:mm} UTC, Type: {SelectedOption.Type}, PlanId: {SelectedOption.PlanId}, PackId: {SelectedOption.PackId}, User: {userId}");
+
+            if (SelectedOption.RequiresPurchase)
+            {
                 var checkoutRequest = new CheckoutSessionRequest
                 {
                     Session = session,
                     BookingType = SelectedOption.Type,
-                    PlanId = null,
+                    PlanId = SelectedOption.Type == BookingType.SingleSession ? null : SelectedOption.PlanId,
                     Currency = SelectedOption.Currency ?? "GBP"
                 };
 
-                await LogService.LogInfo("SubmitSessionRequest", $"Creating checkout for single session at {scheduledAtUtc:yyyy-MM-dd HH:mm} UTC, Currency: {checkoutRequest.Currency}");
+                if (SelectedOption.Type != BookingType.SingleSession)
+                {
+                    checkoutRequest.Session.PackId = SelectedOption.PlanId;
+                }
 
                 var response = await HttpClient.PostAsJsonAsync($"{baseUrl}/api/payments/create-checkout-session", checkoutRequest);
 
@@ -1520,17 +1377,124 @@
                     var data = await response.Content.ReadFromJsonAsync<ModelLayer.Models.DTOs.StripeResponse>();
                     session.StripeSessionId = data.SessionId;
                     await SessionService.CreatePendingSessionAsync(session);
-                    await LogService.LogInfo("SubmitSessionRequest", $"Created pending session with StripeSessionId: {data.SessionId}, Redirecting to: {data.Url}");
-                    pendingNavigationUrl = data!.Url;
-                    StateHasChanged();
+                    await LogService.LogInfo("SubmitSessionRequest", 
+                        $"Created pending session with StripeSessionId: {data.SessionId}, Redirecting to: {data.Url}");
+                    pendingNavigationUrl = data.Url;
                 }
                 else
                 {
                     var errorContent = await response.Content.ReadAsStringAsync();
-                    await LogService.LogError("SubmitSessionRequest", $"Checkout failed. Status: {response.StatusCode}, Error: {errorContent}");
+                    await LogService.LogError("SubmitSessionRequest", 
+                        $"Checkout failed. Status: {response.StatusCode}, Error: {errorContent}");
                     Snackbar.Add("Failed to initiate payment. Please try again.", Severity.Error);
                 }
-                return;
+            }
+            else if (SelectedOption.Type == BookingType.SessionPack)
+            {
+                if (remainingPackSessions <= 0)
+                {
+                    await LogService.LogWarning("SubmitSessionRequest", 
+                        $"No remaining sessions in pack for User: {userId}, PackId: {SelectedOption.PackId}");
+                    Snackbar.Add("No remaining sessions in your pack. Please purchase a new pack or select another option.", Severity.Error);
+                    return;
+                }
+
+                var success = await SessionPackService.ConsumeSession(userId, SelectedOption.PackId.ToString());
+                if (!success)
+                {
+                    await LogService.LogError("SubmitSessionRequest", 
+                        $"Failed to consume session for PackId: {SelectedOption.PackId}, User: {userId}");
+                    Snackbar.Add("Failed to consume a session from your pack.", Severity.Error);
+                    return;
+                }
+
+                session.PackId = SelectedOption.PackId.ToString();
+                session.IsPaid = true;
+
+                var created = await SessionService.CreateSessionAsync(session);
+                if (!created)
+                {
+                    var rollbackSuccess = await SessionPackService.RollbackSessionConsumption(userId, SelectedOption.PackId.ToString());
+                    await LogService.LogError("SubmitSessionRequest", 
+                        $"Failed to create session. Rollback {(rollbackSuccess ? "succeeded" : "failed")} for PackId: {SelectedOption.PackId}, User: {userId}");
+                    Snackbar.Add("Failed to schedule session. Please try again.", Severity.Error);
+                    return;
+                }
+
+                await LogService.LogInfo("SubmitSessionRequest", 
+                    $"Session scheduled successfully at {scheduledAtUtc:yyyy-MM-dd HH:mm} UTC with PackId: {SelectedOption.PackId}");
+
+                await RefreshSessionPackStatus();
+                await LoadBookingOptions();
+
+                var currentPack = activePacks.FirstOrDefault(p => p.Id == SelectedOption.PackId);
+                if (currentPack != null && currentPack.SessionsRemaining > 0)
+                {
+                    SelectedOption = BookingOptions.FirstOrDefault(o => o.Type == BookingType.SessionPack && o.PackId == SelectedOption.PackId);
+                }
+                else
+                {
+                    var preferredOption = BookingOptions.FirstOrDefault(o => !o.RequiresPurchase && o.IsAvailable)
+                        ?? BookingOptions.FirstOrDefault(o => o.Type == BookingType.SingleSession && o.IsAvailable);
+                    SelectedOption = preferredOption;
+                    selectedBookingOption = preferredOption?.Type ?? BookingType.SingleSession;
+                }
+
+                remainingPackSessions = activePacks.Sum(p => p.SessionsRemaining);
+                Snackbar.Add($"Session scheduled! You have {remainingPackSessions} session(s) left in your pack.", Severity.Success);
+            }
+            else if (SelectedOption.Type == BookingType.Subscription)
+            {
+                if (remainingSubscriptionSessions <= 0)
+                {
+                    await LogService.LogWarning("SubmitSessionRequest", 
+                        $"No remaining subscription sessions for User: {userId}, PlanId: {SelectedOption.PlanId}");
+                    Snackbar.Add("Monthly session limit reached. Please select another option or wait until next month.", Severity.Error);
+                    return;
+                }
+
+                session.PackId = SelectedOption.PlanId;
+                session.IsPaid = true;
+
+                var success = await UserSubscriptionService.RegisterMonthlyUsage(userId, SelectedOption.PlanId);
+                if (!success)
+                {
+                    await LogService.LogError("SubmitSessionRequest", 
+                        $"Failed to register monthly usage for PlanId: {SelectedOption.PlanId}, User: {userId}");
+                    Snackbar.Add("Failed to register session usage. Monthly limit may have been reached.", Severity.Error);
+                    return;
+                }
+
+                var created = await SessionService.CreateSessionAsync(session);
+                if (!created)
+                {
+                    await LogService.LogError("SubmitSessionRequest", 
+                        $"Failed to create session for PlanId: {SelectedOption.PlanId}, User: {userId}");
+                    Snackbar.Add("Failed to schedule session. Please try again.", Severity.Error);
+                    return;
+                }
+
+                await LogService.LogInfo("SubmitSessionRequest", 
+                    $"Session scheduled successfully at {scheduledAtUtc:yyyy-MM-dd HH:mm} UTC with PlanId: {SelectedOption.PlanId}");
+
+                await RefreshSubscriptionStatus();
+                await LoadBookingOptions();
+
+                var status = subscriptionStatuses.ContainsKey(requestModel.SessionCategory) ? subscriptionStatuses[requestModel.SessionCategory] : new SubscriptionStatusDto();
+                if (status.Remaining > 0)
+                {
+                    SelectedOption = BookingOptions.FirstOrDefault(o => o.Type == BookingType.Subscription && o.PlanId == SelectedOption.PlanId);
+                }
+                else
+                {
+                    var preferredOption = BookingOptions.FirstOrDefault(o => !o.RequiresPurchase && o.IsAvailable)
+                        ?? BookingOptions.FirstOrDefault(o => o.Type == BookingType.SingleSession && o.IsAvailable);
+                    SelectedOption = preferredOption;
+                    selectedBookingOption = preferredOption?.Type ?? BookingType.SingleSession;
+                }
+
+                remainingSubscriptionSessions = subscriptionStatuses.Sum(s => s.Value.Remaining);
+                Snackbar.Add($"Session scheduled! You have {remainingSubscriptionSessions} session(s) left this month.", Severity.Success);
             }
             else
             {
@@ -1539,6 +1503,7 @@
                 return;
             }
 
+            // Reset form
             selectedSlotString = null;
             requestModel.Message = string.Empty;
             requestModel.SessionCategory = SessionType.lifeCoaching;
@@ -1546,13 +1511,16 @@
             selectedTab = 1;
             await LoadSessions();
             await LoadAvailableSlots();
-            await LogService.LogInfo("SubmitSessionRequest", $"Form reset and slots refreshed after scheduling.");
-            StateHasChanged();
         }
         catch (Exception ex)
         {
             await LogService.LogError("SubmitSessionRequest", $"Error scheduling session: {ex.Message}");
             Snackbar.Add("An error occurred while scheduling the session. Please try again.", Severity.Error);
+        }
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
         }
     }
 
