@@ -116,42 +116,45 @@ namespace BusinessLayer.Services
             }
         }
 
-        public async Task DeleteAsync(int id)
+        public async Task DeleteAsync(int subscriptionId)
         {
             try
             {
-                await _logService.LogInfo("SubscriptionPriceService.DeleteAsync", $"Deleting subscription price with ID: {id}");
-                var price = await _context.SubscriptionPrices.FindAsync(id);
-                if (price != null)
+                var subscriptionPrice = await _context.SubscriptionPrices.FindAsync(subscriptionId);
+                if (subscriptionPrice == null)
                 {
-                    // Archive the Stripe Price if it exists
-                    if (!string.IsNullOrEmpty(price.StripePriceId))
-                    {
-                        try
-                        {
-                            var priceService = new PriceService();
-                            var updateOptions = new PriceUpdateOptions { Active = false };
-                            await priceService.UpdateAsync(price.StripePriceId, updateOptions);
-                            await _logService.LogInfo("SubscriptionPriceService.DeleteAsync", $"Archived Stripe Price ID: {price.StripePriceId}");
-                        }
-                        catch (StripeException ex)
-                        {
-                            await _logService.LogWarning("SubscriptionPriceService.DeleteAsync", $"Failed to archive Stripe Price ID: {price.StripePriceId}, Error: {ex.Message}");
-                        }
-                    }
+                    await _logService.LogError("DeleteAsync", $"Subscription price not found for ID: {subscriptionId}");
+                    throw new Exception("Subscription price not found.");
+                }
 
-                    _context.SubscriptionPrices.Remove(price);
-                    await _context.SaveChangesAsync();
-                    await _logService.LogInfo("SubscriptionPriceService.DeleteAsync", $"Deleted subscription price with ID: {id}");
-                }
-                else
+                // Archive the Stripe price if it exists
+                if (!string.IsNullOrEmpty(subscriptionPrice.StripePriceId))
                 {
-                    await _logService.LogWarning("SubscriptionPriceService.DeleteAsync", $"No subscription price found with ID: {id}");
+                    try
+                    {
+                        var priceService = new PriceService();
+                        await priceService.UpdateAsync(subscriptionPrice.StripePriceId, new PriceUpdateOptions { Active = false });
+                        await _logService.LogInfo("DeleteAsync", $"Archived Stripe price ID: {subscriptionPrice.StripePriceId}");
+                    }
+                    catch (StripeException ex)
+                    {
+                        await _logService.LogError("DeleteAsync", $"Failed to archive Stripe price ID: {subscriptionPrice.StripePriceId}. Error: {ex.Message}");
+                        throw new Exception($"Failed to archive Stripe price: {ex.Message}");
+                    }
                 }
+
+                _context.SubscriptionPrices.Remove(subscriptionPrice);
+                await _context.SaveChangesAsync();
+                await _logService.LogInfo("DeleteAsync", $"Deleted subscription price ID: {subscriptionId} from database");
+            }
+            catch (DbUpdateException ex)
+            {
+                await _logService.LogError("DeleteAsync", $"Database error deleting subscription ID: {subscriptionId}. Error: {ex.InnerException?.Message ?? ex.Message}");
+                throw new Exception("Failed to delete subscription due to database error.", ex);
             }
             catch (Exception ex)
             {
-                await _logService.LogError("SubscriptionPriceService.DeleteAsync Error", ex.Message);
+                await _logService.LogError("DeleteAsync", $"Unexpected error deleting subscription ID: {subscriptionId}. Error: {ex.Message}");
                 throw;
             }
         }

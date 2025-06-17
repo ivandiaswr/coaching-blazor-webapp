@@ -402,6 +402,17 @@ public class StripeService : IPaymentService
                     return false;
                 }
 
+                if (!string.IsNullOrEmpty(subscriptionPrice.StripePriceId))
+                {
+                    var priceService = new PriceService();
+                    var stripePrice = await priceService.GetAsync(subscriptionPrice.StripePriceId);
+                    if (!stripePrice.Active)
+                    {
+                        await _logService.LogError("ConfirmPaymentAsync", $"Stripe price ID: {subscriptionPrice.StripePriceId} is inactive for PlanId: {planId}");
+                        return false;
+                    }
+                }
+
                 var periodStart = stripeSession.Created;
                 var periodEnd = periodStart.AddMonths(1);
 
@@ -418,7 +429,7 @@ public class StripeService : IPaymentService
 
                 _context.UserSubscriptions.Add(userSubscription);
                 await _context.SaveChangesAsync();
-                await _logService.LogInfo("ConfirmPaymentAsync", $"Created UserSubscription for UserId: {userSubscription.UserId}, SubscriptionId: {userSubscription.StripeSubscriptionId}, SessionsUsedThisMonth: {userSubscription.SessionsUsedThisMonth}, Currency: {currency}");
+                await _logService.LogInfo("ConfirmPaymentAsync", $"Created UserSubscription for UserId: {userSubscription.UserId}, SubscriptionId: {userSubscription.StripeSubscriptionId}");
             }
 
             dbSession.IsPaid = true;
@@ -532,14 +543,14 @@ public class StripeService : IPaymentService
             {
                 var priceService = new PriceService();
                 var stripePrice = await priceService.GetAsync(existingPrice.StripePriceId);
-                if (stripePrice.UnitAmountDecimal == (long)(amount * 100) && stripePrice.Currency.ToUpper() == currency.ToUpper())
+                if (stripePrice.Active && stripePrice.UnitAmountDecimal == (long)(amount * 100) && stripePrice.Currency.ToUpper() == currency.ToUpper())
                 {
-                    await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync", $"Existing Price ID: {existingPrice.StripePriceId} matches amount {amount} {currency}");
+                    await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync", $"Using existing active Price ID: {existingPrice.StripePriceId}");
                     return existingPrice.StripePriceId;
                 }
                 else
                 {
-                    await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync", $"Amount or currency changed from {stripePrice.UnitAmountDecimal / 100} {stripePrice.Currency} to {amount} {currency}. Creating new Price.");
+                    await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync", $"Existing price ID: {existingPrice.StripePriceId} is inactive or mismatched. Creating new Price.");
                 }
             }
 
@@ -574,15 +585,14 @@ public class StripeService : IPaymentService
             };
             var price = await priceServiceCreate.CreateAsync(priceOptions);
 
-            // Update SubscriptionPrice in database
             var subscriptionPrice = new SubscriptionPrice
             {
                 SessionType = parsedSessionType,
                 Name = productName,
-                PriceGBP = amount, // Store GBP equivalent if needed for reference
+                PriceGBP = amount,
                 Currency = currency,
                 StripePriceId = price.Id,
-                MonthlyLimit = existingPrice?.MonthlyLimit ?? 1 // Preserve existing limit or default
+                MonthlyLimit = existingPrice?.MonthlyLimit ?? 1
             };
             _context.SubscriptionPrices.Add(subscriptionPrice);
             await _context.SaveChangesAsync();
@@ -590,14 +600,9 @@ public class StripeService : IPaymentService
             await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync", $"Created Price ID: {price.Id} for Product: {productName}, Amount: {amount} {currency}");
             return price.Id;
         }
-        catch (StripeException ex)
-        {
-            await _logService.LogError("CreateOrUpdateSubscriptionPriceAsync Stripe Error", $"Error: {ex.Message}, StripeError: {ex.StripeError?.Message}");
-            throw new Exception("Failed to create or update Stripe subscription price.");
-        }
         catch (Exception ex)
         {
-            await _logService.LogError("CreateOrUpdateSubscriptionPriceAsync Error", ex.Message);
+            await _logService.LogError("CreateOrUpdateSubscriptionPriceAsync", $"Error: {ex.Message}");
             throw;
         }
     }

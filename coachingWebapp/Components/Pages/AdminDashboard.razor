@@ -804,14 +804,25 @@
         try
         {
             await SessionPackPriceService.DeleteAsync(packId);
-            packPrices[sessionType] = (await SessionPackPriceService.GetPricesForSessionTypeAsync(sessionType)).ToList();
+
+            var updatedPrices = (await SessionPackPriceService.GetPricesForSessionTypeAsync(sessionType))?.ToList() ?? new List<SessionPackPrice>();
+            packPrices[sessionType] = updatedPrices;
+
             packForms.Remove((sessionType, packId));
+
+            var staleForms = packForms.Keys.Where(k => k.Item1 == sessionType && !packPrices[sessionType].Any(p => p.Id == k.Item2)).ToList();
+            foreach (var staleKey in staleForms)
+            {
+                packForms.Remove(staleKey);
+            }
+
             Snackbar.Add("Session pack deleted successfully.", Severity.Success);
             StateHasChanged();
         }
         catch (Exception ex)
         {
             Snackbar.Add($"Error deleting session pack: {ex.Message}", Severity.Error);
+            await LogService.LogError("DeleteSessionPack", $"Error deleting pack ID: {packId}. Error: {ex.Message}");
         }
     }
 
@@ -839,14 +850,25 @@
         try
         {
             await SubscriptionPriceService.DeleteAsync(subscriptionId);
-            subscriptionPrices[sessionType] = (await SubscriptionPriceService.GetPricesForSessionTypeAsync(sessionType)).ToList();
+
+            var updatedPrices = (await SubscriptionPriceService.GetPricesForSessionTypeAsync(sessionType))?.ToList() ?? new List<SubscriptionPrice>();
+
+            subscriptionPrices[sessionType] = updatedPrices;
             subscriptionForms.Remove((sessionType, subscriptionId));
+
+            var staleForms = subscriptionForms.Keys.Where(k => k.Item1 == sessionType && !subscriptionPrices[sessionType].Any(p => p.Id == k.Item2)).ToList();
+            foreach (var staleKey in staleForms)
+            {
+                subscriptionForms.Remove(staleKey);
+            }
+
             Snackbar.Add("Subscription deleted successfully.", Severity.Success);
             StateHasChanged();
         }
         catch (Exception ex)
         {
             Snackbar.Add($"Error deleting subscription: {ex.Message}", Severity.Error);
+            await LogService.LogError("DeleteSubscription", $"Error deleting subscription ID: {subscriptionId}. Error: {ex.Message}");
         }
     }
 

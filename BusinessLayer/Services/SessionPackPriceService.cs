@@ -100,26 +100,29 @@ namespace BusinessLayer.Services
             }
         }
 
-        public async Task DeleteAsync(int id)
+        public async Task DeleteAsync(int packId)
         {
             try
             {
-                await _logService.LogInfo("SessionPackPriceService.DeleteAsync", $"Deleting session pack price with ID: {id}");
-                var price = await _context.SessionPackPrices.FindAsync(id);
-                if (price != null)
+                var packPrice = await _context.SessionPackPrices.FindAsync(packId);
+                if (packPrice == null)
                 {
-                    _context.SessionPackPrices.Remove(price);
-                    await _context.SaveChangesAsync();
-                    await _logService.LogInfo("SessionPackPriceService.DeleteAsync", $"Deleted session pack price with ID: {id}");
+                    await _logService.LogError("DeleteAsync", $"Session pack price not found for ID: {packId}");
+                    throw new Exception("Session pack price not found.");
                 }
-                else
-                {
-                    await _logService.LogWarning("SessionPackPriceService.DeleteAsync", $"No session pack price found with ID: {id}");
-                }
+
+                _context.SessionPackPrices.Remove(packPrice);
+                await _context.SaveChangesAsync();
+                await _logService.LogInfo("DeleteAsync", $"Deleted session pack price ID: {packId} from database");
+            }
+            catch (DbUpdateException ex)
+            {
+                await _logService.LogError("DeleteAsync", $"Database error deleting pack ID: {packId}. Error: {ex.InnerException?.Message ?? ex.Message}");
+                throw new Exception("Failed to delete session pack due to database error.", ex);
             }
             catch (Exception ex)
             {
-                await _logService.LogError("SessionPackPriceService.DeleteAsync Error", ex.Message);
+                await _logService.LogError("DeleteAsync", $"Unexpected error deleting pack ID: {packId}. Error: {ex.Message}");
                 throw;
             }
         }
