@@ -1370,6 +1370,8 @@
                     checkoutRequest.Session.PackId = SelectedOption.PlanId;
                 }
 
+                await SessionService.CreatePendingSessionAsync(session);
+
                 var response = await HttpClient.PostAsJsonAsync($"{baseUrl}/api/payments/create-checkout-session", checkoutRequest);
 
                 if (response.IsSuccessStatusCode)
@@ -1387,6 +1389,10 @@
                     await LogService.LogError("SubmitSessionRequest", 
                         $"Checkout failed. Status: {response.StatusCode}, Error: {errorContent}");
                     Snackbar.Add("Failed to initiate payment. Please try again.", Severity.Error);
+                    if (session.Id != 0)
+                    {
+                        SessionService.DeleteSession(session.Id);
+                    }
                 }
             }
             else if (SelectedOption.Type == BookingType.SessionPack)

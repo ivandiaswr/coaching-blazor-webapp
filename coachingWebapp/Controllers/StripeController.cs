@@ -11,11 +11,13 @@ namespace coachingWebapp.Controllers
     {
         private readonly IPaymentService _paymentService;
         private readonly ILogService _logService;
+        private readonly ISessionService _sessionService;
 
-        public StripeController(IPaymentService paymentService, ILogService logService)
+        public StripeController(IPaymentService paymentService, ILogService logService, ISessionService sessionService)
         {
             _paymentService = paymentService;
             _logService = logService;
+            _sessionService = sessionService;
         }
 
         [HttpPost("create-checkout-session")]
@@ -35,15 +37,23 @@ namespace coachingWebapp.Controllers
                     request.Currency = "GBP";
                 }
 
-                await _logService.LogInfo("CreateCheckoutSession", $"Received request: BookingType={request.BookingType}, PlanId={request.PlanId}, SessionId={request.Session.Id}, Currency={request.Currency}, Price={request.Price}");
+                var session = _sessionService.GetSessionById(request.Session.Id);
+                if (session == null || !session.IsPending)
+                {
+                    await _logService.LogError("CreateCheckoutSession", $"Session not found or not pending. SessionId: {request.Session.Id}, Email: {request.Session.Email}");
+                    return BadRequest(new { error = "Session not found or not pending." });
+                }
+
+                await _logService.LogInfo("CreateCheckoutSession", 
+                    $"Received request: BookingType={request.BookingType}, PlanId={request.PlanId}, SessionId={request.Session.Id}, Currency={request.Currency}, IdempotencyKey={request.IdempotencyKey}");
 
                 var url = await _paymentService.CreateCheckoutSessionAsync(request);
-
                 return Ok(new ModelLayer.Models.DTOs.StripeResponse { Url = url });
             }
             catch (StripeException ex)
             {
-                await _logService.LogError("CreateCheckoutSession Stripe Error", $"Error: {ex.Message}, StripeError: {ex.StripeError?.Message}");
+                await _logService.LogError("CreateCheckoutSession Stripe Error", 
+                    $"Error: {ex.Message}, StripeError: {ex.StripeError?.Message}");
                 return BadRequest(new { error = $"Stripe error: {ex.Message}", details = ex.StripeError?.Message });
             }
             catch (Exception ex)

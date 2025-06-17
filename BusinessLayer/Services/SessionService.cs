@@ -142,11 +142,12 @@ public class SessionService : ISessionService
             }
 
             var existingPendingSession = await _context.Sessions
-                .FirstOrDefaultAsync(s => s.Email == session.Email &&
-                                        s.IsPending &&
-                                        s.SessionCategory == session.SessionCategory &&
-                                        s.PreferredDateTime == session.PreferredDateTime &&
-                                        (string.IsNullOrEmpty(session.PackId) ? s.PackId == null : s.PackId == session.PackId));
+            .FirstOrDefaultAsync(s => s.Email == session.Email &&
+                                     s.IsPending &&
+                                     s.SessionCategory == session.SessionCategory &&
+                                     s.PreferredDateTime == session.PreferredDateTime &&
+                                     (string.IsNullOrEmpty(session.PackId) ? s.PackId == null : s.PackId == session.PackId) &&
+                                     (session.Id == 0 || s.Id != session.Id));
 
             if (existingPendingSession != null)
             {
