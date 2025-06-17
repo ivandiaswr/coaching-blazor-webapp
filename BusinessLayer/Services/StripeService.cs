@@ -164,7 +164,12 @@ public class StripeService : IPaymentService
                         throw new Exception("Session pack price not found.");
                     }
 
-                    var priceInUserCurrency = await _currencyConversionService.ConvertPrice(packPrice.PriceGBP, userCurrency);
+                    var (priceValue, priceError) = await _currencyConversionService.ConvertPrice(packPrice.PriceGBP, userCurrency);
+                    if (!string.IsNullOrEmpty(priceError))
+                    {
+                        await _logService.LogError("CreateCheckoutSessionAsync", $"Currency conversion error: {priceError}");
+                        throw new Exception($"Currency conversion error: {priceError}");
+                    }
 
                     options = new SessionCreateOptions
                     {
@@ -180,7 +185,7 @@ public class StripeService : IPaymentService
                                     {
                                         Name = $"Session Pack: {packPrice.Name}",
                                     },
-                                    UnitAmountDecimal = (long)(priceInUserCurrency * 100),
+                                    UnitAmountDecimal = (long)(priceValue * 100),
                                 },
                                 Quantity = 1,
                             },
@@ -214,7 +219,12 @@ public class StripeService : IPaymentService
                         throw new Exception("Subscription price not found.");
                     }
 
-                    var priceInUserCurrency = await _currencyConversionService.ConvertPrice(subscriptionPrice.PriceGBP, userCurrency);
+                    var (priceInUserCurrency, priceError) = await _currencyConversionService.ConvertPrice(subscriptionPrice.PriceGBP, userCurrency);
+                    if (!string.IsNullOrEmpty(priceError))
+                    {
+                        await _logService.LogError("CreateCheckoutSessionAsync", $"Currency conversion error: {priceError}");
+                        throw new Exception($"Currency conversion error: {priceError}");
+                    }
 
                     var stripePriceId = await CreateOrUpdateSubscriptionPriceAsync(
                         $"Subscription: {subscriptionPrice.Name}",
@@ -257,7 +267,12 @@ public class StripeService : IPaymentService
                         throw new Exception("Service price not found.");
                     }
 
-                    var priceInUserCurrency = await _currencyConversionService.ConvertPrice(servicePrice.PriceGBP, userCurrency);
+                    var (priceInUserCurrency, priceError) = await _currencyConversionService.ConvertPrice(servicePrice.PriceGBP, userCurrency);
+                    if (!string.IsNullOrEmpty(priceError))
+                    {
+                        await _logService.LogError("CreateCheckoutSessionAsync", $"Currency conversion error: {priceError}");
+                        throw new Exception($"Currency conversion error: {priceError}");
+                    }
 
                     options = new SessionCreateOptions
                     {

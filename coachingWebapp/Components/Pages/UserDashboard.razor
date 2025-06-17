@@ -1209,7 +1209,8 @@
             if (singleSessionOption != null)
             {
                 BookingOptions.Remove(singleSessionOption);
-                var convertedPrice = await CurrencyConversionService.ConvertPrice(sessionPrice.PriceGBP, userCurrency);
+                var (convertedPrice, error) = await CurrencyConversionService.ConvertPrice(sessionPrice.PriceGBP, userCurrency);
+
                 BookingOptions.Add(new BookingOption
                 {
                     Id = Guid.NewGuid().ToString(),
