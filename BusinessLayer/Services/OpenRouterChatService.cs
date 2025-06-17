@@ -27,7 +27,19 @@ namespace BusinessLayer.Services
             _resources = new List<(string[] Keywords, ChatResource Resource, double Weight)>
                 {
                     (
-                        new[] { "inner peace", "mindfulness", "calm", "clarity", "resilience", "self-discovery" },
+                        new[] 
+                        { 
+                            "inner peace", "mindfulness", "calm", "clarity", "resilience", "self-discovery", 
+                            "avoid burnout", "stress free", "self-care", "work-life balance", "worthiness", 
+                            "personal life", "spiritual", "busy", "overcommitment", "trauma", "overcome", 
+                            "self-love", "limiting beliefs", "women", "healing", "real transformation", 
+                            "wellness coach", "mental health", "holistic life coaching", "holistic wellbeing", 
+                            "emotional wellness coach", "burnout recovery coach", "mindset and clarity coach", 
+                            "trauma-informed life coach", "coaching for self-worth and confidence", 
+                            "wellness coach online", "personal growth guide", "Christian", "faith-based coaching",
+                            "resources", "guide", "files", "file", "link", "download", "pdf", "available resources", 
+                            "direct link", "access resources", "get resources", "resource link"
+                        },
                         new ChatResource 
                         { 
                             Name = "Find Your Calm, Shape Your Power: A 30-Day Inner Peace Challenge", 
@@ -36,7 +48,16 @@ namespace BusinessLayer.Services
                         0.8
                     ),
                     (
-                        new[] { "goals", "success", "focus", "planning", "2025", "motivation" },
+                        new[] 
+                        { 
+                            "goals", "success", "focus", "planning", "2025", "motivation", 
+                            "smart goals", "finish strong", "career mapping", "direction", 
+                            "confidence boost", "live with purpose", "life coaching", "life coach", 
+                            "purpose-driven life coaching", "clarity coach for professionals",
+                            // Generic resource keywords
+                            "resources", "guide", "files", "file", "link", "download", "pdf", "available resources", 
+                            "direct link", "access resources", "get resources", "resource link"
+                        },
                         new ChatResource 
                         { 
                             Name = "Master Your 2025: Focused, Fresh, and Fearless", 
@@ -49,29 +70,36 @@ namespace BusinessLayer.Services
 
         public List<ChatResource> GetResources(string message)
         {
-            var matchedResources = new List<(ChatResource Resource, double Weight)>();
+            if (string.IsNullOrWhiteSpace(message))
+            {
+                _logService.LogInfo("ResourceSuggestion", "No resources suggested: empty or null message");
+                return new List<ChatResource>();
+            }
+
+            var matchedResources = new List<(ChatResource Resource, double Weight, bool IsGenericRequest)>();
+            var genericResourceKeywords = new[] 
+            { 
+                "resources", "guide", "files", "file", "link", "download", "pdf", 
+                "available resources", "direct link", "access resources", "get resources", "resource link" 
+            };
 
             foreach (var (keywords, resource, weight) in _resources)
             {
-                if (keywords.Any(k => message.Contains(k, StringComparison.OrdinalIgnoreCase)))
+                bool isGenericRequest = genericResourceKeywords.Any(k => message.Contains(k, StringComparison.OrdinalIgnoreCase));
+                bool isThematicMatch = keywords.Except(genericResourceKeywords).Any(k => message.Contains(k, StringComparison.OrdinalIgnoreCase));
+
+                if (isGenericRequest || isThematicMatch)
                 {
-                    matchedResources.Add((resource, weight));
+                    matchedResources.Add((resource, weight, isGenericRequest));
                 }
             }
 
             var selectedResources = matchedResources
-                .Where(r => _random.NextDouble() < r.Weight)
+                .Where(r => r.IsGenericRequest || _random.NextDouble() < r.Weight)
                 .Select(r => r.Resource)
                 .Distinct()
-                .Take(1)
+                .Take(2)
                 .ToList();
-
-            if (selectedResources.Any())
-            {
-                var resourceText = "\n\nYou might find this helpful (click to download PDF):\n" + 
-                                string.Join("\n", selectedResources.Select(r => $"* {r.Name}"));
-                _logService.LogInfo("ResourceSuggestion", $"Suggested resources: {string.Join(", ", selectedResources.Select(r => r.Name))}");
-            }
 
             return selectedResources;
         }
