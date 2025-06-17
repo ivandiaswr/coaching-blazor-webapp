@@ -26,19 +26,18 @@ namespace BusinessLayer.Services
             _configuration = configuration;
         }
 
-        public async Task<decimal> ConvertPrice(decimal priceGBP, string targetCurrency)
+        public async Task<(decimal Price, string Error)> ConvertPrice(decimal priceGBP, string targetCurrency)
         {
             if (string.IsNullOrEmpty(targetCurrency))
             {
                 await _logService.LogWarning("ConvertPrice", "Target currency is null or empty. Falling back to GBP.");
-                return priceGBP;
+                return (priceGBP, null);
             }
 
             if (string.Equals(targetCurrency, "GBP", StringComparison.OrdinalIgnoreCase))
             {
-                return priceGBP;
+                return (priceGBP, null);
             }
-
 
             if (DateTime.UtcNow > _lastUpdated.AddHours(24) || !_exchangeRates.ContainsKey(targetCurrency))
             {
@@ -51,7 +50,7 @@ namespace BusinessLayer.Services
                     .Contains(targetCurrency, StringComparer.OrdinalIgnoreCase);
                 var convertedPrice = isZeroDecimal ? Math.Round(priceGBP * rate) : Math.Round(priceGBP * rate, 2);
                 await _logService.LogInfo("ConvertPrice", $"Converted {priceGBP} GBP to {convertedPrice} {targetCurrency} using API rate {rate}.");
-                return convertedPrice;
+                return (convertedPrice, null);
             }
 
             if (_fallbackRates.TryGetValue(targetCurrency, out var fallbackRate))
@@ -60,13 +59,12 @@ namespace BusinessLayer.Services
                     .Contains(targetCurrency, StringComparer.OrdinalIgnoreCase);
                 var convertedPrice = isZeroDecimal ? Math.Round(priceGBP * fallbackRate) : Math.Round(priceGBP * fallbackRate, 2);
                 await _logService.LogWarning("ConvertPrice", $"No API exchange rate for {targetCurrency}. Used fallback rate {fallbackRate}. Converted {priceGBP} GBP to {convertedPrice} {targetCurrency}.");
-                return convertedPrice;
+                return (convertedPrice, $"Currency conversion for {targetCurrency} used fallback rate due to API unavailability.");
             }
 
             await _logService.LogError("ConvertPrice", $"No exchange rate or fallback for {targetCurrency}. Returning {priceGBP} GBP.");
-            return priceGBP;
+            return (priceGBP, $"Unable to convert to {targetCurrency}: no exchange rate available.");
         }
-
         private async Task FetchExchangeRates()
         {
             try

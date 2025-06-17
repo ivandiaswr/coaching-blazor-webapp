@@ -2,7 +2,7 @@ namespace BusinessLayer.Services.Interfaces
 {
     public interface ICurrencyConversionService
     {
-        Task<decimal> ConvertPrice(decimal priceGBP, string targetCurrency);
+        Task<(decimal Price, string Error)> ConvertPrice(decimal priceGBP, string targetCurrency);
         Task FetchExchangeRates();
     }
 }

@@ -764,20 +764,30 @@
         try
         {
             BookingOptions.Clear();
-
             var sessionType = requestModel.SessionCategory;
-
             userCurrency = await DetectUserCurrency();
+
+            bool usedFallback = false;
+            string fallbackCurrency = null;
 
             var singleSessionPrice = await SessionPriceService.GetPriceForSessionTypeAsync(sessionType);
             if (singleSessionPrice != null)
             {
-                var convertedPrice = await CurrencyConversionService.ConvertPrice(singleSessionPrice.PriceGBP, userCurrency);
-                var finalCurrency = convertedPrice == singleSessionPrice.PriceGBP && !string.Equals(userCurrency, "GBP", StringComparison.OrdinalIgnoreCase) ? "GBP" : userCurrency;
-                if (finalCurrency == "GBP" && !string.Equals(userCurrency, "GBP", StringComparison.OrdinalIgnoreCase))
+                var (convertedPrice, error) = await CurrencyConversionService.ConvertPrice(singleSessionPrice.PriceGBP, userCurrency);
+                var finalCurrency = userCurrency;
+                
+                if (!string.IsNullOrEmpty(error))
                 {
-                    Snackbar.Add($"Unable to convert to {userCurrency}. Prices are shown in GBP.", Severity.Info);
+                    finalCurrency = "GBP";
+                    convertedPrice = singleSessionPrice.PriceGBP;
+                    Snackbar.Add(error, Severity.Warning);
                 }
+                else if (convertedPrice != singleSessionPrice.PriceGBP && !string.Equals(userCurrency, finalCurrency, StringComparison.OrdinalIgnoreCase))
+                {
+                    usedFallback = true;
+                    fallbackCurrency = userCurrency;
+                }
+
                 BookingOptions.Add(new BookingOption
                 {
                     Id = Guid.NewGuid().ToString(),
@@ -797,12 +807,21 @@
             {
                 foreach (var packPrice in packPrices)
                 {
-                    var convertedPrice = await CurrencyConversionService.ConvertPrice(packPrice.PriceGBP, userCurrency);
-                    var finalCurrency = convertedPrice == packPrice.PriceGBP && !string.Equals(userCurrency, "GBP", StringComparison.OrdinalIgnoreCase) ? "GBP" : userCurrency;
-                    if (finalCurrency == "GBP" && !string.Equals(userCurrency, "GBP", StringComparison.OrdinalIgnoreCase))
+                    var (convertedPrice, error) = await CurrencyConversionService.ConvertPrice(packPrice.PriceGBP, userCurrency);
+                    var finalCurrency = userCurrency;
+
+                    if (!string.IsNullOrEmpty(error))
                     {
-                        Snackbar.Add($"Unable to convert to {userCurrency}. Prices are shown in GBP.", Severity.Info);
+                        finalCurrency = "GBP";
+                        convertedPrice = packPrice.PriceGBP;
+                        Snackbar.Add(error, Severity.Warning);
                     }
+                    else if (convertedPrice != packPrice.PriceGBP && !string.Equals(userCurrency, finalCurrency, StringComparison.OrdinalIgnoreCase))
+                    {
+                        usedFallback = true;
+                        fallbackCurrency = userCurrency;
+                    }
+
                     BookingOptions.Add(new BookingOption
                     {
                         Id = Guid.NewGuid().ToString(),
@@ -825,12 +844,21 @@
             {
                 foreach (var subscriptionPrice in subscriptionPrices)
                 {
-                    var convertedPrice = await CurrencyConversionService.ConvertPrice(subscriptionPrice.PriceGBP, userCurrency);
-                    var finalCurrency = convertedPrice == subscriptionPrice.PriceGBP && !string.Equals(userCurrency, "GBP", StringComparison.OrdinalIgnoreCase) ? "GBP" : userCurrency;
-                    if (finalCurrency == "GBP" && !string.Equals(userCurrency, "GBP", StringComparison.OrdinalIgnoreCase))
+                    var (convertedPrice, error) = await CurrencyConversionService.ConvertPrice(subscriptionPrice.PriceGBP, userCurrency);
+                    var finalCurrency = userCurrency;
+
+                    if (!string.IsNullOrEmpty(error))
                     {
-                        Snackbar.Add($"Unable to convert to {userCurrency}. Prices are shown in GBP.", Severity.Info);
+                        finalCurrency = "GBP";
+                        convertedPrice = subscriptionPrice.PriceGBP;
+                        Snackbar.Add(error, Severity.Warning);
                     }
+                    else if (convertedPrice != subscriptionPrice.PriceGBP && !string.Equals(userCurrency, finalCurrency, StringComparison.OrdinalIgnoreCase))
+                    {
+                        usedFallback = true;
+                        fallbackCurrency = userCurrency;
+                    }
+
                     BookingOptions.Add(new BookingOption
                     {
                         Id = Guid.NewGuid().ToString(),
@@ -854,12 +882,21 @@
                 var price = pack.Price;
                 if (price != null)
                 {
-                    var convertedPrice = await CurrencyConversionService.ConvertPrice(price.PriceGBP, userCurrency);
-                    var finalCurrency = convertedPrice == price.PriceGBP && !string.Equals(userCurrency, "GBP", StringComparison.OrdinalIgnoreCase) ? "GBP" : userCurrency;
-                    if (finalCurrency == "GBP" && !string.Equals(userCurrency, "GBP", StringComparison.OrdinalIgnoreCase))
+                    var (convertedPrice, error) = await CurrencyConversionService.ConvertPrice(price.PriceGBP, userCurrency);
+                    var finalCurrency = userCurrency;
+
+                    if (!string.IsNullOrEmpty(error))
                     {
-                        Snackbar.Add($"Unable to convert to {userCurrency}. Prices are shown in GBP.", Severity.Info);
+                        finalCurrency = "GBP";
+                        convertedPrice = price.PriceGBP;
+                        Snackbar.Add(error, Severity.Warning);
                     }
+                    else if (convertedPrice != price.PriceGBP && !string.Equals(userCurrency, finalCurrency, StringComparison.OrdinalIgnoreCase))
+                    {
+                        usedFallback = true;
+                        fallbackCurrency = userCurrency;
+                    }
+
                     var option = new BookingOption
                     {
                         Id = Guid.NewGuid().ToString(),
@@ -887,12 +924,21 @@
             foreach (var subscription in subscriptions.Where(s => s.Price?.SessionType == sessionType))
             {
                 var status = subscriptionStatuses.ContainsKey(sessionType) ? subscriptionStatuses[sessionType] : new SubscriptionStatusDto();
-                var convertedPrice = await CurrencyConversionService.ConvertPrice(subscription.Price.PriceGBP, userCurrency);
-                var finalCurrency = convertedPrice == subscription.Price.PriceGBP && !string.Equals(userCurrency, "GBP", StringComparison.OrdinalIgnoreCase) ? "GBP" : userCurrency;
-                if (finalCurrency == "GBP" && !string.Equals(userCurrency, "GBP", StringComparison.OrdinalIgnoreCase))
+                var (convertedPrice, error) = await CurrencyConversionService.ConvertPrice(subscription.Price.PriceGBP, userCurrency);
+                var finalCurrency = userCurrency;
+
+                if (!string.IsNullOrEmpty(error))
                 {
-                    Snackbar.Add($"Unable to convert to {userCurrency}. Prices are shown in GBP.", Severity.Info);
+                    finalCurrency = "GBP";
+                    convertedPrice = subscription.Price.PriceGBP;
+                    Snackbar.Add(error, Severity.Warning);
                 }
+                else if (convertedPrice != subscription.Price.PriceGBP && !string.Equals(userCurrency, finalCurrency, StringComparison.OrdinalIgnoreCase))
+                {
+                    usedFallback = true;
+                    fallbackCurrency = userCurrency;
+                }
+
                 var option = new BookingOption
                 {
                     Id = Guid.NewGuid().ToString(),
@@ -915,7 +961,12 @@
                 }
             }
 
-            await LogService.LogInfo("LoadBookingOptions", $"Loaded {BookingOptions.Count} booking options for UserId: {userId}, SessionType: {sessionType}, Currency: {userCurrency}");
+            if (usedFallback && !string.IsNullOrEmpty(fallbackCurrency))
+            {
+                @* Snackbar.Add($"Prices shown in {fallbackCurrency} using cached rates due to currency conversion service unavailability.", Severity.Info); *@
+            }
+
+            await LogService.LogInfo("LoadBookingOptions", $"Loaded {BookingOptions.Count} booking options for UserId: {userId}, SessionType: {sessionType}, Currency: {userCurrency}, UsedFallback: {usedFallback}");
             StateHasChanged();
         }
         catch (Exception ex)
@@ -1249,6 +1300,7 @@
 
         var session = new Session
         {
+            Id = 0,
             PreferredDateTime = scheduledAtUtc,
             PreferredDateTimeString = requestModel.PreferredDateTimeString,
             SessionCategory = requestModel.SessionCategory,
