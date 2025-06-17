@@ -1362,7 +1362,8 @@
                     Session = session,
                     BookingType = SelectedOption.Type,
                     PlanId = SelectedOption.Type == BookingType.SingleSession ? null : SelectedOption.PlanId,
-                    Currency = SelectedOption.Currency ?? "GBP"
+                    Currency = SelectedOption.Currency ?? "GBP",
+                    IdempotencyKey = Guid.NewGuid().ToString()
                 };
 
                 if (SelectedOption.Type != BookingType.SingleSession)

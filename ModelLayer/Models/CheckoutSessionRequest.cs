@@ -9,5 +9,6 @@ namespace ModelLayer.Models
         public string? PlanId { get; set; }
         public decimal Price { get; set; }
         public string Currency { get; set; }
+        public string IdempotencyKey { get; set; } = Guid.NewGuid().ToString();
     }
 }
