@@ -533,7 +533,6 @@
 
                 if (slotStart <= DateTime.UtcNow.AddDays(2))
                 {
-                    //LogService.LogInfo("GenerateAvailableSlots", $"Skipping slot {slotStart:yyyy-MM-dd HH:mm} UTC: within 2 days of {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC.");
                     continue;
                 }
 
@@ -542,41 +541,38 @@
                     var busyStart = busy.Start.UtcDateTime;
                     var busyEnd = busy.End.UtcDateTime;
                     bool overlaps = slotStart < busyEnd && slotEnd > busyStart;
-                    if (overlaps)
-                    {
-                        //LogService.LogInfo("GenerateAvailableSlots", $"Slot {slotStart:yyyy-MM-dd HH:mm} UTC overlaps with busy time {busyStart:yyyy-MM-dd HH:mm} to {busyEnd:yyyy-MM-dd HH:mm} UTC.");
-                    }
                     return overlaps;
                 });
 
                 bool isWithinUnavailability = adminUnavailabilities.Any(u =>
                 {
-                    var bstDateTime = new DateTime(slotStart.Year, slotStart.Month, slotStart.Day, u.StartTime.Value.Hours, u.StartTime.Value.Minutes, u.StartTime.Value.Seconds, DateTimeKind.Unspecified);
-                    var bstEndDateTime = new DateTime(slotStart.Year, slotStart.Month, slotStart.Day, u.EndTime.Value.Hours, u.EndTime.Value.Minutes, u.EndTime.Value.Seconds, DateTimeKind.Unspecified);
-                    var utcStart = TimeZoneInfo.ConvertTimeToUtc(bstDateTime, adminTimeZone);
-                    var utcEnd = TimeZoneInfo.ConvertTimeToUtc(bstEndDateTime, adminTimeZone);
+                    if (u.StartTime == null || u.EndTime == null || (u.IsRecurring && !u.DayOfWeek.HasValue) || (!u.IsRecurring && !u.Date.HasValue))
+                    {
+                        LogService.LogWarning("GenerateAvailableSlots", $"Skipping invalid unavailability: ID {u.Id}, IsRecurring: {u.IsRecurring}, DayOfWeek: {u.DayOfWeek}, Date: {u.Date}, StartTime: {u.StartTime}, EndTime: {u.EndTime}");
+                        return false;
+                    }
 
-                    bool isUnavailable;
+                    var slotStartLocal = TimeZoneInfo.ConvertTimeFromUtc(slotStart, adminTimeZone);
+                    var slotStartDate = slotStartLocal.Date;
+                    var slotStartTime = slotStartLocal.TimeOfDay;
+
                     if (u.IsRecurring)
                     {
-                        isUnavailable = u.DayOfWeek == slotStart.DayOfWeek && slotStart >= utcStart && slotStart < utcEnd;
+                        return slotStartLocal.DayOfWeek == u.DayOfWeek.Value &&
+                            slotStartTime >= u.StartTime.Value &&
+                            slotStartTime < u.EndTime.Value;
                     }
                     else
                     {
-                        var uDateUtc = TimeZoneInfo.ConvertTimeToUtc(u.Date, adminTimeZone);
-                        isUnavailable = uDateUtc.Date == slotStart.Date && slotStart >= utcStart && slotStart < utcEnd;
+                        var unavailableDate = u.Date.Value.Date;
+                        return slotStartDate == unavailableDate &&
+                            slotStartTime >= u.StartTime.Value &&
+                            slotStartTime < u.EndTime.Value;
                     }
-
-                    if (isUnavailable)
-                    {
-                        //LogService.LogInfo("GenerateAvailableSlots", $"Slot {slotStart:yyyy-MM-dd HH:mm} UTC blocked by unavailability: {(u.IsRecurring ? $"Recurring on {u.DayOfWeek}" : $"On {u.Date:yyyy-MM-dd}")} from {u.StartTime} to {u.EndTime} BST ({utcStart:HH:mm} to {utcEnd:HH:mm} UTC).");
-                    }
-                    return isUnavailable;
                 });
 
                 if (!isBusy && !isWithinUnavailability)
                 {
-                    //LogService.LogInfo("GenerateAvailableSlots", $"Adding available slot {slotStart:yyyy-MM-dd HH:mm} UTC.");
                     slots.Add(slotStart);
                 }
             }

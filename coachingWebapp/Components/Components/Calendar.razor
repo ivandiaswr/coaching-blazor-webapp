@@ -136,8 +136,8 @@
                 }
                 else
                 {
-                    var bstStart = new DateTime(unavailable.Date.Year, unavailable.Date.Month, unavailable.Date.Day, unavailable.StartTime.Value.Hours, unavailable.StartTime.Value.Minutes, 0, DateTimeKind.Unspecified);
-                    var bstEnd = new DateTime(unavailable.Date.Year, unavailable.Date.Month, unavailable.Date.Day, unavailable.EndTime.Value.Hours, unavailable.EndTime.Value.Minutes, 0, DateTimeKind.Unspecified);
+                    var bstStart = new DateTime(unavailable.Date.Value.Year, unavailable.Date.Value.Month, unavailable.Date.Value.Day, unavailable.StartTime.Value.Hours, unavailable.StartTime.Value.Minutes, 0, DateTimeKind.Unspecified);
+                    var bstEnd = new DateTime(unavailable.Date.Value.Year, unavailable.Date.Value.Month, unavailable.Date.Value.Day, unavailable.EndTime.Value.Hours, unavailable.EndTime.Value.Minutes, 0, DateTimeKind.Unspecified);
                     var utcStart = TimeZoneInfo.ConvertTimeToUtc(bstStart, adminTimeZone);
                     var utcEnd = TimeZoneInfo.ConvertTimeToUtc(bstEnd, adminTimeZone);
                     calendarItems.Add(new CalendarItem

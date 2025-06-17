@@ -59,50 +59,62 @@
                 <MudItem xs="12" sm="6">
                     <MudCard Class="p-4">
                         <MudCardContent>
-                            <MudForm @ref="_busyForm" Model="_newUnavailableTime">
-                                <MudGrid Dense="true" Class="busy-time-form">
-                                    <MudItem xs="12" sm="12">
-                                        <MudSelect T="DayOfWeek?" Label="Day of the week" Dense="true"
-                                                @bind-Value="_newUnavailableTime.DayOfWeek" Required="true"
-                                                RequiredError="Day of the week is required">
-                                            @foreach (DayOfWeek day in Enum.GetValues(typeof(DayOfWeek)))
-                                            {
-                                                <MudSelectItem T="DayOfWeek?" Value="@day">@day</MudSelectItem>
-                                            }
-                                        </MudSelect>
-                                    </MudItem>
-
-                                    <MudItem xs="6" sm="6">
-                                        <MudTimePicker Label="Start time" 
-                                                    Dense="true" 
-                                                    @bind-Time="_newUnavailableTime.StartTime"
-                                                    Required="true" 
-                                                    RequiredError="Start time is required" />
-                                    </MudItem>
-
-                                    <MudItem xs="6" sm="6">
-                                        <MudTimePicker Label="End time" 
-                                                    Dense="true" 
-                                                    @bind-Time="_newUnavailableTime.EndTime"
-                                                    Required="true" 
-                                                    RequiredError="End time is required" />
-                                    </MudItem>
-
-                                    @* <MudItem xs="12" Key="@renderKey.ToString()">
-                                        <MudCheckBox T="bool" 
-                                                    Label="Recurring weekly" 
-                                                    @bind-Checked="_newUnavailableTime.IsRecurring" /><MudText>IsRecurring: @_newUnavailableTime.IsRecurring</MudText>
-                                    </MudItem> *@
-
-                                    <MudItem xs="12">
-                                        <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                                                StartIcon="@Icons.Material.Filled.Add"
-                                                OnClick="HandleAddUnavailability">
-                                            @(IsEditing ? "Update" : "Add")
-                                        </MudButton>
-                                    </MudItem>
-                                </MudGrid>
-                            </MudForm>
+                          <MudForm @ref="_busyForm">
+                    <MudItem xs="12">
+                        <MudCheckBox T="bool" 
+                            Label="Recurring weekly" 
+                            Value="_newUnavailableTime.IsRecurring"
+                            ValueChanged="@(value => OnIsRecurringChanged(value))"
+                            Color="Color.Primary" />
+                    </MudItem>
+                    <MudItem xs="12">
+                        @if (_newUnavailableTime.IsRecurring)
+                        {
+                            <MudSelect T="DayOfWeek?" 
+                                    Label="Day of Week" 
+                                    @bind-Value="_newUnavailableTime.DayOfWeek"
+                                    For="@(() => _newUnavailableTime.DayOfWeek)">
+                                @foreach (var day in Enum.GetValues(typeof(DayOfWeek)).Cast<DayOfWeek>())
+                                {
+                                    <MudSelectItem Value="@((DayOfWeek?)day)">@day</MudSelectItem>
+                                }
+                            </MudSelect>
+                        }
+                        else
+                        {
+                            <MudDatePicker Label="Date" 
+                                        @bind-Date="_newUnavailableTime.Date" 
+                                        For="@(() => _newUnavailableTime.Date)"
+                                        DateFormat="dd-MM-yyyy" />
+                        }
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudTimePicker Label="Start Time" 
+                                    @bind-Time="_newUnavailableTime.StartTime"
+                                    For="@(() => _newUnavailableTime.StartTime)"
+                                    TimeFormat="HH:mm" />
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudTimePicker Label="End Time" 
+                                    @bind-Time="_newUnavailableTime.EndTime"
+                                    For="@(() => _newUnavailableTime.EndTime)"
+                                    TimeFormat="HH:mm" />
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudTextField Label="Reason" 
+                                    @bind-Value="_newUnavailableTime.Reason"
+                                    Placeholder="Optional reason (e.g., Weekly meeting)"
+                                    MaxLength="100" />
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudButton Variant="Variant.Filled" 
+                                Color="Color.Primary" 
+                                OnClick="HandleAddUnavailability"
+                                Disabled="@isSubmitting">
+                            Add Unavailability
+                        </MudButton>
+                    </MudItem>
+                </MudForm>
                         </MudCardContent>
                     </MudCard>
                 </MudItem>
@@ -110,26 +122,49 @@
                 <MudItem xs="12" sm="6">
                     <MudPaper Class="p-4">
                         <MudText Typo="Typo.h6" Class="mb-2">Unavailable Times:</MudText>
-                        <MudList T="UnavailableTime" Dense="true" Hover="true">
+                       <MudList T="UnavailableTime" Dense="true" Hover="true">
                             @if (_adminUnavailableTimes.Any())
                             {
                                 @foreach (var time in _adminUnavailableTimes)
                                 {
                                     <MudListItem Class="busy-time-entry">
                                         <div class="busy-time-info">
-                                            <strong>@time.DayOfWeek</strong>: @time.StartTime - @time.EndTime (@adminTimeZone)
                                             @if (time.IsRecurring)
                                             {
+                                                @time.DayOfWeek
+                                                @($"{time.StartTime} - {time.EndTime} ({adminTimeZone})")
+
+                                                if (!string.IsNullOrEmpty(time.Reason) && time.Reason != "Unavailable")
+                                                {
+                                                    <MudTooltip Text="@time.Reason">
+                                                        <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Class="ml-2" />
+                                                    </MudTooltip>
+                                                }
+
                                                 <span class="ml-2 text-success d-inline-flex align-center">
                                                     <MudIcon Icon="@Icons.Material.Filled.Loop" Size="Size.Small" Class="mr-1" />
                                                     Recurring
                                                 </span>
                                             }
+                                            else
+                                            {
+                                                @($"{time.Date?.ToString("dd-MM-yyyy")} ({time.DayOfWeek})");
+                                                @($"{time.StartTime} - {time.EndTime} ({adminTimeZone})");
+
+                                                if (!string.IsNullOrEmpty(time.Reason) && time.Reason != "Unavailable")
+                                                {
+                                                    <MudTooltip Text="@time.Reason">
+                                                        <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Class="ml-2" />
+                                                    </MudTooltip>
+                                                }
+
+                                                <span class="ml-2 text-info d-inline-flex align-center">
+                                                    <MudIcon Icon="@Icons.Material.Filled.Event" Size="Size.Small" Class="mr-1" />
+                                                    One-time
+                                                </span>
+                                            }
+
                                             <div class="busy-time-actions">
-                                                <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                                            Color="Color.Primary"
-                                                            OnClick="@(() => StartEditUnavailability(time))"
-                                                            Size="Size.Small" />
                                                 <MudIconButton Icon="@Icons.Material.Filled.Delete"
                                                             Color="Color.Error"
                                                             OnClick="@(() => ConfirmDeleteUnavailableTime(time.Id))"
@@ -475,7 +510,6 @@
     private MudCalendar calendar;
     private List<CalendarItem> calendarItems = new();
     private MudForm _busyForm;
-    private bool IsEditing => _newUnavailableTime.Id != 0;
     private int renderKey;
 
     private string searchContactsString = string.Empty;
@@ -506,6 +540,7 @@
     private const int MAX_SUBSCRIPTIONS = 5;
 
     private string adminTimeZone = "Europe/London";
+    private bool isSubmitting = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -598,87 +633,89 @@
         }
     }
 
-   private async Task HandleAddUnavailability()
+    private async Task HandleAddUnavailability()
     {
         try
         {
-            await _busyForm.Validate();
-            if (!_busyForm.IsValid)
-                return;
+            isSubmitting = true;
 
-            await AddUnavailability();
+            await LogService.LogInfo("HandleAddUnavailability", $"Before validation: IsRecurring={_newUnavailableTime.IsRecurring}, DayOfWeek={_newUnavailableTime.DayOfWeek}, Date={_newUnavailableTime.Date?.ToString("yyyy-MM-dd")}, Reason={_newUnavailableTime.Reason}");
 
-            Snackbar.Add($"Unavailable time {(IsEditing ? "updated" : "added")} successfully.", Severity.Success);
-
-            if (_busyForm != null)
+            if (_newUnavailableTime.IsRecurring)
             {
-                _busyForm.ResetValidation();
+                if (!_newUnavailableTime.DayOfWeek.HasValue)
+                {
+                    Snackbar.Add("Day of the week is required for recurring unavailability.", Severity.Error);
+                    isSubmitting = false;
+                    return;
+                }
+                _newUnavailableTime.Date = null;
+            }
+            else
+            {
+                if (!_newUnavailableTime.Date.HasValue)
+                {
+                    Snackbar.Add("Date is required for one-time unavailability.", Severity.Error);
+                    isSubmitting = false;
+                    return;
+                }
+                _newUnavailableTime.DayOfWeek = _newUnavailableTime.Date.Value.DayOfWeek;
             }
 
-            _adminUnavailableTimes = (await UnavailableTimeService.GetAllUnavailableTimesAsync()).ToList();
+            if (!_newUnavailableTime.StartTime.HasValue || !_newUnavailableTime.EndTime.HasValue)
+            {
+                Snackbar.Add("Start and end times are required.", Severity.Error);
+                isSubmitting = false;
+                return;
+            }
 
-            renderKey++;
-            StateHasChanged();
+            if (_newUnavailableTime.EndTime <= _newUnavailableTime.StartTime)
+            {
+                Snackbar.Add("End time must be after start time.", Severity.Error);
+                isSubmitting = false;
+                return;
+            }
+
+            await LogService.LogInfo("HandleAddUnavailability", $"Saving unavailability: IsRecurring={_newUnavailableTime.IsRecurring}, DayOfWeek={_newUnavailableTime.DayOfWeek}, Date={_newUnavailableTime.Date?.ToString("yyyy-MM-dd")}, Reason={_newUnavailableTime.Reason}");
+
+            await UnavailableTimeService.CreateUnavailableTimeAsync(_newUnavailableTime);
+            Snackbar.Add("Unavailable time added successfully.", Severity.Success);
 
             _newUnavailableTime = new UnavailableTime();
-
+            await _busyForm?.ResetAsync();
+            _busyForm?.ResetValidation();
+            _adminUnavailableTimes = (await UnavailableTimeService.GetAllUnavailableTimesAsync()).ToList();
             renderKey++;
             StateHasChanged();
+        }
+        catch (ArgumentException ex)
+        {
+            Snackbar.Add($"Validation error: {ex.Message}", Severity.Error);
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error {(IsEditing ? "updating" : "adding")} unavailable time: {ex.Message}", Severity.Error);
+            Snackbar.Add($"Error adding unavailability: {ex.Message}", Severity.Error);
+            await LogService.LogError("HandleAddUnavailability", $"Error: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
         }
     }
 
-    private void OnRecurringChanged(bool value)
+    private async Task OnIsRecurringChanged(bool value)
     {
         _newUnavailableTime.IsRecurring = value;
-        StateHasChanged();
-    }
-
-    private async Task AddUnavailability()
-    {
-        var adminTimeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(adminTimeZone);
-
-        var unavailabilityToSave = new UnavailableTime
+        await LogService.LogInfo("OnIsRecurringChanged", $"IsRecurring set to: {value}");
+        if (value)
         {
-            Id = _newUnavailableTime.Id,
-            DayOfWeek = _newUnavailableTime.DayOfWeek,
-            StartTime = _newUnavailableTime.StartTime,
-            EndTime = _newUnavailableTime.EndTime,
-            IsRecurring = _newUnavailableTime.IsRecurring,
-            Date = _newUnavailableTime.IsRecurring ? DateTime.UtcNow.Date : TimeZoneInfo.ConvertTimeToUtc(_newUnavailableTime.Date, adminTimeZoneInfo).Date
-        };
-
-        if (unavailabilityToSave.Id == 0)
-        {
-            await UnavailableTimeService.CreateUnavailableTimeAsync(unavailabilityToSave);
+            _newUnavailableTime.Date = null;
         }
         else
         {
-            await UnavailableTimeService.UpdateUnavailableTimeAsync(unavailabilityToSave);
+            _newUnavailableTime.DayOfWeek = null;
         }
-    }
-
-    private void StartEditUnavailability(UnavailableTime time)
-    {
-        _newUnavailableTime = new UnavailableTime
-        {
-            Id = time.Id,
-            DayOfWeek = time.DayOfWeek,
-            StartTime = time.StartTime,
-            EndTime = time.EndTime,
-            IsRecurring = time.IsRecurring
-        };
-
-        if (_busyForm != null)
-        {
-            _busyForm.ResetValidation();
-        }
-
-        renderKey++;
-
         StateHasChanged();
     }
 
