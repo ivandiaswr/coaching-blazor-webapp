@@ -27,15 +27,24 @@ public class LogService : ILogService
 
     private async Task SaveLog(string logLevel, string message, string? exception = null)
     {
-        var log = new ModelLayer.Models.Log
+        try
         {
-            LogLevel = logLevel,
-            Message = message,
-            Exception = exception,
-            CreatedAt = DateTime.UtcNow
-        };
+            var log = new ModelLayer.Models.Log
+            {
+                LogLevel = logLevel,
+                Message = message,
+                Exception = exception,
+                CreatedAt = DateTime.UtcNow
+            };
 
         _context.Logs.Add(log);
         await _context.SaveChangesAsync();
+        } 
+        catch (Exception ex)
+        {
+            Console.WriteLine($"LogService.SaveLog Error: {ex.Message}, InnerException: {ex.InnerException?.Message}, StackTrace: {ex.StackTrace}");
+            throw;
+        }
+        
     }
 }

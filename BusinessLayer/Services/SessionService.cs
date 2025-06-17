@@ -131,7 +131,7 @@ public class SessionService : ISessionService
         }
     }
 
-    public async Task CreatePendingSessionAsync(Session session)
+    public async Task<Session> CreatePendingSessionAsync(Session session)
     {
         try
         {
@@ -142,12 +142,12 @@ public class SessionService : ISessionService
             }
 
             var existingPendingSession = await _context.Sessions
-            .FirstOrDefaultAsync(s => s.Email == session.Email &&
-                                     s.IsPending &&
-                                     s.SessionCategory == session.SessionCategory &&
-                                     s.PreferredDateTime == session.PreferredDateTime &&
-                                     (string.IsNullOrEmpty(session.PackId) ? s.PackId == null : s.PackId == session.PackId) &&
-                                     (session.Id == 0 || s.Id != session.Id));
+                .FirstOrDefaultAsync(s => s.Email == session.Email &&
+                                        s.IsPending &&
+                                        s.SessionCategory == session.SessionCategory &&
+                                        s.PreferredDateTime == session.PreferredDateTime &&
+                                        (string.IsNullOrEmpty(session.PackId) ? s.PackId == null : s.PackId == session.PackId) &&
+                                        (session.Id == 0 || s.Id != session.Id));
 
             if (existingPendingSession != null)
             {
@@ -175,6 +175,8 @@ public class SessionService : ISessionService
             await _context.SaveChangesAsync();
             await _logService.LogInfo("CreatePendingSessionAsync", 
                 $"Created pending session with Id: {session.Id}, Email: {session.Email}, SessionCategory: {session.SessionCategory}, PreferredDateTime: {session.PreferredDateTime}");
+
+            return session;
         }
         catch (Exception ex)
         {
@@ -206,21 +208,23 @@ public class SessionService : ISessionService
         }
     }
 
-    public Session GetSessionById(int id)
+    public async Task<Session> GetSessionByIdAsync(int id)
     {
         try
         {
-            return _context.Sessions
+            var session = await _context.Sessions
                 .Include(s => s.VideoSession)
-                .FirstOrDefault(s => s.Id == id)
-                ?? throw new InvalidOperationException($"Session with ID {id} not found.");
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            return session ?? throw new InvalidOperationException($"Session with ID {id} not found.");
         }
         catch (Exception ex)
         {
-            _logService.LogError("GetSessionById", ex.Message);
+            await _logService.LogError("GetSessionByIdAsync", ex.Message);
             throw;
         }
     }
+
 
     public void UpdateSession(Session session)
     {

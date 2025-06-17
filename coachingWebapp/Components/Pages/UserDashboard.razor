@@ -1356,46 +1356,68 @@
                 $"Attempting to schedule session at {scheduledAtUtc:yyyy-MM-dd HH:mm} UTC, Type: {SelectedOption.Type}, PlanId: {SelectedOption.PlanId}, PackId: {SelectedOption.PackId}, User: {userId}");
 
             if (SelectedOption.RequiresPurchase)
-            {
-                var checkoutRequest = new CheckoutSessionRequest
                 {
-                    Session = session,
-                    BookingType = SelectedOption.Type,
-                    PlanId = SelectedOption.Type == BookingType.SingleSession ? null : SelectedOption.PlanId,
-                    Currency = SelectedOption.Currency ?? "GBP",
-                    IdempotencyKey = Guid.NewGuid().ToString()
-                };
-
-                if (SelectedOption.Type != BookingType.SingleSession)
-                {
-                    checkoutRequest.Session.PackId = SelectedOption.PlanId;
-                }
-
-                await SessionService.CreatePendingSessionAsync(session);
-
-                var response = await HttpClient.PostAsJsonAsync($"{baseUrl}/api/payments/create-checkout-session", checkoutRequest);
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var data = await response.Content.ReadFromJsonAsync<ModelLayer.Models.DTOs.StripeResponse>();
-                    session.StripeSessionId = data.SessionId;
-                    await SessionService.CreatePendingSessionAsync(session);
                     await LogService.LogInfo("SubmitSessionRequest", 
-                        $"Created pending session with StripeSessionId: {data.SessionId}, Redirecting to: {data.Url}");
-                    pendingNavigationUrl = data.Url;
-                }
-                else
-                {
-                    var errorContent = await response.Content.ReadAsStringAsync();
-                    await LogService.LogError("SubmitSessionRequest", 
-                        $"Checkout failed. Status: {response.StatusCode}, Error: {errorContent}");
-                    Snackbar.Add("Failed to initiate payment. Please try again.", Severity.Error);
-                    if (session.Id != 0)
+                        $"Creating pending session for Email: {session.Email}, SessionCategory: {session.SessionCategory}, PreferredDateTime: {scheduledAtUtc}");
+                    var createdSession = await SessionService.CreatePendingSessionAsync(session);
+                    
+                    var checkoutRequest = new CheckoutSessionRequest
                     {
-                        SessionService.DeleteSession(session.Id);
+                        Session = createdSession,
+                        BookingType = SelectedOption.Type,
+                        PlanId = SelectedOption.Type == BookingType.SingleSession ? null : SelectedOption.PlanId,
+                        Currency = SelectedOption.Currency ?? "GBP",
+                        IdempotencyKey = Guid.NewGuid().ToString()
+                    };
+
+                    if (SelectedOption.Type != BookingType.SingleSession)
+                    {
+                        checkoutRequest.Session.PackId = SelectedOption.PlanId;
+                    }
+
+                    await LogService.LogInfo("SubmitSessionRequest", 
+                        $"Sending checkout request for SessionId: {createdSession.Id}, BookingType: {checkoutRequest.BookingType}, Currency: {checkoutRequest.Currency}, IdempotencyKey: {checkoutRequest.IdempotencyKey}");
+                    
+                    try
+                    {
+                        var response = await HttpClient.PostAsJsonAsync($"{baseUrl}/api/payments/create-checkout-session", checkoutRequest);
+                        if (response.IsSuccessStatusCode)
+                        {
+                            var data = await response.Content.ReadFromJsonAsync<ModelLayer.Models.DTOs.StripeResponse>();
+                            await LogService.LogInfo("SubmitSessionRequest", 
+                                $"Checkout session created, StripeSessionId: {data.SessionId}, Redirecting to: {data.Url}");
+                            createdSession.StripeSessionId = data.SessionId;
+                            await SessionService.CreatePendingSessionAsync(createdSession);
+                            pendingNavigationUrl = data.Url;
+                            NavigationManager.NavigateTo(data.Url, forceLoad: true);
+                        }
+                        else
+                        {
+                            var errorContent = await response.Content.ReadAsStringAsync();
+                            await LogService.LogError("SubmitSessionRequest", 
+                                $"Checkout failed. Status: {response.StatusCode}, Error: {errorContent}, SessionId: {createdSession.Id}");
+                            Snackbar.Add("Failed to initiate payment. Please try again.", Severity.Error);
+                            if (createdSession.Id != 0)
+                            {
+                                SessionService.DeleteSession(createdSession.Id);
+                                await LogService.LogInfo("SubmitSessionRequest", 
+                                    $"Deleted session with Id: {createdSession.Id} due to checkout failure");
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        await LogService.LogError("SubmitSessionRequest HttpClient Error", 
+                            $"Failed to send checkout request for SessionId: {createdSession.Id}. Error: {ex.Message}, StackTrace: {ex.StackTrace}");
+                        Snackbar.Add("An error occurred while contacting the payment service.", Severity.Error);
+                        if (createdSession.Id != 0)
+                        {
+                            SessionService.DeleteSession(createdSession.Id);
+                            await LogService.LogInfo("SubmitSessionRequest", 
+                                $"Deleted session with Id: {createdSession.Id} due to client error");
+                        }
                     }
                 }
-            }
             else if (SelectedOption.Type == BookingType.SessionPack)
             {
                 if (remainingPackSessions <= 0)

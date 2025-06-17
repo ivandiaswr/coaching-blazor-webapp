@@ -23,6 +23,9 @@ namespace coachingWebapp.Controllers
         [HttpPost("create-checkout-session")]
         public async Task<IActionResult> CreateCheckoutSession([FromBody] CheckoutSessionRequest request)
         {
+            var requestJson = System.Text.Json.JsonSerializer.Serialize(request);
+            await _logService.LogInfo("CreateCheckoutSession - Deserialized Request", requestJson);
+
             try
             {
                 if (request == null || request.Session == null)
@@ -37,29 +40,16 @@ namespace coachingWebapp.Controllers
                     request.Currency = "GBP";
                 }
 
-                var session = _sessionService.GetSessionById(request.Session.Id);
-                if (session == null || !session.IsPending)
-                {
-                    await _logService.LogError("CreateCheckoutSession", $"Session not found or not pending. SessionId: {request.Session.Id}, Email: {request.Session.Email}");
-                    return BadRequest(new { error = "Session not found or not pending." });
-                }
-
-                await _logService.LogInfo("CreateCheckoutSession", 
+                await _logService.LogInfo("CreateCheckoutSession",
                     $"Received request: BookingType={request.BookingType}, PlanId={request.PlanId}, SessionId={request.Session.Id}, Currency={request.Currency}, IdempotencyKey={request.IdempotencyKey}");
 
                 var url = await _paymentService.CreateCheckoutSessionAsync(request);
                 return Ok(new ModelLayer.Models.DTOs.StripeResponse { Url = url });
             }
-            catch (StripeException ex)
-            {
-                await _logService.LogError("CreateCheckoutSession Stripe Error", 
-                    $"Error: {ex.Message}, StripeError: {ex.StripeError?.Message}");
-                return BadRequest(new { error = $"Stripe error: {ex.Message}", details = ex.StripeError?.Message });
-            }
             catch (Exception ex)
             {
-                await _logService.LogError("CreateCheckoutSession Error", ex.Message);
-                return BadRequest(new { error = "Failed to create checkout session.", details = ex.Message });
+                await _logService.LogError("CreateCheckoutSession Error", $"Failed to create checkout session for SessionId: {request?.Session?.Id}, Error: {ex.Message}, StackTrace: {ex.StackTrace}");
+                return StatusCode(500, new { error = "Failed to create checkout session.", details = ex.Message });
             }
         }
 

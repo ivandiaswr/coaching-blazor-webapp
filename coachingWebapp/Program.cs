@@ -14,6 +14,8 @@ using OpenTelemetry.Logs;
 using System.Globalization;
 using MudBlazor;
 using ModelLayer.Models;
+using Microsoft.AspNetCore.Diagnostics;
+using Newtonsoft.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -181,6 +183,26 @@ if (!app.Environment.IsDevelopment())
 
     app.UseHttpsRedirection();
 }
+
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
+        var exception = exceptionHandlerPathFeature.Error;
+
+        if (context.Request.Path.Value.StartsWith("/api") || context.Request.Headers["Accept"].Contains("application/json"))
+        {
+            context.Response.ContentType = "application/json";
+            context.Response.StatusCode = 500;
+            await context.Response.WriteAsync(JsonConvert.SerializeObject(new { error = exception.Message }));
+        }
+        else
+        {
+            context.Response.Redirect("/Error");
+        }
+    });
+});
 
 app.UseWebSockets();
 
