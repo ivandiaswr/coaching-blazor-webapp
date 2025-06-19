@@ -41,7 +41,7 @@ public class StripeService : IPaymentService
         try
         {
             await _logService.LogInfo("CreateCheckoutSessionAsync", $"Starting checkout for Request: {request?.Session?.Id}, Email: {request?.Session?.Email}, BookingType: {request?.BookingType}, Currency: {request?.Currency}");
-            
+
             var session = request.Session;
             var bookingType = request.BookingType;
             var planId = request.PlanId;
@@ -102,8 +102,7 @@ public class StripeService : IPaymentService
             await _logService.LogInfo("CreateCheckoutSessionAsync", $"Cleaning up stale sessions for Email: {session.Email}");
             await CleanupStalePendingSessionsAsync(session.Email, bookingType, planId, session.SessionCategory.ToString(), session.PreferredDateTime);
             await _logService.LogInfo("CreateCheckoutSessionAsync", $"Completed cleanup for Email: {session.Email}");
-            
-            //using var sessionTransaction = await _context.Database.BeginTransactionAsync();
+
             await _logService.LogInfo("CreateCheckoutSessionAsync", $"Starting transaction for session Id: {session.Id}");
 
             SessionCreateOptions options;
@@ -133,6 +132,7 @@ public class StripeService : IPaymentService
 
                 options = new SessionCreateOptions
                 {
+                    CustomerEmail = session.Email,
                     PaymentMethodTypes = new List<string> { "card" },
                     LineItems = new List<SessionLineItemOptions>
                     {
@@ -197,6 +197,7 @@ public class StripeService : IPaymentService
 
                 options = new SessionCreateOptions
                 {
+                    CustomerEmail = session.Email,
                     PaymentMethodTypes = new List<string> { "card" },
                     LineItems = new List<SessionLineItemOptions>
                     {
@@ -220,38 +221,39 @@ public class StripeService : IPaymentService
             }
             else if (bookingType == BookingType.SingleSession)
             {
-                await _logService.LogInfo("CreateCheckoutSessionAsync", 
+                await _logService.LogInfo("CreateCheckoutSessionAsync",
                     $"Processing SingleSession for SessionCategory: {session.SessionCategory}, Currency: {userCurrency}");
-                
+
                 try
                 {
-                    await _logService.LogInfo("CreateCheckoutSessionAsync", 
+                    await _logService.LogInfo("CreateCheckoutSessionAsync",
                         $"Retrieving price for SessionCategory: {session.SessionCategory}");
                     var servicePrice = await _context.SessionPrices
                         .FirstOrDefaultAsync(sp => sp.SessionType == session.SessionCategory);
                     if (servicePrice == null)
                     {
-                        await _logService.LogError("CreateCheckoutSessionAsync", 
+                        await _logService.LogError("CreateCheckoutSessionAsync",
                             $"No price found for session category: {session.SessionCategory}");
                         throw new InvalidOperationException($"No price found for session category: {session.SessionCategory}");
                     }
-                    await _logService.LogInfo("CreateCheckoutSessionAsync", 
+                    await _logService.LogInfo("CreateCheckoutSessionAsync",
                         $"Found price for SessionCategory: {session.SessionCategory}, PriceGBP: {servicePrice.PriceGBP}");
 
-                    await _logService.LogInfo("CreateCheckoutSessionAsync", 
+                    await _logService.LogInfo("CreateCheckoutSessionAsync",
                         $"Converting price {servicePrice.PriceGBP} GBP to {userCurrency}");
                     (decimal priceInUserCurrency, string priceError) = await _currencyConversionService.ConvertPrice(servicePrice.PriceGBP, userCurrency);
                     if (!string.IsNullOrEmpty(priceError))
                     {
-                        await _logService.LogError("CreateCheckoutSessionAsync", 
+                        await _logService.LogError("CreateCheckoutSessionAsync",
                             $"Currency conversion error for {userCurrency}: {priceError}");
                         throw new InvalidOperationException($"Currency conversion error: {priceError}");
                     }
-                    await _logService.LogInfo("CreateCheckoutSessionAsync", 
+                    await _logService.LogInfo("CreateCheckoutSessionAsync",
                         $"Converted price: {priceInUserCurrency} {userCurrency}");
 
                     options = new SessionCreateOptions
                     {
+                        CustomerEmail = session.Email,
                         PaymentMethodTypes = new List<string> { "card" },
                         LineItems = new List<SessionLineItemOptions>
                         {
@@ -279,12 +281,12 @@ public class StripeService : IPaymentService
                             { "Currency", userCurrency }
                         }
                     };
-                    await _logService.LogInfo("CreateCheckoutSessionAsync", 
+                    await _logService.LogInfo("CreateCheckoutSessionAsync",
                         $"Created SessionCreateOptions for SessionId: {session.Id}, Currency: {userCurrency}");
                 }
                 catch (Exception ex)
                 {
-                    await _logService.LogError("CreateCheckoutSessionAsync SingleSession Error", 
+                    await _logService.LogError("CreateCheckoutSessionAsync SingleSession Error",
                         $"Failed to process SingleSession for SessionId: {session.Id}, SessionCategory: {session.SessionCategory}. Error: {ex.Message}, StackTrace: {ex.StackTrace}");
                     throw;
                 }
@@ -308,8 +310,24 @@ public class StripeService : IPaymentService
             session.StripeSessionId = stripeSession.Id;
             await _sessionService.CreatePendingSessionAsync(session);
 
-            await _context.SaveChangesAsync();
-            //await sessionTransaction.CommitAsync();
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (SqliteException ex)
+            {
+                await _logService.LogError("CreateCheckoutSessionAsync SQLite Error",
+                    $"Failed to save changes for SessionId: {session.Id}, Error: {ex.Message}, SqliteErrorCode: {ex.SqliteErrorCode}, InnerException: {ex.InnerException?.Message}");
+                throw;
+            }
+            catch (DbUpdateException ex)
+            {
+                await _logService.LogError("CreateCheckoutSessionAsync DbUpdate Error",
+                    $"Failed to save changes for SessionId: {session.Id}, Error: {ex.Message}, InnerException: {ex.InnerException?.Message}");
+                throw;
+            }
+
             await _logService.LogInfo("CreateCheckoutSessionAsync",
                 $"Completed checkout for session Id: {session.Id}, StripeSessionId: {stripeSession.Id}, Currency: {userCurrency}, PreferredDateTime: {session.PreferredDateTime}");
 
@@ -572,7 +590,7 @@ public class StripeService : IPaymentService
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync", 
+            await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync",
                 $"Processing price for {productName}, Amount: {amount}, Currency: {currency}, SessionType: {sessionType}");
 
             SubscriptionPrice? existingPrice = null;
@@ -593,14 +611,14 @@ public class StripeService : IPaymentService
                 var stripePrice = await priceService.GetAsync(existingPrice.StripePriceId);
                 if (stripePrice.Active && stripePrice.UnitAmountDecimal == (long)(amount * 100) && stripePrice.Currency.ToUpper() == currency.ToUpper())
                 {
-                    await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync", 
+                    await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync",
                         $"Using existing active Price ID: {existingPrice.StripePriceId}");
                     await transaction.CommitAsync();
                     return existingPrice.StripePriceId;
                 }
                 else
                 {
-                    await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync", 
+                    await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync",
                         $"Existing price ID: {existingPrice.StripePriceId} is inactive or mismatched. Creating new Price.");
                 }
             }
@@ -649,14 +667,14 @@ public class StripeService : IPaymentService
             await _context.SaveChangesAsync();
 
             await transaction.CommitAsync();
-            await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync", 
+            await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync",
                 $"Created Price ID: {price.Id} for Product: {productName}, Amount: {amount} {currency}");
             return price.Id;
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            await _logService.LogError("CreateOrUpdateSubscriptionPriceAsync", 
+            await _logService.LogError("CreateOrUpdateSubscriptionPriceAsync",
                 $"Failed to create or update price for {productName}. Error: {ex.Message}");
             throw;
         }
@@ -678,7 +696,7 @@ public class StripeService : IPaymentService
             {
                 session.IsPending = false;
                 _context.Sessions.Update(session);
-                await _logService.LogInfo("CleanupStalePendingSessionsAsync", 
+                await _logService.LogInfo("CleanupStalePendingSessionsAsync",
                     $"Canceled stale or duplicate pending session Id: {session.Id} for User: {userEmail}, BookingType: {bookingType}, PlanId: {planId}, StripeSessionId: {session.StripeSessionId ?? "null"}, SessionCategory: {session.SessionCategory}, PreferredDateTime: {session.PreferredDateTime}");
             }
 
@@ -686,7 +704,7 @@ public class StripeService : IPaymentService
         }
         catch (Exception ex)
         {
-            await _logService.LogError("CleanupStalePendingSessionsAsync Error", 
+            await _logService.LogError("CleanupStalePendingSessionsAsync Error",
                 $"Failed to cleanup stale sessions for User: {userEmail}, BookingType: {bookingType}, PlanId: {planId}. Error: {ex.Message}");
         }
     }

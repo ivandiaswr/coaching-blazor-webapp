@@ -1384,10 +1384,6 @@
                         if (response.IsSuccessStatusCode)
                         {
                             var data = await response.Content.ReadFromJsonAsync<ModelLayer.Models.DTOs.StripeResponse>();
-                            await LogService.LogInfo("SubmitSessionRequest", 
-                                $"Checkout session created, StripeSessionId: {data.SessionId}, Redirecting to: {data.Url}");
-                            createdSession.StripeSessionId = data.SessionId;
-                            await SessionService.CreatePendingSessionAsync(createdSession);
                             pendingNavigationUrl = data.Url;
                             NavigationManager.NavigateTo(data.Url, forceLoad: true);
                         }

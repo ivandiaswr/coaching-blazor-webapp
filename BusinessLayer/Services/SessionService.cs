@@ -151,7 +151,7 @@ public class SessionService : ISessionService
 
             if (existingPendingSession != null)
             {
-                await _logService.LogWarning("CreatePendingSessionAsync", 
+                await _logService.LogWarning("CreatePendingSessionAsync",
                     $"Duplicate pending session found for Email: {session.Email}, SessionId: {existingPendingSession.Id}, SessionCategory: {existingPendingSession.SessionCategory}, PreferredDateTime: {existingPendingSession.PreferredDateTime}, PackId: {existingPendingSession.PackId}");
                 throw new InvalidOperationException($"A pending session already exists (SessionId: {existingPendingSession.Id}).");
             }
@@ -162,26 +162,80 @@ public class SessionService : ISessionService
 
             if (string.IsNullOrEmpty(session.StripeSessionId))
             {
-                await _logService.LogInfo("CreatePendingSessionAsync", 
+                await _logService.LogInfo("CreatePendingSessionAsync",
                     $"Creating pending session without StripeSessionId for Email: {session.Email}");
             }
             else
             {
-                await _logService.LogInfo("CreatePendingSessionAsync", 
+                await _logService.LogInfo("CreatePendingSessionAsync",
                     $"Creating pending session with StripeSessionId: {session.StripeSessionId} for Email: {session.Email}");
             }
 
-            _context.Sessions.Add(session);
-            await _context.SaveChangesAsync();
-            await _logService.LogInfo("CreatePendingSessionAsync", 
-                $"Created pending session with Id: {session.Id}, Email: {session.Email}, SessionCategory: {session.SessionCategory}, PreferredDateTime: {session.PreferredDateTime}");
+            if (session.Id != 0)
+            {
+                var existingSession = await _context.Sessions.FindAsync(session.Id);
+                if (existingSession != null)
+                {
+                    existingSession.StripeSessionId = session.StripeSessionId;
+                    existingSession.IsPending = session.IsPending;
+                    existingSession.CreatedAt = session.CreatedAt;
+                    existingSession.PaidAt = session.PaidAt;
+                    existingSession.Email = session.Email;
+                    existingSession.SessionCategory = session.SessionCategory;
+                    existingSession.PreferredDateTime = session.PreferredDateTime;
+                    existingSession.PackId = session.PackId;
+                    existingSession.FirstName = session.FirstName;
+                    existingSession.LastName = session.LastName;
+                    existingSession.FullName = session.FullName;
+                    existingSession.Message = session.Message;
+                    existingSession.DiscoveryCall = session.DiscoveryCall;
+                    existingSession.IsSessionBooking = session.IsSessionBooking;
+                    existingSession.UpdateFullName();
+
+                    _context.Sessions.Update(existingSession);
+                    await _logService.LogInfo("CreatePendingSessionAsync",
+                        $"Updating existing session with Id: {session.Id}, Email: {session.Email}, StripeSessionId: {session.StripeSessionId}");
+                }
+                else
+                {
+                    _context.Sessions.Add(session);
+                    await _logService.LogInfo("CreatePendingSessionAsync",
+                        $"Adding new session with Id: {session.Id}, Email: {session.Email}, StripeSessionId: {session.StripeSessionId}");
+                }
+            }
+            else
+            {
+                _context.Sessions.Add(session);
+                await _logService.LogInfo("CreatePendingSessionAsync",
+                    $"Adding new session with auto-generated Id for Email: {session.Email}, StripeSessionId: {session.StripeSessionId}");
+            }
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (Microsoft.Data.Sqlite.SqliteException ex)
+            {
+                await _logService.LogError("CreatePendingSessionAsync SQLite Error",
+                    $"Failed to save session for Email: {session.Email}, Id: {session.Id}, Error: {ex.Message}, SqliteErrorCode: {ex.SqliteErrorCode}, InnerException: {ex.InnerException?.Message}");
+                throw;
+            }
+            catch (DbUpdateException ex)
+            {
+                await _logService.LogError("CreatePendingSessionAsync DbUpdate Error",
+                    $"Failed to save session for Email: {session.Email}, Id: {session.Id}, Error: {ex.Message}, InnerException: {ex.InnerException?.Message}");
+                throw;
+            }
+
+            await _logService.LogInfo("CreatePendingSessionAsync",
+                $"Created or updated pending session with Id: {session.Id}, Email: {session.Email}, SessionCategory: {session.SessionCategory}, PreferredDateTime: {session.PreferredDateTime}");
 
             return session;
         }
         catch (Exception ex)
         {
-            await _logService.LogError("CreatePendingSessionAsync Error", 
-                $"Failed to create pending session for Email: {session?.Email}. Error: {ex.Message}");
+            await _logService.LogError("CreatePendingSessionAsync Error",
+                $"Failed to create or update pending session for Email: {session?.Email}, Id: {session?.Id}, Error: {ex.Message}, InnerException: {ex.InnerException?.Message}, StackTrace: {ex.StackTrace}");
             throw;
         }
     }
@@ -336,7 +390,7 @@ public class SessionService : ISessionService
 
             if (session != null)
             {
-                await _logService.LogInfo("GetPendingSessionByEmailAndPackAsync", 
+                await _logService.LogInfo("GetPendingSessionByEmailAndPackAsync",
                     $"Found pending session Id: {session.Id} for Email: {email}, SessionCategory: {sessionCategory}, PreferredDateTime: {preferredDateTime}, PackId: {packId}");
             }
 
@@ -344,7 +398,7 @@ public class SessionService : ISessionService
         }
         catch (Exception ex)
         {
-            await _logService.LogError("GetPendingSessionByEmailAndPackAsync", 
+            await _logService.LogError("GetPendingSessionByEmailAndPackAsync",
                 $"Error querying pending session for Email: {email}, PackId: {packId}. Error: {ex.Message}");
             throw;
         }
