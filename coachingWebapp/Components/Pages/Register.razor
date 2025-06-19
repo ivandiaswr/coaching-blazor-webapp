@@ -59,6 +59,11 @@
                    OnClick="HandleRegister">
             Register
         </MudButton>
+        <MudText Typo="Typo.caption" Class="privacy-notice">
+            By registering, you’re agreeing to receive marketing emails from Ítala Veloso. You can unsubscribe at any time. For more details, check out our
+            <a Href="/privacy-policy">Privacy Policy</a> and
+            <a Href="/terms-and-conditions">Terms & Conditions</a>.
+        </MudText>
     </MudForm>
 
     @if (!string.IsNullOrEmpty(debugMessage))
