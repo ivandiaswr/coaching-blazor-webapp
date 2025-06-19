@@ -525,7 +525,6 @@ public class StripeService : IPaymentService
                     return;
                 }
 
-                using var transaction = await _context.Database.BeginTransactionAsync();
                 try
                 {
                     var dbSession = await _context.Sessions.FirstOrDefaultAsync(s => s.StripeSessionId == checkoutSession.Id);
@@ -538,14 +537,12 @@ public class StripeService : IPaymentService
                     if (!dbSession.IsPending && dbSession.IsPaid)
                     {
                         await _logService.LogInfo("HandleWebhookAsync", $"Session already confirmed for StripeSessionId: {checkoutSession.Id}");
-                        await transaction.CommitAsync();
                         return;
                     }
 
                     if (!dbSession.IsPending || dbSession.IsPaid)
                     {
                         await _logService.LogInfo("HandleWebhookAsync", $"Session Id: {dbSession.Id} already processed for StripeSessionId: {checkoutSession.Id}");
-                        await transaction.CommitAsync();
                         return;
                     }
 
@@ -558,12 +555,10 @@ public class StripeService : IPaymentService
 
                     await _sessionService.CreateSessionAsync(dbSession);
                     await _context.SaveChangesAsync();
-                    await transaction.CommitAsync();
                     await _logService.LogInfo("HandleWebhookAsync", $"Successfully processed checkout.session.completed for StripeSessionId: {checkoutSession.Id}");
                 }
                 catch (Exception ex)
                 {
-                    await transaction.RollbackAsync();
                     await _logService.LogError("HandleWebhookAsync", $"Failed to process webhook for StripeSessionId: {checkoutSession.Id}. Error: {ex.Message}");
                     throw;
                 }
@@ -587,7 +582,6 @@ public class StripeService : IPaymentService
 
     public async Task<string> CreateOrUpdateSubscriptionPriceAsync(string productName, decimal amount, string sessionType, string currency = "GBP")
     {
-        using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
             await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync",
@@ -613,7 +607,6 @@ public class StripeService : IPaymentService
                 {
                     await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync",
                         $"Using existing active Price ID: {existingPrice.StripePriceId}");
-                    await transaction.CommitAsync();
                     return existingPrice.StripePriceId;
                 }
                 else
@@ -666,14 +659,12 @@ public class StripeService : IPaymentService
             _context.SubscriptionPrices.Add(subscriptionPrice);
             await _context.SaveChangesAsync();
 
-            await transaction.CommitAsync();
             await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync",
                 $"Created Price ID: {price.Id} for Product: {productName}, Amount: {amount} {currency}");
             return price.Id;
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
             await _logService.LogError("CreateOrUpdateSubscriptionPriceAsync",
                 $"Failed to create or update price for {productName}. Error: {ex.Message}");
             throw;
