@@ -2,6 +2,7 @@ using BusinessLayer.Services.Interfaces;
 using DataAccessLayer;
 using Microsoft.EntityFrameworkCore;
 using ModelLayer.Models;
+using ModelLayer.Models.Enums;
 
 namespace BusinessLayer.Services
 {

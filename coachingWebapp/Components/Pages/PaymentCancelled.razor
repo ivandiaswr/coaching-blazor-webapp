@@ -1,5 +1,5 @@
 @page "/payment-cancelled"
-@inject ISnackbar Snackbar
+@rendermode InteractiveServer
 
 <MudSnackbarProvider />
 
@@ -9,7 +9,7 @@
     <div class="cancelled-card">
         <MudText Typo="Typo.h5" Class="cancelled-title">Payment Cancelled</MudText>
         <MudText Class="cancelled-message">Your payment was cancelled. You can try booking again.</MudText>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => NavigationManager.NavigateTo("/UserDashboard"))" Class="return-button">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ReturnToDashboard">
             Return to Dashboard
         </MudButton>
     </div>
@@ -19,5 +19,10 @@
     protected override void OnInitialized()
     {
         Snackbar.Add("Payment was cancelled.", Severity.Warning);
+    }
+
+    private void ReturnToDashboard()
+    {
+        NavigationManager.NavigateTo("/UserDashboard");
     }
 }

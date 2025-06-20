@@ -332,13 +332,14 @@
                 @foreach (var sessionType in Enum.GetValues(typeof(SessionType)).Cast<SessionType>())
                 {
                     <MudTabPanel Text="@sessionType.GetDisplayName()">
-                        <MudGrid>
+                        <MudGrid Spacing="4" Justify="Justify.Center">
+                            <!-- Single Session Price -->
                             <MudItem xs="12">
-                                <MudCard Class="mb-4">
+                                <MudCard Class="pa-4 mb-4" Elevation="2">
                                     <MudCardContent>
-                                        <MudText Typo="Typo.h6" Class="mb-2">@BookingType.SingleSession.GetDisplayName()</MudText>
+                                        <MudText Typo="Typo.h6" GutterBottom="true">@BookingType.SingleSession.GetDisplayName()</MudText>
                                         <MudForm @ref="singleForms[sessionType]">
-                                            <MudGrid>
+                                            <MudGrid Spacing="3">
                                                 <MudItem xs="12" sm="6">
                                                     <MudNumericField Label="Price (£)"
                                                                     @bind-Value="singlePrices[sessionType].PriceGBP"
@@ -347,43 +348,55 @@
                                                                     AdornmentText="£"
                                                                     Required="true"
                                                                     RequiredError="Price is required"
-                                                                    Min="0" />
+                                                                    Min="0"
+                                                                    Variant="Variant.Outlined" />
                                                 </MudItem>
                                             </MudGrid>
                                         </MudForm>
+                                        <MudButton Variant="Variant.Filled"
+                                                Color="Color.Primary"
+                                                OnClick="@(() => SaveSinglePrice(sessionType))"
+                                                Class="mt-4"
+                                                StartIcon="@Icons.Material.Filled.Save">
+                                            Save Single Price
+                                        </MudButton>
                                     </MudCardContent>
                                 </MudCard>
                             </MudItem>
 
+                            <!-- Session Packs -->
                             <MudItem xs="12">
-                                <MudText Typo="Typo.h6" Class="mb-2">@BookingType.SessionPack.GetDisplayName()</MudText>
+                                <MudText Typo="Typo.h6" GutterBottom="true">@BookingType.SessionPack.GetDisplayName()</MudText>
                                 @foreach (var pack in packPrices[sessionType])
                                 {
-                                    <MudCard Class="mb-4">
+                                    <MudCard Class="pa-4 mb-4" Elevation="2">
                                         <MudCardContent>
                                             <MudForm @ref="packForms[(sessionType, pack.Id)]">
-                                                <MudGrid>
+                                                <MudGrid Spacing="3">
                                                     <MudItem xs="12" sm="6">
                                                         <MudTextField Label="Pack Name"
                                                                     @bind-Value="pack.Name"
                                                                     For="@(() => pack.Name)"
                                                                     Required="true"
-                                                                    RequiredError="Name is required" />
+                                                                    RequiredError="Name is required"
+                                                                    Variant="Variant.Outlined" />
                                                     </MudItem>
                                                     <MudItem xs="12" sm="6">
                                                         <MudTextField Label="Pack Description"
                                                                     @bind-Value="pack.Description"
-                                                                    For="@(() => pack.Description)" />
+                                                                    For="@(() => pack.Description)"
+                                                                    Variant="Variant.Outlined" />
                                                     </MudItem>
-                                                    <MudItem xs="12" sm="6">
+                                                    <MudItem xs="12" sm="4">
                                                         <MudNumericField Label="Total Sessions"
                                                                         @bind-Value="pack.TotalSessions"
                                                                         For="@(() => pack.TotalSessions)"
                                                                         Required="true"
                                                                         RequiredError="Total sessions is required"
-                                                                        Min="1" />
+                                                                        Min="1"
+                                                                        Variant="Variant.Outlined" />
                                                     </MudItem>
-                                                    <MudItem xs="12" sm="6">
+                                                    <MudItem xs="12" sm="4">
                                                         <MudNumericField Label="Price (£)"
                                                                         @bind-Value="pack.PriceGBP"
                                                                         For="@(() => pack.PriceGBP)"
@@ -391,62 +404,76 @@
                                                                         AdornmentText="£"
                                                                         Required="true"
                                                                         RequiredError="Price is required"
-                                                                        Min="0" />
-                                                    </MudItem>
-                                                    <MudItem xs="12">
-                                                        <MudButton Variant="Variant.Filled" Color="Color.Error"
-                                                                StartIcon="@Icons.Material.Filled.Delete"
-                                                                OnClick="@(() => ConfirmDeleteSessionPack(sessionType, pack.Id))">
-                                                            Delete Pack
-                                                        </MudButton>
+                                                                        Min="0"
+                                                                        Variant="Variant.Outlined" />
                                                     </MudItem>
                                                 </MudGrid>
                                             </MudForm>
+                                            <MudButton Variant="Variant.Filled"
+                                                    Color="Color.Error"
+                                                    OnClick="@(() => ConfirmDeleteSessionPack(sessionType, pack.Id))"
+                                                    Class="mt-4 mr-2"
+                                                    StartIcon="@Icons.Material.Filled.Delete">
+                                                Delete Pack
+                                            </MudButton>
                                         </MudCardContent>
                                     </MudCard>
                                 }
-                                <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                                        StartIcon="@Icons.Material.Filled.Add"
-                                        OnClick="@(() => AddNewSessionPack(sessionType))"
-                                        Class="mb-4"
-                                        Disabled="@(packPrices[sessionType].Count >= MAX_PACKS)">
-                                    Add New Pack
+                                <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mb-4">
+                                    <MudButton Variant="Variant.Filled"
+                                            Color="Color.Primary"
+                                            OnClick="@(() => AddNewSessionPack(sessionType))"
+                                            Disabled="@(packPrices[sessionType].Count >= MAX_PACKS)"
+                                            StartIcon="@Icons.Material.Filled.Add">
+                                        Add New Pack
+                                    </MudButton>
+                                    @if (packPrices[sessionType].Count >= MAX_PACKS)
+                                    {
+                                        <MudText Color="Color.Error">Maximum of @MAX_PACKS session packs reached.</MudText>
+                                    }
+                                </MudStack>
+                                <MudButton Variant="Variant.Filled"
+                                        Color="Color.Primary"
+                                        OnClick="@(() => SaveSessionPacks(sessionType))"
+                                        StartIcon="@Icons.Material.Filled.Save"
+                                        Class="mt-2">
+                                    Save All Packs
                                 </MudButton>
-                                @if (packPrices[sessionType].Count >= MAX_PACKS)
-                                {
-                                    <MudText Color="Color.Error">Maximum of @MAX_PACKS session packs reached.</MudText>
-                                }
                             </MudItem>
 
+                            <!-- Subscriptions -->
                             <MudItem xs="12">
-                                <MudText Typo="Typo.h6" Class="mb-2">@BookingType.Subscription.GetDisplayName()</MudText>
+                                <MudText Typo="Typo.h6" GutterBottom="true">@BookingType.Subscription.GetDisplayName()</MudText>
                                 @foreach (var subscription in subscriptionPrices[sessionType])
                                 {
-                                    <MudCard Class="mb-4">
+                                    <MudCard Class="pa-4 mb-4" Elevation="2">
                                         <MudCardContent>
                                             <MudForm @ref="subscriptionForms[(sessionType, subscription.Id)]">
-                                                <MudGrid>
+                                                <MudGrid Spacing="3">
                                                     <MudItem xs="12" sm="6">
                                                         <MudTextField Label="Subscription Name"
                                                                     @bind-Value="subscription.Name"
                                                                     For="@(() => subscription.Name)"
                                                                     Required="true"
-                                                                    RequiredError="Name is required" />
+                                                                    RequiredError="Name is required"
+                                                                    Variant="Variant.Outlined" />
                                                     </MudItem>
                                                     <MudItem xs="12" sm="6">
                                                         <MudTextField Label="Subscription Description"
                                                                     @bind-Value="subscription.Description"
-                                                                    For="@(() => subscription.Description)" />
+                                                                    For="@(() => subscription.Description)"
+                                                                    Variant="Variant.Outlined" />
                                                     </MudItem>
-                                                    <MudItem xs="12" sm="6">
+                                                    <MudItem xs="12" sm="4">
                                                         <MudNumericField Label="Monthly Session Limit"
                                                                         @bind-Value="subscription.MonthlyLimit"
                                                                         For="@(() => subscription.MonthlyLimit)"
                                                                         Required="true"
                                                                         RequiredError="Monthly limit is required"
-                                                                        Min="1" />
+                                                                        Min="1"
+                                                                        Variant="Variant.Outlined" />
                                                     </MudItem>
-                                                    <MudItem xs="12" sm="6">
+                                                    <MudItem xs="12" sm="4">
                                                         <MudNumericField Label="Price (£)"
                                                                         @bind-Value="subscription.PriceGBP"
                                                                         For="@(() => subscription.PriceGBP)"
@@ -454,42 +481,43 @@
                                                                         AdornmentText="£"
                                                                         Required="true"
                                                                         RequiredError="Price is required"
-                                                                        Min="0" />
+                                                                        Min="0"
+                                                                        Variant="Variant.Outlined" />
                                                         <MudTooltip Text="A Stripe price will be created if the price is greater than 0.">
                                                             <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" />
                                                         </MudTooltip>
                                                     </MudItem>
-                                                    <MudItem xs="12">
-                                                        <MudButton Variant="Variant.Filled" Color="Color.Error"
-                                                                StartIcon="@Icons.Material.Filled.Delete"
-                                                                OnClick="@(() => ConfirmDeleteSubscription(sessionType, subscription.Id))">
-                                                            Delete Subscription
-                                                        </MudButton>
-                                                    </MudItem>
                                                 </MudGrid>
                                             </MudForm>
+                                            <MudButton Variant="Variant.Filled"
+                                                    Color="Color.Error"
+                                                    OnClick="@(() => ConfirmDeleteSubscription(sessionType, subscription.Id))"
+                                                    Class="mt-4 mr-2"
+                                                    StartIcon="@Icons.Material.Filled.Delete">
+                                                Delete Subscription
+                                            </MudButton>
                                         </MudCardContent>
                                     </MudCard>
                                 }
-                                <MudButton Variant="Variant.Filled" Color="Color.Primary"
-                                        StartIcon="@Icons.Material.Filled.Add"
-                                        OnClick="@(() => AddNewSubscription(sessionType))"
-                                        Class="mb-4"
-                                        Disabled="@(subscriptionPrices[sessionType].Count >= MAX_SUBSCRIPTIONS)">
-                                    Add New Subscription
-                                </MudButton>
-                                @if (subscriptionPrices[sessionType].Count >= MAX_SUBSCRIPTIONS)
-                                {
-                                    <MudText Color="Color.Error">Maximum of @MAX_SUBSCRIPTIONS subscriptions reached.</MudText>
-                                }
-                            </MudItem>
-
-                            <MudItem xs="12">
+                                <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mb-4">
+                                    <MudButton Variant="Variant.Filled"
+                                            Color="Color.Primary"
+                                            OnClick="@(() => AddNewSubscription(sessionType))"
+                                            Disabled="@(subscriptionPrices[sessionType].Count >= MAX_SUBSCRIPTIONS)"
+                                            StartIcon="@Icons.Material.Filled.Add">
+                                        Add New Subscription
+                                    </MudButton>
+                                    @if (subscriptionPrices[sessionType].Count >= MAX_SUBSCRIPTIONS)
+                                    {
+                                        <MudText Color="Color.Error">Maximum of @MAX_SUBSCRIPTIONS subscriptions reached.</MudText>
+                                    }
+                                </MudStack>
                                 <MudButton Variant="Variant.Filled"
                                         Color="Color.Primary"
-                                        OnClick="@(() => SavePrices(sessionType))"
-                                        Class="mt-4">
-                                    Save
+                                        OnClick="@(() => SaveSubscriptions(sessionType))"
+                                        StartIcon="@Icons.Material.Filled.Save"
+                                        Class="mt-2">
+                                    Save All Subscriptions
                                 </MudButton>
                             </MudItem>
                         </MudGrid>
@@ -568,17 +596,12 @@
                 Text = $"{c.FullName}: {c.SessionCategory.GetDisplayName().Replace("Coaching", "").Replace("Food", "").Trim()}",
             }).ToList();
 
-            foreach (var sessionType in Enum.GetValues(typeof(SessionType)).Cast<SessionType>())
+            var sessionTypes = Enum.GetValues(typeof(SessionType)).Cast<SessionType>();
+            foreach (var sessionType in sessionTypes)
             {
-                singlePrices[sessionType] = await SessionPriceService.GetPriceForSessionTypeAsync(sessionType)
-                    ?? new SessionPrice
-                    {
-                        SessionType = sessionType,
-                        PriceGBP = 0,
-                        LastUpdated = DateTime.UtcNow
-                    };
-                packPrices[sessionType] = (await SessionPackPriceService.GetPricesForSessionTypeAsync(sessionType))?.ToList() ?? new();
-                subscriptionPrices[sessionType] = (await SubscriptionPriceService.GetPricesForSessionTypeAsync(sessionType))?.ToList() ?? new();
+                singlePrices[sessionType] = await SessionPriceService.GetBySessionTypeAsync(sessionType) ?? new SessionPrice { SessionType = sessionType };
+                packPrices[sessionType] = await SessionPackPriceService.GetPricesForSessionTypeAsync(sessionType);
+                subscriptionPrices[sessionType] = await SubscriptionPriceService.GetPricesForSessionTypeAsync(sessionType);
 
                 singleForms[sessionType] = new MudForm();
                 foreach (var pack in packPrices[sessionType])
@@ -590,7 +613,6 @@
                     subscriptionForms[(sessionType, subscription.Id)] = new MudForm();
                 }
             }
-
             StateHasChanged();
         }
         catch (Exception ex)
@@ -773,14 +795,21 @@
             };
 
             await SessionPackPriceService.AddOrUpdateAsync(newPack);
-            packPrices[sessionType] = (await SessionPackPriceService.GetPricesForSessionTypeAsync(sessionType)).ToList();
-            packForms[(sessionType, newPack.Id)] = new MudForm();
+
+            var updatedPack = await SessionPackPriceService.GetByIdAsync(newPack.Id);
+            if (updatedPack != null)
+            {
+                packPrices[sessionType].Add(updatedPack);
+                packForms[(sessionType, updatedPack.Id)] = new MudForm();
+            }
             Snackbar.Add("New session pack added.", Severity.Success);
             StateHasChanged();
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error adding session pack: {ex.Message}", Severity.Error);
+            var innerException = ex.InnerException?.Message ?? "No inner exception";
+            Snackbar.Add($"Error adding session pack: {ex.Message} (Inner: {innerException})", Severity.Error);
+            await LogService.LogError("AddNewSessionPack", $"Error: {ex.Message}, Inner: {innerException}");
         }
     }
 
@@ -790,6 +819,7 @@
         {
             if (subscriptionPrices[sessionType].Count >= MAX_SUBSCRIPTIONS)
             {
+                await LogService.LogWarning("AddNewSubscription", $"Maximum number of subscriptions ({MAX_SUBSCRIPTIONS}) reached for {sessionType}");
                 Snackbar.Add($"Maximum number of subscriptions ({MAX_SUBSCRIPTIONS}) reached.", Severity.Error);
                 return;
             }
@@ -800,20 +830,23 @@
                 Name = $"{sessionType.GetDisplayName()} Subscription {subscriptionPrices[sessionType].Count + 1}",
                 Description = string.Empty,
                 MonthlyLimit = 4,
-                PriceGBP = 0,
+                PriceGBP = 30m,
                 StripePriceId = null,
-                LastUpdated = DateTime.UtcNow
+                LastUpdated = DateTime.UtcNow,
+                Currency = "GBP"
             };
 
-            await SubscriptionPriceService.AddOrUpdateAsync(newSubscription);
-            subscriptionPrices[sessionType] = (await SubscriptionPriceService.GetPricesForSessionTypeAsync(sessionType)).ToList();
+            subscriptionPrices[sessionType].Add(newSubscription);
             subscriptionForms[(sessionType, newSubscription.Id)] = new MudForm();
-            Snackbar.Add("New subscription added.", Severity.Success);
+            Snackbar.Add("New subscription added to form. Please edit and save.", Severity.Success);
+            await LogService.LogInfo("AddNewSubscription", $"Added new subscription to UI for SessionType: {sessionType}, Name: {newSubscription.Name}, PriceGBP: {newSubscription.PriceGBP}");
             StateHasChanged();
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error adding subscription: {ex.Message}", Severity.Error);
+            var innerException = ex.InnerException?.Message ?? "No inner exception";
+            await LogService.LogError("AddNewSubscription", $"Error adding subscription for {sessionType}: {ex.Message}, Inner: {innerException}");
+            Snackbar.Add($"Error adding subscription: {ex.Message} (Inner: {innerException})", Severity.Error);
         }
     }
 
@@ -909,48 +942,212 @@
         }
     }
 
-    private async Task SavePrices(SessionType sessionType)
+    private async Task SaveSinglePrice(SessionType sessionType)
     {
         try
         {
+            await LogService.LogInfo("SaveSinglePrice", $"Starting save for single price, SessionType: {sessionType}");
             await singleForms[sessionType].Validate();
-            foreach (var pack in packPrices[sessionType])
-            {
-                await packForms[(sessionType, pack.Id)].Validate();
-            }
-            foreach (var subscription in subscriptionPrices[sessionType])
-            {
-                await subscriptionForms[(sessionType, subscription.Id)].Validate();
-            }
 
-            if (!singleForms[sessionType].IsValid || 
-                packForms.Any(f => f.Key.Item1 == sessionType && !f.Value.IsValid) ||
-                subscriptionForms.Any(f => f.Key.Item1 == sessionType && !f.Value.IsValid))
+            if (!singleForms[sessionType].IsValid)
             {
-                Snackbar.Add("Please correct the errors in the form.", Severity.Error);
+                await LogService.LogWarning("SaveSinglePrice", $"Validation failed for {sessionType}");
+                Snackbar.Add("Please correct the errors in the single price form.", Severity.Error);
                 return;
             }
 
             singlePrices[sessionType].LastUpdated = DateTime.UtcNow;
             await SessionPriceService.AddOrUpdateAsync(singlePrices[sessionType]);
-
-            foreach (var pack in packPrices[sessionType])
-            {
-                pack.LastUpdated = DateTime.UtcNow;
-                await SessionPackPriceService.AddOrUpdateAsync(pack);
-            }
-
-            foreach (var subscription in subscriptionPrices[sessionType])
-            {
-                subscription.LastUpdated = DateTime.UtcNow;
-                await SubscriptionPriceService.AddOrUpdateAsync(subscription);
-            }
-
-            Snackbar.Add($"Prices for {sessionType.GetDisplayName()} saved successfully.", Severity.Success);
+            await LogService.LogInfo("SaveSinglePrice", $"Successfully saved single price for {sessionType}");
+            Snackbar.Add($"Single price for {sessionType.GetDisplayName()} saved successfully.", Severity.Success);
+            StateHasChanged();
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error saving prices: {ex.Message}", Severity.Error);
+            var innerException = ex.InnerException?.Message ?? "No inner exception";
+            await LogService.LogError("SaveSinglePrice", $"Error saving single price for {sessionType}: {ex.Message}, Inner: {innerException}, StackTrace: {ex.StackTrace}");
+            Snackbar.Add($"Error saving single price: {ex.Message} (Inner: {innerException})", Severity.Error);
+        }
+    }
+
+    private async Task SaveSessionPacks(SessionType sessionType)
+    {
+        try
+        {
+            await LogService.LogInfo("SaveSessionPacks", $"Starting save for session packs, SessionType: {sessionType}");
+            bool hasValidationErrors = false;
+
+            foreach (var pack in packPrices[sessionType])
+            {
+                var formKey = (sessionType, pack.Id);
+                if (packForms.ContainsKey(formKey))
+                {
+                    await packForms[formKey].Validate();
+                    if (!packForms[formKey].IsValid)
+                    {
+                        hasValidationErrors = true;
+                        await LogService.LogWarning("SaveSessionPacks", $"Validation failed for pack ID: {pack.Id}, Name: {pack.Name}, SessionType: {sessionType}");
+                    }
+                    else if (string.IsNullOrEmpty(pack.Name) || pack.PriceGBP < 0 || pack.TotalSessions < 1)
+                    {
+                        hasValidationErrors = true;
+                        await LogService.LogWarning("SaveSessionPacks", $"Invalid data for pack ID: {pack.Id}, Name: {pack.Name}, PriceGBP: {pack.PriceGBP}, TotalSessions: {pack.TotalSessions}");
+                    }
+                }
+                else
+                {
+                    await LogService.LogWarning("SaveSessionPacks", $"Form not found for pack ID: {pack.Id}, Name: {pack.Name}, SessionType: {sessionType}");
+                }
+            }
+
+            if (hasValidationErrors)
+            {
+                Snackbar.Add("Please correct the errors in the session pack forms.", Severity.Error);
+                return;
+            }
+
+            var updatedPacks = new List<SessionPackPrice>();
+            var currentPacks = await SessionPackPriceService.GetPricesForSessionTypeAsync(sessionType);
+
+            foreach (var pack in packPrices[sessionType])
+            {
+                await LogService.LogInfo("SaveSessionPacks", $"Processing pack ID: {pack.Id}, Name: {pack.Name}, PriceGBP: {pack.PriceGBP}, TotalSessions: {pack.TotalSessions}, StripePriceId: {pack.StripePriceId ?? "null"}");
+
+                var dbPack = pack.Id > 0
+                    ? currentPacks.FirstOrDefault(p => p.Id == pack.Id)
+                    : null;
+
+                if (dbPack != null)
+                {
+                    dbPack.Name = pack.Name ?? string.Empty;
+                    dbPack.Description = pack.Description ?? string.Empty;
+                    dbPack.TotalSessions = pack.TotalSessions > 0 ? pack.TotalSessions : 1;
+                    dbPack.PriceGBP = pack.PriceGBP >= 0 ? pack.PriceGBP : 0;
+                    dbPack.LastUpdated = DateTime.UtcNow;
+                    updatedPacks.Add(dbPack);
+                    await LogService.LogInfo("SaveSessionPacks", $"Prepared update for existing pack ID: {dbPack.Id}, Name: {dbPack.Name}");
+                }
+                else
+                {
+                    // This case should not occur unless a new pack was added but not saved yet
+                    pack.LastUpdated = DateTime.UtcNow;
+                    updatedPacks.Add(pack);
+                    await LogService.LogInfo("SaveSessionPacks", $"Prepared new pack Name: {pack.Name}, PriceGBP: {pack.PriceGBP}, TotalSessions: {pack.TotalSessions}, StripePriceId: {pack.StripePriceId ?? "null"}");
+                }
+            }
+
+            if (!updatedPacks.Any())
+            {
+                await LogService.LogWarning("SaveSessionPacks", $"No packs to update for SessionType: {sessionType}");
+                Snackbar.Add($"No changes to save for {sessionType.GetDisplayName()}.", Severity.Info);
+                return;
+            }
+
+            await SessionPackPriceService.UpdateMultipleAsync(updatedPacks);
+            packPrices[sessionType] = await SessionPackPriceService.GetPricesForSessionTypeAsync(sessionType);
+
+            var newForms = new Dictionary<(SessionType, int), MudForm>();
+            foreach (var pack in packPrices[sessionType])
+            {
+                var formKey = (sessionType, pack.Id);
+                newForms[formKey] = packForms.ContainsKey(formKey) ? packForms[formKey] : new MudForm();
+            }
+            packForms = newForms;
+
+            await LogService.LogInfo("SaveSessionPacks", $"Successfully saved session packs for {sessionType}");
+            Snackbar.Add($"Session packs for {sessionType.GetDisplayName()} saved successfully.", Severity.Success);
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            var innerException = ex.InnerException?.Message ?? "No inner exception";
+            await LogService.LogError("SaveSessionPacks",
+                $"Error saving session packs for {sessionType}: {ex.Message}, Inner: {innerException}, StackTrace: {ex.StackTrace}");
+            Snackbar.Add($"Error saving session packs: {ex.Message} (Inner: {innerException})", Severity.Error);
+        }
+    }
+
+    private async Task SaveSubscriptions(SessionType sessionType)
+    {
+        try
+        {
+            await LogService.LogInfo("SaveSubscriptions", $"Starting save for subscriptions, SessionType: {sessionType}");
+            bool hasValidationErrors = false;
+
+            foreach (var subscription in subscriptionPrices[sessionType])
+            {
+                var formKey = (sessionType, subscription.Id);
+                if (subscriptionForms.ContainsKey(formKey))
+                {
+                    await subscriptionForms[formKey].Validate();
+                    if (!subscriptionForms[formKey].IsValid)
+                    {
+                        hasValidationErrors = true;
+                        await LogService.LogWarning("SaveSubscriptions", $"Validation failed for subscription ID: {subscription.Id}, Name: {subscription.Name}, SessionType: {sessionType}");
+                    }
+                }
+                else
+                {
+                    await LogService.LogWarning("SaveSubscriptions", $"Form not found for subscription ID: {subscription.Id}, Name: {subscription.Name}, SessionType: {sessionType}");
+                }
+            }
+
+            if (hasValidationErrors)
+            {
+                Snackbar.Add("Please correct the errors in the subscription forms.", Severity.Error);
+                return;
+            }
+
+            var updatedSubscriptions = new List<SubscriptionPrice>();
+            var currentSubscriptions = await SubscriptionPriceService.GetPricesForSessionTypeAsync(sessionType);
+
+            foreach (var subscription in subscriptionPrices[sessionType])
+            {
+                await LogService.LogInfo("SaveSubscriptions", $"Processing subscription ID: {subscription.Id}, Name: {subscription.Name}, PriceGBP: {subscription.PriceGBP}, StripePriceId: {subscription.StripePriceId ?? "null"}");
+
+                var dbSubscription = subscription.Id > 0
+                    ? currentSubscriptions.FirstOrDefault(s => s.Id == subscription.Id)
+                    : null;
+
+                if (dbSubscription != null)
+                {
+                    dbSubscription.Name = subscription.Name ?? string.Empty;
+                    dbSubscription.Description = subscription.Description ?? string.Empty;
+                    dbSubscription.MonthlyLimit = subscription.MonthlyLimit > 0 ? subscription.MonthlyLimit : 1;
+                    dbSubscription.PriceGBP = subscription.PriceGBP;
+                    dbSubscription.LastUpdated = DateTime.UtcNow;
+                    updatedSubscriptions.Add(dbSubscription);
+                    await LogService.LogInfo("SaveSubscriptions", $"Prepared update for existing subscription ID: {dbSubscription.Id}, Name: {dbSubscription.Name}");
+                }
+                else
+                {
+                    subscription.LastUpdated = DateTime.UtcNow;
+                    updatedSubscriptions.Add(subscription);
+                    await LogService.LogInfo("SaveSubscriptions", $"Prepared new subscription Name: {subscription.Name}, PriceGBP: {subscription.PriceGBP}, StripePriceId: {subscription.StripePriceId ?? "null"}");
+                }
+            }
+
+            await SubscriptionPriceService.UpdateMultipleAsync(updatedSubscriptions);
+            subscriptionPrices[sessionType] = await SubscriptionPriceService.GetPricesForSessionTypeAsync(sessionType);
+
+            var newForms = new Dictionary<(SessionType, int), MudForm>();
+            foreach (var subscription in subscriptionPrices[sessionType])
+            {
+                var formKey = (sessionType, subscription.Id);
+                newForms[formKey] = subscriptionForms.ContainsKey(formKey) ? subscriptionForms[formKey] : new MudForm();
+            }
+            subscriptionForms = newForms;
+
+            await LogService.LogInfo("SaveSubscriptions", $"Successfully saved subscriptions for {sessionType}");
+            Snackbar.Add($"Subscriptions for {sessionType.GetDisplayName()} saved successfully.", Severity.Success);
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            var innerException = ex.InnerException?.Message ?? "No inner exception";
+            await LogService.LogError("SaveSubscriptions",
+                $"Error saving subscriptions for {sessionType}: {ex.Message}, Inner: {innerException}, StackTrace: {ex.StackTrace}");
+            Snackbar.Add($"Error saving subscriptions: {ex.Message} (Inner: {innerException})", Severity.Error);
         }
     }
 

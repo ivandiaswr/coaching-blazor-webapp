@@ -1,5 +1,6 @@
 using ModelLayer.Models;
 using ModelLayer.Models.DTOs;
+using ModelLayer.Models.Enums;
 
 namespace BusinessLayer.Services.Interfaces
 {

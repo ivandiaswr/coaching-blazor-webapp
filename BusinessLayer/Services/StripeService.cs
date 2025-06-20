@@ -130,6 +130,21 @@ public class StripeService : IPaymentService
                     throw new Exception($"Currency conversion error: {priceError}");
                 }
 
+                string stripePriceId = packPrice.StripePriceId;
+                if (string.IsNullOrEmpty(stripePriceId))
+                {
+                    stripePriceId = await CreateOrUpdateSessionPackPriceAsync(
+                        packPrice.Name,
+                        priceValue,
+                        packPrice.SessionType.ToString(),
+                        packPrice.TotalSessions,
+                        userCurrency
+                    );
+                    packPrice.StripePriceId = stripePriceId;
+                    _context.SessionPackPrices.Update(packPrice);
+                    await _context.SaveChangesAsync();
+                }
+
                 options = new SessionCreateOptions
                 {
                     CustomerEmail = session.Email,
@@ -138,15 +153,7 @@ public class StripeService : IPaymentService
                     {
                         new SessionLineItemOptions
                         {
-                            PriceData = new SessionLineItemPriceDataOptions
-                            {
-                                Currency = userCurrency.ToLower(),
-                                ProductData = new SessionLineItemPriceDataProductDataOptions
-                                {
-                                    Name = $"Session Pack: {packPrice.Name}",
-                                },
-                                UnitAmountDecimal = (long)(priceValue * 100),
-                            },
+                            Price = stripePriceId,
                             Quantity = 1,
                         },
                     },
@@ -187,13 +194,19 @@ public class StripeService : IPaymentService
                     throw new Exception($"Currency conversion error: {priceError}");
                 }
 
-                await _logService.LogInfo("CreateCheckoutSessionAsync", $"Creating or updating Stripe price for PlanId: {planId}");
-                var stripePriceId = await CreateOrUpdateSubscriptionPriceAsync(
-                    $"Subscription: {subscriptionPrice.Name}",
-                    priceInUserCurrency,
-                    subscriptionPrice.SessionType.ToString(),
-                    userCurrency
-                );
+                string stripePriceId = subscriptionPrice.StripePriceId;
+                if (string.IsNullOrEmpty(stripePriceId))
+                {
+                    stripePriceId = await CreateOrUpdateSubscriptionPriceAsync(
+                        subscriptionPrice.Name,
+                        priceInUserCurrency,
+                        subscriptionPrice.SessionType.ToString(),
+                        userCurrency
+                    );
+                    subscriptionPrice.StripePriceId = stripePriceId;
+                    _context.SubscriptionPrices.Update(subscriptionPrice);
+                    await _context.SaveChangesAsync();
+                }
 
                 options = new SessionCreateOptions
                 {
@@ -264,7 +277,8 @@ public class StripeService : IPaymentService
                                     Currency = userCurrency.ToLower(),
                                     ProductData = new SessionLineItemPriceDataProductDataOptions
                                     {
-                                        Name = $"Coaching Session: {session.SessionCategory}",
+                                        Name = $"Single Session - {session.SessionCategory.GetDisplayName()}",
+                                        Description = "A one-time personalized coaching session tailored to your goals."
                                     },
                                     UnitAmountDecimal = (long)(priceInUserCurrency * 100),
                                 },
@@ -403,19 +417,32 @@ public class StripeService : IPaymentService
                     return false;
                 }
 
-                var sessionPack = new SessionPack
-                {
-                    UserId = dbSession.Email,
-                    PriceId = packPrice.Id,
-                    SessionsRemaining = packPrice.TotalSessions,
-                    PurchasedAt = DateTime.UtcNow,
-                    ExpiresAt = DateTime.UtcNow.AddMonths(3)
-                };
+                var existingPack = await _context.SessionPacks
+                    .FirstOrDefaultAsync(p => p.UserId == dbSession.Email && p.PriceId == priceId && p.SessionsRemaining > 0 &&
+                                             (p.ExpiresAt == null || p.ExpiresAt > DateTime.UtcNow));
 
-                await _sessionPackService.CreateAsync(sessionPack);
-                packId = sessionPack.Id.ToString();
-                await _logService.LogInfo("ConfirmPaymentAsync",
-                    $"Created SessionPack for UserId: {sessionPack.UserId}, PackId: {sessionPack.Id}, SessionsRemaining: {sessionPack.SessionsRemaining}, Currency: {currency}");
+                if (existingPack != null)
+                {
+                    await _logService.LogInfo("ConfirmPaymentAsync",
+                        $"Existing active SessionPack found for UserId: {dbSession.Email}, PackId: {existingPack.Id}, PriceId: {priceId}. Skipping creation.");
+                    packId = existingPack.Id.ToString();
+                }
+                else
+                {
+                    var sessionPack = new SessionPack
+                    {
+                        UserId = dbSession.Email,
+                        PriceId = packPrice.Id,
+                        SessionsRemaining = packPrice.TotalSessions,
+                        PurchasedAt = DateTime.UtcNow,
+                        ExpiresAt = DateTime.UtcNow.AddMonths(3)
+                    };
+
+                    await _sessionPackService.CreateAsync(sessionPack);
+                    packId = sessionPack.Id.ToString();
+                    await _logService.LogInfo("ConfirmPaymentAsync",
+                        $"Created SessionPack for UserId: {sessionPack.UserId}, PackId: {sessionPack.Id}, SessionsRemaining: {sessionPack.SessionsRemaining}, Currency: {currency}");
+                }
 
                 var success = await _sessionPackService.ConsumeSession(dbSession.Email, packId);
                 if (!success)
@@ -442,41 +469,43 @@ public class StripeService : IPaymentService
                     return false;
                 }
 
-                if (!string.IsNullOrEmpty(subscriptionPrice.StripePriceId))
+                var existingSubscription = await _context.UserSubscriptions
+                    .FirstOrDefaultAsync(s => s.UserId == dbSession.Email && s.PriceId == priceId && s.IsActive);
+
+                if (existingSubscription != null)
                 {
-                    var priceService = new PriceService();
-                    var stripePrice = await priceService.GetAsync(subscriptionPrice.StripePriceId);
-                    if (!stripePrice.Active)
-                    {
-                        await _logService.LogError("ConfirmPaymentAsync",
-                            $"Stripe price ID: {subscriptionPrice.StripePriceId} is inactive for PlanId: {planId}");
-                        return false;
-                    }
+                    await _logService.LogInfo("ConfirmPaymentAsync",
+                        $"Existing active subscription found for UserId: {dbSession.Email}, SubscriptionId: {existingSubscription.StripeSubscriptionId}, PriceId: {priceId}. Updating sessions.");
+                    existingSubscription.SessionsUsedThisMonth = 0;
+                    existingSubscription.CurrentPeriodStart = stripeSession.Created;
+                    existingSubscription.CurrentPeriodEnd = existingSubscription.CurrentPeriodStart.AddMonths(1);
+                    await _context.SaveChangesAsync();
                 }
-
-                var periodStart = stripeSession.Created;
-                var periodEnd = periodStart.AddMonths(1);
-
-                var userSubscription = new UserSubscription
+                else
                 {
-                    UserId = dbSession.Email,
-                    PriceId = priceId,
-                    StripeSubscriptionId = stripeSession.SubscriptionId,
-                    IsActive = true,
-                    SessionsUsedThisMonth = 1,
-                    CurrentPeriodStart = periodStart,
-                    CurrentPeriodEnd = periodEnd
-                };
+                    var periodStart = stripeSession.Created;
+                    var periodEnd = periodStart.AddMonths(1);
 
-                _context.UserSubscriptions.Add(userSubscription);
-                await _context.SaveChangesAsync();
-                await _logService.LogInfo("ConfirmPaymentAsync",
-                    $"Created UserSubscription for UserId: {userSubscription.UserId}, SubscriptionId: {userSubscription.StripeSubscriptionId}");
+                    var userSubscription = new UserSubscription
+                    {
+                        UserId = dbSession.Email,
+                        PriceId = priceId,
+                        StripeSubscriptionId = stripeSession.SubscriptionId,
+                        IsActive = true,
+                        SessionsUsedThisMonth = 0,
+                        CurrentPeriodStart = periodStart,
+                        CurrentPeriodEnd = periodEnd
+                    };
+
+                    _context.UserSubscriptions.Add(userSubscription);
+                    await _context.SaveChangesAsync();
+                    await _logService.LogInfo("ConfirmPaymentAsync",
+                        $"Created UserSubscription for UserId: {userSubscription.UserId}, SubscriptionId: {userSubscription.StripeSubscriptionId}");
+                }
             }
 
             dbSession.IsPaid = true;
             dbSession.PaidAt = DateTime.UtcNow;
-            dbSession.PackId = packId;
             dbSession.IsPending = false;
 
             if (dbSession.VideoSession == null)
@@ -496,7 +525,7 @@ public class StripeService : IPaymentService
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
             await _logService.LogInfo("ConfirmPaymentAsync",
-                $"Confirmed session Id: {dbSession.Id}, UserId: {dbSession.Email}, StripeSessionId: {stripeSessionId}, PackId: {dbSession.PackId}, Currency: {currency}");
+                $"Confirmed session Id: {dbSession.Id}, UserId: {dbSession.Email}, StripeSessionId: {stripeSessionId}, Currency: {currency}");
 
             return true;
         }
@@ -587,86 +616,211 @@ public class StripeService : IPaymentService
             await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync",
                 $"Processing price for {productName}, Amount: {amount}, Currency: {currency}, SessionType: {sessionType}");
 
-            SubscriptionPrice? existingPrice = null;
+            var productService = new ProductService();
+            var productListOptions = new ProductListOptions { Limit = 100, Active = true };
+            var products = await productService.ListAsync(productListOptions);
+            var existingProduct = products.Data.FirstOrDefault(p =>
+                p.Metadata.TryGetValue("SessionType", out var st) && st == sessionType &&
+                p.Metadata.TryGetValue("Currency", out var curr) && curr.ToUpper() == currency.ToUpper());
 
-            if (Enum.TryParse<SessionType>(sessionType, out var parsedSessionType))
+            string productId;
+            if (existingProduct != null)
             {
-                existingPrice = await _context.SubscriptionPrices
-                    .FirstOrDefaultAsync(sp => sp.SessionType == parsedSessionType && sp.Currency == currency && !string.IsNullOrEmpty(sp.StripePriceId));
+                productId = existingProduct.Id;
+                await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync",
+                    $"Reusing existing Product ID: {productId} for SessionType: {sessionType}, Currency: {currency}");
             }
             else
             {
-                throw new ArgumentException($"Invalid session type: {sessionType}");
+                var productOptions = new ProductCreateOptions
+                {
+                    Name = productName,
+                    Description = $"Subscription for {sessionType} in {currency}",
+                    Metadata = new Dictionary<string, string>
+                        {
+                            { "SessionType", sessionType },
+                            { "Currency", currency }
+                        }
+                };
+                var product = await productService.CreateAsync(productOptions);
+                productId = product?.Id ?? throw new InvalidOperationException("Failed to create Stripe product.");
+                await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync",
+                    $"Created new Product ID: {productId} for SessionType: {sessionType}, Currency: {currency}");
             }
 
+            var priceService = new PriceService();
+            var priceListOptions = new PriceListOptions { Product = productId, Active = true, Limit = 100 };
+            var prices = await priceService.ListAsync(priceListOptions);
+            var existingPrice = prices.Data.FirstOrDefault(p =>
+                p.UnitAmountDecimal == (long)(amount * 100) && p.Currency.ToUpper() == currency.ToUpper());
+
+            string stripePriceId;
             if (existingPrice != null)
             {
-                var priceService = new PriceService();
-                var stripePrice = await priceService.GetAsync(existingPrice.StripePriceId);
-                if (stripePrice.Active && stripePrice.UnitAmountDecimal == (long)(amount * 100) && stripePrice.Currency.ToUpper() == currency.ToUpper())
+                stripePriceId = existingPrice.Id;
+                await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync",
+                    $"Using existing active Price ID: {stripePriceId}");
+            }
+            else
+            {
+                var priceOptions = new PriceCreateOptions
                 {
-                    await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync",
-                        $"Using existing active Price ID: {existingPrice.StripePriceId}");
-                    return existingPrice.StripePriceId;
-                }
-                else
-                {
-                    await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync",
-                        $"Existing price ID: {existingPrice.StripePriceId} is inactive or mismatched. Creating new Price.");
-                }
+                    UnitAmount = (long)(amount * 100),
+                    Currency = currency.ToLower(),
+                    Recurring = new PriceRecurringOptions { Interval = "month" },
+                    Product = productId,
+                    Metadata = new Dictionary<string, string>
+                        {
+                            { "SessionType", sessionType },
+                            { "Currency", currency }
+                        }
+                };
+                var price = await priceService.CreateAsync(priceOptions);
+                stripePriceId = price?.Id ?? throw new InvalidOperationException("Failed to create Stripe price.");
+                await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync",
+                    $"Created Price ID: {stripePriceId} for Product: {productName}, Amount: {amount} {currency}");
             }
 
-            var productService = new ProductService();
-            var productOptions = new ProductCreateOptions
-            {
-                Name = productName,
-                Description = $"Subscription for {sessionType} in {currency}",
-                Metadata = new Dictionary<string, string>
-                {
-                    { "SessionType", sessionType },
-                    { "Currency", currency }
-                }
-            };
-            var product = await productService.CreateAsync(productOptions);
-
-            var priceServiceCreate = new PriceService();
-            var priceOptions = new PriceCreateOptions
-            {
-                UnitAmount = (long)(amount * 100),
-                Currency = currency.ToLower(),
-                Recurring = new PriceRecurringOptions
-                {
-                    Interval = "month"
-                },
-                Product = product.Id,
-                Metadata = new Dictionary<string, string>
-                {
-                    { "SessionType", sessionType },
-                    { "Currency", currency }
-                }
-            };
-            var price = await priceServiceCreate.CreateAsync(priceOptions);
-
-            var subscriptionPrice = new SubscriptionPrice
-            {
-                SessionType = parsedSessionType,
-                Name = productName,
-                PriceGBP = amount,
-                Currency = currency,
-                StripePriceId = price.Id,
-                MonthlyLimit = existingPrice?.MonthlyLimit ?? 1
-            };
-            _context.SubscriptionPrices.Add(subscriptionPrice);
-            await _context.SaveChangesAsync();
-
-            await _logService.LogInfo("CreateOrUpdateSubscriptionPriceAsync",
-                $"Created Price ID: {price.Id} for Product: {productName}, Amount: {amount} {currency}");
-            return price.Id;
+            return stripePriceId;
+        }
+        catch (StripeException ex)
+        {
+            await _logService.LogError("CreateOrUpdateSubscriptionPriceAsync",
+                $"Stripe error for {productName}: {ex.Message}, StripeError: {ex.StripeError?.Message}");
+            throw;
         }
         catch (Exception ex)
         {
             await _logService.LogError("CreateOrUpdateSubscriptionPriceAsync",
-                $"Failed to create or update price for {productName}. Error: {ex.Message}");
+                $"Failed to create or update price for {productName}. Error: {ex.Message}, StackTrace: {ex.StackTrace}");
+            throw;
+        }
+    }
+
+    public async Task<string> CreateOrUpdateSessionPackPriceAsync(string productName, decimal amount, string sessionType, int totalSessions, string currency = "GBP")
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(StripeConfiguration.ApiKey))
+            {
+                throw new InvalidOperationException("Stripe API key is not configured.");
+            }
+
+            await _logService.LogInfo("CreateOrUpdateSessionPackPriceAsync",
+                $"Processing price for {productName}, Amount: {amount}, Currency: {currency}, SessionType: {sessionType}, TotalSessions: {totalSessions}");
+
+            SessionPackPrice? existingPrice = await _context.SessionPackPrices
+                .FirstOrDefaultAsync(sp => sp.SessionType.ToString() == sessionType && sp.PriceGBP == amount && sp.TotalSessions == totalSessions);
+
+            string stripePriceId = existingPrice?.StripePriceId;
+            if (existingPrice != null && !string.IsNullOrEmpty(stripePriceId))
+            {
+                var existsPriceService = new PriceService();
+                var stripePrice = await existsPriceService.GetAsync(stripePriceId);
+                if (stripePrice != null)
+                {
+                    if (stripePrice.Active && stripePrice.UnitAmountDecimal == (long)(amount * 100) &&
+                        stripePrice.Currency.ToUpper() == currency.ToUpper() && stripePrice.Product.Name == productName &&
+                        stripePrice.Metadata.TryGetValue("TotalSessions", out var totalSessionsMetadata) &&
+                        int.TryParse(totalSessionsMetadata, out var parsedTotalSessions) && parsedTotalSessions == totalSessions)
+                    {
+                        await _logService.LogInfo("CreateOrUpdateSessionPackPriceAsync",
+                            $"Using existing active Price ID: {stripePriceId}");
+                        return stripePriceId;
+                    }
+                    await _logService.LogInfo("CreateOrUpdateSessionPackPriceAsync",
+                        $"Existing price mismatch or inactive for ID: {stripePriceId}, creating new.");
+                }
+                else
+                {
+                    await _logService.LogWarning("CreateOrUpdateSessionPackPriceAsync",
+                        $"Failed to retrieve Stripe price for ID: {stripePriceId}, creating new.");
+                }
+            }
+
+            var productService = new ProductService();
+            var productListOptions = new ProductListOptions { Limit = 100, Active = true };
+            var products = await productService.ListAsync(productListOptions);
+            var existingProduct = products.Data.FirstOrDefault(p =>
+                p.Metadata.TryGetValue("SessionType", out var st) && st == sessionType &&
+                p.Metadata.TryGetValue("Currency", out var curr) && curr.ToUpper() == currency.ToUpper() &&
+                p.Name == productName);
+
+            string productId;
+            if (existingProduct != null)
+            {
+                productId = existingProduct.Id;
+                await _logService.LogInfo("CreateOrUpdateSessionPackPriceAsync",
+                    $"Reusing existing Product ID: {productId} for SessionType: {sessionType}, Currency: {currency}");
+            }
+            else
+            {
+                var productOptions = new ProductCreateOptions
+                {
+                    Name = productName,
+                    Description = $"Session Pack for {sessionType} ({totalSessions} sessions) in {currency}",
+                    Metadata = new Dictionary<string, string>
+                    {
+                        { "SessionType", sessionType },
+                        { "Currency", currency },
+                        { "TotalSessions", totalSessions.ToString() }
+                    }
+                };
+                var product = await productService.CreateAsync(productOptions);
+                productId = product?.Id ?? throw new InvalidOperationException("Failed to create Stripe product.");
+                await _logService.LogInfo("CreateOrUpdateSessionPackPriceAsync",
+                    $"Created new Product ID: {productId} for SessionType: {sessionType}, Currency: {currency}, TotalSessions: {totalSessions}");
+            }
+
+            var priceService = new PriceService();
+            var priceOptions = new PriceCreateOptions
+            {
+                UnitAmount = (long)(amount * 100),
+                Currency = currency.ToLower(),
+                Product = productId,
+                Metadata = new Dictionary<string, string>
+                {
+                    { "SessionType", sessionType },
+                    { "Currency", currency },
+                    { "TotalSessions", totalSessions.ToString() }
+                }
+            };
+            var price = await priceService.CreateAsync(priceOptions);
+            if (price == null) throw new InvalidOperationException("Failed to create Stripe price.");
+
+            if (existingPrice != null)
+            {
+                existingPrice.StripePriceId = price.Id;
+                _context.SessionPackPrices.Update(existingPrice);
+            }
+            else
+            {
+                var sessionPackPrice = new SessionPackPrice
+                {
+                    SessionType = (SessionType)Enum.Parse(typeof(SessionType), sessionType),
+                    Name = productName,
+                    PriceGBP = amount,
+                    StripePriceId = price.Id,
+                    TotalSessions = totalSessions
+                };
+                _context.SessionPackPrices.Add(sessionPackPrice);
+            }
+
+            await _context.SaveChangesAsync();
+            await _logService.LogInfo("CreateOrUpdateSessionPackPriceAsync",
+                $"Created Price ID: {price.Id} for Product: {productName}, Amount: {amount} {currency}, TotalSessions: {totalSessions}");
+            return price.Id;
+        }
+        catch (StripeException ex)
+        {
+            await _logService.LogError("CreateOrUpdateSessionPackPriceAsync",
+                $"Stripe error for {productName}: {ex.Message}, StripeError: {ex.StripeError?.Message}");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            await _logService.LogError("CreateOrUpdateSessionPackPriceAsync",
+                $"Failed to create or update price for {productName}. Error: {ex.Message}, StackTrace: {ex.StackTrace}");
             throw;
         }
     }

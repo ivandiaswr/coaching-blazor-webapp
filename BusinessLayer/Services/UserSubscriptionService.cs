@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using ModelLayer.Models;
 using ModelLayer.Models.DTOs;
+using ModelLayer.Models.Enums;
 using Stripe;
 
 namespace BusinessLayer.Services;

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using ModelLayer.Models.Enums;
 
 namespace ModelLayer.Models
 {
@@ -17,6 +18,7 @@ namespace ModelLayer.Models
         [Range(0, double.MaxValue)]
         public decimal PriceGBP { get; set; }
         public string Currency { get; } = "GBP";
+        public string? StripePriceId { get; set; }
         public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
     }
 }

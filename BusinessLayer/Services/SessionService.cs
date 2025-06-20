@@ -5,6 +5,7 @@ using MimeKit;
 using MailKit.Net.Smtp;
 using ModelLayer.Models;
 using Microsoft.EntityFrameworkCore;
+using ModelLayer.Models.Enums;
 namespace BusinessLayer.Services;
 
 public class SessionService : ISessionService

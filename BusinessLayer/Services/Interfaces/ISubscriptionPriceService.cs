@@ -1,4 +1,5 @@
 using ModelLayer.Models;
+using ModelLayer.Models.Enums;
 
 namespace BusinessLayer.Services.Interfaces
 {
@@ -8,6 +9,7 @@ namespace BusinessLayer.Services.Interfaces
         Task<List<SubscriptionPrice>> GetPricesForSessionTypeAsync(SessionType sessionType);
         Task<SubscriptionPrice?> GetByIdAsync(int id);
         Task AddOrUpdateAsync(SubscriptionPrice price);
+        Task UpdateMultipleAsync(List<SubscriptionPrice> subscriptions);
         Task DeleteAsync(int id);
     }
 }

@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using ModelLayer.Models.Enums;
 
 namespace ModelLayer.Models
 {

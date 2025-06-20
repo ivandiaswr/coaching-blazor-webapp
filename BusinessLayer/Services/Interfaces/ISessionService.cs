@@ -1,4 +1,5 @@
 using ModelLayer.Models;
+using ModelLayer.Models.Enums;
 
 namespace BusinessLayer.Services.Interfaces;
 
