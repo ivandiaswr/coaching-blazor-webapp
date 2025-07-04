@@ -105,6 +105,21 @@
                 await SessionService.CreateSessionAsync(session);
             }
 
+            var subscriptionId = session.PackId;
+            if (!string.IsNullOrEmpty(subscriptionId))
+            {
+                var registerUsageSuccess = await UserSubscriptionService.RegisterMonthlyUsage(session.Email, subscriptionId);
+
+                if (registerUsageSuccess)
+                {
+                    await LogService.LogInfo("PaymentSuccess", $"Successfully registered monthly usage for user {session.Email}, subscription {subscriptionId}");
+                }
+                else
+                {
+                    await LogService.LogInfo("PaymentSuccess", $"No monthly usage registered for {session.Email}, PackId {subscriptionId} - likely a pack or single session");
+                }
+            }
+
             isLoading = false;
             isSuccess = true;
             Snackbar.Add("Payment successful! Your session is confirmed.", Severity.Success);

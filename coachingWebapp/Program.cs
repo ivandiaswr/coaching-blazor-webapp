@@ -62,8 +62,8 @@ builder.Services.AddDbContext<CoachingDbContext>(options =>
 //                    Console.WriteLine(message);
 //                }
 //            }, LogLevel.Information));
-    // .EnableSensitiveDataLogging() // Only use in development
-    // .EnableDetailedErrors());
+// .EnableSensitiveDataLogging() // Only use in development
+// .EnableDetailedErrors());
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     {
@@ -89,7 +89,6 @@ builder.Services.AddScoped<IUnavailableTimeService, UnavailableTimeService>();
 builder.Services.AddScoped<IVideoCallService, VideoCallService>();
 builder.Services.AddScoped<ISecurityService, SecurityService>();
 builder.Services.AddScoped<IHelperService, HelperService>();
-builder.Services.AddScoped<ILogService, LogService>();
 builder.Services.AddScoped<IChatService, OpenRouterChatService>();
 builder.Services.AddScoped<IPaymentService, StripeService>();
 builder.Services.AddScoped<ISessionPriceService, SessionPriceService>();
@@ -99,9 +98,15 @@ builder.Services.AddScoped<ISessionPackService, SessionPackService>();
 builder.Services.AddScoped<IUserSubscriptionService, UserSubscriptionService>();
 builder.Services.AddScoped<ICurrencyConversionService, CurrencyConversionService>();
 
+builder.Services.AddScoped<ILogService>(provider =>
+{
+    var context = provider.GetRequiredService<CoachingDbContext>();
+    return new LogService(context);
+});
+
 builder.Services.AddSingleton<LogProcessor>();
 
-builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation(); 
+builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
 
 // Add services to the container
 builder.Services.AddRazorComponents()
@@ -225,7 +230,7 @@ using (var scope = app.Services.CreateScope())
     dbContext.Database.EnsureCreated();
 
     var roleMananger = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-    string[] roles = { "Admin", "User"};
+    string[] roles = { "Admin", "User" };
 
     foreach (var role in roles)
     {

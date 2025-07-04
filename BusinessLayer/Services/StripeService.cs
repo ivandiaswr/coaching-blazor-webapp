@@ -172,14 +172,26 @@ public class StripeService : IPaymentService
             else if (bookingType == BookingType.Subscription && !string.IsNullOrEmpty(planId))
             {
                 await _logService.LogInfo("CreateCheckoutSessionAsync", $"Processing Subscription with PlanId: {planId}");
-                if (!int.TryParse(planId, out var priceId))
+
+                // For subscriptions, planId is the Stripe Price ID, not the database ID
+                SubscriptionPrice subscriptionPrice;
+
+                if (planId.StartsWith("price_")) // It's a Stripe Price ID
+                {
+                    subscriptionPrice = await _context.SubscriptionPrices
+                        .FirstOrDefaultAsync(sp => sp.StripePriceId == planId && sp.SessionType == session.SessionCategory);
+                }
+                else if (int.TryParse(planId, out var priceId)) // It's a database ID
+                {
+                    subscriptionPrice = await _context.SubscriptionPrices
+                        .FirstOrDefaultAsync(sp => sp.Id == priceId && sp.SessionType == session.SessionCategory);
+                }
+                else
                 {
                     await _logService.LogError("CreateCheckoutSessionAsync", $"Invalid PlanId format: {planId}");
                     throw new ArgumentException("Invalid PlanId format.");
                 }
 
-                var subscriptionPrice = await _context.SubscriptionPrices
-                    .FirstOrDefaultAsync(sp => sp.Id == priceId && sp.SessionType == session.SessionCategory);
                 if (subscriptionPrice == null)
                 {
                     await _logService.LogError("CreateCheckoutSessionAsync", $"No subscription price found for PlanId: {planId}");
@@ -355,113 +367,73 @@ public class StripeService : IPaymentService
         }
     }
 
-    public async Task<bool> ConfirmPaymentAsync(string stripeSessionId)
+    public async Task<bool> ConfirmPaymentAsync(string sessionId)
     {
-        using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            var stripeSessionService = new SessionService();
-            var stripeSession = await stripeSessionService.GetAsync(stripeSessionId);
+            await _logService.LogInfo("ConfirmPaymentAsync", $"Starting payment confirmation for sessionId: {sessionId}");
 
-            if (stripeSession.PaymentStatus != "paid" && stripeSession.Status != "complete")
+            var existingSession = await _context.Sessions
+                .FirstOrDefaultAsync(s => s.StripeSessionId == sessionId);
+
+            if (existingSession != null && existingSession.IsPaid && !existingSession.IsPending)
             {
-                await _logService.LogError("ConfirmPaymentAsync", $"Payment not completed for StripeSessionId: {stripeSessionId}");
+                await _logService.LogInfo("ConfirmPaymentAsync", $"Session {sessionId} already processed successfully");
+                return true;
+            }
+
+            var service = new SessionService();
+            var stripeSession = await service.GetAsync(sessionId);
+
+            if (stripeSession.PaymentStatus != "paid")
+            {
+                await _logService.LogError("ConfirmPaymentAsync", $"Payment not completed. Status: {stripeSession.PaymentStatus}");
                 return false;
             }
 
-            var dbSession = await _context.Sessions
-                .Include(s => s.VideoSession)
-                .FirstOrDefaultAsync(s => s.StripeSessionId == stripeSessionId);
+            if (!stripeSession.Metadata.TryGetValue("SessionId", out var dbSessionId) ||
+                !int.TryParse(dbSessionId, out var sessionIdInt))
+            {
+                await _logService.LogError("ConfirmPaymentAsync", "Invalid or missing SessionId in metadata");
+                return false;
+            }
 
+            var dbSession = await _context.Sessions.FindAsync(sessionIdInt);
             if (dbSession == null)
             {
-                await _logService.LogError("ConfirmPaymentAsync", $"No session found for StripeSessionId: {stripeSessionId}");
+                await _logService.LogError("ConfirmPaymentAsync", $"Session not found in database: {sessionIdInt}");
                 return false;
             }
 
-            if (!dbSession.IsPending && dbSession.IsPaid && dbSession.VideoSession != null)
+            dbSession.IsPaid = true;
+            dbSession.PaidAt = DateTime.UtcNow;
+            dbSession.IsPending = false;
+            dbSession.StripeSessionId = sessionId;
+
+            var bookingType = Enum.Parse<BookingType>(stripeSession.Metadata["BookingType"]);
+            var planId = stripeSession.Metadata.GetValueOrDefault("PlanId");
+
+            await _logService.LogInfo("ConfirmPaymentAsync", $"Processing {bookingType} payment for PlanId: {planId}");
+
+            if (bookingType == BookingType.Subscription && !string.IsNullOrEmpty(planId))
             {
-                await _logService.LogInfo("ConfirmPaymentAsync", $"Session Id: {dbSession.Id} already confirmed with VideoSession for StripeSessionId: {stripeSessionId}");
-                await transaction.CommitAsync();
-                return true;
-            }
+                SubscriptionPrice subscriptionPrice;
 
-            if (dbSession.IsPending && dbSession.VideoSession != null)
-            {
-                await _logService.LogWarning("ConfirmPaymentAsync", $"Pending session Id: {dbSession.Id} already has VideoSession for StripeSessionId: {stripeSessionId}");
-                await transaction.CommitAsync();
-                return true;
-            }
-
-            var bookingTypeStr = stripeSession.Metadata.TryGetValue("BookingType", out var bt) ? bt : null;
-            var planId = stripeSession.Metadata.TryGetValue("PlanId", out var pid) ? pid : null;
-            var currency = stripeSession.Metadata.TryGetValue("Currency", out var curr) ? curr : "GBP";
-            var bookingType = Enum.TryParse<BookingType>(bookingTypeStr, out var parsedType) ? parsedType : BookingType.SingleSession;
-
-            string packId = null;
-
-            if (bookingType == BookingType.SessionPack && !string.IsNullOrEmpty(planId))
-            {
-                if (!int.TryParse(planId, out var priceId))
+                if (planId.StartsWith("price_"))
                 {
-                    await _logService.LogError("ConfirmPaymentAsync", $"Invalid PlanId format: {planId}");
-                    return false;
+                    subscriptionPrice = await _context.SubscriptionPrices
+                        .FirstOrDefaultAsync(sp => sp.StripePriceId == planId);
                 }
-
-                var packPrice = await _context.SessionPackPrices
-                    .FirstOrDefaultAsync(sp => sp.Id == priceId);
-
-                if (packPrice == null)
+                else if (int.TryParse(planId, out var priceId))
                 {
-                    await _logService.LogError("ConfirmPaymentAsync", $"Session pack price not found for PlanId: {planId}");
-                    return false;
-                }
-
-                var existingPack = await _context.SessionPacks
-                    .FirstOrDefaultAsync(p => p.UserId == dbSession.Email && p.PriceId == priceId && p.SessionsRemaining > 0 &&
-                                             (p.ExpiresAt == null || p.ExpiresAt > DateTime.UtcNow));
-
-                if (existingPack != null)
-                {
-                    await _logService.LogInfo("ConfirmPaymentAsync",
-                        $"Existing active SessionPack found for UserId: {dbSession.Email}, PackId: {existingPack.Id}, PriceId: {priceId}. Skipping creation.");
-                    packId = existingPack.Id.ToString();
+                    subscriptionPrice = await _context.SubscriptionPrices
+                        .FirstOrDefaultAsync(sp => sp.Id == priceId);
                 }
                 else
                 {
-                    var sessionPack = new SessionPack
-                    {
-                        UserId = dbSession.Email,
-                        PriceId = packPrice.Id,
-                        SessionsRemaining = packPrice.TotalSessions,
-                        PurchasedAt = DateTime.UtcNow,
-                        ExpiresAt = DateTime.UtcNow.AddMonths(3)
-                    };
-
-                    await _sessionPackService.CreateAsync(sessionPack);
-                    packId = sessionPack.Id.ToString();
-                    await _logService.LogInfo("ConfirmPaymentAsync",
-                        $"Created SessionPack for UserId: {sessionPack.UserId}, PackId: {sessionPack.Id}, SessionsRemaining: {sessionPack.SessionsRemaining}, Currency: {currency}");
-                }
-
-                var success = await _sessionPackService.ConsumeSession(dbSession.Email, packId);
-                if (!success)
-                {
-                    await _logService.LogError("ConfirmPaymentAsync",
-                        $"Failed to deduct session from pack for UserId: {dbSession.Email}, PackId: {packId}");
-                    return false;
-                }
-            }
-            else if (bookingType == BookingType.Subscription && !string.IsNullOrEmpty(planId))
-            {
-                if (!int.TryParse(planId, out var priceId))
-                {
                     await _logService.LogError("ConfirmPaymentAsync", $"Invalid PlanId format: {planId}");
                     return false;
                 }
-
-                var subscriptionPrice = await _context.SubscriptionPrices
-                    .FirstOrDefaultAsync(sp => sp.Id == priceId);
 
                 if (subscriptionPrice == null)
                 {
@@ -469,71 +441,87 @@ public class StripeService : IPaymentService
                     return false;
                 }
 
-                var existingSubscription = await _context.UserSubscriptions
-                    .FirstOrDefaultAsync(s => s.UserId == dbSession.Email && s.PriceId == priceId && s.IsActive);
-
-                if (existingSubscription != null)
+                var stripeSubscriptionId = stripeSession.SubscriptionId;
+                if (string.IsNullOrEmpty(stripeSubscriptionId))
                 {
-                    await _logService.LogInfo("ConfirmPaymentAsync",
-                        $"Existing active subscription found for UserId: {dbSession.Email}, SubscriptionId: {existingSubscription.StripeSubscriptionId}, PriceId: {priceId}. Updating sessions.");
-                    existingSubscription.SessionsUsedThisMonth = 0;
-                    existingSubscription.CurrentPeriodStart = stripeSession.Created;
-                    existingSubscription.CurrentPeriodEnd = existingSubscription.CurrentPeriodStart.AddMonths(1);
-                    await _context.SaveChangesAsync();
+                    await _logService.LogError("ConfirmPaymentAsync", "No subscription ID found in Stripe session");
+                    return false;
+                }
+
+                var existingSubscription = await _context.UserSubscriptions
+                    .FirstOrDefaultAsync(s => s.UserId == dbSession.Email &&
+                                        s.PriceId == subscriptionPrice.Id &&
+                                        s.IsActive);
+
+                if (existingSubscription == null)
+                {
+                    var newSubscription = new UserSubscription
+                    {
+                        UserId = dbSession.Email,
+                        PriceId = subscriptionPrice.Id,
+                        StripeSubscriptionId = stripeSubscriptionId,
+                        IsActive = true,
+                        SessionsUsedThisMonth = 0,
+                        CurrentPeriodStart = DateTime.UtcNow,
+                        CurrentPeriodEnd = DateTime.UtcNow.AddMonths(1),
+                        StartedAt = DateTime.UtcNow
+                    };
+
+                    _context.UserSubscriptions.Add(newSubscription);
+                    await _logService.LogInfo("ConfirmPaymentAsync", $"Created new subscription: {stripeSubscriptionId}");
                 }
                 else
                 {
-                    var periodStart = stripeSession.Created;
-                    var periodEnd = periodStart.AddMonths(1);
+                    await _logService.LogInfo("ConfirmPaymentAsync", $"Subscription already exists: {existingSubscription.StripeSubscriptionId}");
+                }
 
-                    var userSubscription = new UserSubscription
+                dbSession.PackId = stripeSubscriptionId;
+            }
+            else if (bookingType == BookingType.SessionPack && !string.IsNullOrEmpty(planId))
+            {
+                if (int.TryParse(planId, out var packId))
+                {
+                    var packPrice = await _context.SessionPackPrices.FindAsync(packId);
+                    if (packPrice != null)
                     {
-                        UserId = dbSession.Email,
-                        PriceId = priceId,
-                        StripeSubscriptionId = stripeSession.SubscriptionId,
-                        IsActive = true,
-                        SessionsUsedThisMonth = 0,
-                        CurrentPeriodStart = periodStart,
-                        CurrentPeriodEnd = periodEnd
-                    };
+                        await _logService.LogInfo("ConfirmPaymentAsync", $"Processing pack: {packPrice.Name}");
 
-                    _context.UserSubscriptions.Add(userSubscription);
-                    await _context.SaveChangesAsync();
-                    await _logService.LogInfo("ConfirmPaymentAsync",
-                        $"Created UserSubscription for UserId: {userSubscription.UserId}, SubscriptionId: {userSubscription.StripeSubscriptionId}");
+                        // Create a new session pack for the user
+                        var userSessionPack = new SessionPack
+                        {
+                            UserId = dbSession.Email,
+                            PriceId = packPrice.Id,
+                            SessionsRemaining = packPrice.TotalSessions,
+                            PurchasedAt = DateTime.UtcNow,
+                        };
+
+                        _context.SessionPacks.Add(userSessionPack);
+                        await _logService.LogInfo("ConfirmPaymentAsync", $"Created session pack for user {dbSession.Email}: {packPrice.Name} with {packPrice.TotalSessions} sessions");
+
+                        // Update the session's PackId to reference the user's session pack
+                        dbSession.PackId = userSessionPack.Id.ToString();
+                    }
+                    else
+                    {
+                        await _logService.LogError("ConfirmPaymentAsync", $"Session pack price not found for PlanId: {planId}");
+                        return false;
+                    }
+                }
+                else
+                {
+                    await _logService.LogError("ConfirmPaymentAsync", $"Invalid pack PlanId format: {planId}");
+                    return false;
                 }
             }
 
-            dbSession.IsPaid = true;
-            dbSession.PaidAt = DateTime.UtcNow;
-            dbSession.IsPending = false;
-
-            if (dbSession.VideoSession == null)
-            {
-                var videoSession = new VideoSession
-                {
-                    UserId = dbSession.Email,
-                    ScheduledAt = dbSession.PreferredDateTime,
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
-                    Session = dbSession,
-                    SessionRefId = dbSession.Id
-                };
-                _context.VideoSessions.Add(videoSession);
-            }
-
             await _context.SaveChangesAsync();
-            await transaction.CommitAsync();
-            await _logService.LogInfo("ConfirmPaymentAsync",
-                $"Confirmed session Id: {dbSession.Id}, UserId: {dbSession.Email}, StripeSessionId: {stripeSessionId}, Currency: {currency}");
+            await _logService.LogInfo("ConfirmPaymentAsync", $"Payment confirmation completed successfully for session: {sessionIdInt}");
 
             return true;
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
-            await _logService.LogError("ConfirmPaymentAsync Error",
-                $"Failed to confirm payment for StripeSessionId: {stripeSessionId}. Error: {ex.Message}");
+            await _logService.LogError("ConfirmPaymentAsync", $"Error: {ex.Message}, StackTrace: {ex.StackTrace}");
             return false;
         }
     }
@@ -559,13 +547,22 @@ public class StripeService : IPaymentService
                     var dbSession = await _context.Sessions.FirstOrDefaultAsync(s => s.StripeSessionId == checkoutSession.Id);
                     if (dbSession == null)
                     {
-                        await _logService.LogError("HandleWebhookAsync", $"Session not found for StripeSessionId: {checkoutSession.Id}");
-                        return;
+                        if (checkoutSession.Metadata != null &&
+                            checkoutSession.Metadata.TryGetValue("SessionId", out var sessionIdStr) &&
+                            int.TryParse(sessionIdStr, out var sessionId))
+                        {
+                            dbSession = await _context.Sessions.FindAsync(sessionId);
+                            if (dbSession != null)
+                            {
+                                dbSession.StripeSessionId = checkoutSession.Id;
+                                await _logService.LogInfo("HandleWebhookAsync", $"Updated session {sessionId} with StripeSessionId: {checkoutSession.Id}");
+                            }
+                        }
                     }
 
-                    if (!dbSession.IsPending && dbSession.IsPaid)
+                    if (dbSession == null)
                     {
-                        await _logService.LogInfo("HandleWebhookAsync", $"Session already confirmed for StripeSessionId: {checkoutSession.Id}");
+                        await _logService.LogError("HandleWebhookAsync", $"Session not found for StripeSessionId: {checkoutSession.Id}");
                         return;
                     }
 
@@ -582,7 +579,6 @@ public class StripeService : IPaymentService
                         return;
                     }
 
-                    await _sessionService.CreateSessionAsync(dbSession);
                     await _context.SaveChangesAsync();
                     await _logService.LogInfo("HandleWebhookAsync", $"Successfully processed checkout.session.completed for StripeSessionId: {checkoutSession.Id}");
                 }

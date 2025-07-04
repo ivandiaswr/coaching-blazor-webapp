@@ -27,15 +27,15 @@
                     </MudItem>
                     <MudItem xs="12" Class="session-detail-item">
                         <MudText Typo="Typo.caption" Color="Color.Primary">Message</MudText>
-                        <MudText Typo="Typo.body2" Class="mt-1">@Session.Message</MudText>
+                        <MudText Typo="Typo.body2" Class="mt-1">@(string.IsNullOrEmpty(Session.Message) ? "No message provided." : Session.Message)</MudText>
                     </MudItem>
                     <MudItem xs="12" sm="6" Class="session-detail-item">
                         <MudText Typo="Typo.caption" Color="Color.Primary">Preferred Date & Time</MudText>
-                        <MudText Typo="Typo.body1">@Session.PreferredDateTime.ToString("dd MMM yyyy HH:mm")</MudText>
+                        <MudText Typo="Typo.body1">@ConvertToLocalTime(Session.PreferredDateTime).ToString("dd MMM yyyy HH:mm") (@CurrentTimeZone)</MudText>
                     </MudItem>
                     <MudItem xs="12" sm="6" Class="session-detail-item">
                         <MudText Typo="Typo.caption" Color="Color.Primary">Created At</MudText>
-                        <MudText Typo="Typo.body1">@Session.CreatedAt.ToString("dd MMM yyyy HH:mm")</MudText>
+                        <MudText Typo="Typo.body1">@ConvertToLocalTime(Session.CreatedAt).ToString("dd MMM yyyy HH:mm") (@CurrentTimeZone)</MudText>
                     </MudItem>
                     <MudItem xs="12" sm="6" Class="session-detail-item">
                         <MudText Typo="Typo.caption" Color="Color.Primary">Type</MudText>
@@ -43,6 +43,10 @@
                             @if (Session.DiscoveryCall)
                             {
                                 <MudChip T="string" Color="Color.Info" Size="Size.Small">Discovery Call</MudChip>
+                            }
+                            else
+                            {
+                                <MudChip T="string" Color="Color.Primary" Size="Size.Small">Single Session</MudChip>
                             }
                         </MudText>
                     </MudItem>
@@ -67,7 +71,7 @@
                     {
                         <MudItem xs="12" sm="6" Class="session-detail-item">
                             <MudText Typo="Typo.caption" Color="Color.Primary">Paid At</MudText>
-                            <MudText Typo="Typo.body1">@Session.PaidAt.ToString("dd MMM yyyy HH:mm")</MudText>
+                            <MudText Typo="Typo.body1">@ConvertToLocalTime(Session.PaidAt).ToString("dd MMM yyyy HH:mm") (@CurrentTimeZone)</MudText>
                         </MudItem>
                     }
                     @if (!string.IsNullOrEmpty(Session.StripeSessionId))
@@ -89,24 +93,24 @@
                         </MudItem>
                         <MudItem xs="12" sm="6" Class="session-detail-item">
                             <MudText Typo="Typo.caption" Color="Color.Primary">Created At</MudText>
-                            <MudText Typo="Typo.body1">@Session.VideoSession.CreatedAt.ToString("dd MMM yyyy HH:mm")</MudText>
+                            <MudText Typo="Typo.body1">@ConvertToLocalTime(Session.VideoSession.CreatedAt).ToString("dd MMM yyyy HH:mm") (@CurrentTimeZone)</MudText>
                         </MudItem>
                         <MudItem xs="12" sm="6" Class="session-detail-item">
                             <MudText Typo="Typo.caption" Color="Color.Primary">Scheduled At</MudText>
-                            <MudText Typo="Typo.body1">@Session.VideoSession.ScheduledAt.ToString("dd MMM yyyy HH:mm")</MudText>
+                            <MudText Typo="Typo.body1">@ConvertToLocalTime(Session.VideoSession.ScheduledAt).ToString("dd MMM yyyy HH:mm") (@CurrentTimeZone)</MudText>
                         </MudItem>
                         @if (Session.VideoSession.StartedAt.HasValue)
                         {
                             <MudItem xs="12" sm="6" Class="session-detail-item">
                                 <MudText Typo="Typo.caption" Color="Color.Primary">Started At</MudText>
-                                <MudText Typo="Typo.body1">@Session.VideoSession.StartedAt.Value.ToString("dd MMM yyyy HH:mm")</MudText>
+                                <MudText Typo="Typo.body1">@ConvertToLocalTime(Session.VideoSession.StartedAt.Value).ToString("dd MMM yyyy HH:mm") (@CurrentTimeZone)</MudText>
                             </MudItem>
                         }
                         @if (Session.VideoSession.EndedAt.HasValue)
                         {
                             <MudItem xs="12" sm="6" Class="session-detail-item">
                                 <MudText Typo="Typo.caption" Color="Color.Primary">Ended At</MudText>
-                                <MudText Typo="Typo.body1">@Session.VideoSession.EndedAt.Value.ToString("dd MMM yyyy HH:mm")</MudText>
+                                <MudText Typo="Typo.body1">@ConvertToLocalTime(Session.VideoSession.EndedAt.Value).ToString("dd MMM yyyy HH:mm") (@CurrentTimeZone)</MudText>
                             </MudItem>
                         }
                     }
@@ -121,7 +125,7 @@
         }
     </DialogContent>
     <DialogActions>
-        @if (Session != null && !CanJoinSession)
+        @if (Session != null)
         {
             <MudAlert Severity="@GetAlertSeverity()" Class="ma-3" Variant="Variant.Filled" Dense="true">
                 @GetSessionStatusMessage()
@@ -133,7 +137,8 @@
                    StartIcon="@Icons.Material.Filled.VideoCall"
                    Class="go-to-session-btn"
                    OnClick="GoToSessionPage"
-                   Disabled="@(!CanJoinSession)">
+                   Disabled="@(!CanJoinSession)"
+                   AriaLabel="Go to session">
             Go to Session
         </MudButton>
     </DialogActions>
@@ -146,98 +151,153 @@
     [Parameter]
     public Session Session { get; set; }
 
+    private string CurrentTimeZone { get; set; } = "UTC";
+    private const int DefaultSessionDurationMinutes = 45;
+    private const int JoinWindowBufferMinutes = 10;
+    private const int ClockSkewBufferMinutes = 5;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTimeZone();
+    }
+
+    private async Task LoadTimeZone()
+    {
+        try
+        {
+            CurrentTimeZone = await JSRuntime.InvokeAsync<string>("eval", "Intl.DateTimeFormat().resolvedOptions().timeZone");
+            
+            if (!TimeZoneInfo.GetSystemTimeZones().Any(tz => tz.Id == CurrentTimeZone))
+            {
+                CurrentTimeZone = "UTC";
+                Snackbar.Add("Unable to detect your time zone. Defaulting to UTC.", Severity.Warning);
+                await LogService.LogError("LoadTimeZone", $"Invalid time zone detected: {CurrentTimeZone}. Defaulting to UTC.");
+            }
+        }
+        catch (Exception ex)
+        {
+            CurrentTimeZone = "UTC";
+            Snackbar.Add("Failed to detect time zone. Using UTC.", Severity.Warning);
+            await LogService.LogError("LoadTimeZone", $"Time zone detection failed: {ex.Message}");
+        }
+    }
+
     private bool CanJoinSession
     {
         get
         {
-            if (Session == null)
+            if (Session == null || Session.VideoSession == null || !Session.VideoSession.IsActive || string.IsNullOrEmpty(Session.VideoSession.SessionId))
                 return false;
 
             var now = DateTime.UtcNow;
-            var sessionStart = Session.PreferredDateTime;
-            var sessionEnd = sessionStart.AddMinutes(45);
-            var joinWindowStart = sessionStart.AddMinutes(-10);
+            var sessionStart = Session.VideoSession.ScheduledAt; // Use VideoSession.ScheduledAt for consistency
+            var sessionEnd = sessionStart.AddMinutes(DefaultSessionDurationMinutes + ClockSkewBufferMinutes);
+            var joinWindowStart = sessionStart.AddMinutes(-JoinWindowBufferMinutes);
 
-            return now >= joinWindowStart && now <= sessionEnd;
+            return !Session.VideoSession.EndedAt.HasValue && now >= joinWindowStart && now <= sessionEnd;
         }
     }
 
     private Severity GetAlertSeverity()
     {
-        if (Session == null || Session.VideoSession?.SessionId == null)
+        if (Session == null || Session.VideoSession == null || string.IsNullOrEmpty(Session.VideoSession.SessionId))
             return Severity.Error;
 
         var now = DateTime.UtcNow;
-        var sessionStart = Session.PreferredDateTime;
-        var sessionEnd = sessionStart.AddMinutes(45);
-        var joinWindowStart = sessionStart.AddMinutes(-10);
+        var sessionStart = Session.VideoSession.ScheduledAt;
+        var sessionEnd = sessionStart.AddMinutes(DefaultSessionDurationMinutes + ClockSkewBufferMinutes);
+        var joinWindowStart = sessionStart.AddMinutes(-JoinWindowBufferMinutes);
 
         if (now < joinWindowStart)
             return Severity.Info;
-        if (now > sessionEnd)
-            return Severity.Error;
-        return Severity.Warning;
+        if (now > sessionEnd || Session.VideoSession.EndedAt.HasValue)
+            return Severity.Warning;
+        return CanJoinSession ? Severity.Success : Severity.Error;
     }
 
     private string GetSessionStatusMessage()
     {
         if (Session == null)
             return "No session selected.";
-        if (Session.VideoSession?.SessionId == null)
+        if (Session.VideoSession == null || string.IsNullOrEmpty(Session.VideoSession.SessionId))
             return "No video session available for this session.";
 
         var now = DateTime.UtcNow;
-        var sessionStart = Session.PreferredDateTime;
-        var sessionEnd = sessionStart.AddMinutes(45);
-        var joinWindowStart = sessionStart.AddMinutes(-10);
+        var sessionStart = Session.VideoSession.ScheduledAt;
+        var sessionEnd = sessionStart.AddMinutes(DefaultSessionDurationMinutes + ClockSkewBufferMinutes);
+        var joinWindowStart = sessionStart.AddMinutes(-JoinWindowBufferMinutes);
 
-        if (now < sessionStart)
-            return $"This session is scheduled for {sessionStart:dd MMM yyyy HH:mm}. You can join here 10 minutes before it starts.";
-        else if (now < joinWindowStart)
-            return $"The session hasn’t started yet. Please try again at {joinWindowStart:HH:mm}.";
-        else if (now > sessionEnd)
-            return "This session has ended.";
-        else
-            return "Session is available to join.";
+        try
+        {
+            var localTime = ConvertToLocalTime(sessionStart);
+            if (now < joinWindowStart)
+                return $"Session starts at {localTime:dd MMM yyyy HH:mm} ({CurrentTimeZone}). Join available {JoinWindowBufferMinutes} minutes before.";
+            if (now > sessionEnd || Session.VideoSession.EndedAt.HasValue)
+                return "This session has ended. Contact support for assistance.";
+            return CanJoinSession ? "Ready to join the session!" : "Session missed. Contact support.";
+        }
+        catch (Exception ex)
+        {
+            LogService.LogError("GetSessionStatusMessage", $"Time conversion error for session {Session.VideoSession.SessionId}: {ex.Message}");
+            return "Error displaying session time. Contact support.";
+        }
     }
 
-    private void GoToSessionPage()
+    private DateTime ConvertToLocalTime(DateTime utcTime)
     {
-        if (Session == null)
+        try
         {
-            Snackbar.Add("No session selected.", Severity.Error);
+            var timeZone = TimeZoneInfo.FindSystemTimeZoneById(CurrentTimeZone);
+            return TimeZoneInfo.ConvertTimeFromUtc(utcTime, timeZone);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Time zone conversion failed. Displaying UTC time.", Severity.Warning);
+            LogService.LogError("ConvertToLocalTime", $"Failed to convert UTC time {utcTime:yyyy-MM-dd HH:mm:ss} to {CurrentTimeZone}: {ex.Message}");
+            return utcTime;
+        }
+    }
+
+    private async Task GoToSessionPage()
+    {
+        if (Session == null || Session.VideoSession == null || string.IsNullOrEmpty(Session.VideoSession.SessionId))
+        {
+            Snackbar.Add("No valid session selected.", Severity.Error);
+            await LogService.LogError("GoToSessionPage", "No valid session selected: Session or VideoSession is null or SessionId is empty.");
             return;
         }
 
         var now = DateTime.UtcNow;
-        var sessionStart = Session.PreferredDateTime;
-        var sessionEnd = sessionStart.AddMinutes(45);
-        var joinWindowStart = sessionStart.AddMinutes(-10);
+        var sessionStart = Session.VideoSession.ScheduledAt;
+        var sessionEnd = sessionStart.AddMinutes(DefaultSessionDurationMinutes + ClockSkewBufferMinutes);
+        var joinWindowStart = sessionStart.AddMinutes(-JoinWindowBufferMinutes);
 
-        if (now < sessionStart)
+        try
         {
-            Snackbar.Add($"This session is scheduled for {sessionStart:dd MMM yyyy HH:mm}. You can join jere 10 minutes before it starts.", Severity.Warning);
-            return;
-        }
-        else if (now > sessionEnd)
-        {
-            Snackbar.Add("This session has ended.", Severity.Error);
-            return;
-        }
-        else if (now < joinWindowStart)
-        {
-            Snackbar.Add($"The session hasn’t started yet. Please try again at {joinWindowStart:HH:mm}.", Severity.Warning);
-            return;
-        }
+            if (now < joinWindowStart)
+            {
+                var localJoinTime = ConvertToLocalTime(joinWindowStart);
+                var minutesUntilJoin = Math.Ceiling((joinWindowStart - now).TotalMinutes);
+                Snackbar.Add($"Session starts in {minutesUntilJoin} minute(s) at {localJoinTime:HH:mm} ({CurrentTimeZone}).", Severity.Info);
+                await LogService.LogError("GoToSessionPage", $"Attempt to join session {Session.VideoSession.SessionId} too early. Join window starts at {joinWindowStart:yyyy-MM-dd HH:mm:ss} UTC.");
+                return;
+            }
 
-        if (Session.VideoSession?.SessionId == null)
-        {
-            Snackbar.Add("No video session available.", Severity.Error);
-            return;
-        }
+            if (now > sessionEnd || Session.VideoSession.EndedAt.HasValue)
+            {
+                Snackbar.Add("This session has ended or was canceled.", Severity.Error);
+                await LogService.LogError("GoToSessionPage", $"Session {Session.VideoSession.SessionId} has ended or was canceled. Current time: {now:yyyy-MM-dd HH:mm:ss} UTC, Session end: {sessionEnd:yyyy-MM-dd HH:mm:ss} UTC.");
+                return;
+            }
 
-        NavigationManager.NavigateTo($"/session/{Session.VideoSession.SessionId}");
-        MudDialog.Close(DialogResult.Ok(true));
+            NavigationManager.NavigateTo($"/session/{Session.VideoSession.SessionId}");
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Failed to join session. Please try again or contact support.", Severity.Error);
+            await LogService.LogError("GoToSessionPage", $"Failed to join session {Session.VideoSession.SessionId}: {ex.Message}");
+        }
     }
 
     private void Cancel()

@@ -1,7 +1,6 @@
 using BusinessLayer.Services.Interfaces;
 using DataAccessLayer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using ModelLayer.Models;
 using ModelLayer.Models.DTOs;
 using ModelLayer.Models.Enums;
@@ -11,18 +10,15 @@ namespace BusinessLayer.Services;
 
 public class UserSubscriptionService : IUserSubscriptionService
 {
-    private readonly IConfiguration _configuration;
     private readonly CoachingDbContext _context;
     private readonly ILogService _logService;
     private readonly IHelperService _helperService;
 
     public UserSubscriptionService(
-        IConfiguration configuration,
         CoachingDbContext context,
         ILogService logService,
         IHelperService helperService)
     {
-        _configuration = configuration;
         _context = context;
         _logService = logService;
         _helperService = helperService;
@@ -33,42 +29,67 @@ public class UserSubscriptionService : IUserSubscriptionService
     {
         try
         {
+            await _logService.LogInfo("RegisterMonthlyUsage",
+                $"Called with UserId={userId}, SubscriptionId={subscriptionId}");
+
             var subscription = await _context.UserSubscriptions
                 .Include(s => s.Price)
                 .FirstOrDefaultAsync(s => s.UserId == userId && s.IsActive && s.StripeSubscriptionId == subscriptionId);
 
             if (subscription == null || subscription.Price == null)
             {
-                await _logService.LogError("RegisterMonthlyUsage", $"No active subscription found for user: {userId}, SubscriptionId: {subscriptionId}");
+                await _logService.LogError("RegisterMonthlyUsage",
+                    $"No active subscription found for user: {userId}, SubscriptionId: {subscriptionId}");
                 return false;
             }
 
-            var now = DateTime.UtcNow;
+            await _logService.LogInfo("RegisterMonthlyUsage",
+                $"Before update: Id={subscription.Id}, SessionsUsedThisMonth={subscription.SessionsUsedThisMonth}, CurrentPeriodStart={subscription.CurrentPeriodStart:yyyy-MM-dd HH:mm:ss.fff zzz}, CurrentPeriodEnd={subscription.CurrentPeriodEnd:yyyy-MM-dd HH:mm:ss.fff zzz}");
+
+            // Use WEST time zone
+            var westTimeZone = TimeZoneInfo.FindSystemTimeZoneById("W. Europe Standard Time");
+            var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, westTimeZone);
             var startOfMonth = new DateTime(now.Year, now.Month, 1);
+            var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1).Date.AddHours(23).AddMinutes(59).AddSeconds(59);
+
+            // Check if the subscription needs a reset (current month is after CurrentPeriodStart's month)
             if (subscription.CurrentPeriodStart < startOfMonth)
             {
                 subscription.SessionsUsedThisMonth = 0;
                 subscription.CurrentPeriodStart = startOfMonth;
+                subscription.CurrentPeriodEnd = endOfMonth;
                 _context.Entry(subscription).State = EntityState.Modified;
-                var rowsAffected1 = await _context.SaveChangesAsync();
-                await _logService.LogInfo("RegisterMonthlyUsage", $"Reset period: Rows affected={rowsAffected1}");
+                await _logService.LogInfo("RegisterMonthlyUsage",
+                    $"Reset SessionsUsedThisMonth to 0 and updated period for SubscriptionId: {subscription.StripeSubscriptionId}, UserId: {userId}, New CurrentPeriodStart={startOfMonth:yyyy-MM-dd}, New CurrentPeriodEnd={endOfMonth:yyyy-MM-dd HH:mm:ss.fff}");
+                await _context.SaveChangesAsync();
             }
 
             if (subscription.SessionsUsedThisMonth >= subscription.Price.MonthlyLimit)
             {
-                await _logService.LogInfo("RegisterMonthlyUsage", $"Monthly limit reached for user: {userId}, SubscriptionId: {subscriptionId}");
+                await _logService.LogInfo("RegisterMonthlyUsage",
+                    $"Monthly limit reached for user: {userId}, SubscriptionId: {subscriptionId}");
                 return false;
             }
 
             subscription.SessionsUsedThisMonth++;
             _context.Entry(subscription).State = EntityState.Modified;
             var rowsAffected = await _context.SaveChangesAsync();
-            await _logService.LogInfo("RegisterMonthlyUsage", $"Increment session: Rows affected={rowsAffected}");
-            return rowsAffected > 0;
+            await _logService.LogInfo("RegisterMonthlyUsage",
+                $"Increment session: Id={subscription.Id}, SessionsUsedThisMonth={subscription.SessionsUsedThisMonth}, Rows affected={rowsAffected}");
+
+            if (rowsAffected == 0)
+            {
+                await _logService.LogError("RegisterMonthlyUsage",
+                    $"No rows affected for user: {userId}, SubscriptionId: {subscriptionId}");
+                return false;
+            }
+
+            return true;
         }
         catch (Exception ex)
         {
-            await _logService.LogError("RegisterMonthlyUsage Error", ex.Message);
+            await _logService.LogError("RegisterMonthlyUsage Error",
+                $"Exception: {ex.Message}, StackTrace: {ex.StackTrace}");
             return false;
         }
     }
@@ -94,12 +115,19 @@ public class UserSubscriptionService : IUserSubscriptionService
         if (subscription == null || subscription.Price == null)
             return 0;
 
-        var now = DateTime.UtcNow;
+        var westTimeZone = TimeZoneInfo.FindSystemTimeZoneById("W. Europe Standard Time");
+        var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, westTimeZone);
         var startOfMonth = new DateTime(now.Year, now.Month, 1);
+        var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1).Date.AddHours(23).AddMinutes(59).AddSeconds(59);
+
         if (subscription.CurrentPeriodStart < startOfMonth)
         {
             subscription.SessionsUsedThisMonth = 0;
             subscription.CurrentPeriodStart = startOfMonth;
+            subscription.CurrentPeriodEnd = endOfMonth;
+            _context.Entry(subscription).State = EntityState.Modified;
+            await _logService.LogInfo("GetRemainingSessionsThisMonth",
+                $"Reset SessionsUsedThisMonth to 0 and updated period for SubscriptionId: {subscription.StripeSubscriptionId}, UserId: {userId}, New CurrentPeriodStart={startOfMonth:yyyy-MM-dd}, New CurrentPeriodEnd={endOfMonth:yyyy-MM-dd HH:mm:ss.fff}");
             await _context.SaveChangesAsync();
         }
 
@@ -111,26 +139,25 @@ public class UserSubscriptionService : IUserSubscriptionService
         var subscriptions = await GetActiveSubscriptionsAsync(userId);
         var result = new Dictionary<SessionType, SubscriptionStatusDto>();
 
+        // Use WEST time zone
+        var westTimeZone = TimeZoneInfo.FindSystemTimeZoneById("W. Europe Standard Time");
+        var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, westTimeZone);
+        var startOfMonth = new DateTime(now.Year, now.Month, 1);
+        var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1).Date.AddHours(23).AddMinutes(59).AddSeconds(59);
+
         foreach (var subscription in subscriptions)
         {
             if (subscription.Price == null) continue;
 
-            var stripeService = new SubscriptionService();
-            var stripeSubscription = await stripeService.GetAsync(subscription.StripeSubscriptionId);
-
-            if (stripeSubscription.Items?.Data?.Any() == true)
-            {
-                var firstItem = stripeSubscription.Items.Data[0];
-                subscription.CurrentPeriodStart = firstItem.CurrentPeriodStart;
-                subscription.CurrentPeriodEnd = firstItem.CurrentPeriodEnd;
-            }
-
-            var now = DateTime.UtcNow;
-            var startOfMonth = new DateTime(now.Year, now.Month, 1);
+            // Check if the subscription needs a reset
             if (subscription.CurrentPeriodStart < startOfMonth)
             {
                 subscription.SessionsUsedThisMonth = 0;
                 subscription.CurrentPeriodStart = startOfMonth;
+                subscription.CurrentPeriodEnd = endOfMonth;
+                _context.Entry(subscription).State = EntityState.Modified;
+                await _logService.LogInfo("GetStatusAsync",
+                    $"Reset SessionsUsedThisMonth to 0 and updated period for SubscriptionId: {subscription.StripeSubscriptionId}, UserId: {userId}, New CurrentPeriodStart={startOfMonth:yyyy-MM-dd}, New CurrentPeriodEnd={endOfMonth:yyyy-MM-dd HH:mm:ss.fff}");
             }
 
             var monthlyLimit = subscription.Price.MonthlyLimit;
@@ -146,7 +173,9 @@ public class UserSubscriptionService : IUserSubscriptionService
             };
         }
 
-        await _context.SaveChangesAsync();
+        var rowsAffected = await _context.SaveChangesAsync();
+        await _logService.LogInfo("GetStatusAsync",
+            $"SaveChangesAsync: Rows affected={rowsAffected}, UserId={userId}");
 
         if (!result.Any())
         {
@@ -211,12 +240,11 @@ public class UserSubscriptionService : IUserSubscriptionService
             {
                 subscription.IsActive = false;
                 subscription.CancelledAt = DateTime.UtcNow;
-
-                if (updatedSubscription.Items?.Data?.Any() == true)
-                {
-                    var firstItem = updatedSubscription.Items.Data[0];
-                    subscription.CurrentPeriodEnd = firstItem.CurrentPeriodEnd;
-                }
+                // Use WEST time zone for CurrentPeriodEnd
+                var westTimeZone = TimeZoneInfo.FindSystemTimeZoneById("W. Europe Standard Time");
+                var now = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, westTimeZone);
+                subscription.CurrentPeriodEnd = new DateTime(now.Year, now.Month, 1)
+                    .AddMonths(1).AddDays(-1).Date.AddHours(23).AddMinutes(59).AddSeconds(59);
 
                 await _context.SaveChangesAsync();
                 await _logService.LogInfo("CancelSubscriptionAsync", $"Successfully canceled subscription for user: {userId}, SubscriptionId: {subscriptionId}");

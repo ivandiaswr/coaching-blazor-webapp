@@ -359,6 +359,14 @@
                         {
                             <MudChip T="string" Color="Color.Info">Scheduled</MudChip>
                         }
+                        else if (DateTime.UtcNow >= context.ScheduledAt && DateTime.UtcNow <= context.ScheduledAt.AddMinutes(45))
+                        {
+                            <MudChip T="string" Color="Color.Primary">In Progress</MudChip>
+                        }
+                        else if (context.IsActive == false)
+                        {
+                            <MudChip T="string" Color="Color.Error">Canceled</MudChip>
+                        }
                         else
                         {
                             <MudChip T="string" Color="Color.Warning">Missed</MudChip>
@@ -881,7 +889,7 @@
                         MonthlyLimit = subscriptionPrice.MonthlyLimit,
                         IsAvailable = true,
                         RequiresPurchase = true,
-                        PlanId = subscriptionPrice.Id.ToString()
+                        PlanId = subscriptionPrice.StripePriceId
                     });
                 }
             }
@@ -1253,6 +1261,19 @@
             return;
         }
 
+        if (SelectedOption == null)
+        {
+            Snackbar.Add("Please select a's booking option.", Severity.Error);
+            showValidationErrors = true;
+            return;
+        }
+        if (string.IsNullOrEmpty(selectedSlotString))
+        {
+            Snackbar.Add("Please select a preferred date and time.", Severity.Error);
+            showValidationErrors = true;
+            return;
+        }
+
         await requestForm.Validate();
 
         if (!requestForm.IsValid)
@@ -1318,6 +1339,14 @@
             {
                 await LogService.LogError("SubmitSessionRequest", $"User not found in AspNetUsers. Email: {userId}");
                 Snackbar.Add("User account not found. Please contact support.", Severity.Error);
+                return;
+            }
+
+            var conflictingSession = await SessionService.GetAllSessionsAsync(false);
+            if (conflictingSession.Any(s => s.PreferredDateTime == scheduledAtUtc && s.IsPaid))
+            {
+                await LogService.LogWarning("SubmitSessionRequest", $"Slot {scheduledAtUtc:yyyy-MM-dd HH:mm} UTC is already booked.");
+                Snackbar.Add("The selected time slot is no longer available. Please choose another.", Severity.Error);
                 return;
             }
 

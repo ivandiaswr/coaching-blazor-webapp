@@ -128,16 +128,33 @@
     public VideoSession VideoSession { get; set; }
 
     private string CurrentTimeZone { get; set; } = "UTC";
+    private const int DefaultSessionDurationMinutes = 45;
+    private const int JoinWindowBufferMinutes = 15;
+    private const int ClockSkewBufferMinutes = 5;
 
     protected override async Task OnInitializedAsync()
+    {
+        await LoadTimeZone();
+    }
+
+    private async Task LoadTimeZone()
     {
         try
         {
             CurrentTimeZone = await JSRuntime.InvokeAsync<string>("eval", "Intl.DateTimeFormat().resolvedOptions().timeZone");
+                
+            if (!TimeZoneInfo.GetSystemTimeZones().Any(tz => tz.Id == CurrentTimeZone))
+            {
+                CurrentTimeZone = "UTC";
+                Snackbar.Add("Unable to detect your time zone. Defaulting to UTC.", Severity.Warning);
+                await LogService.LogError("LoadTimeZone", $"Invalid time zone detected: {CurrentTimeZone}. Defaulting to UTC.");
+            }
         }
-        catch
+        catch (Exception ex)
         {
             CurrentTimeZone = "UTC";
+            Snackbar.Add("Failed to detect time zone. Using UTC.", Severity.Warning);
+            await LogService.LogError("LoadTimeZone", $"Time zone detection failed: {ex.Message}");
         }
     }
 
@@ -145,13 +162,13 @@
     {
         get
         {
-            if (VideoSession == null || !VideoSession.IsActive)
+            if (VideoSession == null || !VideoSession.IsActive || string.IsNullOrEmpty(VideoSession.SessionId))
                 return false;
 
             var now = DateTime.UtcNow;
             var sessionStart = VideoSession.ScheduledAt;
-            var sessionEnd = sessionStart.AddMinutes(45);
-            var joinWindowStart = sessionStart.AddMinutes(-10);
+            var sessionEnd = sessionStart.AddMinutes(DefaultSessionDurationMinutes + ClockSkewBufferMinutes);
+            var joinWindowStart = sessionStart.AddMinutes(-JoinWindowBufferMinutes);
 
             return !VideoSession.EndedAt.HasValue && now >= joinWindowStart && now <= sessionEnd;
         }
@@ -164,8 +181,8 @@
 
         var now = DateTime.UtcNow;
         var sessionStart = VideoSession.ScheduledAt;
-        var sessionEnd = sessionStart.AddMinutes(45);
-        var joinWindowStart = sessionStart.AddMinutes(-10);
+        var sessionEnd = sessionStart.AddMinutes(DefaultSessionDurationMinutes + ClockSkewBufferMinutes);
+        var joinWindowStart = sessionStart.AddMinutes(-JoinWindowBufferMinutes);
 
         if (now < joinWindowStart)
             return Severity.Info;
@@ -181,43 +198,80 @@
 
         var now = DateTime.UtcNow;
         var sessionStart = VideoSession.ScheduledAt;
-        var sessionEnd = sessionStart.AddMinutes(45);
-        var joinWindowStart = sessionStart.AddMinutes(-10);
+        var sessionEnd = sessionStart.AddMinutes(DefaultSessionDurationMinutes + ClockSkewBufferMinutes);
+        var joinWindowStart = sessionStart.AddMinutes(-JoinWindowBufferMinutes);
 
-        if (now < joinWindowStart)
-            return $"This session is scheduled for {TimeZoneInfo.ConvertTimeFromUtc(sessionStart, TimeZoneInfo.FindSystemTimeZoneById(CurrentTimeZone)):dd MMM yyyy HH:mm}. You can join 10 minutes before it starts.";
-        if (now > sessionEnd || VideoSession.EndedAt.HasValue)
-            return "This session has ended. Contact support for details.";
-        return CanJoinSession ? "Session is ready to join!" : "This session was missed. Contact support.";
+        try
+        {
+            var localTime = ConvertToLocalTime(sessionStart);
+            if (now < joinWindowStart)
+                return $"Session starts at {localTime:dd MMM yyyy HH:mm} ({CurrentTimeZone}). Join available {JoinWindowBufferMinutes} minutes before.";
+            if (now > sessionEnd || VideoSession.EndedAt.HasValue)
+                return "This session has ended. Contact support for assistance.";
+            return CanJoinSession ? "Ready to join the session!" : "Session missed. Contact support.";
+        }
+        catch (Exception ex)
+        {
+            LogService.LogError("GetSessionStatusMessage", $"Time conversion error for session {VideoSession?.SessionId}: {ex.Message}");
+            return "Error displaying session time. Contact support.";
+        }
     }
 
-    private void JoinSession()
+    private DateTime ConvertToLocalTime(DateTime utcTime)
+    {
+        try
+        {
+            var timeZone = TimeZoneInfo.FindSystemTimeZoneById(CurrentTimeZone);
+            return TimeZoneInfo.ConvertTimeFromUtc(utcTime, timeZone);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add("Time zone conversion failed. Displaying UTC time.", Severity.Warning);
+            LogService.LogError("ConvertToLocalTime", $"Failed to convert UTC time {utcTime:yyyy-MM-dd HH:mm:ss} to {CurrentTimeZone}: {ex.Message}");
+            return utcTime;
+        }
+    }
+
+    private async Task JoinSession()
     {
         if (VideoSession == null || string.IsNullOrEmpty(VideoSession.SessionId))
         {
-            Snackbar.Add("No session selected.", Severity.Error);
+            Snackbar.Add("No valid session selected.", Severity.Error);
+            await LogService.LogError("JoinSession", "No valid session selected: VideoSession is null or SessionId is empty.");
             return;
         }
 
         var now = DateTime.UtcNow;
         var sessionStart = VideoSession.ScheduledAt;
-        var sessionEnd = sessionStart.AddMinutes(45);
-        var joinWindowStart = sessionStart.AddMinutes(-10);
+        var sessionEnd = sessionStart.AddMinutes(DefaultSessionDurationMinutes + ClockSkewBufferMinutes);
+        var joinWindowStart = sessionStart.AddMinutes(-JoinWindowBufferMinutes);
 
-        if (now < joinWindowStart)
+        try
         {
-            Snackbar.Add($"The session hasn’t started yet. Please try again at {TimeZoneInfo.ConvertTimeFromUtc(joinWindowStart, TimeZoneInfo.FindSystemTimeZoneById(CurrentTimeZone)):HH:mm}.", Severity.Warning);
-            return;
-        }
+            if (now < joinWindowStart)
+            {
+                var localJoinTime = ConvertToLocalTime(joinWindowStart);
+                var minutesUntilJoin = Math.Ceiling((joinWindowStart - now).TotalMinutes);
+                Snackbar.Add($"Session starts in {minutesUntilJoin} minute(s) at {localJoinTime:HH:mm} ({CurrentTimeZone}).", Severity.Info);
+                await LogService.LogError("JoinSession", $"Attempt to join session {VideoSession.SessionId} too early. Join window starts at {joinWindowStart:yyyy-MM-dd HH:mm:ss} UTC.");
+                return;
+            }
 
-        if (now > sessionEnd || VideoSession.EndedAt.HasValue)
+            if (now > sessionEnd || VideoSession.EndedAt.HasValue)
+            {
+                Snackbar.Add("This session has ended or was canceled.", Severity.Error);
+                await LogService.LogError("JoinSession", $"Session {VideoSession.SessionId} has ended or was canceled. Current time: {now:yyyy-MM-dd HH:mm:ss} UTC, Session end: {sessionEnd:yyyy-MM-dd HH:mm:ss} UTC.");
+                return;
+            }
+
+            NavigationManager.NavigateTo($"/session/{VideoSession.SessionId}");
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
         {
-            Snackbar.Add("This session has ended.", Severity.Error);
-            return;
+            Snackbar.Add("Failed to join session. Please try again or contact support.", Severity.Error);
+            await LogService.LogError("JoinSession", $"Failed to join session {VideoSession.SessionId}: {ex.Message}");
         }
-
-        NavigationManager.NavigateTo($"/session/{VideoSession.SessionId}");
-        MudDialog.Close(DialogResult.Ok(true));
     }
 
     private void Cancel()

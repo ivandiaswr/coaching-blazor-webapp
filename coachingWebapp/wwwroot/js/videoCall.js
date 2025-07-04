@@ -78,7 +78,9 @@ window.VideoCall = (() => {
         if (!localStream) {
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                document.getElementById("localVideo").srcObject = localStream;
+                const localVideo = document.getElementById("localVideo");
+                localVideo.srcObject = localStream;
+                localVideo.muted = true; 
             } catch (err) {
                 console.error("Error accessing media devices.", err);
                 alert("Could not access camera/microphone: " + err);
