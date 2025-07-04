@@ -49,7 +49,9 @@ public class UserSubscriptionService : IUserSubscriptionService
             {
                 subscription.SessionsUsedThisMonth = 0;
                 subscription.CurrentPeriodStart = startOfMonth;
-                await _context.SaveChangesAsync();
+                _context.Entry(subscription).State = EntityState.Modified;
+                var rowsAffected1 = await _context.SaveChangesAsync();
+                await _logService.LogInfo("RegisterMonthlyUsage", $"Reset period: Rows affected={rowsAffected1}");
             }
 
             if (subscription.SessionsUsedThisMonth >= subscription.Price.MonthlyLimit)
@@ -59,8 +61,10 @@ public class UserSubscriptionService : IUserSubscriptionService
             }
 
             subscription.SessionsUsedThisMonth++;
-            await _context.SaveChangesAsync();
-            return true;
+            _context.Entry(subscription).State = EntityState.Modified;
+            var rowsAffected = await _context.SaveChangesAsync();
+            await _logService.LogInfo("RegisterMonthlyUsage", $"Increment session: Rows affected={rowsAffected}");
+            return rowsAffected > 0;
         }
         catch (Exception ex)
         {
