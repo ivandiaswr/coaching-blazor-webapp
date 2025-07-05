@@ -1749,7 +1749,7 @@
         var now = DateTime.UtcNow;
         var sessionStart = session.ScheduledAt;
         var sessionEnd = sessionStart.AddMinutes(45);
-        var joinWindowStart = sessionStart.AddMinutes(-10);
+        var joinWindowStart = sessionStart.AddMinutes(-15);
 
         if (now < joinWindowStart)
         {
