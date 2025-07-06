@@ -153,8 +153,8 @@
 
     private string CurrentTimeZone { get; set; } = "UTC";
     private const int DefaultSessionDurationMinutes = 45;
-    private const int JoinWindowBufferMinutes = 15;
-    private const int ClockSkewBufferMinutes = 5;
+    private const int JoinWindowBufferMinutes = 720; // 12 hours before
+    private const int ClockSkewBufferMinutes = 720; // 12 hours after
 
     protected override async Task OnInitializedAsync()
     {
@@ -190,11 +190,12 @@
                 return false;
 
             var now = DateTime.UtcNow;
-            var sessionStart = Session.VideoSession.ScheduledAt; // Use VideoSession.ScheduledAt for consistency
-            var sessionEnd = sessionStart.AddMinutes(DefaultSessionDurationMinutes + ClockSkewBufferMinutes);
-            var joinWindowStart = sessionStart.AddMinutes(-JoinWindowBufferMinutes);
-
-            return !Session.VideoSession.EndedAt.HasValue && now >= joinWindowStart && now <= sessionEnd;
+            var sessionStart = Session.VideoSession.ScheduledAt;
+            var sessionDate = sessionStart.Date;
+            var currentDate = now.Date;
+            
+            return !Session.VideoSession.EndedAt.HasValue && 
+                   (currentDate == sessionDate || now >= sessionStart.AddMinutes(-JoinWindowBufferMinutes));
         }
     }
 

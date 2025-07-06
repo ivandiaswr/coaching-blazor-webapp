@@ -4,7 +4,7 @@
 
 <section id="video-session" class="services-section">
     <div class="container">
-        
+
         <header class="services-header">
             <h1>Video Session</h1>
             <p class="header-description">
@@ -28,7 +28,8 @@
         {
             isGuest = true;
             <MudAlert Severity="Severity.Warning">
-                <b>Guest access:</b> You can join this session as a guest. Your camera and microphone will be used, but you won't have access to dashboard features.
+                <b>Guest access:</b> You can join this session as a guest. Your camera and microphone will be used, but you
+                won't have access to dashboard features.
             </MudAlert>
         }
 
@@ -37,7 +38,8 @@
 
             <div class="video-container">
                 <div class="video-position">
-                    <video id="localVideo" autoplay playsinline muted controls class="video-element" @key="@("localVideo")" />
+                    <video id="localVideo" autoplay playsinline muted controls class="video-element"
+                        @key="@("localVideo")" />
                     @if (!isCallActive)
                     {
                         <div class="session-video-overlay">
@@ -52,7 +54,8 @@
                     }
                 </div>
                 <div class="video-position">
-                    <video id="remoteVideo" autoplay playsinline controls class="video-element" @key="@("remoteVideo")" />
+                    <video id="remoteVideo" autoplay playsinline controls class="video-element"
+                        @key="@("remoteVideo")" />
                     @if (!isCallActive)
                     {
                         <div class="session-video-overlay">
@@ -70,64 +73,50 @@
             </div>
 
             <div class="button-container">
-                <MudIconButton Icon="@(isCallActive ? Icons.Material.Filled.Call : Icons.Material.Filled.Call)"
-                            Color="@(isCallActive ? Color.Success : Color.Default)"
-                            Variant="@(isCallActive ? Variant.Filled : Variant.Outlined)"
-                            OnClick="@JoinCall"
-                            ToolTip="@(isCallActive ? "Call Active" : "Start/Join Call")"
-                            AriaLabel="@(isCallActive ? "Call Active" : "Start/Join Call")" />
+                <MudIconButton Icon="@(isCallActive? Icons.Material.Filled.Call : Icons.Material.Filled.Call)"
+                    Color="@(isCallActive ? Color.Success : Color.Default)"
+                    Variant="@(isCallActive ? Variant.Filled : Variant.Outlined)" OnClick="@JoinCall"
+                    ToolTip="@(isCallActive ? "Call Active" : "Start/Join Call")"
+                    AriaLabel="@(isCallActive ? "Call Active" : "Start/Join Call")" />
 
-                <MudIconButton Icon="@(isMuted ? Icons.Material.Filled.MicOff : Icons.Material.Filled.Mic)"
-                            Color="@(isMuted ? Color.Secondary : Color.Default)"
-                            Variant="@(isMuted ? Variant.Filled : Variant.Outlined)"
-                            OnClick="@ToggleMic"
-                            ToolTip="@(isMuted ? "Unmute Microphone" : "Mute Microphone")"
-                            AriaLabel="@(isMuted ? "Unmute Microphone" : "Mute Microphone")"
-                            Disabled="@(!isCallActive)" />
+                <MudIconButton Icon="@(isMuted? Icons.Material.Filled.MicOff : Icons.Material.Filled.Mic)"
+                    Color="@(isMuted ? Color.Secondary : Color.Default)"
+                    Variant="@(isMuted ? Variant.Filled : Variant.Outlined)" OnClick="@ToggleMic"
+                    ToolTip="@(isMuted ? "Unmute Microphone" : "Mute Microphone")"
+                    AriaLabel="@(isMuted ? "Unmute Microphone" : "Mute Microphone")" Disabled="@(!isCallActive)" />
 
-                <MudIconButton Icon="@(isCameraOff ? Icons.Material.Filled.VideocamOff : Icons.Material.Filled.Videocam)"
-                            Color="@(isCameraOff ? Color.Secondary : Color.Default)"
-                            Variant="@(isCameraOff ? Variant.Filled : Variant.Outlined)"
-                            OnClick="@ToggleCamera"
-                            ToolTip="@(isCameraOff ? "Enable Camera" : "Disable Camera")"
-                            AriaLabel="@(isCameraOff ? "Enable Camera" : "Disable Camera")"
-                            Disabled="@(!isCallActive)" />
+                <MudIconButton
+                    Icon="@(isCameraOff ? Icons.Material.Filled.VideocamOff : Icons.Material.Filled.Videocam)"
+                    Color="@(isCameraOff ? Color.Secondary : Color.Default)"
+                    Variant="@(isCameraOff ? Variant.Filled : Variant.Outlined)" OnClick="@ToggleCamera"
+                    ToolTip="@(isCameraOff ? "Enable Camera" : "Disable Camera")"
+                    AriaLabel="@(isCameraOff ? "Enable Camera" : "Disable Camera")" Disabled="@(!isCallActive)" />
 
-                <MudIconButton Icon="@(isScreenSharing ? Icons.Material.Filled.StopScreenShare : Icons.Material.Filled.ScreenShare)"
-                            Color="@(isScreenSharing ? Color.Success : Color.Default)"
-                            Variant="@(isScreenSharing ? Variant.Filled : Variant.Outlined)"
-                            OnClick="@ShareScreen"
-                            ToolTip="@(isScreenSharing ? "Stop Sharing Screen" : "Share Your Screen")"
-                            AriaLabel="@(isScreenSharing ? "Stop Sharing Screen" : "Share Your Screen")"
-                            Disabled="@(!isCallActive)" />
+                <MudIconButton
+                    Icon="@(isScreenSharing ? Icons.Material.Filled.StopScreenShare : Icons.Material.Filled.ScreenShare)"
+                    Color="@(isScreenSharing ? Color.Success : Color.Default)"
+                    Variant="@(isScreenSharing ? Variant.Filled : Variant.Outlined)" OnClick="@ShareScreen"
+                    ToolTip="@(isScreenSharing ? "Stop Sharing Screen" : "Share Your Screen")"
+                    AriaLabel="@(isScreenSharing ? "Stop Sharing Screen" : "Share Your Screen")"
+                    Disabled="@(!isCallActive)" />
 
-                <MudIconButton Icon="@Icons.Material.Filled.CallEnd"
-                            Color="Color.Error"
-                            Variant="Variant.Filled"
-                            OnClick="@EndCall"
-                            ToolTip="End Call"
-                            AriaLabel="End Call"
-                            Disabled="@(!isCallActive)" />
+                <MudIconButton Icon="@Icons.Material.Filled.CallEnd" Color="Color.Error" Variant="Variant.Filled"
+                    OnClick="@EndCall" ToolTip="End Call" AriaLabel="End Call" Disabled="@(!isCallActive)" />
             </div>
 
             <MudPaper Class="chat-paper">
                 <div id="chatMessages" class="chat-messages"></div>
                 <div class="chat-input-container">
-                    <MudTextField @ref="chatInputRef"
-                                  @bind-Value="chatMessage" 
-                                  Placeholder="Type a message..." 
-                                  Variant="Variant.Outlined" 
-                                  Class="chat-textfield"
-                                  Immediate="true"
-                                  OnKeyDown="@(async (KeyboardEventArgs e) => { if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(chatMessage)) await SendChatMessage(); })" />
+                    <MudTextField @ref="chatInputRef" @bind-Value="chatMessage" Placeholder="Type a message..."
+                        Variant="Variant.Outlined" Class="chat-textfield" Immediate="true"
+                        OnKeyDown="@(async (KeyboardEventArgs e) => { if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(chatMessage)) await SendChatMessage(); })" />
                     <InputFile OnChange="OnFileSelected" class="file-input" id="fileInput" key="@inputFileKey" />
 
                     <MudButton Color="Color.Secondary" OnClick="TriggerFileUpload">
                         Attach
                     </MudButton>
-                    <MudButton Color="Color.Primary" 
-                               OnClick="@SendChatMessage" 
-                               Disabled="@(string.IsNullOrWhiteSpace(chatMessage))">
+                    <MudButton Color="Color.Primary" OnClick="@SendChatMessage"
+                        Disabled="@(string.IsNullOrWhiteSpace(chatMessage))">
                         Send
                     </MudButton>
                 </div>
@@ -248,6 +237,9 @@
             await JSRuntime.InvokeVoidAsync("VideoCall.startCall");
             isCallActive = true;
             isLocalStreamActive = true;
+
+            await VideoCallService.MarkSessionAsStartedAsync(SessionId);
+
             Snackbar.Add("Call started!", Severity.Success);
         }
         catch (Exception ex)
