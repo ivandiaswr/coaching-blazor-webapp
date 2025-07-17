@@ -1,6 +1,6 @@
-﻿document.querySelector('.mobile-menu-btn').addEventListener('click', function() {
+﻿document.querySelector('.mobile-menu-btn').addEventListener('click', function () {
     document.querySelector('.nav-ul').classList.toggle('active');
-  });
+});
 
 window.scrollToTop = function () {
     // console.log("scrollToTop called");
@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(() => {
         const currentUrl = window.location.href;
         if (currentUrl !== lastUrl) {
-            console.log(`URL changed from ${lastUrl} to ${currentUrl}`);
+            // console.log(`URL changed from ${lastUrl} to ${currentUrl}`);
             lastUrl = currentUrl;
             setTimeout(() => {
                 const fragment = window.location.hash;
@@ -98,20 +98,20 @@ function downloadGift(url) {
     const urlObject = new URL(url, window.location.origin);
     const downloadName = urlObject.searchParams.get('downloadName');
     link.href = urlObject.origin + urlObject.pathname;
-    link.download = downloadName || url.split('/').pop(); 
+    link.download = downloadName || url.split('/').pop();
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 }
 
-window.downloadFile = function(url, fileName, callback) {
+window.downloadFile = function (url, fileName, callback) {
     const link = document.createElement('a');
     link.href = url;
     link.download = fileName;
-    link.onerror = function() {
+    link.onerror = function () {
         callback('File not found or inaccessible.');
     };
-    link.onclick = function() {
+    link.onclick = function () {
         setTimeout(() => {
             callback(null); // Success
         }, 1000);
@@ -170,29 +170,29 @@ window.login = function (loginModel) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(loginModel)
     })
-    .then(response => {
-        if (response.ok) {
-            return response.json().then(data => {
-                if (data.role === "Admin") {
-                    window.location.href = "/AdminDashboard";
-                } else {
-                    window.location.href = "/UserDashboard";
-                }
-                return { success: true };
-            });
-        } else {
-            return response.text().then(text => {
-                let errorMsg = "Login failed.";
-                try {
-                    const parsed = JSON.parse(text);
-                    errorMsg = parsed.detail || text;
-                } catch {
-                    errorMsg = text;
-                }
-                return { success: false, error: errorMsg };
-            });
-        }
-    });
+        .then(response => {
+            if (response.ok) {
+                return response.json().then(data => {
+                    if (data.role === "Admin") {
+                        window.location.href = "/AdminDashboard";
+                    } else {
+                        window.location.href = "/UserDashboard";
+                    }
+                    return { success: true };
+                });
+            } else {
+                return response.text().then(text => {
+                    let errorMsg = "Login failed.";
+                    try {
+                        const parsed = JSON.parse(text);
+                        errorMsg = parsed.detail || text;
+                    } catch {
+                        errorMsg = text;
+                    }
+                    return { success: false, error: errorMsg };
+                });
+            }
+        });
 };
 
 window.logout = function () {
