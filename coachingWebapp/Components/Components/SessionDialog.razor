@@ -153,8 +153,8 @@
 
     private string CurrentTimeZone { get; set; } = "UTC";
     private const int DefaultSessionDurationMinutes = 45;
-    private const int JoinWindowBufferMinutes = 720; // 12 hours before
-    private const int ClockSkewBufferMinutes = 720; // 12 hours after
+    private const int JoinWindowBufferMinutes = 120; // 2 hours before
+    private const int ClockSkewBufferMinutes = 120; //  2 hours after
 
     protected override async Task OnInitializedAsync()
     {
