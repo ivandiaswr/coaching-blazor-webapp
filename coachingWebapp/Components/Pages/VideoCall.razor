@@ -2,6 +2,8 @@
 @rendermode InteractiveServer
 <MudSnackbarProvider />
 
+<PageTitle>@pageTitle</PageTitle>
+
 <section id="video-session" class="services-section">
     <div class="container">
 
@@ -129,6 +131,7 @@
 
 @code {
     [Parameter] public string SessionId { get; set; }
+    private string pageTitle = "Session | Ítala Veloso";
     private bool isGuest = true;
     private bool isUser = false;
     private bool isAdmin = false;
