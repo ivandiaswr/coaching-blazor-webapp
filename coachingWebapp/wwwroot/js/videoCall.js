@@ -303,7 +303,7 @@ window.VideoCall = (() => {
         }
     }
 
-    function sendFileAttachment(fileName, base64Content, contentType) {
+    function sendFileAttachment(fileName, base64Content, contentType, userName) {
         if (!hubConnection || hubConnection.state !== signalR.HubConnectionState.Connected) {
             console.warn("Hub not connected. Cannot send file.");
             return;
@@ -320,54 +320,12 @@ window.VideoCall = (() => {
         }
 
         const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        const chatContainer = document.getElementById("chatMessages");
-        if (!chatContainer) {
-            console.warn("Chat container not found");
-            return;
-        }
 
         try {
-            const extensionMap = {
-                "image/png": ".png",
-                "image/jpeg": ".jpg",
-                "application/pdf": ".pdf",
-                "text/plain": ".txt",
-                "application/msword": ".doc",
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
-            };
-
-            let downloadFileName = fileName;
-            if (!downloadFileName.includes('.')) {
-                const extension = extensionMap[contentType] || `.${contentType.split('/').pop()}`;
-                downloadFileName += extension;
-            }
-
-            const binaryData = Uint8Array.from(atob(base64Content), c => c.charCodeAt(0));
-            const blob = new Blob([binaryData], { type: contentType });
-            const url = URL.createObjectURL(blob);
-
-            const fileSize = (binaryData.length / 1024).toFixed(2);
-            const sizeText = fileSize < 1024 ? `${fileSize} KB` : `${(fileSize / 1024).toFixed(2)} MB`;
-
-            const messageDiv = document.createElement("div");
-            const fileIcon = contentType.startsWith('image/') ? '🖼️' : contentType === 'application/pdf' ? '📄' : '📎';
-            messageDiv.innerHTML = `
-                <strong>[${timestamp}] You:</strong> 
-                <a href="${url}" download="${downloadFileName}" title="Download ${downloadFileName}">
-                    ${downloadFileName} (${sizeText}) ${fileIcon}
-                </a>
-            `;
-
-            const shouldAutoScroll = chatContainer.scrollTop + chatContainer.clientHeight >= chatContainer.scrollHeight - 50;
-            chatContainer.appendChild(messageDiv);
-            if (shouldAutoScroll) {
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-            }
-
-            hubConnection.invoke("SendFileAttachment", sessionId, fileName, base64Content, contentType)
+            // Send the file attachment to the hub first
+            hubConnection.invoke("SendFileAttachment", sessionId, userName, fileName, base64Content, contentType)
                 .then(() => console.log("File attachment sent to hub"))
-                .catch(err => console.error("Error sending attachment:", err));
-
+                .catch(err => console.error("Error sending file attachment:", err));
         } catch (err) {
             console.error("Error processing file attachment:", err);
         }
@@ -375,18 +333,41 @@ window.VideoCall = (() => {
 
     function onReceiveFileAttachment(userName, timestamp, fileName, base64Data, contentType) {
         const chatContainer = document.getElementById("chatMessages");
-        if (chatContainer) {
+        if (!chatContainer) {
+            console.warn("Chat container not found");
+            return;
+        }
+
+        try {
             const shouldAutoScroll =
                 chatContainer.scrollTop + chatContainer.clientHeight >= chatContainer.scrollHeight - 50;
 
+            // Create download link with proper file handling
+            const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+            const blob = new Blob([binaryData], { type: contentType });
+            const url = URL.createObjectURL(blob);
+
+            const fileSize = (binaryData.length / 1024).toFixed(2);
+            const sizeText = fileSize < 1024 ? `${fileSize} KB` : `${(fileSize / 1024).toFixed(2)} MB`;
+
+            const fileIcon = contentType.startsWith('image/') ? '🖼️' :
+                contentType === 'application/pdf' ? '📄' : '📎';
+
             const fileDiv = document.createElement("div");
-            const dataUrl = `data:${contentType};base64,${base64Data}`;
-            fileDiv.innerHTML = `<strong>[${timestamp}] ${userName}:</strong> <a href="${dataUrl}" download="${fileName}">${fileName}</a>`;
+            fileDiv.innerHTML = `
+                <strong>[${timestamp}] ${userName}:</strong> 
+                <a href="${url}" download="${fileName}" title="Download ${fileName}">
+                    ${fileName} (${sizeText}) ${fileIcon}
+                </a>
+            `;
+
             chatContainer.appendChild(fileDiv);
 
             if (shouldAutoScroll) {
                 chatContainer.scrollTop = chatContainer.scrollHeight;
             }
+        } catch (err) {
+            console.error("Error displaying file attachment:", err);
         }
     }
 

@@ -209,7 +209,10 @@
                 var base64 = Convert.ToBase64String(buffer);
                 var contentType = file.ContentType;
 
-                await JSRuntime.InvokeVoidAsync("VideoCall.sendFileAttachment", fileName, base64, contentType);
+                var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+                var userName = authState.User.Identity?.Name ?? "Guest";
+
+                await JSRuntime.InvokeVoidAsync("VideoCall.sendFileAttachment", fileName, base64, contentType, userName);
                 inputFileKey = Guid.NewGuid().ToString();
             }
             catch (Exception ex)
