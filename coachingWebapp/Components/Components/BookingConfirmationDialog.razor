@@ -1,3 +1,5 @@
+@using System.Globalization
+
 <MudDialog>
     <TitleContent>
         <MudText Typo="Typo.h6" Class="mb-1">Confirm Your Booking</MudText>
@@ -19,8 +21,10 @@
                 <MudText Typo="Typo.subtitle2"><b>Option:</b> @SelectedOption?.Title</MudText>
                 <MudText Typo="Typo.body2"><b>Description:</b> @SelectedOption?.Description</MudText>
                 <MudText Typo="Typo.body2"><b>Date & Time:</b> @SelectedDateTime</MudText>
-                <MudText Typo="Typo.body2"><b>Price:</b> @((SelectedOption?.PriceGBP.HasValue == true && SelectedOption?.RequiresPurchase == true ? $"{SelectedOption.PriceGBP}{SelectedOption.Currency}" : "Included"))</MudText>
-                <MudText Typo="Typo.body2"><b>Payment Method:</b> @(SelectedOption?.RequiresPurchase == true ? "Stripe" : "None (Using available sessions)")</MudText>
+                <MudText Typo="Typo.body2"><b>Price:</b> @((SelectedOption?.RequiresPurchase == true ?
+                                        FormatPrice(SelectedOption.PriceConverted ?? 0, SelectedOption.Currency) : "Included"))</MudText>
+                <MudText Typo="Typo.body2"><b>Payment Method:</b> @(SelectedOption?.RequiresPurchase == true ? "Stripe"
+                                        : "None (Using available sessions)")</MudText>
             </MudPaper>
         </MudStack>
     </DialogContent>
@@ -42,4 +46,20 @@
 
     private void OnConfirmClicked() => MudDialog.Close(DialogResult.Ok(true));
     private void Close() => MudDialog.Close(DialogResult.Cancel());
+
+    private string FormatPrice(decimal price, string currency)
+    {
+        var cultureMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+{
+{ "GBP", "en-GB" }, { "EUR", "fr-FR" }, { "USD", "en-US" }, { "JPY", "ja-JP" },
+{ "CAD", "en-CA" }, { "AUD", "en-AU" }, { "BRL", "pt-BR" }, { "MXN", "es-MX" },
+{ "CNY", "zh-CN" }, { "HKD", "zh-HK" }, { "SGD", "en-SG" }, { "MYR", "ms-MY" },
+{ "THB", "th-TH" }, { "IDR", "id-ID" }, { "PHP", "fil-PH" }, { "AED", "ar-AE" },
+{ "SAR", "ar-SA" }, { "INR", "hi-IN" }, { "ZAR", "en-ZA" }, { "NGN", "en-NG" }
+};
+
+        var culture = cultureMap.TryGetValue(currency, out var cultureCode) ? CultureInfo.GetCultureInfo(cultureCode) :
+        CultureInfo.InvariantCulture;
+        return price.ToString("C", culture);
+    }
 }
