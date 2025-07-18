@@ -17,7 +17,7 @@
         var nextSession = UpcomingSessions.First();
         <MudText Typo="Typo.subtitle1" Class="mb-4">
             Your next session is scheduled for
-            <strong>@TimeZoneInfo.ConvertTimeFromUtc(nextSession.ScheduledAt, TimeZoneInfo.FindSystemTimeZoneById(userTimeZone)).ToString("MMMM dd 'at' HH:mm") (@userTimeZone)</strong>. Get ready to take your next step!
+            <strong>@FormatSessionTime(nextSession.ScheduledAt)</strong>. Get ready to take your next step!
         </MudText>
     }
     else
@@ -349,7 +349,7 @@
                     <MudTh>Session</MudTh>
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd>@TimeZoneInfo.ConvertTimeFromUtc(context.ScheduledAt, TimeZoneInfo.FindSystemTimeZoneById(userTimeZone)).ToString("dd MMM yyyy - HH:mm") (@userTimeZone)</MudTd>
+                    <MudTd>@FormatSlotTime(context.ScheduledAt)</MudTd>
                     <MudTd>
                         @if (context.EndedAt.HasValue)
                         {
@@ -1202,6 +1202,21 @@
         }
     }
 
+    private string FormatSessionTime(DateTime sessionUtc)
+    {
+        try
+        {
+            var timeZone = TimeZoneInfo.FindSystemTimeZoneById(userTimeZone);
+            var localTime = TimeZoneInfo.ConvertTimeFromUtc(sessionUtc, timeZone);
+            return localTime.ToString("MMMM dd 'at' HH:mm", CultureInfo.InvariantCulture) + $" ({userTimeZone})";
+        }
+        catch (Exception ex)
+        {
+            LogService.LogError("FormatSessionTime", $"Failed to convert UTC time {sessionUtc:yyyy-MM-dd HH:mm:ss} to {userTimeZone}: {ex.Message}");
+            return sessionUtc.ToString("MMMM dd 'at' HH:mm 'UTC'", CultureInfo.InvariantCulture);
+        }
+    }
+
     private async Task HandleSlotSelected(string isoString)
     {
         try
@@ -1753,7 +1768,16 @@
 
         if (now < joinWindowStart)
         {
-            Snackbar.Add($"The session hasn’t started yet. Please try again at {joinWindowStart:HH:mm}.", Severity.Warning);
+            try
+            {
+                var userTimeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(userTimeZone);
+                var joinWindowStartLocal = TimeZoneInfo.ConvertTimeFromUtc(joinWindowStart, userTimeZoneInfo);
+                Snackbar.Add($"The session hasn't started yet. Please try again after {joinWindowStartLocal:dd MMM yyyy HH:mm} ({userTimeZone}).", Severity.Warning);
+            }
+            catch (TimeZoneNotFoundException)
+            {
+                Snackbar.Add($"The session hasn't started yet. Please try again after {joinWindowStart:dd MMM yyyy HH:mm} UTC.", Severity.Warning);
+            }
             return;
         }
 
@@ -1778,7 +1802,7 @@
         var now = DateTime.UtcNow;
         var sessionStart = session.ScheduledAt;
         var sessionEnd = sessionStart.AddMinutes(45);
-        var joinWindowStart = sessionStart.AddMinutes(-10);
+        var joinWindowStart = sessionStart.AddMinutes(-15);
 
         if (!session.IsActive)
         {
@@ -1788,17 +1812,16 @@
 
         if (now < joinWindowStart)
         {
-            var userTimeZoneInfo = TimeZoneInfo.Local;
             try
             {
-                userTimeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(userTimeZone);
+                var userTimeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(userTimeZone);
+                var joinWindowStartLocal = TimeZoneInfo.ConvertTimeFromUtc(joinWindowStart, userTimeZoneInfo);
+                Snackbar.Add($"The session hasn't started yet. Please try again after {joinWindowStartLocal:dd MMM yyyy HH:mm} ({userTimeZone}).", Severity.Warning);
             }
             catch (TimeZoneNotFoundException)
             {
-                Snackbar.Add("Invalid time zone. Using local time zone.", Severity.Warning);
+                Snackbar.Add($"The session hasn't started yet. Please try again after {joinWindowStart:dd MMM yyyy HH:mm} UTC.", Severity.Warning);
             }
-            var joinWindowStartLocal = TimeZoneInfo.ConvertTimeFromUtc(joinWindowStart, userTimeZoneInfo);
-            Snackbar.Add($"The session hasn’t started yet. Please try again after {joinWindowStartLocal:dd MMM yyyy HH:mm}.", Severity.Warning);
             return;
         }
 

@@ -586,10 +586,14 @@
     {
         try
         {
-            var date = DateTime.Parse(isoString);
+            // Parse the ISO string which is already in the user's timezone
+            var dateInUserTimeZone = DateTime.Parse(isoString);
             var userTimeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(userTimeZoneDisplay);
-            var utcDate = TimeZoneInfo.ConvertTimeToUtc(date, userTimeZoneInfo);
+            
+            // Convert the user timezone date to UTC for storage
+            var utcDate = TimeZoneInfo.ConvertTimeToUtc(dateInUserTimeZone, userTimeZoneInfo);
 
+            // Check if this UTC time matches any of our available slots
             if (!availableSlots.Any(s => s == utcDate))
             {
                 await LogService.LogWarning("HandleSlotSelected", $"Selected slot {utcDate:yyyy-MM-dd HH:mm} UTC is not in availableSlots.");
@@ -598,11 +602,13 @@
                 return;
             }
 
+            // Store the UTC time for the session
             session.PreferredDateTime = utcDate;
-            session.PreferredDateTimeString = TimeZoneInfo.ConvertTimeFromUtc(utcDate, userTimeZoneInfo).ToString("dd MMM yyyy - HH:mm") + $" ({userTimeZoneDisplay})";
+            // Display string shows the user's local time
+            session.PreferredDateTimeString = dateInUserTimeZone.ToString("dd MMM yyyy - HH:mm") + $" ({userTimeZoneDisplay})";
             showTimeSlots = false;
 
-            await LogService.LogInfo("HandleSlotSelected", $"Selected slot: {utcDate:yyyy-MM-dd HH:mm} UTC ({session.PreferredDateTimeString}).");
+            await LogService.LogInfo("HandleSlotSelected", $"Selected slot: User time {dateInUserTimeZone:yyyy-MM-dd HH:mm} ({userTimeZoneDisplay}) -> UTC {utcDate:yyyy-MM-dd HH:mm} UTC. Display: {session.PreferredDateTimeString}");
             StateHasChanged();
         }
         catch (Exception ex)

@@ -153,8 +153,8 @@
 
     private string CurrentTimeZone { get; set; } = "UTC";
     private const int DefaultSessionDurationMinutes = 45;
-    private const int JoinWindowBufferMinutes = 120; // 2 hours before
-    private const int ClockSkewBufferMinutes = 120; //  2 hours after
+    private const int JoinWindowBufferMinutes = 15; // 15 minutes before
+    private const int ClockSkewBufferMinutes = 60; // 1 hour after
 
     protected override async Task OnInitializedAsync()
     {
@@ -167,11 +167,17 @@
         {
             CurrentTimeZone = await JSRuntime.InvokeAsync<string>("eval", "Intl.DateTimeFormat().resolvedOptions().timeZone");
             
-            if (!TimeZoneInfo.GetSystemTimeZones().Any(tz => tz.Id == CurrentTimeZone))
+            // Validate the timezone by trying to create a TimeZoneInfo object
+            try
             {
+                TimeZoneInfo.FindSystemTimeZoneById(CurrentTimeZone);
+                await LogService.LogInfo("LoadTimeZone", $"Successfully detected and validated user timezone: {CurrentTimeZone}");
+            }
+            catch (TimeZoneNotFoundException)
+            {
+                await LogService.LogWarning("LoadTimeZone", $"Invalid time zone detected: {CurrentTimeZone}. Falling back to UTC.");
                 CurrentTimeZone = "UTC";
                 Snackbar.Add("Unable to detect your time zone. Defaulting to UTC.", Severity.Warning);
-                await LogService.LogError("LoadTimeZone", $"Invalid time zone detected: {CurrentTimeZone}. Defaulting to UTC.");
             }
         }
         catch (Exception ex)
