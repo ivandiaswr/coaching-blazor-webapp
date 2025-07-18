@@ -473,7 +473,7 @@ public class SessionService : ISessionService
                 <p>Thank you for booking a free Discovery Call with Ítala Veloso.</p>
 
                 <p><strong>📅 Date:</strong> {formattedDate}<br>
-                <strong>💼 Session:</strong> {session.SessionCategory}<br>
+                <strong>💼 Session:</strong> {session.SessionCategory.GetDisplayName()}<br>
                 <strong>📍 Access Link:</strong> <a href='{videoCallLink}' target='_blank'>{videoCallLink}</a></p>
 
                 <p>Please join a few minutes before your session time. If you need to reschedule, just reply to this email.</p>
