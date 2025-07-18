@@ -35,10 +35,6 @@
     <ProjectReference Include="..\BusinessLayer\BusinessLayer.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Components/Functions/" />
-  </ItemGroup>
-
   <Target Name="KillPort5000" BeforeTargets="Build">
     <Exec Command="lsof -ti:5000 | xargs -r kill -9" ContinueOnError="true" />
   </Target>

@@ -49,9 +49,9 @@ namespace BusinessLayer.Services
             {
                 var pack = await _context.SessionPacks
                     .Include(p => p.Price)
-                    .FirstOrDefaultAsync(p => p.UserId == userId && p.Id.ToString() == packId && p.SessionsRemaining > 0 && 
+                    .FirstOrDefaultAsync(p => p.UserId == userId && p.Id.ToString() == packId && p.SessionsRemaining > 0 &&
                                             (p.ExpiresAt == null || p.ExpiresAt > DateTime.UtcNow));
-                
+
                 if (pack == null)
                 {
                     await _logService.LogError("ConsumeSession", $"No valid pack found for UserId: {userId}, PackId: {packId}");
@@ -69,7 +69,7 @@ namespace BusinessLayer.Services
                 return false;
             }
         }
-        
+
         public async Task<bool> RollbackSessionConsumption(string userId, string packId)
         {
             try
@@ -98,6 +98,7 @@ namespace BusinessLayer.Services
         public async Task<int> GetRemainingSessions(string userId)
         {
             var pack = await _context.SessionPacks
+                .AsNoTracking()
                 .Where(p => p.UserId == userId && p.SessionsRemaining > 0 &&
                             (p.ExpiresAt == null || p.ExpiresAt > DateTime.UtcNow))
                 .FirstOrDefaultAsync();
@@ -108,6 +109,7 @@ namespace BusinessLayer.Services
         public async Task<List<SessionPack>> GetUserPacksAsync(string userId)
         {
             return await _context.SessionPacks
+                .AsNoTracking()
                 .Include(p => p.Price)
                 .Where(p => p.UserId == userId && p.SessionsRemaining > 0)
                 .ToListAsync();
