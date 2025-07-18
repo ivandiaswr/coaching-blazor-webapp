@@ -238,6 +238,19 @@ namespace BusinessLayer.Services
                     throw new Exception("Session pack price not found.");
                 }
 
+                var activePacks = await _context.SessionPacks
+                    .Where(sp => sp.PriceId == packId &&
+                                sp.SessionsRemaining > 0 &&
+                                (sp.ExpiresAt == null || sp.ExpiresAt > DateTime.UtcNow))
+                    .CountAsync();
+
+                if (activePacks > 0)
+                {
+                    await _logService.LogWarning("DeleteAsync",
+                        $"Cannot delete session pack price ID: {packId} because {activePacks} active session pack(s) are using it.");
+                    throw new Exception($"Cannot delete this session pack price. {activePacks} active session pack(s) are currently using it. Please wait for all packs to expire or be consumed before deleting.");
+                }
+
                 if (!string.IsNullOrEmpty(packPrice.StripePriceId))
                 {
                     try

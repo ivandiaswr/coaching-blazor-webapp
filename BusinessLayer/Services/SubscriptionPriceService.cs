@@ -228,6 +228,19 @@ namespace BusinessLayer.Services
                     throw new Exception("Subscription price not found.");
                 }
 
+                var activeSubscriptions = await _context.UserSubscriptions
+                    .Where(us => us.PriceId == subscriptionId &&
+                                us.IsActive &&
+                                !string.IsNullOrEmpty(us.StripeSubscriptionId))
+                    .CountAsync();
+
+                if (activeSubscriptions > 0)
+                {
+                    await _logService.LogWarning("DeleteAsync",
+                        $"Cannot delete subscription price ID: {subscriptionId} because {activeSubscriptions} active user subscription(s) are using it.");
+                    throw new Exception($"Cannot delete this subscription price. {activeSubscriptions} active user subscription(s) are currently using it. Please wait for all subscriptions to expire or be cancelled before deleting.");
+                }
+
                 if (!string.IsNullOrEmpty(subscriptionPrice.StripePriceId))
                 {
                     try
