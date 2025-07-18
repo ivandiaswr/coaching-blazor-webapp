@@ -70,6 +70,32 @@ namespace BusinessLayer.Services
             }
         }
 
+        public async Task<bool> ConsumeSessionWithoutSave(string userId, string packId)
+        {
+            try
+            {
+                var pack = await _context.SessionPacks
+                    .Include(p => p.Price)
+                    .FirstOrDefaultAsync(p => p.UserId == userId && p.Id.ToString() == packId && p.SessionsRemaining > 0 &&
+                                            (p.ExpiresAt == null || p.ExpiresAt > DateTime.UtcNow));
+
+                if (pack == null)
+                {
+                    await _logService.LogError("ConsumeSessionWithoutSave", $"No valid pack found for UserId: {userId}, PackId: {packId}");
+                    return false;
+                }
+
+                pack.SessionsRemaining--;
+                await _logService.LogInfo("ConsumeSessionWithoutSave", $"Decremented sessions for PackId: {packId}, UserId: {userId}, Remaining: {pack.SessionsRemaining} (not saved yet)");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                await _logService.LogError("ConsumeSessionWithoutSave", ex.Message);
+                return false;
+            }
+        }
+
         public async Task<bool> RollbackSessionConsumption(string userId, string packId)
         {
             try

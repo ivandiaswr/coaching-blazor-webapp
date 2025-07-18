@@ -17,6 +17,7 @@ public class StripeService : IPaymentService
     private readonly ISessionService _sessionService;
     private readonly ISessionPackService _sessionPackService;
     private readonly ICurrencyConversionService _currencyConversionService;
+    private readonly IUserSubscriptionService _userSubscriptionService;
 
     public StripeService(IConfiguration configuration,
         CoachingDbContext context,
@@ -24,7 +25,8 @@ public class StripeService : IPaymentService
         IHelperService helperService,
         ISessionService sessionService,
         ISessionPackService sessionPackService,
-        ICurrencyConversionService currencyConversionService)
+        ICurrencyConversionService currencyConversionService,
+        IUserSubscriptionService userSubscriptionService)
     {
         _configuration = configuration;
         _context = context;
@@ -33,6 +35,7 @@ public class StripeService : IPaymentService
         _sessionService = sessionService;
         _sessionPackService = sessionPackService;
         _currencyConversionService = currencyConversionService;
+        _userSubscriptionService = userSubscriptionService;
         StripeConfiguration.ApiKey = _helperService.GetConfigValue("Stripe:SecretKey");
     }
 
@@ -461,18 +464,26 @@ public class StripeService : IPaymentService
                         PriceId = subscriptionPrice.Id,
                         StripeSubscriptionId = stripeSubscriptionId,
                         IsActive = true,
-                        SessionsUsedThisMonth = 0,
+                        SessionsUsedThisMonth = 1,
                         CurrentPeriodStart = DateTime.UtcNow,
                         CurrentPeriodEnd = DateTime.UtcNow.AddMonths(1),
                         StartedAt = DateTime.UtcNow
                     };
 
                     _context.UserSubscriptions.Add(newSubscription);
-                    await _logService.LogInfo("ConfirmPaymentAsync", $"Created new subscription: {stripeSubscriptionId}");
+                    await _logService.LogInfo("ConfirmPaymentAsync", $"Created new subscription: {stripeSubscriptionId} with first session consumed");
                 }
                 else
                 {
-                    await _logService.LogInfo("ConfirmPaymentAsync", $"Subscription already exists: {existingSubscription.StripeSubscriptionId}");
+                    var usageRegistered = await _userSubscriptionService.RegisterMonthlyUsage(dbSession.Email, stripeSubscriptionId);
+                    if (usageRegistered)
+                    {
+                        await _logService.LogInfo("ConfirmPaymentAsync", $"Registered monthly usage for existing subscription: {existingSubscription.StripeSubscriptionId}");
+                    }
+                    else
+                    {
+                        await _logService.LogWarning("ConfirmPaymentAsync", $"Failed to register monthly usage for existing subscription: {existingSubscription.StripeSubscriptionId}");
+                    }
                 }
 
                 dbSession.PackId = stripeSubscriptionId;
@@ -486,19 +497,17 @@ public class StripeService : IPaymentService
                     {
                         await _logService.LogInfo("ConfirmPaymentAsync", $"Processing pack: {packPrice.Name}");
 
-                        // Create a new session pack for the user
                         var userSessionPack = new SessionPack
                         {
                             UserId = dbSession.Email,
                             PriceId = packPrice.Id,
-                            SessionsRemaining = packPrice.TotalSessions,
+                            SessionsRemaining = packPrice.TotalSessions - 1,
                             PurchasedAt = DateTime.UtcNow,
                         };
 
                         _context.SessionPacks.Add(userSessionPack);
-                        await _logService.LogInfo("ConfirmPaymentAsync", $"Created session pack for user {dbSession.Email}: {packPrice.Name} with {packPrice.TotalSessions} sessions");
+                        await _logService.LogInfo("ConfirmPaymentAsync", $"Created session pack for user {dbSession.Email}: {packPrice.Name} with {packPrice.TotalSessions} sessions, {userSessionPack.SessionsRemaining} remaining after consuming one for scheduled session");
 
-                        // Update the session's PackId to reference the user's session pack
                         dbSession.PackId = userSessionPack.Id.ToString();
                     }
                     else

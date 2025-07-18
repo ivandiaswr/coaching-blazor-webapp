@@ -10,6 +10,7 @@ public interface ISessionService
     Task<Session> GetSessionByStripeSessionIdAsync(string stripeSessionId);
     Task<Session> GetSessionByIdAsync(int id);
     Task<bool> CreateSessionAsync(Session contact);
+    Task<bool> CreateSessionWithPackConsumptionAsync(Session session, string userId, string packId, ISessionPackService sessionPackService);
     void UpdateSession(Session session);
     void DeleteSession(int id);
     Task<Session?> GetLatestSessionByEmailAsync(string email);

@@ -108,15 +108,16 @@
             var subscriptionId = session.PackId;
             if (!string.IsNullOrEmpty(subscriptionId))
             {
-                var registerUsageSuccess = await UserSubscriptionService.RegisterMonthlyUsage(session.Email, subscriptionId);
-
-                if (registerUsageSuccess)
+                var sessionPack = await SessionPackService.GetUserPacksAsync(session.Email);
+                var isSessionPack = sessionPack.Any(p => p.Id.ToString() == subscriptionId);
+                
+                if (isSessionPack)
                 {
-                    await LogService.LogInfo("PaymentSuccess", $"Successfully registered monthly usage for user {session.Email}, subscription {subscriptionId}");
+                    await LogService.LogInfo("PaymentSuccess", $"Session pack purchase confirmed for {session.Email}, PackId {subscriptionId}");
                 }
                 else
                 {
-                    await LogService.LogInfo("PaymentSuccess", $"No monthly usage registered for {session.Email}, PackId {subscriptionId} - likely a pack or single session");
+                    await LogService.LogInfo("PaymentSuccess", $"Subscription purchase confirmed for {session.Email}, SubscriptionId {subscriptionId} - monthly usage will be registered when session is created");
                 }
             }
 

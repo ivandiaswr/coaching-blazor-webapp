@@ -132,6 +132,115 @@ public class SessionService : ISessionService
         }
     }
 
+    public async Task<bool> CreateSessionWithPackConsumptionAsync(Session session, string userId, string packId, ISessionPackService sessionPackService)
+    {
+        if (session == null)
+            return false;
+
+        try
+        {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            // First, consume the session from the pack (without saving)
+            var consumeSuccess = await sessionPackService.ConsumeSessionWithoutSave(userId, packId);
+            if (!consumeSuccess)
+            {
+                await _logService.LogError("CreateSessionWithPackConsumption", $"Failed to consume session for PackId: {packId}, User: {userId}");
+                return false;
+            }
+
+            // Then create the session (without saving)
+            var existingSession = await _context.Sessions
+                .Include(s => s.VideoSession)
+                .FirstOrDefaultAsync(s => s.Id == session.Id);
+
+            if (existingSession != null)
+            {
+                if (existingSession.IsPending)
+                {
+                    existingSession.IsPending = false;
+                    existingSession.Email = session.Email;
+                    existingSession.SessionCategory = session.SessionCategory;
+                    existingSession.Message = session.Message;
+                    existingSession.PreferredDateTime = session.PreferredDateTime;
+                    existingSession.DiscoveryCall = session.DiscoveryCall;
+                    existingSession.IsSessionBooking = session.IsSessionBooking;
+                    existingSession.FirstName = session.FirstName;
+                    existingSession.LastName = session.LastName;
+                    existingSession.FullName = session.FullName;
+                    existingSession.PackId = session.PackId;
+                    existingSession.IsPaid = session.IsPaid;
+                    existingSession.PaidAt = session.PaidAt;
+                    existingSession.UpdateFullName();
+                    _context.Sessions.Update(existingSession);
+                    await _logService.LogInfo("CreateSessionWithPackConsumption", $"Confirmed pending session Id: {existingSession.Id}, UserId: {existingSession.Email}, PackId: {existingSession.PackId}");
+                }
+                else
+                {
+                    existingSession.Email = session.Email;
+                    existingSession.SessionCategory = session.SessionCategory;
+                    existingSession.Message = session.Message;
+                    existingSession.PreferredDateTime = session.PreferredDateTime;
+                    existingSession.DiscoveryCall = session.DiscoveryCall;
+                    existingSession.IsSessionBooking = session.IsSessionBooking;
+                    existingSession.FirstName = session.FirstName;
+                    existingSession.LastName = session.LastName;
+                    existingSession.FullName = session.FullName;
+                    existingSession.PackId = session.PackId;
+                    existingSession.IsPaid = session.IsPaid;
+                    existingSession.PaidAt = session.PaidAt;
+                    existingSession.UpdateFullName();
+                    _context.Sessions.Update(existingSession);
+                    await _logService.LogInfo("CreateSessionWithPackConsumption", $"Updated session Id: {existingSession.Id}, UserId: {existingSession.Email}, PackId: {existingSession.PackId}");
+                }
+            }
+            else
+            {
+                session.CreatedAt = DateTime.UtcNow;
+                session.IsSessionBooking = true;
+                session.IsPending = false;
+                session.UpdateFullName();
+                _context.Sessions.Add(session);
+                await _logService.LogInfo("CreateSessionWithPackConsumption", $"Created new session Id: {session.Id}, UserId: {session.Email}, PackId: {session.PackId}");
+            }
+
+            var targetSession = existingSession ?? session;
+
+            if (targetSession.VideoSession == null)
+            {
+                var videoSession = new VideoSession
+                {
+                    UserId = targetSession.Email,
+                    ScheduledAt = targetSession.PreferredDateTime,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    Session = targetSession,
+                    SessionRefId = targetSession.Id
+                };
+
+                _context.VideoSessions.Add(videoSession);
+            }
+            else
+            {
+                await _logService.LogInfo("CreateSessionWithPackConsumption", $"VideoSession already exists for session Id: {targetSession.Id}, VideoSession Id: {targetSession.VideoSession.Id}");
+            }
+
+            // Save all changes together (session pack consumption + session creation)
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            await _logService.LogInfo("CreateSessionWithPackConsumption", $"Successfully created session and consumed pack session for PackId: {packId}, UserId: {userId}");
+
+            await SendSessionConfirmationEmailAsync(targetSession, targetSession.VideoSession ?? await _context.VideoSessions.FirstAsync(vs => vs.SessionRefId == targetSession.Id));
+            return true;
+        }
+        catch (Exception ex)
+        {
+            await _logService.LogError("CreateSessionWithPackConsumption", $"Failed to create session with pack consumption: {ex.Message}");
+            return false;
+        }
+    }
+
     public async Task<Session> CreatePendingSessionAsync(Session session)
     {
         try

@@ -589,11 +589,16 @@
             emailSubscriptions = EmailSubscriptionService.GetAllEmailSubscriptions() ?? new();
             _adminUnavailableTimes = (await UnavailableTimeService.GetAllUnavailableTimesAsync()).ToList();
             nextSessions = sessions.Where(s => s.PreferredDateTime >= DateTime.UtcNow).ToList();
-            calendarItems = sessions.Select(c => new CalendarItem
-            {
-                Start = c.PreferredDateTime,
-                End = c.PreferredDateTime.AddMinutes(45),
-                Text = $"{c.FullName}: {c.SessionCategory.GetDisplayName().Replace("Coaching", "").Replace("Food", "").Trim()}",
+            
+            calendarItems = sessions.Select(c => {
+                var startLocal = TimeZoneInfo.ConvertTimeFromUtc(c.PreferredDateTime, adminTimeZoneInfo);
+                var endLocal = TimeZoneInfo.ConvertTimeFromUtc(c.PreferredDateTime.AddMinutes(45), adminTimeZoneInfo);
+                return new CalendarItem
+                {
+                    Start = startLocal,
+                    End = endLocal,
+                    Text = $"{c.FullName}: {c.SessionCategory.GetDisplayName().Replace("Coaching", "").Replace("Food", "").Trim()}",
+                };
             }).ToList();
 
             var sessionTypes = Enum.GetValues(typeof(SessionType)).Cast<SessionType>();
@@ -625,8 +630,11 @@
     {
         try
         {
+            var adminTimeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(adminTimeZone);
+            var itemStartUtc = TimeZoneInfo.ConvertTimeToUtc(item.Start, adminTimeZoneInfo);
+            
             var session = sessions.FirstOrDefault(s => 
-                s.PreferredDateTime == item.Start && 
+                s.PreferredDateTime == itemStartUtc && 
                 item.Text.Contains(s.FullName));
 
             if (session == null)

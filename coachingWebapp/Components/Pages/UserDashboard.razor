@@ -599,6 +599,7 @@
         await LoadSessions();
         await RefreshSessionPackStatus();
         await RefreshSubscriptionStatus();
+        await LoadBookingOptions();
         StateHasChanged();
     }
 
@@ -1468,24 +1469,14 @@
                     return;
                 }
 
-                var success = await SessionPackService.ConsumeSession(userId, SelectedOption.PackId.ToString());
-                if (!success)
-                {
-                    await LogService.LogError("SubmitSessionRequest", 
-                        $"Failed to consume session for PackId: {SelectedOption.PackId}, User: {userId}");
-                    Snackbar.Add("Failed to consume a session from your pack.", Severity.Error);
-                    return;
-                }
-
                 session.PackId = SelectedOption.PackId.ToString();
                 session.IsPaid = true;
 
-                var created = await SessionService.CreateSessionAsync(session);
+                var created = await SessionService.CreateSessionWithPackConsumptionAsync(session, userId, SelectedOption.PackId.ToString(), SessionPackService);
                 if (!created)
                 {
-                    var rollbackSuccess = await SessionPackService.RollbackSessionConsumption(userId, SelectedOption.PackId.ToString());
                     await LogService.LogError("SubmitSessionRequest", 
-                        $"Failed to create session. Rollback {(rollbackSuccess ? "succeeded" : "failed")} for PackId: {SelectedOption.PackId}, User: {userId}");
+                        $"Failed to create session with pack consumption for PackId: {SelectedOption.PackId}, User: {userId}");
                     Snackbar.Add("Failed to schedule session. Please try again.", Severity.Error);
                     return;
                 }
