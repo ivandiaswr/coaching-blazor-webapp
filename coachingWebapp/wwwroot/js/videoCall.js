@@ -1,7 +1,7 @@
 window.VideoCall = (() => {
     let hubConnection = null;
-    let peerConnection = null;  
-    let localStream = null;      
+    let peerConnection = null;
+    let localStream = null;
     let sessionId = null;
     let isScreenSharing = false;
     let dotNetRef = null;
@@ -21,50 +21,42 @@ window.VideoCall = (() => {
             console.log("🛑 Existing hubConnection still active. Stopping...");
             await hubConnection.stop();
         }
-    
+
         hubConnection = new signalR.HubConnectionBuilder()
             .withUrl("/videoHub", { transport: signalR.HttpTransportType.WebSockets })
             .withAutomaticReconnect()
             .configureLogging(signalR.LogLevel.Information)
             .build();
-    
+
         hubConnection.on("ReceiveSignal", onReceiveSignal);
         hubConnection.on("ReceiveChatMessage", onReceiveChatMessage);
         hubConnection.on("ReceiveFileAttachment", onReceiveFileAttachment);
-    
+
         hubConnection.onreconnecting((error) => {
             console.warn("SignalR connection lost. Reconnecting...", error);
         });
-    
+
         hubConnection.onreconnected(async (connectionId) => {
             console.log("SignalR reconnected. Connection ID:", connectionId);
-        
+
             try {
-                await hubConnection.stop().then(async () => {
-                    await hubConnection.start();
-                    await hubConnection.invoke("JoinSession", sessionId);
-                    console.log("✅ Rejoined session after full reconnect");
-                }).catch(err => console.error("❌ Failed to re-establish connection:", err));
-                
+                await hubConnection.invoke("JoinSession", sessionId);
                 console.log("✅ Successfully rejoined session");
             } catch (err) {
                 console.error("❌ Failed to rejoin session:", err);
             }
-        });      
-    
+        });
+
         hubConnection.onclose((error) => {
             console.error("SignalR connection closed:", error);
         });
-    
+
         try {
             await hubConnection.start();
             console.log("SignalR connected. Connection ID:", hubConnection.connectionId);
-            await hubConnection.stop().then(async () => {
-                await hubConnection.start();
-                await hubConnection.invoke("JoinSession", sessionId);
-                console.log("✅ Rejoined session after full reconnect");
-            }).catch(err => console.error("❌ Failed to re-establish connection:", err));
-            
+            await hubConnection.invoke("JoinSession", sessionId);
+            console.log("✅ Joined session successfully");
+
         } catch (err) {
             console.error("Failed to connect to SignalR hub:", err);
         }
@@ -74,21 +66,33 @@ window.VideoCall = (() => {
         if (!hubConnection) {
             await init(sessionId);
         }
-    
+
         if (!localStream) {
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
                 const localVideo = document.getElementById("localVideo");
                 localVideo.srcObject = localStream;
-                localVideo.muted = true; 
+                localVideo.muted = true;
             } catch (err) {
                 console.error("Error accessing media devices.", err);
                 alert("Could not access camera/microphone: " + err);
                 return;
             }
         }
-    
+
         await ensurePeerConnection();
+
+        // Force negotiation to start the WebRTC handshake
+        if (peerConnection && peerConnection.signalingState === "stable") {
+            try {
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+                await hubConnection.invoke("SendSignal", sessionId, JSON.stringify({ sdp: offer }));
+                console.log("Sent initial offer to start WebRTC handshake");
+            } catch (err) {
+                console.error("Error creating initial offer:", err);
+            }
+        }
     }
 
     function endCall() {
@@ -118,18 +122,30 @@ window.VideoCall = (() => {
 
         peerConnection.onicecandidate = event => {
             if (event.candidate) {
-                hubConnection.invoke("SendSignal", sessionId, 
+                hubConnection.invoke("SendSignal", sessionId,
                     JSON.stringify({ candidate: event.candidate }));
             }
         };
 
         peerConnection.ontrack = event => {
+            console.log("Received remote track:", event);
             const remoteVideo = document.getElementById("remoteVideo");
             if (event.streams && event.streams[0]) {
                 remoteVideo.srcObject = event.streams[0];
-                
+                console.log("Set remote video stream");
+
                 if (dotNetRef) {
                     dotNetRef.invokeMethodAsync("OnRemoteStreamConnected", true);
+                }
+            }
+        };
+
+        peerConnection.onconnectionstatechange = () => {
+            console.log("Connection state changed:", peerConnection.connectionState);
+            if (peerConnection.connectionState === "disconnected" ||
+                peerConnection.connectionState === "failed") {
+                if (dotNetRef) {
+                    dotNetRef.invokeMethodAsync("OnRemoteStreamConnected", false);
                 }
             }
         };
@@ -153,10 +169,12 @@ window.VideoCall = (() => {
     }
 
     async function onReceiveSignal(messageJson) {
+        console.log("Received signal:", messageJson);
         const message = JSON.parse(messageJson);
 
         if (message.sdp) {
             if (message.sdp.type === "offer") {
+                console.log("Received offer, creating answer...");
                 await ensurePeerConnection();
                 await peerConnection.setRemoteDescription(new RTCSessionDescription(message.sdp));
 
@@ -164,6 +182,7 @@ window.VideoCall = (() => {
                 await peerConnection.setLocalDescription(answer);
 
                 await hubConnection.invoke("SendSignal", sessionId, JSON.stringify({ sdp: answer }));
+                console.log("Sent answer");
             }
             else if (message.sdp.type === "answer") {
                 console.log("Received SDP answer");
@@ -172,6 +191,7 @@ window.VideoCall = (() => {
         }
         else if (message.candidate) {
             // ICE candidate
+            console.log("Received ICE candidate");
             if (peerConnection) {
                 try {
                     await peerConnection.addIceCandidate(new RTCIceCandidate(message.candidate));
@@ -262,7 +282,7 @@ window.VideoCall = (() => {
             console.warn("Hub not connected. Cannot send message.");
             return;
         }
-    
+
         hubConnection.invoke("SendChatMessage", sessionId, userName, message)
             .catch(err => console.error("Error sending chat message:", err));
     }
@@ -272,17 +292,17 @@ window.VideoCall = (() => {
         if (chatContainer) {
             const shouldAutoScroll =
                 chatContainer.scrollTop + chatContainer.clientHeight >= chatContainer.scrollHeight - 50;
-    
+
             const messageDiv = document.createElement("div");
             messageDiv.innerHTML = `<strong>[${timestamp}] ${userName}:</strong> ${message}`;
             chatContainer.appendChild(messageDiv);
-    
+
             if (shouldAutoScroll) {
                 chatContainer.scrollTop = chatContainer.scrollHeight;
             }
         }
-    }  
-    
+    }
+
     function sendFileAttachment(fileName, base64Content, contentType) {
         if (!hubConnection || hubConnection.state !== signalR.HubConnectionState.Connected) {
             console.warn("Hub not connected. Cannot send file.");
@@ -293,19 +313,19 @@ window.VideoCall = (() => {
             console.warn("Hub connection not established");
             return;
         }
-    
+
         if (!fileName || !base64Content || !contentType) {
             console.error("Invalid file attachment data:", { fileName, base64Content, contentType });
             return;
         }
-    
+
         const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         const chatContainer = document.getElementById("chatMessages");
         if (!chatContainer) {
             console.warn("Chat container not found");
             return;
         }
-    
+
         try {
             const extensionMap = {
                 "image/png": ".png",
@@ -315,20 +335,20 @@ window.VideoCall = (() => {
                 "application/msword": ".doc",
                 "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
             };
-    
+
             let downloadFileName = fileName;
             if (!downloadFileName.includes('.')) {
                 const extension = extensionMap[contentType] || `.${contentType.split('/').pop()}`;
                 downloadFileName += extension;
             }
-    
+
             const binaryData = Uint8Array.from(atob(base64Content), c => c.charCodeAt(0));
             const blob = new Blob([binaryData], { type: contentType });
             const url = URL.createObjectURL(blob);
-    
+
             const fileSize = (binaryData.length / 1024).toFixed(2);
             const sizeText = fileSize < 1024 ? `${fileSize} KB` : `${(fileSize / 1024).toFixed(2)} MB`;
-    
+
             const messageDiv = document.createElement("div");
             const fileIcon = contentType.startsWith('image/') ? '🖼️' : contentType === 'application/pdf' ? '📄' : '📎';
             messageDiv.innerHTML = `
@@ -337,17 +357,17 @@ window.VideoCall = (() => {
                     ${downloadFileName} (${sizeText}) ${fileIcon}
                 </a>
             `;
-    
+
             const shouldAutoScroll = chatContainer.scrollTop + chatContainer.clientHeight >= chatContainer.scrollHeight - 50;
             chatContainer.appendChild(messageDiv);
             if (shouldAutoScroll) {
                 chatContainer.scrollTop = chatContainer.scrollHeight;
             }
-    
+
             hubConnection.invoke("SendFileAttachment", sessionId, fileName, base64Content, contentType)
                 .then(() => console.log("File attachment sent to hub"))
                 .catch(err => console.error("Error sending attachment:", err));
-    
+
         } catch (err) {
             console.error("Error processing file attachment:", err);
         }
@@ -356,7 +376,7 @@ window.VideoCall = (() => {
     function onReceiveFileAttachment(userName, timestamp, fileName, base64Data, contentType) {
         const chatContainer = document.getElementById("chatMessages");
         if (chatContainer) {
-            const shouldAutoScroll = 
+            const shouldAutoScroll =
                 chatContainer.scrollTop + chatContainer.clientHeight >= chatContainer.scrollHeight - 50;
 
             const fileDiv = document.createElement("div");

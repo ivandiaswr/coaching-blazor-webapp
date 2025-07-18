@@ -53,6 +53,7 @@ public class VideoCallHub : Hub
                 if (occupantConnId == Context.ConnectionId)
                 {
                     NonAdminOccupantBySession.TryRemove(sessionId, out _);
+                    OccupantUserBySession.TryRemove(sessionId, out _);
                 }
             }
         }
