@@ -1,384 +1,458 @@
-window.VideoCall = (() => {
-    let hubConnection = null;
-    let peerConnection = null;
-    let localStream = null;
-    let sessionId = null;
-    let isScreenSharing = false;
-    let dotNetRef = null;
+let hubConnection = null;
+let peerConnection = null;
+let localStream = null;
+let sessionId = null;
+let isScreenSharing = false;
+let dotNetRef = null;
+let isNegotiating = false;
+let pendingIceCandidates = [];
+let isCallStarted = false;
+let isLocalStreamReady = false;
+let otherParticipantPresent = false;
 
-    // needs STUN/TURN configs for users with nat/firewalls 
-    const rtcConfig = {
-        iceServers: [
-            { urls: "stun:stun.l.google.com:19302" }
-        ]
-    };
+const rtcConfig = {
+    iceServers: [
+        { urls: "stun:stun.l.google.com:19302" }
+    ]
+};
 
-    async function init(sessId, dotNetReference) {
-        sessionId = sessId;
-        dotNetRef = dotNetReference;
-
-        if (hubConnection && hubConnection.state !== signalR.HubConnectionState.Disconnected) {
-            console.log("🛑 Existing hubConnection still active. Stopping...");
-            await hubConnection.stop();
-        }
-
-        hubConnection = new signalR.HubConnectionBuilder()
-            .withUrl("/videoHub", { transport: signalR.HttpTransportType.WebSockets })
-            .withAutomaticReconnect()
-            .configureLogging(signalR.LogLevel.Information)
-            .build();
-
-        hubConnection.on("ReceiveSignal", onReceiveSignal);
-        hubConnection.on("ReceiveChatMessage", onReceiveChatMessage);
-        hubConnection.on("ReceiveFileAttachment", onReceiveFileAttachment);
-
-        hubConnection.onreconnecting((error) => {
-            console.warn("SignalR connection lost. Reconnecting...", error);
-        });
-
-        hubConnection.onreconnected(async (connectionId) => {
-            console.log("SignalR reconnected. Connection ID:", connectionId);
-
-            try {
-                await hubConnection.invoke("JoinSession", sessionId);
-                console.log("✅ Successfully rejoined session");
-            } catch (err) {
-                console.error("❌ Failed to rejoin session:", err);
-            }
-        });
-
-        hubConnection.onclose((error) => {
-            console.error("SignalR connection closed:", error);
-        });
-
-        try {
-            await hubConnection.start();
-            console.log("SignalR connected. Connection ID:", hubConnection.connectionId);
-            await hubConnection.invoke("JoinSession", sessionId);
-            console.log("✅ Joined session successfully");
-
-        } catch (err) {
-            console.error("Failed to connect to SignalR hub:", err);
-        }
+export async function init(sessId, dotNetReference) {
+    if (hubConnection || peerConnection || localStream) {
+        await cleanup();
     }
 
-    async function startCall() {
-        if (!hubConnection) {
-            await init(sessionId);
-        }
+    sessionId = sessId;
+    dotNetRef = dotNetReference;
 
-        if (!localStream) {
-            try {
-                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                const localVideo = document.getElementById("localVideo");
-                localVideo.srcObject = localStream;
-                localVideo.muted = true;
-            } catch (err) {
-                console.error("Error accessing media devices.", err);
-                alert("Could not access camera/microphone: " + err);
-                return;
-            }
-        }
-
-        await ensurePeerConnection();
-
-        // Force negotiation to start the WebRTC handshake
-        if (peerConnection && peerConnection.signalingState === "stable") {
-            try {
-                const offer = await peerConnection.createOffer();
-                await peerConnection.setLocalDescription(offer);
-                await hubConnection.invoke("SendSignal", sessionId, JSON.stringify({ sdp: offer }));
-                console.log("Sent initial offer to start WebRTC handshake");
-            } catch (err) {
-                console.error("Error creating initial offer:", err);
-            }
-        }
+    try {
+        window.isCurrentUserAdmin = await dotNetRef.invokeMethodAsync("IsCurrentUserAdmin");
+    } catch (err) {
+        console.error("Failed to determine user role, defaulting to client:", err);
+        window.isCurrentUserAdmin = false;
     }
 
-    function endCall() {
-        if (peerConnection) {
-            peerConnection.close();
-            peerConnection = null;
-        }
+    hubConnection = new signalR.HubConnectionBuilder()
+        .withUrl("/videoHub")
+        .withAutomaticReconnect()
+        .build();
+
+    hubConnection.on("ReceiveSignal", onReceiveSignal);
+    hubConnection.on("ParticipantJoined", onParticipantJoined);
+    hubConnection.on("ParticipantLeft", onParticipantLeft);
+    hubConnection.on("ReceiveChatMessage", (userName, timestamp, message, userRole) => {
+        dotNetRef.invokeMethodAsync("OnChatMessageReceived", userName, timestamp, message, userRole);
+    });
+    hubConnection.on("ReceiveFileAttachment", (userName, timestamp, fileName, base64Data, contentType) => {
+        dotNetRef.invokeMethodAsync("OnFileAttachmentReceived", userName, timestamp, fileName, base64Data, contentType);
+    });
+
+
+    hubConnection.onreconnecting(error => console.warn("SignalR connection lost. Reconnecting...", error));
+    hubConnection.onreconnected(async connectionId => {
+        console.log("SignalR reconnected. Re-joining session...");
         if (hubConnection) {
-            hubConnection.stop();
-            hubConnection = null;
+            await hubConnection.invoke("JoinSession", sessionId);
         }
-        if (localStream) {
-            localStream.getTracks().forEach(t => t.stop());
-            localStream = null;
+    });
+    hubConnection.onclose(error => {
+        console.error("SignalR connection closed:", error);
+        if (dotNetRef) {
+            dotNetRef.invokeMethodAsync("OnCallEnded");
         }
+    });
 
-        isScreenSharing = false;
-
-        document.getElementById("localVideo").srcObject = null;
-        document.getElementById("remoteVideo").srcObject = null;
+    try {
+        await hubConnection.start();
+        await hubConnection.invoke("JoinSession", sessionId);
+    } catch (err) {
+        console.error("Failed to connect to SignalR hub:", err);
     }
+}
 
-    async function ensurePeerConnection() {
-        if (peerConnection) return;
+export function setCallStarted(started) {
+    isCallStarted = started;
+    console.log(`Call state updated: isCallStarted = ${isCallStarted}`);
+}
 
+export async function startCall() {
+    if (!hubConnection || hubConnection.state !== signalR.HubConnectionState.Connected) {
+        console.warn("Hub not connected, attempting to initialize.");
+        await init(sessionId, dotNetRef);
+    }
+    if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+    }
+    try {
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        const localVideo = document.getElementById("localVideo");
+        if (localVideo) {
+            localVideo.srcObject = localStream;
+            // Add a small delay to prevent interruption errors
+            await new Promise(resolve => setTimeout(resolve, 100));
+            localVideo.play().catch(e => console.error("Local video play failed:", e));
+        }
+        isLocalStreamReady = true;
+        // Notify Blazor UI
+        dotNetRef.invokeMethodAsync("OnCallStarted");
+        dotNetRef.invokeMethodAsync("OnLocalStreamActive", true);
+        // If admin and another participant is already present, initiate WebRTC offer
+        if (window.isCurrentUserAdmin && otherParticipantPresent) {
+            console.log("Admin local stream ready and participant present, initiating WebRTC.");
+            await initiateWebRTCIfReady("Client");
+        }
+    } catch (err) {
+        console.error("Error starting call:", err);
+        dotNetRef.invokeMethodAsync("OnLocalStreamActive", false);
+    }
+}
+
+export async function endCall() {
+    await cleanup();
+    dotNetRef.invokeMethodAsync("OnCallEnded");
+}
+
+async function cleanupForReconnection() {
+    console.log("Cleaning up for reconnection...");
+    if (peerConnection) {
+        peerConnection.onicecandidate = null;
+        peerConnection.ontrack = null;
+        peerConnection.onconnectionstatechange = null;
+        if (peerConnection.connectionState !== 'closed') {
+            peerConnection.close();
+        }
+        peerConnection = null;
+    }
+    isNegotiating = false;
+    pendingIceCandidates = [];
+    const remoteVideo = document.getElementById("remoteVideo");
+    if (remoteVideo) {
+        remoteVideo.pause();
+        remoteVideo.srcObject = null;
+        remoteVideo.load(); // Reset video element
+    }
+    if (dotNetRef) {
+        dotNetRef.invokeMethodAsync("OnRemoteStreamDisconnected");
+    }
+    console.log("Cleanup for reconnection complete.");
+}
+
+export async function cleanup() {
+    if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+        isLocalStreamReady = false;
+    }
+    // Clear local video
+    const localVideo = document.getElementById("localVideo");
+    if (localVideo) {
+        localVideo.pause();
+        localVideo.srcObject = null;
+        localVideo.load();
+    }
+    await cleanupForReconnection();
+    if (hubConnection) {
+        await hubConnection.stop();
+        hubConnection = null;
+    }
+    isCallStarted = false;
+    otherParticipantPresent = false;
+}
+
+async function ensurePeerConnection() {
+    if (!peerConnection || peerConnection.connectionState === 'closed' || peerConnection.connectionState === 'failed') {
+        console.log("Creating new PeerConnection.");
         peerConnection = new RTCPeerConnection(rtcConfig);
 
+        peerConnection.onconnectionstatechange = event => {
+            console.log(`Peer Connection State Change: ${peerConnection.connectionState}`);
+            if (peerConnection.connectionState === 'failed') {
+                // Attempt to restart ICE, which can sometimes recover the connection
+                peerConnection.restartIce();
+            }
+        };
+
         peerConnection.onicecandidate = event => {
-            if (event.candidate) {
-                hubConnection.invoke("SendSignal", sessionId,
-                    JSON.stringify({ candidate: event.candidate }));
+            if (event.candidate && hubConnection && hubConnection.state === signalR.HubConnectionState.Connected) {
+                const signal = { type: 'ice-candidate', candidate: event.candidate };
+                console.log("Sending ICE candidate:", signal);
+                hubConnection.invoke("SendSignal", sessionId, JSON.stringify(signal));
             }
         };
-
         peerConnection.ontrack = event => {
-            console.log("Received remote track:", event);
+            console.log("Remote track received.");
             const remoteVideo = document.getElementById("remoteVideo");
-            if (event.streams && event.streams[0]) {
+            if (remoteVideo && event.streams && event.streams[0]) {
+                console.log("Attaching remote stream to video element.");
                 remoteVideo.srcObject = event.streams[0];
-                console.log("Set remote video stream");
-
-                if (dotNetRef) {
-                    dotNetRef.invokeMethodAsync("OnRemoteStreamConnected", true);
-                }
+                // Add a small delay and clear any existing src to prevent interruption
+                setTimeout(() => {
+                    remoteVideo.play().catch(e => console.error("Remote video play failed:", e));
+                }, 100);
+                dotNetRef.invokeMethodAsync("OnRemoteStreamConnected");
             }
         };
-
-        peerConnection.onconnectionstatechange = () => {
-            console.log("Connection state changed:", peerConnection.connectionState);
-            if (peerConnection.connectionState === "disconnected" ||
-                peerConnection.connectionState === "failed") {
-                if (dotNetRef) {
-                    dotNetRef.invokeMethodAsync("OnRemoteStreamConnected", false);
-                }
-            }
-        };
-
         if (localStream) {
-            localStream.getTracks().forEach(track => {
-                peerConnection.addTrack(track, localStream);
-            });
-        }
-
-        peerConnection.onnegotiationneeded = async () => {
-            try {
-                const offer = await peerConnection.createOffer();
-                await peerConnection.setLocalDescription(offer);
-
-                await hubConnection.invoke("SendSignal", sessionId, JSON.stringify({ sdp: offer }));
-            } catch (err) {
-                console.error("Error during negotiation/offering:", err);
-            }
-        };
-    }
-
-    async function onReceiveSignal(messageJson) {
-        console.log("Received signal:", messageJson);
-        const message = JSON.parse(messageJson);
-
-        if (message.sdp) {
-            if (message.sdp.type === "offer") {
-                console.log("Received offer, creating answer...");
-                await ensurePeerConnection();
-                await peerConnection.setRemoteDescription(new RTCSessionDescription(message.sdp));
-
-                const answer = await peerConnection.createAnswer();
-                await peerConnection.setLocalDescription(answer);
-
-                await hubConnection.invoke("SendSignal", sessionId, JSON.stringify({ sdp: answer }));
-                console.log("Sent answer");
-            }
-            else if (message.sdp.type === "answer") {
-                console.log("Received SDP answer");
-                await peerConnection.setRemoteDescription(new RTCSessionDescription(message.sdp));
-            }
-        }
-        else if (message.candidate) {
-            // ICE candidate
-            console.log("Received ICE candidate");
-            if (peerConnection) {
-                try {
-                    await peerConnection.addIceCandidate(new RTCIceCandidate(message.candidate));
-                } catch (err) {
-                    console.error("Error adding ICE candidate:", err);
-                }
-            }
+            console.log("Adding local stream tracks to PeerConnection.");
+            localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
         }
     }
+}
 
-    function toggleMic() {
-        if (!localStream) {
-            console.warn("No local stream available to toggle microphone.");
-            return false;
+async function processQueuedIceCandidates() {
+    while (pendingIceCandidates.length > 0) {
+        const candidate = pendingIceCandidates.shift();
+        try {
+            if (peerConnection && peerConnection.remoteDescription) {
+                await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+            } else {
+                pendingIceCandidates.unshift(candidate);
+                break;
+            }
+        } catch (e) {
+            console.error("Error adding received ICE candidate", e);
         }
+    }
+}
 
+async function onReceiveSignal(messageJson) {
+    const signal = JSON.parse(messageJson);
+
+    if (isNegotiating && signal.type !== 'ice-candidate') {
+        console.warn(`Negotiation is in progress. Ignoring ${signal.type} signal.`);
+        return;
+    }
+
+    try {
+        // If client receives offer but hasn't started local stream, auto-initiate startCall
+        if (signal.type === 'offer' && !window.isCurrentUserAdmin && !isLocalStreamReady) {
+            console.log("Client not ready for offer, initializing local stream.");
+            await startCall();
+        }
+        await ensurePeerConnection();
+        if (signal.type === 'offer') {
+            console.log("Received offer.");
+            isNegotiating = true;
+            await peerConnection.setRemoteDescription(new RTCSessionDescription({
+                type: signal.type,
+                sdp: signal.sdp
+            }));
+            await processQueuedIceCandidates();
+            console.log("Creating answer.");
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+            if (hubConnection) {
+                console.log("Sending answer.");
+                await hubConnection.invoke("SendSignal", sessionId,
+                    JSON.stringify({ type: 'answer', sdp: peerConnection.localDescription.sdp }));
+            }
+            isNegotiating = false;
+        } else if (signal.type === 'answer') {
+            console.log("Received answer.");
+            isNegotiating = true;
+            await peerConnection.setRemoteDescription(new RTCSessionDescription({
+                type: signal.type,
+                sdp: signal.sdp
+            }));
+            await processQueuedIceCandidates();
+            isNegotiating = false;
+        } else if (signal.type === 'ice-candidate') {
+            console.log("Received ICE candidate.");
+            if (peerConnection.remoteDescription) {
+                await peerConnection.addIceCandidate(new RTCIceCandidate(signal.candidate));
+            } else {
+                console.log("Queuing ICE candidate.");
+                pendingIceCandidates.push(signal.candidate);
+            }
+        }
+    } catch (e) {
+        console.error("Error handling signal:", e);
+        isNegotiating = false;
+    }
+}
+
+export function toggleMic() {
+    if (localStream) {
         const audioTrack = localStream.getAudioTracks()[0];
         if (audioTrack) {
             audioTrack.enabled = !audioTrack.enabled;
-            console.log("Microphone toggled. Muted:", !audioTrack.enabled);
             return !audioTrack.enabled;
         }
-        return false;
     }
+    return false;
+}
 
-    function toggleCamera() {
-        if (!localStream) {
-            console.warn("No local stream available to toggle camera.");
-            return false;
-        }
-
+export function toggleCamera() {
+    if (localStream) {
         const videoTrack = localStream.getVideoTracks()[0];
         if (videoTrack) {
             videoTrack.enabled = !videoTrack.enabled;
-            console.log("Camera toggled. Off:", !videoTrack.enabled);
             return !videoTrack.enabled;
         }
-        return false;
     }
+    return false;
+}
 
-    async function shareScreen() {
-        if (!peerConnection) {
-            console.warn("No peer connection available for screen sharing.");
-            return false;
-        }
-
+export async function shareScreen() {
+    if (!isScreenSharing) {
         try {
-            if (isScreenSharing) {
-                const videoTrack = localStream.getVideoTracks()[0];
-                if (videoTrack) {
-                    const sender = peerConnection.getSenders().find(s => s.track?.kind === "video");
-                    if (sender) {
-                        await sender.replaceTrack(videoTrack);
-                        console.log("Stopped screen sharing. Reverted to camera.");
-                    }
-                }
-                isScreenSharing = false;
-                return false;
+            const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+            const screenTrack = screenStream.getVideoTracks()[0];
+
+            const sender = peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
+            if (sender) {
+                sender.replaceTrack(screenTrack);
             } else {
-                const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-                const screenTrack = screenStream.getVideoTracks()[0];
-                const sender = peerConnection.getSenders().find(s => s.track?.kind === "video");
-
-                if (sender) {
-                    await sender.replaceTrack(screenTrack);
-                    console.log("Started screen sharing.");
-                    isScreenSharing = true;
-
-                    screenTrack.onended = async () => {
-                        const videoTrack = localStream.getVideoTracks()[0];
-                        if (videoTrack && sender) {
-                            await sender.replaceTrack(videoTrack);
-                            console.log("Screen sharing ended by user. Reverted to camera.");
-                            isScreenSharing = false;
-                        }
-                    };
-                }
-                return true;
+                peerConnection.addTrack(screenTrack, localStream);
             }
+
+            const localVideoTrack = localStream.getVideoTracks()[0];
+            localStream.removeTrack(localVideoTrack);
+            localStream.addTrack(screenTrack);
+
+
+            screenTrack.onended = () => {
+                stopScreenShare(screenTrack);
+            };
+
+            isScreenSharing = true;
         } catch (err) {
-            console.error("Error toggling screen sharing:", err);
-            throw err;
+            console.error("Screen share failed:", err);
         }
+    } else {
+        const screenTrack = localStream.getVideoTracks().find(t => t.getSettings().displaySurface);
+        await stopScreenShare(screenTrack);
+    }
+    return isScreenSharing;
+}
+
+async function stopScreenShare(screenTrack) {
+    if (screenTrack) {
+        screenTrack.stop();
+        localStream.removeTrack(screenTrack);
     }
 
-    function sendChatMessage(userName, message) {
-        if (!hubConnection || hubConnection.state !== signalR.HubConnectionState.Connected) {
-            console.warn("Hub not connected. Cannot send message.");
-            return;
-        }
+    const newStream = await navigator.mediaDevices.getUserMedia({ video: true });
+    const newVideoTrack = newStream.getVideoTracks()[0];
+    localStream.addTrack(newVideoTrack);
 
-        hubConnection.invoke("SendChatMessage", sessionId, userName, message)
-            .catch(err => console.error("Error sending chat message:", err));
+    const sender = peerConnection.getSenders().find(s => s.track && s.track.kind === 'video');
+    if (sender) {
+        sender.replaceTrack(newVideoTrack);
     }
+    isScreenSharing = false;
+}
 
-    function onReceiveChatMessage(userName, timestamp, message) {
-        const chatContainer = document.getElementById("chatMessages");
-        if (chatContainer) {
-            const shouldAutoScroll =
-                chatContainer.scrollTop + chatContainer.clientHeight >= chatContainer.scrollHeight - 50;
-
-            const messageDiv = document.createElement("div");
-            messageDiv.innerHTML = `<strong>[${timestamp}] ${userName}:</strong> ${message}`;
-            chatContainer.appendChild(messageDiv);
-
-            if (shouldAutoScroll) {
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-            }
-        }
+export function sendChatMessage(userName, message) {
+    if (hubConnection && hubConnection.state === signalR.HubConnectionState.Connected) {
+        hubConnection.invoke("SendChatMessage", sessionId, userName, message);
     }
+}
 
-    function sendFileAttachment(fileName, base64Content, contentType, userName) {
-        if (!hubConnection || hubConnection.state !== signalR.HubConnectionState.Connected) {
-            console.warn("Hub not connected. Cannot send file.");
-            return;
-        }
+export function sendFileAttachment(fileName, base64Content, contentType, userName) {
+    if (hubConnection && hubConnection.state === signalR.HubConnectionState.Connected) {
+        hubConnection.invoke("SendFileAttachment", sessionId, userName, fileName, base64Content, contentType);
+    }
+}
 
-        if (!hubConnection) {
-            console.warn("Hub connection not established");
-            return;
-        }
-
-        if (!fileName || !base64Content || !contentType) {
-            console.error("Invalid file attachment data:", { fileName, base64Content, contentType });
-            return;
-        }
-
-        const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-        try {
-            // Send the file attachment to the hub first
-            hubConnection.invoke("SendFileAttachment", sessionId, userName, fileName, base64Content, contentType)
-                .then(() => console.log("File attachment sent to hub"))
-                .catch(err => console.error("Error sending file attachment:", err));
-        } catch (err) {
-            console.error("Error processing file attachment:", err);
+async function onParticipantJoined(participantType) {
+    // Mark that another participant is present
+    otherParticipantPresent = true;
+    dotNetRef.invokeMethodAsync("OnOtherParticipantChanged", true);
+    if (window.isCurrentUserAdmin) {
+        if (isCallStarted && isLocalStreamReady) {
+            console.log("Admin detected another participant, initiating WebRTC.");
+            await initiateWebRTCIfReady(participantType);
+        } else {
+            console.log("Admin: Waiting for local stream to be ready before initiating WebRTC.");
         }
     }
+}
 
-    function onReceiveFileAttachment(userName, timestamp, fileName, base64Data, contentType) {
-        const chatContainer = document.getElementById("chatMessages");
-        if (!chatContainer) {
-            console.warn("Chat container not found");
-            return;
-        }
-
-        try {
-            const shouldAutoScroll =
-                chatContainer.scrollTop + chatContainer.clientHeight >= chatContainer.scrollHeight - 50;
-
-            // Create download link with proper file handling
-            const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
-            const blob = new Blob([binaryData], { type: contentType });
-            const url = URL.createObjectURL(blob);
-
-            const fileSize = (binaryData.length / 1024).toFixed(2);
-            const sizeText = fileSize < 1024 ? `${fileSize} KB` : `${(fileSize / 1024).toFixed(2)} MB`;
-
-            const fileIcon = contentType.startsWith('image/') ? '🖼️' :
-                contentType === 'application/pdf' ? '📄' : '📎';
-
-            const fileDiv = document.createElement("div");
-            fileDiv.innerHTML = `
-                <strong>[${timestamp}] ${userName}:</strong> 
-                <a href="${url}" download="${fileName}" title="Download ${fileName}">
-                    ${fileName} (${sizeText}) ${fileIcon}
-                </a>
-            `;
-
-            chatContainer.appendChild(fileDiv);
-
-            if (shouldAutoScroll) {
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-            }
-        } catch (err) {
-            console.error("Error displaying file attachment:", err);
-        }
+async function initiateWebRTCIfReady(participantType) {
+    if (!isCallStarted || !isLocalStreamReady) {
+        console.log("Skipping WebRTC initiation: Call or local stream not started.");
+        return;
     }
+    if (isNegotiating) {
+        console.log("Negotiation already in progress. Skipping initiation.");
+        return;
+    }
+    console.log(`Initiating WebRTC for ${participantType}...`);
+    await cleanupForReconnection();
+    await ensurePeerConnection();
+    isNegotiating = true;
+    try {
+        console.log("Creating offer.");
+        const offer = await peerConnection.createOffer({
+            offerToReceiveAudio: 1,
+            offerToReceiveVideo: 1
+        });
+        await peerConnection.setLocalDescription(offer);
+        if (hubConnection) {
+            console.log("Sending offer.");
+            await hubConnection.invoke("SendSignal", sessionId,
+                JSON.stringify({ type: 'offer', sdp: peerConnection.localDescription.sdp }));
+        }
+    } catch (e) {
+        console.error("Error initiating WebRTC:", e);
+    } finally {
+        isNegotiating = false;
+    }
+}
 
+function onParticipantLeft(participantType) {
+    console.log(`Participant left: ${participantType}. Cleaning up for reconnection.`);
+    // Mark that other participant has left
+    otherParticipantPresent = false;
+    dotNetRef.invokeMethodAsync("OnOtherParticipantChanged", false);
+    // Add a small delay before cleanup to ensure proper state management
+    setTimeout(() => {
+        cleanupForReconnection();
+    }, 100);
+}
+
+export function getConnectionState() {
     return {
-        init,
-        startCall,
-        endCall,
-        toggleMic,
-        toggleCamera,
-        shareScreen,
-        sendChatMessage,
-        sendFileAttachment
+        hub: hubConnection ? hubConnection.state : 'disconnected',
+        peer: peerConnection ? peerConnection.connectionState : 'disconnected'
     };
-})();
+}
+
+export function toggleFullscreen() {
+    const remoteVideo = document.getElementById('remoteVideo');
+    if (!remoteVideo) {
+        console.error('Remote video element not found');
+        return;
+    }
+
+    if (!document.fullscreenElement) {
+        // Enter fullscreen
+        if (remoteVideo.requestFullscreen) {
+            remoteVideo.requestFullscreen();
+        } else if (remoteVideo.webkitRequestFullscreen) {
+            remoteVideo.webkitRequestFullscreen();
+        } else if (remoteVideo.msRequestFullscreen) {
+            remoteVideo.msRequestFullscreen();
+        }
+    } else {
+        // Exit fullscreen
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+        }
+    }
+}
+
+export function setRemoteVideoVolume(volume) {
+    const remoteVideo = document.getElementById('remoteVideo');
+    if (remoteVideo) {
+        remoteVideo.volume = volume;
+        console.log(`Remote video volume set to: ${volume}`);
+    } else {
+        console.error('Remote video element not found');
+    }
+}
