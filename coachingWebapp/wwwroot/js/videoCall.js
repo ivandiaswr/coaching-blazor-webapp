@@ -88,6 +88,9 @@ export async function startCall() {
         const localVideo = document.getElementById("localVideo");
         if (localVideo) {
             localVideo.srcObject = localStream;
+            // Ensure local video is muted to prevent audio feedback/echo
+            localVideo.muted = true;
+            localVideo.volume = 0;
             // Add a small delay to prevent interruption errors
             await new Promise(resolve => setTimeout(resolve, 100));
             localVideo.play().catch(e => console.error("Local video play failed:", e));
@@ -340,6 +343,14 @@ async function stopScreenShare(screenTrack) {
     if (sender) {
         sender.replaceTrack(newVideoTrack);
     }
+
+    // Ensure local video remains muted after screen share
+    const localVideo = document.getElementById("localVideo");
+    if (localVideo) {
+        localVideo.muted = true;
+        localVideo.volume = 0;
+    }
+
     isScreenSharing = false;
 }
 

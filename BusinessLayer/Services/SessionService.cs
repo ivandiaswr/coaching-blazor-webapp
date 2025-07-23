@@ -263,7 +263,24 @@ public class SessionService : ISessionService
             {
                 await _logService.LogWarning("CreatePendingSessionAsync",
                     $"Duplicate pending session found for Email: {session.Email}, SessionId: {existingPendingSession.Id}, SessionCategory: {existingPendingSession.SessionCategory}, PreferredDateTime: {existingPendingSession.PreferredDateTime}, PackId: {existingPendingSession.PackId}");
-                throw new InvalidOperationException($"A pending session already exists (SessionId: {existingPendingSession.Id}).");
+
+                // Check if the existing session is stale (older than 30 minutes) or has no StripeSessionId
+                var staleThreshold = DateTime.UtcNow.AddMinutes(-30);
+                if (existingPendingSession.CreatedAt < staleThreshold || string.IsNullOrEmpty(existingPendingSession.StripeSessionId))
+                {
+                    await _logService.LogInfo("CreatePendingSessionAsync",
+                        $"Cleaning up stale pending session Id: {existingPendingSession.Id}, CreatedAt: {existingPendingSession.CreatedAt}, StripeSessionId: {existingPendingSession.StripeSessionId ?? "null"}");
+
+                    // Clean up the stale session and continue with creating the new one
+                    existingPendingSession.IsPending = false;
+                    _context.Sessions.Update(existingPendingSession);
+                    await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    // If the session is recent and has a StripeSessionId, it's likely a legitimate pending session
+                    throw new InvalidOperationException($"A pending session already exists (SessionId: {existingPendingSession.Id}).");
+                }
             }
 
             session.IsPending = true;
@@ -600,5 +617,61 @@ public class SessionService : ISessionService
         await client.AuthenticateAsync(smtpUsername, smtpPassword);
         await client.SendAsync(message);
         await client.DisconnectAsync(true);
+    }
+
+    public async Task CleanupPendingSessionsForUserAsync(string email)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                await _logService.LogWarning("CleanupPendingSessionsForUserAsync", "Email is null or empty.");
+                return;
+            }
+
+            // Delete ALL pending sessions for this user when they're trying to make a new booking
+            // This includes sessions that may have been created recently but abandoned (e.g., Stripe cancellation)
+            var pendingSessions = await _context.Sessions
+                .Include(s => s.VideoSession)
+                .Where(s => s.Email == email && s.IsPending)
+                .ToListAsync();
+
+            if (pendingSessions.Any())
+            {
+                await _logService.LogInfo("CleanupPendingSessionsForUserAsync",
+                    $"Found {pendingSessions.Count} pending sessions for email: {email}");
+
+                foreach (var session in pendingSessions)
+                {
+                    var sessionAge = DateTime.UtcNow - session.CreatedAt;
+                    await _logService.LogInfo("CleanupPendingSessionsForUserAsync",
+                        $"Deleting pending session Id: {session.Id}, Email: {session.Email}, CreatedAt: {session.CreatedAt}, Age: {sessionAge.TotalMinutes:F1} minutes, StripeSessionId: {session.StripeSessionId ?? "null"}");
+
+                    // Remove related VideoSession if it exists (though unlikely for pending sessions)
+                    if (session.VideoSession != null)
+                    {
+                        await _logService.LogInfo("CleanupPendingSessionsForUserAsync",
+                            $"Also removing VideoSession for SessionId: {session.Id}");
+                        _context.VideoSessions.Remove(session.VideoSession);
+                    }
+
+                    _context.Sessions.Remove(session);
+                }
+
+                await _context.SaveChangesAsync();
+                await _logService.LogInfo("CleanupPendingSessionsForUserAsync",
+                    $"Successfully deleted {pendingSessions.Count} pending sessions for email: {email}");
+            }
+            else
+            {
+                await _logService.LogInfo("CleanupPendingSessionsForUserAsync",
+                    $"No pending sessions found for email: {email}");
+            }
+        }
+        catch (Exception ex)
+        {
+            await _logService.LogError("CleanupPendingSessionsForUserAsync",
+                $"Error cleaning up pending sessions for email: {email}. Error: {ex.Message}");
+        }
     }
 }

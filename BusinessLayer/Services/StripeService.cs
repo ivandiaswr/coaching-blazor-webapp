@@ -103,7 +103,11 @@ public class StripeService : IPaymentService
             }
 
             await _logService.LogInfo("CreateCheckoutSessionAsync", $"Cleaning up stale sessions for Email: {session.Email}");
-            await CleanupStalePendingSessionsAsync(session.Email, bookingType, planId, session.SessionCategory.ToString(), session.PreferredDateTime);
+
+            // Add a small delay to ensure any previous Stripe operations have completed
+            await Task.Delay(500);
+
+            await CleanupStalePendingSessionsAsync(session.Email, bookingType, planId ?? string.Empty, session.SessionCategory.ToString(), session.PreferredDateTime);
             await _logService.LogInfo("CreateCheckoutSessionAsync", $"Completed cleanup for Email: {session.Email}");
 
             await _logService.LogInfo("CreateCheckoutSessionAsync", $"Starting transaction for session Id: {session.Id}");
@@ -162,7 +166,7 @@ public class StripeService : IPaymentService
                     },
                     Mode = "payment",
                     SuccessUrl = $"{_configuration["AppSettings:BaseUrl"]}/payment-success?sessionId={{CHECKOUT_SESSION_ID}}",
-                    CancelUrl = $"{_configuration["AppSettings:BaseUrl"]}/payment-cancelled",
+                    CancelUrl = $"{_configuration["AppSettings:BaseUrl"]}/payment-cancelled?sessionId={session.Id}",
                     Metadata = new Dictionary<string, string>
                     {
                         { "SessionId", session.Id.ToString() },
@@ -237,7 +241,7 @@ public class StripeService : IPaymentService
                     },
                     Mode = "subscription",
                     SuccessUrl = $"{_configuration["AppSettings:BaseUrl"]}/payment-success?sessionId={{CHECKOUT_SESSION_ID}}",
-                    CancelUrl = $"{_configuration["AppSettings:BaseUrl"]}/payment-cancelled",
+                    CancelUrl = $"{_configuration["AppSettings:BaseUrl"]}/payment-cancelled?sessionId={session.Id}",
                     Metadata = new Dictionary<string, string>
                     {
                         { "SessionId", session.Id.ToString() },
@@ -302,7 +306,7 @@ public class StripeService : IPaymentService
                         },
                         Mode = "payment",
                         SuccessUrl = $"{_configuration["AppSettings:BaseUrl"]}/payment-success?sessionId={{CHECKOUT_SESSION_ID}}",
-                        CancelUrl = $"{_configuration["AppSettings:BaseUrl"]}/payment-cancelled",
+                        CancelUrl = $"{_configuration["AppSettings:BaseUrl"]}/payment-cancelled?sessionId={session.Id}",
                         Metadata = new Dictionary<string, string>
                         {
                             { "SessionId", session.Id.ToString() },
@@ -835,6 +839,8 @@ public class StripeService : IPaymentService
         try
         {
             var staleThreshold = DateTime.UtcNow.AddHours(-12);
+
+            // Use a more specific query to avoid conflicts
             var staleSessions = await _context.Sessions
                 .Where(s => s.Email == userEmail &&
                             s.IsPending &&
@@ -842,20 +848,51 @@ public class StripeService : IPaymentService
                             (bookingType == BookingType.SingleSession || s.PackId == planId))
                 .ToListAsync();
 
-            foreach (var session in staleSessions)
+            if (staleSessions.Any())
             {
-                session.IsPending = false;
-                _context.Sessions.Update(session);
                 await _logService.LogInfo("CleanupStalePendingSessionsAsync",
-                    $"Canceled stale or duplicate pending session Id: {session.Id} for User: {userEmail}, BookingType: {bookingType}, PlanId: {planId}, StripeSessionId: {session.StripeSessionId ?? "null"}, SessionCategory: {session.SessionCategory}, PreferredDateTime: {session.PreferredDateTime}");
-            }
+                    $"Found {staleSessions.Count} stale sessions for cleanup for User: {userEmail}");
 
-            await _context.SaveChangesAsync();
+                foreach (var session in staleSessions)
+                {
+                    try
+                    {
+                        session.IsPending = false;
+                        _context.Sessions.Update(session);
+                        await _logService.LogInfo("CleanupStalePendingSessionsAsync",
+                            $"Marked stale session as not pending - Id: {session.Id}, StripeSessionId: {session.StripeSessionId ?? "null"}");
+                    }
+                    catch (Exception sessionEx)
+                    {
+                        await _logService.LogError("CleanupStalePendingSessionsAsync",
+                            $"Failed to update individual session {session.Id}: {sessionEx.Message}");
+                    }
+                }
+
+                try
+                {
+                    await _context.SaveChangesAsync();
+                    await _logService.LogInfo("CleanupStalePendingSessionsAsync",
+                        $"Successfully cleaned up {staleSessions.Count} stale sessions for User: {userEmail}");
+                }
+                catch (Exception saveEx)
+                {
+                    await _logService.LogError("CleanupStalePendingSessionsAsync",
+                        $"Failed to save cleanup changes for User: {userEmail}: {saveEx.Message}");
+                    throw;
+                }
+            }
+            else
+            {
+                await _logService.LogInfo("CleanupStalePendingSessionsAsync",
+                    $"No stale sessions found for User: {userEmail}, BookingType: {bookingType}");
+            }
         }
         catch (Exception ex)
         {
             await _logService.LogError("CleanupStalePendingSessionsAsync Error",
                 $"Failed to cleanup stale sessions for User: {userEmail}, BookingType: {bookingType}, PlanId: {planId}. Error: {ex.Message}");
+            throw;
         }
     }
 

@@ -1,5 +1,13 @@
 @page "/payment-cancelled"
 @rendermode InteractiveServer
+@using BusinessLayer.Services.Interfaces
+@using Microsoft.AspNetCore.Identity
+@inject ISessionService SessionService
+@inject UserManager<IdentityUser> UserManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ILogService LogService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
 
 <MudSnackbarProvider />
 
@@ -7,18 +15,110 @@
 
 <section id="payment-cancelled">
     <div class="cancelled-card">
-        <MudText Typo="Typo.h5" Class="cancelled-title">Payment Cancelled</MudText>
-        <MudText Class="cancelled-message">Your payment was cancelled. You can try booking again.</MudText>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ReturnToDashboard">
-            Return to Dashboard
-        </MudButton>
+        @if (isLoading)
+        {
+            <MudProgressCircular Color="Color.Primary" Size="Size.Medium" Indeterminate="true" />
+            <MudText Class="mt-3">Cleaning up session data...</MudText>
+        }
+        else
+        {
+            <MudText Typo="Typo.h5" Class="cancelled-title">Payment Cancelled</MudText>
+            <MudText Class="cancelled-message">Your payment was cancelled. You can try booking again.</MudText>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ReturnToDashboard">
+                Return to Dashboard
+            </MudButton>
+        }
     </div>
 </section>
 
 @code {
-    protected override void OnInitialized()
+    [SupplyParameterFromQuery(Name = "sessionId")]
+    public string SessionId { get; set; } = string.Empty;
+    
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
     {
-        Snackbar.Add("Payment was cancelled.", Severity.Warning);
+        try
+        {
+            // Clean up any pending sessions for the current user
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var userEmail = authState.User?.Identity?.Name;
+            
+            if (!string.IsNullOrEmpty(userEmail))
+            {
+                await LogService.LogInfo("PaymentCancelled", $"Cleaning up pending sessions for user: {userEmail}, SessionId: {(string.IsNullOrEmpty(SessionId) ? "null" : SessionId)}");
+                
+                // Add delay to avoid race conditions with Stripe webhook processing
+                await Task.Delay(1000);
+                
+                // If we have a specific session ID, clean up that session first
+                if (!string.IsNullOrEmpty(SessionId) && int.TryParse(SessionId, out var sessionIdInt))
+                {
+                    try
+                    {
+                        // Use retry logic for database operations
+                        var retryCount = 0;
+                        var maxRetries = 3;
+                        
+                        while (retryCount < maxRetries)
+                        {
+                            try
+                            {
+                                var session = await SessionService.GetSessionByIdAsync(sessionIdInt);
+                                if (session != null && session.Email == userEmail && session.IsPending)
+                                {
+                                    session.IsPending = false;
+                                    SessionService.UpdateSession(session);
+                                    await LogService.LogInfo("PaymentCancelled", $"Cleaned up specific cancelled session Id: {sessionIdInt}");
+                                }
+                                break; // Success, exit retry loop
+                            }
+                            catch (Exception retryEx) when (retryCount < maxRetries - 1)
+                            {
+                                retryCount++;
+                                await LogService.LogWarning("PaymentCancelled", $"Retry {retryCount} for session {sessionIdInt}: {retryEx.Message}");
+                                await Task.Delay(500 * retryCount); // Exponential backoff
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        await LogService.LogError("PaymentCancelled", $"Error cleaning up specific session {sessionIdInt} after retries: {ex.Message}");
+                        // Don't throw - continue with general cleanup
+                    }
+                }
+                
+                // Clean up any other stale pending sessions for this user
+                try
+                {
+                    await SessionService.CleanupPendingSessionsForUserAsync(userEmail);
+                    await LogService.LogInfo("PaymentCancelled", $"Completed cleanup for user: {userEmail}");
+                }
+                catch (Exception cleanupEx)
+                {
+                    await LogService.LogError("PaymentCancelled", $"Error during general cleanup for user {userEmail}: {cleanupEx.Message}");
+                }
+            }
+            else
+            {
+                await LogService.LogWarning("PaymentCancelled", "User email not found during cleanup");
+            }
+        }
+        catch (Exception ex)
+        {
+            await LogService.LogError("PaymentCancelled", $"Error during cleanup: {ex.Message}");
+            // Don't show error to user - just log it
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+            
+            // Show user-friendly message after a short delay
+            await Task.Delay(100);
+            Snackbar.Add("Payment was cancelled. You can try booking again.", Severity.Info);
+        }
     }
 
     private void ReturnToDashboard()

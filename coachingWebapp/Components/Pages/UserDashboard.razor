@@ -589,6 +589,13 @@
             {
                 userFullName = "Guest";
             }
+
+            // Clean up any stale pending sessions for this user
+            if (!string.IsNullOrEmpty(userId))
+            {
+                await LogService.LogInfo("UserDashboard-OnInitialized", $"Cleaning up pending sessions for user: {userId}");
+                await SessionService.CleanupPendingSessionsForUserAsync(userId);
+            }
         }
         catch (Exception ex)
         {
@@ -1381,6 +1388,9 @@
                 IsPaid = !SelectedOption.RequiresPurchase,
                 PackId = SelectedOption.Type == BookingType.SessionPack && !SelectedOption.RequiresPurchase ? SelectedOption.PackId.ToString() : null
             };
+
+            // Clean up any stale pending sessions before checking
+            await SessionService.CleanupPendingSessionsForUserAsync(userId);
 
             var existingPendingSession = await SessionService.GetPendingSessionByEmailAndPackAsync(
                 session.Email, 

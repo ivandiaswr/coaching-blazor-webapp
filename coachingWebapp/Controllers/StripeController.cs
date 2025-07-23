@@ -48,7 +48,22 @@ namespace coachingWebapp.Controllers
             }
             catch (Exception ex)
             {
-                await _logService.LogError("CreateCheckoutSession Error", $"Failed to create checkout session for SessionId: {request?.Session?.Id}, Error: {ex.Message}, StackTrace: {ex.StackTrace}");
+                await _logService.LogError("CreateCheckoutSession Error", $"Failed to create checkout session for SessionId: {request?.Session?.Id}, Email: {request?.Session?.Email}, BookingType: {request?.BookingType}, Error: {ex.Message}, StackTrace: {ex.StackTrace}");
+
+                // Try to clean up any pending sessions that might have been created
+                if (request?.Session?.Email != null)
+                {
+                    try
+                    {
+                        await _sessionService.CleanupPendingSessionsForUserAsync(request.Session.Email);
+                        await _logService.LogInfo("CreateCheckoutSession Cleanup", $"Cleaned up pending sessions after error for Email: {request.Session.Email}");
+                    }
+                    catch (Exception cleanupEx)
+                    {
+                        await _logService.LogError("CreateCheckoutSession Cleanup Error", $"Failed to cleanup after error for Email: {request.Session.Email}, Error: {cleanupEx.Message}");
+                    }
+                }
+
                 return StatusCode(500, new { error = "Failed to create checkout session.", details = ex.Message });
             }
         }
@@ -90,7 +105,7 @@ namespace coachingWebapp.Controllers
                     return BadRequest(new { error = "Invalid request: Missing Stripe-Signature header." });
                 }
 
-                await _paymentService.HandleWebhookAsync(json, stripeSignature);
+                await _paymentService.HandleWebhookAsync(json, stripeSignature.ToString());
                 return Ok();
             }
             catch (StripeException ex)

@@ -16,6 +16,7 @@ public interface ISessionService
     Task<Session?> GetLatestSessionByEmailAsync(string email);
     Task<Session?> GetSessionByEmailAsync(string email);
     Task<Session> GetPendingSessionByEmailAndPackAsync(string email, string packId, SessionType sessionCategory, DateTime preferredDateTime);
+    Task CleanupPendingSessionsForUserAsync(string email);
 
     // Email    
     Task SendEmailAsync(Session contact);
