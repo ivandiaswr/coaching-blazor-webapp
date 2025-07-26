@@ -583,12 +583,19 @@ public class SessionService : ISessionService
         var message = new MimeMessage();
         message.From.Add(new MailboxAddress("Ítala Veloso", smtpUsername));
         message.To.Add(new MailboxAddress(session.FullName, session.Email));
-        message.Subject = "Your Discovery Call is Confirmed";
+
+        // Dynamic subject based on whether it's a discovery call or regular session
+        string sessionTypeDisplayName = session.SessionCategory.GetDisplayName();
+        bool isDiscoveryCall = session.DiscoveryCall;
+        message.Subject = isDiscoveryCall ? "Your Discovery Call is Confirmed" : $"Your {sessionTypeDisplayName} Session is Confirmed";
 
         string baseUrl = _helperService.GetConfigValue("AppSettings:BaseUrl");
         string videoCallLink = $"{baseUrl}/session/{videoSession.SessionId}";
 
         string formattedDate = session.PreferredDateTime.ToString("dddd, dd MMMM yyyy 'at' HH:mm");
+
+        // Dynamic email content based on session type
+        string sessionDescription = isDiscoveryCall ? "free Discovery Call" : $"{sessionTypeDisplayName} session";
 
         var builder = new BodyBuilder
         {
@@ -596,10 +603,10 @@ public class SessionService : ISessionService
             <div style='font-family: Arial, sans-serif; font-size: 14px; color: #333;'>
                 <p>Dear {session.FirstName},</p>
 
-                <p>Thank you for booking a free Discovery Call with Ítala Veloso.</p>
+                <p>Thank you for booking a {sessionDescription} with Ítala Veloso.</p>
 
                 <p><strong>📅 Date:</strong> {formattedDate}<br>
-                <strong>💼 Session:</strong> {session.SessionCategory.GetDisplayName()}<br>
+                <strong>💼 Session:</strong> {sessionTypeDisplayName}<br>
                 <strong>📍 Access Link:</strong> <a href='{videoCallLink}' target='_blank'>{videoCallLink}</a></p>
 
                 <p>Please join a few minutes before your session time. If you need to reschedule, just reply to this email.</p>
