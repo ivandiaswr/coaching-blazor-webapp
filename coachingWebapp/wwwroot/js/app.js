@@ -242,7 +242,7 @@ window.initializeReviewsSlider = function () {
 
     function autoScrollLoop() {
         if (!isPaused) {
-            currentOffset -= 1; // Smooth scroll speed
+            currentOffset -= 0.3; // Smooth scroll speed (lower = slower, higher = faster)
 
             // Reset position when we've scrolled past the first set of slides
             if (Math.abs(currentOffset) >= slideWidth * originalSlides.length) {
