@@ -98,6 +98,8 @@ builder.Services.AddScoped<ISessionPackService, SessionPackService>();
 builder.Services.AddScoped<IUserSubscriptionService, UserSubscriptionService>();
 builder.Services.AddScoped<ICurrencyConversionService, CurrencyConversionService>();
 
+builder.Services.AddHttpClient<GoogleReviewsService>();
+
 builder.Services.AddScoped<ILogService>(provider =>
 {
     var context = provider.GetRequiredService<CoachingDbContext>();

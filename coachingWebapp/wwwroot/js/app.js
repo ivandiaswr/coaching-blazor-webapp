@@ -212,3 +212,82 @@ window.logout = function () {
     });
 };
 
+// Google Reviews Carousel functionality
+window.initializeReviewsSlider = function () {
+    const sliderContainer = document.querySelector('.reviews-slider-container');
+    const slider = document.querySelector('.reviews-slider');
+    const slides = document.querySelectorAll('.review-slide');
+
+    if (!slider || !slides.length) return;
+
+    // Calculate slide width including gap based on screen size
+    let slideWidth = 300; // 280px width + 20px gap
+
+    // Adjust for responsive breakpoints
+    if (window.innerWidth <= 480) {
+        slideWidth = 290; // 280px width + 10px gap on mobile
+    } else if (window.innerWidth <= 768) {
+        slideWidth = 252; // 240px width + 12px gap on tablet
+    }
+
+    let currentOffset = 0;
+    let isPaused = false;
+
+    // Clone all slides to create seamless loop
+    const originalSlides = Array.from(slides);
+    originalSlides.forEach(slide => {
+        const clone = slide.cloneNode(true);
+        slider.appendChild(clone);
+    });
+
+    function autoScrollLoop() {
+        if (!isPaused) {
+            currentOffset -= 1; // Smooth scroll speed
+
+            // Reset position when we've scrolled past the first set of slides
+            if (Math.abs(currentOffset) >= slideWidth * originalSlides.length) {
+                currentOffset = 0;
+            }
+
+            slider.style.transform = `translateX(${currentOffset}px)`;
+        }
+        requestAnimationFrame(autoScrollLoop);
+    }
+
+    // Pause on hover
+    if (sliderContainer) {
+        sliderContainer.addEventListener('mouseenter', () => {
+            isPaused = true;
+        });
+
+        sliderContainer.addEventListener('mouseleave', () => {
+            isPaused = false;
+        });
+    }
+
+    // Handle window resize
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            // Recalculate slide width on resize
+            if (window.innerWidth <= 480) {
+                slideWidth = 290;
+            } else if (window.innerWidth <= 768) {
+                slideWidth = 252;
+            } else {
+                slideWidth = 300;
+            }
+        }, 250);
+    });
+
+    // Start the animation
+    autoScrollLoop();
+}; window.disposeReviewsSlider = function () {
+    // Clean up event listeners if needed
+    const sliderContainer = document.querySelector('.reviews-slider-container');
+    if (sliderContainer) {
+        sliderContainer.replaceWith(sliderContainer.cloneNode(true));
+    }
+};
+

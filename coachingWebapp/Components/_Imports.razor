@@ -17,6 +17,7 @@
 @using coachingWebapp.Components
 @using coachingWebapp.Components.Components
 @using BusinessLayer
+@using BusinessLayer.Services
 @using BusinessLayer.Services.Interfaces
 @using ModelLayer
 @using ModelLayer.Models
@@ -51,6 +52,7 @@
 @inject IPaymentService StripeService
 @inject IDialogService DialogService
 @inject ICurrencyConversionService CurrencyConversionService
+@inject GoogleReviewsService GoogleReviewsService
 
 @using Stripe
 @inject IConfiguration Configuration

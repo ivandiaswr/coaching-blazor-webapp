@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 
 @inject IHttpClientFactory HttpClientFactory
+
 <MudPopoverProvider /> 
 <MudSnackbarProvider />
 
@@ -183,6 +184,119 @@
         </div>
 </section>
 
+<section id="google-reviews" class="google-reviews-section">
+    <div class="container">
+        <div class="title-section">
+            <h2 class="section-title">Google <span class="highlight">Reviews</span></h2>
+            <p class="section-subtitle">See what our clients say about their experience</p>
+        </div>
+
+        <div class="google-reviews-content">
+            <div class="reviews-showcase">
+                <div class="google-rating-summary">
+                    <div class="rating-display">
+                        <div class="stars">
+                            @for (int i = 1; i <= 5; i++)
+                            {
+                                <i class="fas fa-star @(i <= Math.Round(googleRating) ? "filled" : "empty")"></i>
+                            }
+                        </div>
+                        <div class="rating-text">
+                            <span class="rating-score">@googleRating.ToString("F1")</span>
+                            <span class="rating-source">@totalGoogleReviews Google Reviews</span>
+                        </div>
+                    </div>
+                    <div class="google-logo">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" />
+                    </div>
+                </div>
+
+                @if (isLoadingReviews)
+                {
+                    <div class="reviews-loading">
+                        <MudProgressCircular Color="Color.Primary" Size="Size.Medium" Indeterminate="true" />
+                        <p>Loading reviews...</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="reviews-slider-container">
+                        <div class="reviews-slider">
+                            @foreach (var review in googleReviews)
+                            {
+                                <div class="review-slide">
+                                    <div class="slide-reviewer-info">
+                                        <div class="slide-reviewer-avatar">
+                                            @if (!string.IsNullOrEmpty(review.ProfilePhotoUrl))
+                                            {
+                                                <img src="@review.ProfilePhotoUrl" alt="@review.ReviewerName" class="profile-photo" />
+                                            }
+                                            else
+                                            {
+                                                @review.ReviewerName.Substring(0, 1).ToUpper()
+                                            }
+                                        </div>
+                                        <div class="slide-reviewer-details">
+                                            <h4>@review.ReviewerName</h4>
+                                            <div class="slide-review-stars">
+                                                @for (int i = 1; i <= 5; i++)
+                                                {
+                                                    <i class="fas fa-star @(i <= review.Rating ? "filled" : "empty")"></i>
+                                                }
+                                            </div>
+                                            <div class="slide-review-date">
+                                                @review.ReviewDate.ToString("MMM yyyy")
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p class="slide-review-text">@review.ReviewText</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="add-review-section">
+                <div class="add-review-card">
+                    <div class="add-review-header">
+                        <h3>Share Your Experience</h3>
+                        <p>Help others discover the transformative power of coaching</p>
+                    </div>
+                    <div class="add-review-content">
+                        <div class="review-benefits">
+                            <div class="benefit-item">
+                                <i class="fas fa-heart"></i>
+                                <span>Share your success story</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-users"></i>
+                                <span>Help others on their journey</span>
+                            </div>
+                            <div class="benefit-item">
+                                <i class="fas fa-star"></i>
+                                <span>Support our community</span>
+                            </div>
+                        </div>
+                        <a href="https://g.page/r/CWXw4ssna8vtEAE/review" target="_blank" rel="noopener noreferrer" class="add-review-button">
+                            <div class="button-content">
+                                <div class="button-icon">
+                                    <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" />
+                                </div>
+                                <div class="button-text">
+                                    <span class="primary-text">Write a Google Review</span>
+                                    <span class="secondary-text">Takes less than 1 minute</span>
+                                </div>
+                                <i class="fas fa-external-link-alt"></i>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
 <section id="contact">
     <div class="contact-container">
         <div class="contact-form-container">
@@ -342,23 +456,23 @@
         {
             Id = 1,
             Path = "https://italaveloso.com/Testimonials/testimonial_Laviniah.mp4",
-            Results = "Ítala been really helpful in terms of giving me concrete knowedge about things to do with trauma...",
+            Results = "Ítala been really helpful in terms of giving me concrete knowledge about things to do with trauma, how it affects our behaviours, thinking, patterns; in order to change our actions and outputs into this world. There has been such growth and work of development and I am very proud with where I am right now. Thank you and highly recommend Ítala",
             Author = "Laviniah",
             Role = "- Cyber Security Analyst"
         },
         new Testimonial
         {
             Id = 2,
-            Path = "https://italaveloso.com/Testimonials/testimonial_Fi.mp4",
-            Results = "Ítala kept getting me into this place that it is ok to feel what I was feeling...",
-            Author = "Fi",
+            Path = "https://italaveloso.com/Testimonials/testimonial_Fran.mp4",
+            Results = "When I started my coaching journey with Itala, I thought I had things pretty well sorted. What extra help I could get was going to be great. Little did I know I was going to get a lot of help. Ideas that have been floating around in my entrepreneurial brain, some for more than a decade, are now on paper in a roadmap. They are tangible, and it’s fantastic I can now implement them. Itala really is a bright spark of joy. Sometimes, if I didn't feel that great going into a session, I felt like a million bucks afterwards because her personality is so bubbly and bright. I just love working with her, and I can't imagine a better life coach. If you're thinking about coaching, give Itala a chance because you really won't regret it. There's no way I could have thought of these things on my own, but with the right guidance, it's come together wonderfully. Itala, thank you from the bottom of my heart. You're amazing, and I can't wait to continue the journey with you.",
+            Author = "Fran",
             Role = "- Civil Servant"
         },
         new Testimonial
         {
             Id = 3,
             Path = "https://italaveloso.com/Testimonials/testimonial_Monica.mp4",
-            Results = "With coaching, she really helped me to get to know myself better...",
+            Results = "With coaching, Ítala really helped me to get to know myself better; to believe more in myself... I am really grateful to have unlocked and let go of things that happened in my past that was preventing me to move forward and improve myself. I am really thankful for that. The biggest knowledge I took from this transformation is that I am Capable of more things that I thought that I was. I am such a Stronger person now, since coaching. I highly recommend!",
             Author = "Mónica",
             Role = "- Oral Health Backoffice Assistant"
         }
@@ -374,6 +488,17 @@
     private string userTimeZoneDisplay = "UTC";
     private MudForm sessionForm;
     private bool isSuccess = false;
+
+    private List<GoogleReview> googleReviews = new List<GoogleReview>();
+    private double googleRating = 5.0;
+    private int totalGoogleReviews = 5;
+    private bool isLoadingReviews = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadGoogleReviewsAsync();
+        await base.OnInitializedAsync();
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -400,6 +525,13 @@
                 }
 
             await JSRuntime.InvokeVoidAsync("setTitle", pageTitle);
+            
+            // Initialize slider if reviews are already loaded
+            if (googleReviews.Count > 0)
+            {
+                await JSRuntime.InvokeVoidAsync("initializeReviewsSlider");
+            }
+            
             StateHasChanged();
         }
     }
@@ -623,6 +755,38 @@
     private void OnModalVisibilityChanged(bool isVisible)
     {
         showTimeSlots = isVisible;
+    }
+    #endregion
+    
+    #region GoogleReviews
+    private async Task LoadGoogleReviewsAsync()
+    {
+        try
+        {
+            isLoadingReviews = true;
+            StateHasChanged();
+            
+            var (reviews, rating, total) = await GoogleReviewsService.GetReviewsAsync();
+            googleReviews = reviews;
+            googleRating = rating;
+            
+            await LogService.LogInfo("LoadGoogleReviews", $"Loaded {googleReviews.Count} Google reviews with average rating {googleRating:F1}");
+            
+            if (googleReviews.Count > 0)
+            {
+                await Task.Delay(100); // Small delay to ensure DOM is updated
+                await JSRuntime.InvokeVoidAsync("initializeReviewsSlider");
+            }
+        }
+        catch (Exception ex)
+        {
+            await LogService.LogError("LoadGoogleReviewsAsync Error", ex.Message);
+        }
+        finally
+        {
+            isLoadingReviews = false;
+            StateHasChanged();
+        }
     }
     #endregion
     
