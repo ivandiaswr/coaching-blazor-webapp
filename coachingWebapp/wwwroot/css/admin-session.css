@@ -1,13 +1,35 @@
 #adminDashboard {
-    width: 1600px;
+    max-width: 1600px;
+    width: 100%;
     margin: 0 auto;
-    padding: 2rem;
+    padding: 1rem;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 1680px) {
+    #adminDashboard {
+        max-width: 95%;
+        padding: 1rem 0.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    #adminDashboard {
+        max-width: 100%;
+        padding: 0.5rem;
+    }
 }
 
 .dashboard-header {
     display: flex;
     justify-content: center;
     padding: 2rem 0;
+}
+
+@media (max-width: 768px) {
+    .dashboard-header {
+        padding: 1rem 0;
+    }
 }
 
 .dashboard-header>div {
@@ -23,6 +45,18 @@
     text-align: center;
 }
 
+@media (max-width: 768px) {
+    .dashboard-header h1 {
+        font-size: 2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-header h1 {
+        font-size: 1.75rem;
+    }
+}
+
 .dashboard-header>p {
     font-size: 1.2rem;
     line-height: 1.6;
@@ -30,6 +64,21 @@
     text-align: center;
     max-width: 800px;
     margin: 0 auto 3rem auto;
+}
+
+@media (max-width: 768px) {
+    .dashboard-header>p {
+        font-size: 1rem;
+        margin: 0 auto 2rem auto;
+        padding: 0 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-header>p {
+        font-size: 0.95rem;
+        margin: 0 auto 1.5rem auto;
+    }
 }
 
 .text-red {
@@ -56,6 +105,20 @@
     transition: background-color 0.2s ease, transform 0.1s ease;
     font-weight: 500;
     color: #ffffff !important;
+}
+
+@media (max-width: 768px) {
+    .mud-calendar .mud-chip.mud-chip-color-primary {
+        padding: 4px 8px;
+        font-size: 0.875rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .mud-calendar .mud-chip.mud-chip-color-primary {
+        padding: 3px 6px;
+        font-size: 0.8rem;
+    }
 }
 
 .mud-cal-cell-template-chip {
@@ -95,6 +158,22 @@
     font-weight: 600;
 }
 
+@media (max-width: 768px) {
+    .mud-calendar .mud-button {
+        min-width: 60px;
+        font-size: 0.875rem;
+        padding: 4px 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .mud-calendar .mud-button {
+        min-width: 50px;
+        font-size: 0.8rem;
+        padding: 2px 6px;
+    }
+}
+
 .mud-calendar .mud-button:not(.mud-selected):hover {
     background-color: rgba(var(--mud-palette-primary-rgb), 0.08);
     color: var(--accent-orange);
@@ -118,6 +197,15 @@
     border-bottom: 1px solid #eee;
 }
 
+@media (max-width: 768px) {
+    .busy-time-entry {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+        padding: 0.75rem 0;
+    }
+}
+
 .busy-time-info {
     font-size: 0.95rem;
     font-weight: 500;
@@ -127,10 +215,24 @@
     gap: 0.5rem;
 }
 
+@media (max-width: 768px) {
+    .busy-time-info {
+        font-size: 0.875rem;
+        flex-wrap: wrap;
+    }
+}
+
 .busy-time-actions {
     display: flex;
     gap: 0.25rem;
     align-items: center;
+}
+
+@media (max-width: 768px) {
+    .busy-time-actions {
+        align-self: flex-end;
+        margin-top: 0.25rem;
+    }
 }
 
 /* Session popup */
@@ -161,6 +263,12 @@
     border-bottom: 1px solid #f5f5f5;
 }
 
+@media (max-width: 768px) {
+    .session-detail-item {
+        padding: 0.75rem 0;
+    }
+}
+
 .session-detail-item:last-child {
     border-bottom: none;
 }
@@ -171,10 +279,22 @@
     font-size: 0.875rem;
 }
 
+@media (max-width: 768px) {
+    .detail-label {
+        font-size: 0.8rem;
+    }
+}
+
 .detail-value {
     color: #1a1a1a;
     font-size: 1rem;
     word-break: break-word;
+}
+
+@media (max-width: 768px) {
+    .detail-value {
+        font-size: 0.9rem;
+    }
 }
 
 .text-muted {
@@ -365,4 +485,100 @@ table .mud-table-head .mud-icon-button,
     opacity: 1 !important;
     visibility: visible !important;
     display: inline-flex !important;
+}
+
+/* Mobile responsive improvements */
+@media (max-width: 768px) {
+
+    /* Tab panels mobile optimization */
+    .mud-tabs .mud-tab-panel {
+        padding: 0.5rem !important;
+    }
+
+    /* Data grid mobile optimization */
+    .mud-data-grid {
+        font-size: 0.875rem;
+    }
+
+    .mud-data-grid .mud-table-cell {
+        padding: 4px 8px !important;
+    }
+
+    /* Calendar mobile optimization */
+    .mud-calendar {
+        font-size: 0.875rem;
+    }
+
+    /* Form elements mobile optimization */
+    .mud-form .mud-text-field {
+        margin-bottom: 8px;
+    }
+
+    /* Button optimization for mobile */
+    .mud-button {
+        min-width: auto !important;
+        padding: 6px 12px !important;
+    }
+
+    /* Dialog optimization for mobile */
+    .mud-dialog {
+        margin: 8px !important;
+        max-width: calc(100vw - 16px) !important;
+    }
+
+    .mud-dialog-content {
+        padding: 12px !important;
+    }
+}
+
+@media (max-width: 480px) {
+
+    /* Extra small screens */
+    .mud-tabs .mud-tab {
+        font-size: 0.8rem;
+        min-width: auto;
+        padding: 6px 8px;
+    }
+
+    .mud-data-grid .mud-table-cell {
+        padding: 2px 4px !important;
+        font-size: 0.8rem;
+    }
+
+    /* Stack toolbar items vertically on very small screens */
+    .mud-data-grid .mud-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .mud-data-grid .mud-toolbar>* {
+        margin: 2px 0;
+    }
+}
+
+/* Horizontal scroll container for tables on small screens */
+@media (max-width: 768px) {
+    .mud-data-grid-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .mud-table {
+        min-width: 600px;
+    }
+}
+
+/* Improve touch targets for mobile */
+@media (hover: none) and (pointer: coarse) {
+
+    .mud-button,
+    .mud-icon-button,
+    .mud-chip {
+        min-height: 44px !important;
+        min-width: 44px !important;
+    }
+
+    .mud-table-row {
+        cursor: pointer;
+    }
 }

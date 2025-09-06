@@ -40,7 +40,7 @@
                 }
 
                 <MudStack Class="mt-4" Spacing="2">
-                    <MudText Typo="Typo.body1">📅 <strong>@nextSessions.Count</strong> upcoming session(s) scheduled.</MudText>
+                    <MudText Typo="Typo.body1">📅 <strong>@nextSessions.Count(s => (s.VideoSession != null && s.VideoSession.ScheduledAt >= DateTime.UtcNow) || (s.VideoSession == null && s.PreferredDateTime >= DateTime.UtcNow))</strong> upcoming session(s) scheduled.</MudText>
                 </MudStack>
             </MudPaper>
         </div>

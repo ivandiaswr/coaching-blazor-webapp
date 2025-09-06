@@ -1,121 +1,199 @@
 <MudDialog>
     <TitleContent>
-        <MudText Typo="Typo.h6" Class="dialog-title">
-            <MudIcon Icon="@Icons.Material.Filled.Event" Class="mr-2" Size="Size.Small" />
-            Session Details
-        </MudText>
+        <MudStack Row="true" AlignItems="AlignItems.Center">
+            <MudIcon Icon="@Icons.Material.Filled.Event" Class="mr-2" Size="Size.Medium" Color="Color.Primary" />
+            <MudText Typo="Typo.h5" Class="dialog-title">
+                Session Details
+            </MudText>
+        </MudStack>
     </TitleContent>
     <DialogContent>
         @if (Session != null)
         {
-            <MudPaper Class="pa-4 session-details-card" Elevation="2">
-                <MudGrid Spacing="3" Class="session-details-grid">
-                    <MudItem xs="12">
-                        <MudText Typo="Typo.h5" Class="mb-3">Session Information</MudText>
-                    </MudItem>
-                    <MudItem xs="12" sm="6" Class="session-detail-item">
-                        <MudText Typo="Typo.caption" Color="Color.Primary">Name</MudText>
-                        <MudText Typo="Typo.body1">@Session.FullName</MudText>
-                    </MudItem>
-                    <MudItem xs="12" sm="6" Class="session-detail-item">
-                        <MudText Typo="Typo.caption" Color="Color.Primary">Email</MudText>
-                        <MudText Typo="Typo.body1">@Session.Email</MudText>
-                    </MudItem>
-                    <MudItem xs="12" sm="6" Class="session-detail-item">
-                        <MudText Typo="Typo.caption" Color="Color.Primary">Session Category</MudText>
-                        <MudText Typo="Typo.body1">@Session.SessionCategory.GetDisplayName()</MudText>
-                    </MudItem>
-                    <MudItem xs="12" Class="session-detail-item">
-                        <MudText Typo="Typo.caption" Color="Color.Primary">Message</MudText>
-                        <MudText Typo="Typo.body2" Class="mt-1">@(string.IsNullOrEmpty(Session.Message) ? "No message provided." : Session.Message)</MudText>
-                    </MudItem>
-                    <MudItem xs="12" sm="6" Class="session-detail-item">
-                        <MudText Typo="Typo.caption" Color="Color.Primary">Preferred Date & Time</MudText>
-                        <MudText Typo="Typo.body1">@ConvertToLocalTime(Session.PreferredDateTime).ToString("dd MMM yyyy HH:mm") (@CurrentTimeZone)</MudText>
-                    </MudItem>
-                    <MudItem xs="12" sm="6" Class="session-detail-item">
-                        <MudText Typo="Typo.caption" Color="Color.Primary">Created At</MudText>
-                        <MudText Typo="Typo.body1">@ConvertToLocalTime(Session.CreatedAt).ToString("dd MMM yyyy HH:mm") (@CurrentTimeZone)</MudText>
-                    </MudItem>
-                    <MudItem xs="12" sm="6" Class="session-detail-item">
-                        <MudText Typo="Typo.caption" Color="Color.Primary">Type</MudText>
-                        <MudText Typo="Typo.body1">
-                            @if (Session.DiscoveryCall)
-                            {
-                                <MudChip T="string" Color="Color.Info" Size="Size.Small">Discovery Call</MudChip>
-                            }
-                            else
-                            {
-                                <MudChip T="string" Color="Color.Primary" Size="Size.Small">Single Session</MudChip>
-                            }
+            <MudContainer MaxWidth="MaxWidth.False" Class="pa-0">
+                <!-- Status Alert - Top of dialog for admin visibility -->
+                <MudAlert Severity="@GetAlertSeverity()" Class="mb-4" Variant="Variant.Filled" Dense="false">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                        <MudIcon Icon="@GetSessionStatusIcon()" />
+                        <MudText Typo="Typo.body2" Style="font-weight: 500;">
+                            @GetAdminStatusMessage()
                         </MudText>
-                    </MudItem>
+                    </MudStack>
+                </MudAlert>
+                
+                <MudStack Spacing="4">
+                    <MudPaper Class="pa-4" Elevation="2" Style="border-left: 4px solid var(--mud-palette-primary);">
+                        <MudStack Spacing="3">
+                            <MudText Typo="Typo.h6" Color="Color.Primary">
+                                <MudIcon Icon="@Icons.Material.Filled.Person" Class="mr-2" Size="Size.Small" />
+                                Client Information
+                            </MudText>
+                            <MudGrid Spacing="3">
+                                <MudItem xs="12" sm="6">
+                                    <MudStack Spacing="1">
+                                        <MudText Typo="Typo.caption" Color="Color.Primary" Style="font-weight: 600;">Name</MudText>
+                                        <MudText Typo="Typo.body1">@Session.FullName</MudText>
+                                    </MudStack>
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudStack Spacing="1">
+                                        <MudText Typo="Typo.caption" Color="Color.Primary" Style="font-weight: 600;">Email</MudText>
+                                        <MudText Typo="Typo.body1">@Session.Email</MudText>
+                                    </MudStack>
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudStack Spacing="1">
+                                        <MudText Typo="Typo.caption" Color="Color.Primary" Style="font-weight: 600;">Session Type</MudText>
+                                        <MudText Typo="Typo.body1">@Session.SessionCategory.GetDisplayName()</MudText>
+                                    </MudStack>
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudStack Spacing="1">
+                                        <MudText Typo="Typo.caption" Color="Color.Primary" Style="font-weight: 600;">Session Format</MudText>
+                                        @if (Session.DiscoveryCall)
+                                        {
+                                            <MudChip T="string" Color="Color.Info" Size="Size.Small" Icon="@Icons.Material.Filled.Phone">Discovery Call</MudChip>
+                                        }
+                                        else
+                                        {
+                                            <MudChip T="string" Color="Color.Primary" Size="Size.Small" Icon="@Icons.Material.Filled.VideoCall">Single Session</MudChip>
+                                        }
+                                    </MudStack>
+                                </MudItem>
+                                <MudItem xs="12">
+                                    <MudStack Spacing="1">
+                                        <MudText Typo="Typo.caption" Color="Color.Primary" Style="font-weight: 600;">Message</MudText>
+                                        <MudPaper Class="pa-3" Elevation="1" Style="background-color: var(--mud-palette-background-grey);">
+                                            <MudText Typo="Typo.body2">@(string.IsNullOrEmpty(Session.Message) ? "No message provided." : Session.Message)</MudText>
+                                        </MudPaper>
+                                    </MudStack>
+                                </MudItem>
+                            </MudGrid>
+                        </MudStack>
+                    </MudPaper>
 
-                    <MudItem xs="12" Class="mt-4">
-                        <MudText Typo="Typo.h5" Class="mb-3">Payment Information</MudText>
-                    </MudItem>
-                    <MudItem xs="12" sm="6" Class="session-detail-item">
-                        <MudText Typo="Typo.caption" Color="Color.Primary">Payment Status</MudText>
-                        <MudText Typo="Typo.body1">
-                            @if (Session.IsPaid)
-                            {
-                                <MudChip T="string" Color="Color.Success" Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small">Paid</MudChip>
-                            }
-                            else
-                            {
-                                <MudChip T="string" Color="Color.Error" Icon="@Icons.Material.Filled.Error" Size="Size.Small">Not Paid</MudChip>
-                            }
-                        </MudText>
-                    </MudItem>
-                    @if (Session.IsPaid && Session.PaidAt != default)
+                    <MudPaper Class="pa-4" Elevation="2" Style="border-left: 4px solid var(--mud-palette-secondary);">
+                        <MudStack Spacing="3">
+                            <MudText Typo="Typo.h6" Color="Color.Secondary">
+                                <MudIcon Icon="@Icons.Material.Filled.Schedule" Class="mr-2" Size="Size.Small" />
+                                Scheduling Information
+                            </MudText>
+                            <MudGrid Spacing="3">
+                                <MudItem xs="12" sm="6">
+                                    <MudStack Spacing="1">
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary" Style="font-weight: 600;">Preferred Date & Time</MudText>
+                                        <MudText Typo="Typo.body1">@ConvertToLocalTime(Session.PreferredDateTime).ToString("dd MMM yyyy HH:mm") (@CurrentTimeZone)</MudText>
+                                    </MudStack>
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudStack Spacing="1">
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary" Style="font-weight: 600;">Created At</MudText>
+                                        <MudText Typo="Typo.body1">@ConvertToLocalTime(Session.CreatedAt).ToString("dd MMM yyyy HH:mm") (@CurrentTimeZone)</MudText>
+                                    </MudStack>
+                                </MudItem>
+                            </MudGrid>
+                        </MudStack>
+                    </MudPaper>
+
+                    <!-- Payment Information Card -->
+                    @if (!Session.DiscoveryCall)
                     {
-                        <MudItem xs="12" sm="6" Class="session-detail-item">
-                            <MudText Typo="Typo.caption" Color="Color.Primary">Paid At</MudText>
-                            <MudText Typo="Typo.body1">@ConvertToLocalTime(Session.PaidAt).ToString("dd MMM yyyy HH:mm") (@CurrentTimeZone)</MudText>
-                        </MudItem>
-                    }
-                    @if (!string.IsNullOrEmpty(Session.StripeSessionId))
-                    {
-                        <MudItem xs="12" Class="session-detail-item">
-                            <MudText Typo="Typo.caption" Color="Color.Primary">Stripe Session ID</MudText>
-                            <MudText Typo="Typo.body2" Style="word-break: break-all;">@Session.StripeSessionId</MudText>
-                        </MudItem>
+                        <MudPaper Class="pa-4" Elevation="2" Style="border-left: 4px solid var(--mud-palette-success);">
+                            <MudStack Spacing="3">
+                                <MudText Typo="Typo.h6" Color="Color.Success">
+                                    <MudIcon Icon="@Icons.Material.Filled.Payment" Class="mr-2" Size="Size.Small" />
+                                    Payment Information
+                                </MudText>
+                                <MudGrid Spacing="3">
+                                    <MudItem xs="12" sm="6">
+                                        <MudStack Spacing="1">
+                                            <MudText Typo="Typo.caption" Color="Color.Success" Style="font-weight: 600;">Payment Status</MudText>
+                                            @if (Session.IsPaid)
+                                            {
+                                                <MudChip T="string" Color="Color.Success" Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Medium">Paid</MudChip>
+                                            }
+                                            else
+                                            {
+                                                <MudChip T="string" Color="Color.Error" Icon="@Icons.Material.Filled.Error" Size="Size.Medium">Not Paid</MudChip>
+                                            }
+                                        </MudStack>
+                                    </MudItem>
+                                    @if (Session.IsPaid && Session.PaidAt != default)
+                                    {
+                                        <MudItem xs="12" sm="6">
+                                            <MudStack Spacing="1">
+                                                <MudText Typo="Typo.caption" Color="Color.Success" Style="font-weight: 600;">Paid At</MudText>
+                                                <MudText Typo="Typo.body1">@ConvertToLocalTime(Session.PaidAt).ToString("dd MMM yyyy HH:mm") (@CurrentTimeZone)</MudText>
+                                            </MudStack>
+                                        </MudItem>
+                                    }
+                                    @if (!string.IsNullOrEmpty(Session.StripeSessionId))
+                                    {
+                                        <MudItem xs="12">
+                                            <MudStack Spacing="1">
+                                                <MudText Typo="Typo.caption" Color="Color.Success" Style="font-weight: 600;">Stripe Session ID</MudText>
+                                                <MudPaper Class="pa-2" Elevation="1" Style="background-color: var(--mud-palette-background-grey);">
+                                                    <MudText Typo="Typo.body2" Style="word-break: break-all; font-family: monospace;">@Session.StripeSessionId</MudText>
+                                                </MudPaper>
+                                            </MudStack>
+                                        </MudItem>
+                                    }
+                                </MudGrid>
+                            </MudStack>
+                        </MudPaper>
                     }
 
+                    <!-- Video Session Information Card -->
                     @if (Session.VideoSession != null)
                     {
-                        <MudItem xs="12" Class="mt-4">
-                            <MudText Typo="Typo.h5" Class="mb-3">Video Information</MudText>
-                        </MudItem>
-                        <MudItem xs="12" sm="6" Class="session-detail-item">
-                            <MudText Typo="Typo.caption" Color="Color.Primary">Session ID</MudText>
-                            <MudText Typo="Typo.body2">@Session.VideoSession.SessionId</MudText>
-                        </MudItem>
-                        <MudItem xs="12" sm="6" Class="session-detail-item">
-                            <MudText Typo="Typo.caption" Color="Color.Primary">Created At</MudText>
-                            <MudText Typo="Typo.body1">@ConvertToLocalTime(Session.VideoSession.CreatedAt).ToString("dd MMM yyyy HH:mm") (@CurrentTimeZone)</MudText>
-                        </MudItem>
-                        <MudItem xs="12" sm="6" Class="session-detail-item">
-                            <MudText Typo="Typo.caption" Color="Color.Primary">Scheduled At</MudText>
-                            <MudText Typo="Typo.body1">@ConvertToLocalTime(Session.VideoSession.ScheduledAt).ToString("dd MMM yyyy HH:mm") (@CurrentTimeZone)</MudText>
-                        </MudItem>
-                        @if (Session.VideoSession.StartedAt.HasValue)
-                        {
-                            <MudItem xs="12" sm="6" Class="session-detail-item">
-                                <MudText Typo="Typo.caption" Color="Color.Primary">Started At</MudText>
-                                <MudText Typo="Typo.body1">@ConvertToLocalTime(Session.VideoSession.StartedAt.Value).ToString("dd MMM yyyy HH:mm") (@CurrentTimeZone)</MudText>
-                            </MudItem>
-                        }
-                        @if (Session.VideoSession.EndedAt.HasValue)
-                        {
-                            <MudItem xs="12" sm="6" Class="session-detail-item">
-                                <MudText Typo="Typo.caption" Color="Color.Primary">Ended At</MudText>
-                                <MudText Typo="Typo.body1">@ConvertToLocalTime(Session.VideoSession.EndedAt.Value).ToString("dd MMM yyyy HH:mm") (@CurrentTimeZone)</MudText>
-                            </MudItem>
-                        }
+                        <MudPaper Class="pa-4" Elevation="2" Style="border-left: 4px solid var(--mud-palette-info);">
+                            <MudStack Spacing="3">
+                                <MudText Typo="Typo.h6" Color="Color.Info">
+                                    <MudIcon Icon="@Icons.Material.Filled.VideoCall" Class="mr-2" Size="Size.Small" />
+                                    Video Session Information
+                                </MudText>
+                                <MudGrid Spacing="3">
+                                    <MudItem xs="12" sm="6">
+                                        <MudStack Spacing="1">
+                                            <MudText Typo="Typo.caption" Color="Color.Info" Style="font-weight: 600;">Session ID</MudText>
+                                            <MudPaper Class="pa-2" Elevation="1" Style="background-color: var(--mud-palette-background-grey);">
+                                                <MudText Typo="Typo.body2" Style="font-family: monospace;">@Session.VideoSession.SessionId</MudText>
+                                            </MudPaper>
+                                        </MudStack>
+                                    </MudItem>
+                                    @if (Session.VideoSession.StartedAt.HasValue)
+                                    {
+                                        <MudItem xs="12" sm="6">
+                                            <MudStack Spacing="1">
+                                                <MudText Typo="Typo.caption" Color="Color.Info" Style="font-weight: 600;">Started At</MudText>
+                                                <MudText Typo="Typo.body1">@ConvertToLocalTime(Session.VideoSession.StartedAt.Value).ToString("dd MMM yyyy HH:mm") (@CurrentTimeZone)</MudText>
+                                            </MudStack>
+                                        </MudItem>
+                                    }
+                                    @if (Session.VideoSession.EndedAt.HasValue)
+                                    {
+                                        <MudItem xs="12" sm="6">
+                                            <MudStack Spacing="1">
+                                                <MudText Typo="Typo.caption" Color="Color.Info" Style="font-weight: 600;">Ended At</MudText>
+                                                <MudText Typo="Typo.body1">@ConvertToLocalTime(Session.VideoSession.EndedAt.Value).ToString("dd MMM yyyy HH:mm") (@CurrentTimeZone)</MudText>
+                                            </MudStack>
+                                        </MudItem>
+                                    }
+                                    @if (Session.VideoSession.StartedAt.HasValue && Session.VideoSession.EndedAt.HasValue)
+                                    {
+                                        <MudItem xs="12" sm="6">
+                                            <MudStack Spacing="1">
+                                                <MudText Typo="Typo.caption" Color="Color.Info" Style="font-weight: 600;">Session Duration</MudText>
+                                                <MudText Typo="Typo.body1">@GetSessionDuration()</MudText>
+                                            </MudStack>
+                                        </MudItem>
+                                    }
+                                </MudGrid>
+                            </MudStack>
+                        </MudPaper>
                     }
-                </MudGrid>
-            </MudPaper>
+                </MudStack>
+            </MudContainer>
         }
         else
         {
@@ -125,22 +203,22 @@
         }
     </DialogContent>
     <DialogActions>
-        @if (Session != null)
-        {
-            <MudAlert Severity="@GetAlertSeverity()" Class="ma-3" Variant="Variant.Filled" Dense="true">
-                @GetSessionStatusMessage()
-            </MudAlert>
-        }
-        <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="Cancel">Close</MudButton>
-        <MudButton Variant="Variant.Filled"
-                   Color="Color.Primary"
-                   StartIcon="@Icons.Material.Filled.VideoCall"
-                   Class="go-to-session-btn"
-                   OnClick="GoToSessionPage"
-                   Disabled="@(!CanJoinSession)"
-                   AriaLabel="Go to session">
-            Go to Session
-        </MudButton>
+        <MudContainer MaxWidth="MaxWidth.False" Class="pa-0">
+            <MudStack Row="true" Justify="Justify.FlexEnd" AlignItems="AlignItems.Center" Class="full-width">
+                <MudStack Row="true" Spacing="2">                    
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.VideoCall"
+                               Class="go-to-session-btn"
+                               Size="Size.Medium"
+                               OnClick="GoToSessionPage"
+                               Disabled="@(!CanJoinSession)"
+                               AriaLabel="Go to session">
+                        @(CanJoinSession ? "Join Session" : "Session Unavailable")
+                    </MudButton>
+                </MudStack>
+            </MudStack>
+        </MudContainer>
     </DialogActions>
 </MudDialog>
 
@@ -240,13 +318,77 @@
             if (now < joinWindowStart)
                 return $"Session starts at {localTime:dd MMM yyyy HH:mm} ({CurrentTimeZone}). Join available {JoinWindowBufferMinutes} minutes before.";
             if (now > sessionEnd || Session.VideoSession.EndedAt.HasValue)
-                return "This session has ended. Contact support for assistance.";
+                return "This session has ended.";
             return CanJoinSession ? "Ready to join the session!" : "Session missed. Contact support.";
         }
         catch (Exception ex)
         {
             LogService.LogError("GetSessionStatusMessage", $"Time conversion error for session {Session.VideoSession.SessionId}: {ex.Message}");
             return "Error displaying session time. Contact support.";
+        }
+    }
+
+    private string GetAdminStatusMessage()
+    {
+        if (Session == null)
+            return "No session selected.";
+        
+        if (Session.VideoSession == null || string.IsNullOrEmpty(Session.VideoSession.SessionId))
+        {
+            var preferredTime = ConvertToLocalTime(Session.PreferredDateTime);
+            var timeDiff = Session.PreferredDateTime - DateTime.UtcNow;
+            if (timeDiff.TotalMinutes > 0)
+                return $"⏰ Client requested: {preferredTime:dd MMM yyyy HH:mm} ({CurrentTimeZone}) • No video session scheduled yet";
+            else
+                return $"⚠️ Past request: {preferredTime:dd MMM yyyy HH:mm} ({CurrentTimeZone}) • Client request is overdue";
+        }
+
+        var now = DateTime.UtcNow;
+        var sessionStart = Session.VideoSession.ScheduledAt;
+        var sessionEnd = sessionStart.AddMinutes(DefaultSessionDurationMinutes + ClockSkewBufferMinutes);
+        var joinWindowStart = sessionStart.AddMinutes(-JoinWindowBufferMinutes);
+
+        try
+        {
+            var localTime = ConvertToLocalTime(sessionStart);
+            var clientInfo = $"{Session.FullName} ({Session.Email})";
+            
+            if (Session.VideoSession.EndedAt.HasValue)
+            {
+                var duration = Session.VideoSession.EndedAt.Value - (Session.VideoSession.StartedAt ?? sessionStart);
+                return $"✅ Session completed with {clientInfo} • Duration: {duration.Hours}h {duration.Minutes}m";
+            }
+            
+            if (Session.VideoSession.StartedAt.HasValue && !Session.VideoSession.EndedAt.HasValue)
+            {
+                var elapsed = now - Session.VideoSession.StartedAt.Value;
+                return $"🔴 LIVE SESSION with {clientInfo} • Running for {elapsed.Hours}h {elapsed.Minutes}m";
+            }
+            
+            if (now < joinWindowStart)
+            {
+                var timeUntil = joinWindowStart - now;
+                return $"📅 Scheduled with {clientInfo} at {localTime:dd MMM HH:mm} ({CurrentTimeZone}) • Join available in {Math.Ceiling(timeUntil.TotalMinutes)} min";
+            }
+            
+            if (now >= joinWindowStart && now <= sessionEnd && !Session.VideoSession.EndedAt.HasValue)
+            {
+                var lateMinutes = (now - sessionStart).TotalMinutes;
+                if (lateMinutes > 0)
+                    return $"🚨 Session READY with {clientInfo} • Client waiting for {Math.Ceiling(lateMinutes)} minutes";
+                else
+                    return $"🟢 Session READY with {clientInfo} • Join window is open";
+            }
+            
+            if (now > sessionEnd)
+                return $"❌ Session expired with {clientInfo} • Ended at {ConvertToLocalTime(sessionEnd):dd MMM HH:mm} ({CurrentTimeZone})";
+                
+            return $"Session with {clientInfo}";
+        }
+        catch (Exception ex)
+        {
+            LogService.LogError("GetAdminStatusMessage", $"Time conversion error for session {Session.VideoSession?.SessionId}: {ex.Message}");
+            return $"⚠️ Error displaying session time for {Session.FullName} • Contact support";
         }
     }
 
@@ -269,8 +411,8 @@
     {
         if (Session == null || Session.VideoSession == null || string.IsNullOrEmpty(Session.VideoSession.SessionId))
         {
-            Snackbar.Add("No valid session selected.", Severity.Error);
-            await LogService.LogError("GoToSessionPage", "No valid session selected: Session or VideoSession is null or SessionId is empty.");
+            Snackbar.Add($"❌ Admin Alert: No valid video session found for {Session?.FullName ?? "unknown client"}", Severity.Error);
+            await LogService.LogError("GoToSessionPage", "Admin attempted to join session: Session or VideoSession is null or SessionId is empty.");
             return;
         }
 
@@ -281,29 +423,46 @@
 
         try
         {
+            var clientInfo = $"{Session.FullName} ({Session.Email})";
+            
             if (now < joinWindowStart)
             {
                 var localJoinTime = ConvertToLocalTime(joinWindowStart);
                 var minutesUntilJoin = Math.Ceiling((joinWindowStart - now).TotalMinutes);
-                Snackbar.Add($"Session starts in {minutesUntilJoin} minute(s) at {localJoinTime:HH:mm} ({CurrentTimeZone}).", Severity.Info);
-                await LogService.LogError("GoToSessionPage", $"Attempt to join session {Session.VideoSession.SessionId} too early. Join window starts at {joinWindowStart:yyyy-MM-dd HH:mm:ss} UTC.");
+                Snackbar.Add($"⏰ Admin Info: Session with {clientInfo} starts in {minutesUntilJoin} minute(s) at {localJoinTime:HH:mm} ({CurrentTimeZone})", Severity.Info);
+                await LogService.LogInfo("GoToSessionPage", $"Admin attempted early join for session {Session.VideoSession.SessionId} with {clientInfo}. Join available in {minutesUntilJoin} minutes.");
                 return;
             }
 
             if (now > sessionEnd || Session.VideoSession.EndedAt.HasValue)
             {
-                Snackbar.Add("This session has ended or was canceled.", Severity.Error);
-                await LogService.LogError("GoToSessionPage", $"Session {Session.VideoSession.SessionId} has ended or was canceled. Current time: {now:yyyy-MM-dd HH:mm:ss} UTC, Session end: {sessionEnd:yyyy-MM-dd HH:mm:ss} UTC.");
+                var endTime = Session.VideoSession.EndedAt?.ToString("dd MMM HH:mm") ?? ConvertToLocalTime(sessionEnd).ToString("dd MMM HH:mm");
+                Snackbar.Add($"❌ Admin Alert: Session with {clientInfo} ended at {endTime} ({CurrentTimeZone})", Severity.Error);
+                await LogService.LogWarning("GoToSessionPage", $"Admin attempted to join expired session {Session.VideoSession.SessionId} with {clientInfo}.");
                 return;
             }
 
+            // Success case - joining session
+            var lateMinutes = Math.Max(0, (now - sessionStart).TotalMinutes);
+            if (lateMinutes > 5)
+            {
+                Snackbar.Add($"🚨 Admin Notice: Joining session with {clientInfo} - Client has been waiting {Math.Ceiling(lateMinutes)} minutes", Severity.Warning);
+            }
+            else
+            {
+                Snackbar.Add($"✅ Admin: Joining session with {clientInfo}", Severity.Success);
+            }
+            
+            await LogService.LogInfo("GoToSessionPage", $"Admin joining session {Session.VideoSession.SessionId} with {clientInfo}. Session started {lateMinutes:F1} minutes ago.");
+            
             NavigationManager.NavigateTo($"/session/{Session.VideoSession.SessionId}");
             MudDialog.Close(DialogResult.Ok(true));
         }
         catch (Exception ex)
         {
-            Snackbar.Add("Failed to join session. Please try again or contact support.", Severity.Error);
-            await LogService.LogError("GoToSessionPage", $"Failed to join session {Session.VideoSession.SessionId}: {ex.Message}");
+            var clientInfo = $"{Session.FullName} ({Session.Email})";
+            Snackbar.Add($"❌ Admin Error: Failed to join session with {clientInfo}. Technical issue occurred.", Severity.Error);
+            await LogService.LogError("GoToSessionPage", $"Admin failed to join session {Session.VideoSession.SessionId} with {clientInfo}: {ex.Message}");
         }
     }
 
@@ -311,4 +470,121 @@
     {
         MudDialog.Cancel();
     }
+
+    private string GetSessionStatus()
+    {
+        if (Session?.VideoSession == null)
+            return "Pending";
+        if (Session.VideoSession.EndedAt.HasValue)
+            return "Completed";
+        if (Session.VideoSession.StartedAt.HasValue)
+            return "In Progress";
+            
+        var now = DateTime.UtcNow;
+        var sessionStart = Session.VideoSession.ScheduledAt;
+        var sessionEnd = sessionStart.AddMinutes(DefaultSessionDurationMinutes + ClockSkewBufferMinutes);
+        
+        // Check if session has passed its end time
+        if (now > sessionEnd)
+            return "Expired";
+            
+        // Check if we're in the join window (15 minutes before start)
+        if (now >= sessionStart.AddMinutes(-15))
+            return "Ready";
+            
+        return "Scheduled";
+    }
+
+    private Color GetSessionStatusChipColor()
+    {
+        if (Session?.VideoSession == null)
+            return Color.Default;
+        if (Session.VideoSession.EndedAt.HasValue)
+            return Color.Success;
+        if (Session.VideoSession.StartedAt.HasValue)
+            return Color.Warning;
+            
+        var now = DateTime.UtcNow;
+        var sessionStart = Session.VideoSession.ScheduledAt;
+        var sessionEnd = sessionStart.AddMinutes(DefaultSessionDurationMinutes + ClockSkewBufferMinutes);
+        
+        // Check if session has expired
+        if (now > sessionEnd)
+            return Color.Error;
+            
+        // Check if we're in the ready window
+        if (now >= sessionStart.AddMinutes(-15))
+            return Color.Info;
+            
+        return Color.Primary;
+    }
+
+    private string GetSessionStatusIcon()
+    {
+        if (Session?.VideoSession == null)
+            return Icons.Material.Filled.Schedule;
+        if (Session.VideoSession.EndedAt.HasValue)
+            return Icons.Material.Filled.CheckCircle;
+        if (Session.VideoSession.StartedAt.HasValue)
+            return Icons.Material.Filled.PlayCircle;
+            
+        var now = DateTime.UtcNow;
+        var sessionStart = Session.VideoSession.ScheduledAt;
+        var sessionEnd = sessionStart.AddMinutes(DefaultSessionDurationMinutes + ClockSkewBufferMinutes);
+        
+        // Check if session has expired
+        if (now > sessionEnd)
+            return Icons.Material.Filled.Cancel;
+            
+        // Check if we're in the ready window
+        if (now >= sessionStart.AddMinutes(-15))
+            return Icons.Material.Filled.VideoCall;
+            
+        return Icons.Material.Filled.Event;
+    }
+
+    private string GetSessionDuration()
+    {
+        if (Session?.VideoSession?.StartedAt == null || Session?.VideoSession?.EndedAt == null)
+            return "N/A";
+
+        var duration = Session.VideoSession.EndedAt.Value - Session.VideoSession.StartedAt.Value;
+        return $"{duration.Hours}h {duration.Minutes}m {duration.Seconds}s";
+    }
 }
+
+<style>
+    .session-dialog-content {
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+
+    .session-details-grid .mud-grid-item {
+        margin-bottom: 0.5rem;
+    }
+
+    .go-to-session-btn, .session-details-btn {
+        min-width: 140px;
+    }
+
+    .dialog-title {
+        font-weight: 600;
+    }
+
+    .session-detail-item {
+        padding: 0.25rem 0;
+    }
+
+    .full-width {
+        width: 100%;
+    }
+
+    .mud-paper[style*="border-left"] {
+        transition: all 0.2s ease-in-out;
+    }
+
+    .mud-paper[style*="border-left"]:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    }
+</style>
