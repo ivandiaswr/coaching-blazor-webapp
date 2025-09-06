@@ -48,6 +48,37 @@
 
     <MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-6">
         <MudTabPanel Text="Calendar">
+            <!-- Calendar Legend -->
+            <MudPaper Class="pa-3 mb-4" Elevation="1">
+                <MudText Typo="Typo.h6" Class="mb-2">Session Status Legend:</MudText>
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudIcon Icon="@Icons.Material.Filled.Circle" Style="color: #4caf50;" Size="Size.Small" />
+                            <MudText Typo="Typo.body2">Completed</MudText>
+                        </MudStack>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudIcon Icon="@Icons.Material.Filled.Circle" Style="color: #f44336;" Size="Size.Small" />
+                            <MudText Typo="Typo.body2">Missed/No-show</MudText>
+                        </MudStack>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudIcon Icon="@Icons.Material.Filled.Circle" Style="color: #ffc107;" Size="Size.Small" />
+                            <MudText Typo="Typo.body2">Unscheduled Requests</MudText>
+                        </MudStack>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudIcon Icon="@Icons.Material.Filled.Circle" Style="color: #9e9e9e;" Size="Size.Small" />
+                            <MudText Typo="Typo.body2">Upcoming</MudText>
+                        </MudStack>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+            
             <MudCalendar @ref="calendar" 
                         Items="@calendarItems" 
                         ItemClicked="OnSessionClicked"
@@ -693,6 +724,37 @@
     private string adminTimeZone = "Europe/London";
     private bool isSubmitting = false;
 
+    private string GetSessionColorIcon(Session session)
+    {
+        var sessionDateTime = session.VideoSession?.ScheduledAt ?? session.PreferredDateTime;
+        var now = DateTime.UtcNow;
+        
+        // Check if session is unscheduled (no VideoSession yet)
+        if (session.VideoSession == null)
+        {
+            return "🟡"; // Yellow for unscheduled requests
+        }
+        
+        // For all scheduled sessions (including discovery calls)
+        if (sessionDateTime < now)
+        {
+            // Past sessions - check if they were completed
+            if (session.VideoSession.EndedAt.HasValue)
+            {
+                return "🟢"; // Green for completed sessions
+            }
+            else
+            {
+                return "🔴"; // Red for missed/no-show sessions
+            }
+        }
+        else
+        {
+            // Future sessions - upcoming
+            return "🔵"; // Blue for upcoming scheduled sessions
+        }
+    }
+
     protected override async Task OnInitializedAsync()
     {
         try
@@ -726,11 +788,12 @@
                 var sessionDateTime = c.VideoSession?.ScheduledAt ?? c.PreferredDateTime;
                 var startLocal = TimeZoneInfo.ConvertTimeFromUtc(sessionDateTime, adminTimeZoneInfo);
                 var endLocal = TimeZoneInfo.ConvertTimeFromUtc(sessionDateTime.AddMinutes(45), adminTimeZoneInfo);
+                var colorIcon = GetSessionColorIcon(c);
                 return new CalendarItem
                 {
                     Start = startLocal,
                     End = endLocal,
-                    Text = $"{c.FullName}: {c.SessionCategory.GetDisplayName().Replace("Coaching", "").Replace("Food", "").Trim()}",
+                    Text = $"{colorIcon} {c.FullName}: {c.SessionCategory.GetDisplayName().Replace("Coaching", "").Replace("Food", "").Trim()}",
                 };
             }).ToList();
 
@@ -756,6 +819,21 @@
         catch (Exception ex)
         {
             Snackbar.Add($"Error initializing dashboard: {ex.Message}", Severity.Error);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("colorAdminCalendarSessions");
+            }
+            catch (Exception ex)
+            {
+                await LogService.LogWarning("AdminDashboard.OnAfterRenderAsync", $"Failed to color admin calendar sessions: {ex.Message}");
+            }
         }
     }
 
@@ -1432,16 +1510,27 @@
                         var sessionDateTime = c.VideoSession?.ScheduledAt ?? c.PreferredDateTime;
                         var startLocal = TimeZoneInfo.ConvertTimeFromUtc(sessionDateTime, adminTimeZoneInfo);
                         var endLocal = TimeZoneInfo.ConvertTimeFromUtc(sessionDateTime.AddMinutes(45), adminTimeZoneInfo);
+                        var colorIcon = GetSessionColorIcon(c);
                         return new CalendarItem
                         {
                             Start = startLocal,
                             End = endLocal,
-                            Text = $"{c.FullName}: {c.SessionCategory.GetDisplayName().Replace("Coaching", "").Replace("Food", "").Trim()}",
+                            Text = $"{colorIcon} {c.FullName}: {c.SessionCategory.GetDisplayName().Replace("Coaching", "").Replace("Food", "").Trim()}",
                         };
                     }).ToList();
 
                     Snackbar.Add("Session scheduled time updated successfully!", Severity.Success);
                     StateHasChanged();
+                    
+                    // Re-apply calendar colors after update
+                    try
+                    {
+                        await JSRuntime.InvokeVoidAsync("colorAdminCalendarSessions");
+                    }
+                    catch (Exception jsEx)
+                    {
+                        await LogService.LogWarning("OpenEditScheduleDialog", $"Failed to update calendar colors: {jsEx.Message}");
+                    }
                 }
                 else
                 {

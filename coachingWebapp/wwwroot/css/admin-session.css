@@ -140,6 +140,31 @@
     cursor: default !important;
 }
 
+/* Admin Calendar Session Colors */
+.mud-calendar .mud-chip:has(.mud-chip-content:contains("🟢")) {
+    background-color: rgba(76, 175, 80, 0.2) !important;
+    border: 1px solid rgba(76, 175, 80, 0.6) !important;
+    color: #2e7d32 !important;
+}
+
+.mud-calendar .mud-chip:has(.mud-chip-content:contains("🔴")) {
+    background-color: rgba(244, 67, 54, 0.2) !important;
+    border: 1px solid rgba(244, 67, 54, 0.6) !important;
+    color: #c62828 !important;
+}
+
+.mud-calendar .mud-chip:has(.mud-chip-content:contains("🟡")) {
+    background-color: rgba(255, 193, 7, 0.2) !important;
+    border: 1px solid rgba(255, 193, 7, 0.6) !important;
+    color: #f57c00 !important;
+}
+
+.mud-calendar .mud-chip:has(.mud-chip-content:contains("⚪")) {
+    background-color: rgba(158, 158, 158, 0.15) !important;
+    border: 1px solid rgba(158, 158, 158, 0.5) !important;
+    color: #616161 !important;
+}
+
 .mud-calendar .mud-button:not(.mud-selected) {
     background-color: transparent;
     border: 1.5px solid var(--mud-palette-primary);
