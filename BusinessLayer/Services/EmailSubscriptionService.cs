@@ -31,26 +31,27 @@ public class EmailSubscriptionService : IEmailSubscriptionService
         try
         {
             var emailSubscription = _context.EmailSubscriptions
+            .AsNoTracking()
             .OrderByDescending(o => o.SubscribedAt)
             .ToList();
 
             return emailSubscription;
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             _logService.LogError("GetAllEmailSubscriptions", ex.Message);
-             throw;
+            throw;
         }
     }
-    
+
     public async Task<bool> SubscriptionAsync(EmailSubscription emailSubscription)
     {
-        if(emailSubscription is null)
-            return false; 
+        if (emailSubscription is null)
+            return false;
 
         var EmailSubscription = await _context.EmailSubscriptions.FirstOrDefaultAsync(e => e.Email == emailSubscription.Email);
 
-        if(EmailSubscription != null)
+        if (EmailSubscription != null)
         {
             if (EmailSubscription.IsSubscribed)
             {
@@ -62,10 +63,10 @@ public class EmailSubscriptionService : IEmailSubscriptionService
                 EmailSubscription.IsSubscribed = true;
                 EmailSubscription.SubscribedAt = DateTime.UtcNow;
             }
-        } 
-        else 
+        }
+        else
         {
-            try 
+            try
             {
                 var subscription = new EmailSubscription()
                 {
@@ -77,15 +78,16 @@ public class EmailSubscriptionService : IEmailSubscriptionService
                 };
 
                 _context.EmailSubscriptions.Add(subscription);
-            } 
-            catch (Exception ex){
+            }
+            catch (Exception ex)
+            {
                 await _logService.LogError("SubscriptionAsync", ex.Message);
                 return false;
             }
         }
 
         await _context.SaveChangesAsync();
-        
+
         return true;
     }
 
@@ -101,7 +103,7 @@ public class EmailSubscriptionService : IEmailSubscriptionService
         {
             var emailSubscription = await _context.EmailSubscriptions.FirstOrDefaultAsync(e => e.Email == email);
 
-            if(emailSubscription is null)
+            if (emailSubscription is null)
             {
                 await _logService.LogError("UnsubscribeAsync", $"No subscription found for email {email}");
                 return false;
@@ -124,12 +126,12 @@ public class EmailSubscriptionService : IEmailSubscriptionService
 
     public async Task<bool> SubscriptionGiftAsync(EmailSubscription emailSubscription)
     {
-        if(emailSubscription is null)
-            return false; 
+        if (emailSubscription is null)
+            return false;
 
         var EmailSubscription = await _context.EmailSubscriptions.FirstOrDefaultAsync(e => e.Email == emailSubscription.Email);
 
-        if(EmailSubscription != null)
+        if (EmailSubscription != null)
         {
             if (EmailSubscription.IsSubscribed)
             {
@@ -143,7 +145,7 @@ public class EmailSubscriptionService : IEmailSubscriptionService
                     return false;
                 }
 
-                return true; 
+                return true;
             }
             else
             {
@@ -152,19 +154,20 @@ public class EmailSubscriptionService : IEmailSubscriptionService
                 EmailSubscription.SubscribedAt = DateTime.UtcNow;
                 EmailSubscription.Gift = emailSubscription.Gift;
             }
-        } 
-        else 
+        }
+        else
         {
             try
-            {    
-                var subscription = new EmailSubscription(){
+            {
+                var subscription = new EmailSubscription()
+                {
                     Name = emailSubscription.Name,
                     Email = emailSubscription.Email,
                     Gift = emailSubscription.Gift,
                     SubscribedAt = DateTime.UtcNow,
                     IsSubscribed = true
                 };
-                
+
                 _context.EmailSubscriptions.Add(subscription);
 
                 // Saves into db with success and sends email with a free gift 
@@ -174,7 +177,8 @@ public class EmailSubscriptionService : IEmailSubscriptionService
             {
                 await _logService.LogError("SubscriptionGiftAsync when IsSubscribed", ex.Message);
                 return false;
-            };
+            }
+            ;
         }
 
         await _context.SaveChangesAsync();
@@ -216,11 +220,20 @@ public class EmailSubscriptionService : IEmailSubscriptionService
 
             string unsubscribeUrl = $"{_helperService.GetConfigValue("AppSettings:BaseUrl")}/unsubscribe?email={Uri.EscapeDataString(email)}&token={Uri.EscapeDataString(token)}";
 
+            var emailSubscription = await _context.EmailSubscriptions
+                .FirstOrDefaultAsync(e => e.Email == email);
+
+            string recipientName = "Subscriber";
+            if (emailSubscription != null && !string.IsNullOrWhiteSpace(emailSubscription.Name))
+            {
+                recipientName = emailSubscription.Name.Trim();
+            }
+
             var builder = new BodyBuilder
-                    {
-                        HtmlBody = $@"
+            {
+                HtmlBody = $@"
                             <div style='font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #333;'>
-                                <p>Dear {email}</p>
+                                <p>Dear {recipientName}</p>
 
                                 <p>Here's your free gift from Ítala!</p>
 
@@ -231,8 +244,8 @@ public class EmailSubscriptionService : IEmailSubscriptionService
                                     If you wish to unsubscribe, please click <a href='{unsubscribeUrl}' style='color: #0066cc; text-decoration: none;'>unsubscribe</a>.
                                 </p>
                             </div>"
-                    };
-            
+            };
+
             var fileMapping = new Dictionary<GiftCategory, (string internalName, string displayName)>
             {
                 { GiftCategory.Gift1, ("file1.pdf", "Reclaim & Regain Inner Peace - Ítala Veloso.pdf") },
@@ -269,7 +282,7 @@ public class EmailSubscriptionService : IEmailSubscriptionService
 
             using var client = new SmtpClient();
 
- 
+
             await client.ConnectAsync(smtpServer, smtpPort, SecureSocketOptions.StartTls);
             await client.AuthenticateAsync(smtpUsername, smtpPassword);
             await client.SendAsync(message);
@@ -321,11 +334,17 @@ public class EmailSubscriptionService : IEmailSubscriptionService
                 var emailSubscription = await _context.EmailSubscriptions
                     .FirstOrDefaultAsync(e => e.Email == email);
 
+                string recipientName = "Subscriber";
+                if (emailSubscription != null && !string.IsNullOrWhiteSpace(emailSubscription.Name))
+                {
+                    recipientName = emailSubscription.Name.Trim();
+                }
+
                 var builder = new BodyBuilder
                 {
                     HtmlBody = $@"
                         <div style='font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6;'>
-                            <p>Dear {(string.IsNullOrWhiteSpace(emailSubscription?.Name) ? "Subscriber" : emailSubscription.Name)}</p>
+                            <p>Dear {recipientName}</p>
                             <p>{body.Replace("\n", "<br />")}</p>
                             <hr style='border: none; border-top: 1px solid #ccc; margin: 20px 0;' />
                             <p style='font-size: 8px; color: #666;'>

@@ -1,0 +1,38 @@
+.optimized-image-wrapper {
+    position: relative;
+    overflow: hidden;
+}
+
+.optimized-image-wrapper img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Smooth loading animation */
+.optimized-image-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    z-index: 1;
+}
+
+.optimized-image-wrapper img[style*="opacity:1"]::before {
+    display: none;
+}
+
+@keyframes loading {
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
+    }
+}

@@ -1,4 +1,4 @@
-#adminDashboard{
+#adminDashboard {
     width: 1600px;
     margin: 0 auto;
     padding: 2rem;
@@ -10,7 +10,7 @@
     padding: 2rem 0;
 }
 
-.dashboard-header > div {
+.dashboard-header>div {
     max-width: 850px;
     width: 100%;
 }
@@ -23,7 +23,7 @@
     text-align: center;
 }
 
-.dashboard-header > p {
+.dashboard-header>p {
     font-size: 1.2rem;
     line-height: 1.6;
     color: #4a4a4a;
@@ -42,7 +42,7 @@
     border-radius: 8px !important;
 }
 
-:not(.mud-calendar) > .mud-button-root.mud-button,
+:not(.mud-calendar)>.mud-button-root.mud-button,
 :not(.mud-calendar) .mud-button-root.mud-button {
     background-color: var(--accent-orange);
     color: var(--primary-white);
@@ -292,4 +292,77 @@
 
 .email-dialog .mud-progress-circular {
     margin-right: 4px;
+}
+
+/* Make DataGrid column header icons always visible */
+.mud-table-head .mud-table-cell .mud-button-root {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.mud-table-head .mud-table-cell .mud-icon-button {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.mud-table-head .mud-table-cell .mud-table-sortlabel .mud-icon-root {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Ensure filter and menu icons are always shown */
+.mud-table-head .mud-table-cell .mud-table-head-cell-content .mud-icon-button {
+    display: inline-flex !important;
+    opacity: 1 !important;
+}
+
+/* Specifically target the column menu (three dots) */
+.mud-table-head .mud-table-cell .mud-table-column-header .mud-icon-button {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: inline-flex !important;
+}
+
+/* Target MudBlazor DataGrid column options menu */
+.mud-data-grid .mud-table-head .mud-table-cell .mud-icon-button {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Force show all header buttons and icons */
+.mud-data-grid-header .mud-icon-button,
+.mud-table-head-cell .mud-icon-button,
+.mud-table-column-header .mud-icon-button {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: inline-flex !important;
+}
+
+/* More aggressive targeting for MudBlazor column menu icons */
+.mud-table .mud-table-head .mud-table-row .mud-table-cell .mud-icon-button,
+.mud-data-grid .mud-table-container .mud-table .mud-table-head .mud-table-cell .mud-icon-button,
+.mud-table-head .mud-table-cell>.mud-icon-button,
+.mud-table-head .mud-table-cell [role="columnheader"] .mud-icon-button {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: inline-flex !important;
+}
+
+/* Target any button with "more" icon (three dots) */
+.mud-table-head .mud-icon-button[aria-label*="more"],
+.mud-table-head .mud-icon-button[title*="more"],
+.mud-table-head .mud-icon-button[aria-label*="menu"],
+.mud-table-head .mud-icon-button[title*="menu"] {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: inline-flex !important;
+}
+
+/* Nuclear option - show ALL icon buttons in table headers */
+table .mud-table-head .mud-icon-button,
+.mud-table .mud-table-head .mud-icon-button,
+*[class*="mud-table"] *[class*="mud-table-head"] .mud-icon-button {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: inline-flex !important;
 }

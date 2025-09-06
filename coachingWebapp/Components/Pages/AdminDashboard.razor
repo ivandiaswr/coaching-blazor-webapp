@@ -195,6 +195,8 @@
                         MultiSelection="true" 
                         SortMode="SortMode.Multiple" 
                         Filterable="true"
+                        FilterMode="DataGridFilterMode.Simple"
+                        ShowMenuIcon="true"
                         Hideable="true" 
                         QuickFilter="@quickFilterSessions">
                 <ToolBarContent>
@@ -231,7 +233,11 @@
                     </PropertyColumn>
                     <PropertyColumn Property="x => x.IsPaid" Title="Paid" Sortable="true" Filterable="false">
                         <CellTemplate>
-                            @if (context.Item.IsPaid)
+                            @if (context.Item.DiscoveryCall)
+                            {
+                                <span class="text-info"><i class="fas fa-phone"></i> Discovery Call</span>
+                            }
+                            else if (context.Item.IsPaid)
                             {
                                 <span class="text-success"><i class="fas fa-check-circle"></i> Yes</span>
                             }
@@ -241,16 +247,23 @@
                             }
                         </CellTemplate>
                     </PropertyColumn>
-                    <PropertyColumn Property="x => x.CreatedAt" Title="CreatedAt" Sortable="true" Filterable="false">
+                    <PropertyColumn Property="x => x.VideoSession != null ? x.VideoSession.ScheduledAt : (DateTime?)null" Title="ScheduleAt" Sortable="true" Filterable="false">
                         <CellTemplate>
-                            @TimeZoneInfo.ConvertTimeFromUtc(context.Item.CreatedAt, TimeZoneInfo.FindSystemTimeZoneById(adminTimeZone)).ToString("dd-MM-yyyy HH:mm:ss") (@adminTimeZone)
+                            @if (context.Item.VideoSession != null)
+                            {
+                                @TimeZoneInfo.ConvertTimeFromUtc(context.Item.VideoSession.ScheduledAt, TimeZoneInfo.FindSystemTimeZoneById(adminTimeZone)).ToString("dd-MM-yyyy HH:mm:ss") <text>(@adminTimeZone)</text>
+                            }
+                            else
+                            {
+                                <span class="text-muted">N/A</span>
+                            }
                         </CellTemplate>
                     </PropertyColumn>
-                    <PropertyColumn Property="x => x.PaidAt" Title="PaidAt" Sortable="true" Filterable="false">
+                    @* <PropertyColumn Property="x => x.PaidAt" Title="PaidAt" Sortable="true" Filterable="false">
                         <CellTemplate>
                             @TimeZoneInfo.ConvertTimeFromUtc(context.Item.PaidAt, TimeZoneInfo.FindSystemTimeZoneById(adminTimeZone)).ToString("dd-MM-yyyy HH:mm:ss") (@adminTimeZone)
                         </CellTemplate>
-                    </PropertyColumn>
+                    </PropertyColumn> *@
                 </Columns>
                 <PagerContent>
                     <MudDataGridPager T="Session" />
@@ -266,6 +279,8 @@
                         MultiSelection="true" 
                         SortMode="SortMode.Multiple" 
                         Filterable="true"
+                        FilterMode="DataGridFilterMode.Simple"
+                        ShowMenuIcon="true"
                         Hideable="true" 
                         QuickFilter="@quickFilterEmailSubscriptions" 
                         @ref="emailSubscriptionGrid">
@@ -588,9 +603,10 @@
             sessions = await SessionService.GetAllSessionsAsync() ?? new();
             emailSubscriptions = EmailSubscriptionService.GetAllEmailSubscriptions() ?? new();
             _adminUnavailableTimes = (await UnavailableTimeService.GetAllUnavailableTimesAsync()).ToList();
-            nextSessions = sessions.Where(s => s.PreferredDateTime >= DateTime.UtcNow).ToList();
             
-            calendarItems = sessions.Select(c => {
+            nextSessions = sessions.Where(s => s.PreferredDateTime >= DateTime.UtcNow).Take(50).ToList();
+            
+            calendarItems = nextSessions.Select(c => {
                 var startLocal = TimeZoneInfo.ConvertTimeFromUtc(c.PreferredDateTime, adminTimeZoneInfo);
                 var endLocal = TimeZoneInfo.ConvertTimeFromUtc(c.PreferredDateTime.AddMinutes(45), adminTimeZoneInfo);
                 return new CalendarItem

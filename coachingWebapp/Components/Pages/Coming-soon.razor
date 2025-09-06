@@ -5,12 +5,85 @@
 <PageTitle>@pageTitle</PageTitle>
 
 <section id="coming-soon-video">
-    <video autoplay muted loop playinline class="coming-soon-video">
+    <video @ref="videoElement" muted loop playsinline preload="metadata" class="coming-soon-video"
+        @onloadstart="OnVideoLoadStart" @oncanplay="OnVideoCanPlay" @onerror="OnVideoError">
         <source src="https://italaveloso.com/Videos/coming-soon.mp4" type="video/mp4">
         Your browser does not support the video tag mp4.
     </video>
+
+    @if (isVideoLoading)
+    {
+        <div class="video-loading-overlay">
+            <div class="loading-spinner"></div>
+            <p>Loading experience...</p>
+        </div>
+    }
+
+    @if (hasVideoError)
+    {
+        <div class="video-error-fallback">
+            <div class="error-content">
+                <h2>Coming Soon</h2>
+                <p>Something amazing is on the way!</p>
+                <div class="animated-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    }
 </section>
 
 @code {
     private string pageTitle = "Coming soon | Ítala Veloso";
+    private ElementReference videoElement;
+    private bool isVideoLoading = true;
+    private bool hasVideoError = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Set up video optimization and start playback
+            await JSRuntime.InvokeVoidAsync("videoOptimization.setupVideoObserver", videoElement);
+            await JSRuntime.InvokeVoidAsync("videoOptimization.safeVideoPlay", videoElement);
+        }
+    }
+
+    private void OnVideoLoadStart()
+    {
+        isVideoLoading = true;
+        StateHasChanged();
+    }
+
+    private void OnVideoCanPlay()
+    {
+        isVideoLoading = false;
+        StateHasChanged();
+    }
+
+    private void OnVideoError()
+    {
+        isVideoLoading = false;
+        hasVideoError = true;
+        StateHasChanged();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            // Stop and clean up video to free memory
+            await JSRuntime.InvokeVoidAsync("videoOptimization.cleanupVideo", videoElement);
+        }
+        catch (Exception)
+        {
+            // Ignore disposal errors
+        }
+
+        GC.SuppressFinalize(this);
+    }
 }
+
+@implements IAsyncDisposable

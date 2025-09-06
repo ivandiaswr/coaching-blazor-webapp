@@ -6,7 +6,8 @@
 
 <div class="life-coaching-container">
     <h1><span class="highlight">Food Regulatory Affairs</span> Training</h1>
-    <p>Start living a purpose-driven life and unlock your potential with guidance tailored to you. Explore the areas below:</p>
+    <p>Start living a purpose-driven life and unlock your potential with guidance tailored to you. Explore the areas
+        below:</p>
 
     <div class="slider-container noslider">
         <div class="topics-grid">
@@ -14,7 +15,8 @@
             {
                 <div class="topic-card">
                     <div class="image-wrapper">
-                        <img src="@topic.ImageUrl" alt="@topic.AltText">
+                        <img src="@topic.ImageUrl" alt="@topic.AltText" loading="lazy" decoding="async"
+                            onload="this.style.opacity=1" style="opacity:0;transition:opacity 0.3s;">
                         <div class="image-title">
                             <h3>@topic.Title</h3>
                         </div>
@@ -42,19 +44,48 @@
 
 @code {
     private string pageTitle = "Food Regulatory Training | Ítala Veloso";
-    private List<Topic> Topics { get; set; } = new List<Topic>
+    private List<Topic> Topics { get; set; } = new List<Topic>();
+
+    protected override void OnInitialized()
     {
-        new Topic {
-            Id = 1,
-            ImageUrl = "https://italaveloso.com/Images/services/regulatory-training/label-translation.jpg",
-            Title = "Labelling",
-            AltText = "Labelling"
-        },
-        new Topic {
-            Id = 2,
-            ImageUrl = "https://italaveloso.com/Images/services/regulatory-training/nutrition-health-claims.jpg",
-            Title = "Nutrition and Health Claims",
-            AltText = "Nutrition and Health Claims "
-        }
-    };
+        InitializeTopics();
+        base.OnInitialized();
+    }
+
+    private void InitializeTopics()
+    {
+        Topics = new List<Topic>
+{
+new Topic {
+Id = 1,
+ImageUrl = "https://italaveloso.com/Images/services/regulatory-training/label-translation.jpg",
+Title = "Labelling",
+AltText = "Labelling"
+},
+new Topic {
+Id = 2,
+ImageUrl = "https://italaveloso.com/Images/services/regulatory-training/nutrition-health-claims.jpg",
+Title = "Nutrition and Health Claims",
+AltText = "Nutrition and Health Claims "
 }
+};
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        try
+        {
+            Topics?.Clear();
+            Topics = null;
+        }
+        catch (Exception)
+        {
+            // Ignore disposal errors
+        }
+
+        GC.SuppressFinalize(this);
+        return ValueTask.CompletedTask;
+    }
+}
+
+@implements IAsyncDisposable

@@ -59,7 +59,11 @@ public class UnavailableTimeService : IUnavailableTimeService
 
     public async Task<IEnumerable<UnavailableTime>> GetAllUnavailableTimesAsync()
     {
-        return await _context.UnavailableTimes.ToListAsync();
+        var today = DateTime.Today;
+
+        return await _context.UnavailableTimes
+            .Where(ut => ut.IsRecurring || (ut.Date.HasValue && ut.Date.Value >= today))
+            .ToListAsync();
     }
 
     public async Task<UnavailableTime> UpdateUnavailableTimeAsync(UnavailableTime unavailableTime)

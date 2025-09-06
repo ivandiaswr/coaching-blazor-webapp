@@ -6,7 +6,10 @@
 
 <div class="life-coaching-container">
     <h1><span class="highlight">Food Regulatory Affairs</span> Consulting</h1>
-    <p>Get food regulatory advice & guidance to food businesses throughout the whole supply chain. Assisting you to place legally compliant and commercially viable products (both online and in stores) onto the UK and the European markets. A range from small to multinational food businesses and include manufacturers, wholesalers, retailers and distributors, as clients. Explore the areas below:</p>
+    <p>Get food regulatory advice & guidance to food businesses throughout the whole supply chain. Assisting you to
+        place legally compliant and commercially viable products (both online and in stores) onto the UK and the
+        European markets. A range from small to multinational food businesses and include manufacturers, wholesalers,
+        retailers and distributors, as clients. Explore the areas below:</p>
 
     <div class="slider-container">
         <div class="topics-grid" @ref="topicsGrid">
@@ -14,7 +17,8 @@
             {
                 <div class="topic-card">
                     <div class="image-wrapper">
-                        <img src="@topic.ImageUrl" alt="@topic.AltText">
+                        <img src="@topic.ImageUrl" alt="@topic.AltText" loading="lazy" decoding="async"
+                            onload="this.style.opacity=1" style="opacity:0;transition:opacity 0.3s;">
                         <div class="image-title">
                             <h3>@topic.Title</h3>
                         </div>
@@ -43,55 +47,86 @@
 @code {
     private string pageTitle = "Food Regulatory Consulting | Ítala Veloso";
     private ElementReference topicsGrid;
-    private List<Topic> Topics { get; set; } = new List<Topic>
+    private List<Topic> Topics { get; set; } = new List<Topic>();
+
+    protected override void OnInitialized()
     {
-        new Topic {
-            Id = 1,
-            ImageUrl = "https://italaveloso.com/Images/services/regulatory-consulting/formulation-check.jpg",
-            Title = "Comprehensive Formulation Compliance Check",
-            AltText = "Expert reviewing product formulation documents"
-        },
-        new Topic {
-            Id = 2,
-            ImageUrl = "https://italaveloso.com/Images/services/regulatory-consulting/pack-copy-labeling.jpg",
-            Title = "UK, EU, IE, GB Pack Copy Food Labeling Services",
-            AltText = "Detailed pack copy labeling analysis"
-        },
-        new Topic {
-            Id = 3,
-            ImageUrl = "https://italaveloso.com/Images/services/regulatory-consulting/artwork-label-check.jpg",
-            Title = "Artwork and Label Compliance Reviews",
-            AltText = "Professional examining product artwork and labels"
-        },
-        new Topic {
-            Id = 4,
-            ImageUrl = "https://italaveloso.com/Images/services/regulatory-consulting/regulation-interpretation.jpg",
-            Title = "Regulation Interpretation and Expert Advice",
-            AltText = "Consultant providing regulatory guidance"
-        },
-        new Topic {
-            Id = 5,
-            ImageUrl = "https://italaveloso.com/Images/services/regulatory-consulting/hfss-compliance.jpg",
-            Title = "HFSS Compliance Solutions",
-            AltText = "Specialist advising on HFSS regulations"
-        },
-        new Topic {
-            Id = 6,
-            ImageUrl = "https://italaveloso.com/Images/services/regulatory-consulting/import-export-compliance.jpg",
-            Title = "Import and Export Food Regulatory Compliance",
-            AltText = "Expert consulting on international trade regulations"
-        },
-        new Topic {
-            Id = 7,
-            ImageUrl = "https://italaveloso.com/Images/services/regulatory-consulting/marketing-material-compliance.jpg",
-            Title = "Marketing Material Compliance Audit (Print & Digital)",
-            AltText = "Reviewing marketing content for regulatory adherence"
-        },
-        new Topic {
-            Id = 8,
-            ImageUrl = "https://italaveloso.com/Images/services/regulatory-consulting/label-translation.jpg",
-            Title = "Food Regulatory Label Translation Services (EN-PT, PT-EN, BR-EN)",
-            AltText = "Translating labels from English to Portuguese"
-        }
-    };
+        // Initialize topics data only when needed
+        InitializeTopics();
+        base.OnInitialized();
+    }
+
+    private void InitializeTopics()
+    {
+        Topics = new List<Topic>
+{
+new Topic {
+Id = 1,
+ImageUrl = "https://italaveloso.com/Images/services/regulatory-consulting/formulation-check.jpg",
+Title = "Comprehensive Formulation Compliance Check",
+AltText = "Expert reviewing product formulation documents"
+},
+new Topic {
+Id = 2,
+ImageUrl = "https://italaveloso.com/Images/services/regulatory-consulting/pack-copy-labeling.jpg",
+Title = "UK, EU, IE, GB Pack Copy Food Labeling Services",
+AltText = "Detailed pack copy labeling analysis"
+},
+new Topic {
+Id = 3,
+ImageUrl = "https://italaveloso.com/Images/services/regulatory-consulting/artwork-label-check.jpg",
+Title = "Artwork and Label Compliance Reviews",
+AltText = "Professional examining product artwork and labels"
+},
+new Topic {
+Id = 4,
+ImageUrl = "https://italaveloso.com/Images/services/regulatory-consulting/regulation-interpretation.jpg",
+Title = "Regulation Interpretation and Expert Advice",
+AltText = "Consultant providing regulatory guidance"
+},
+new Topic {
+Id = 5,
+ImageUrl = "https://italaveloso.com/Images/services/regulatory-consulting/hfss-compliance.jpg",
+Title = "HFSS Compliance Solutions",
+AltText = "Specialist advising on HFSS regulations"
+},
+new Topic {
+Id = 6,
+ImageUrl = "https://italaveloso.com/Images/services/regulatory-consulting/import-export-compliance.jpg",
+Title = "Import and Export Food Regulatory Compliance",
+AltText = "Expert consulting on international trade regulations"
+},
+new Topic {
+Id = 7,
+ImageUrl = "https://italaveloso.com/Images/services/regulatory-consulting/marketing-material-compliance.jpg",
+Title = "Marketing Material Compliance Audit (Print & Digital)",
+AltText = "Reviewing marketing content for regulatory adherence"
+},
+new Topic {
+Id = 8,
+ImageUrl = "https://italaveloso.com/Images/services/regulatory-consulting/label-translation.jpg",
+Title = "Food Regulatory Label Translation Services (EN-PT, PT-EN, BR-EN)",
+AltText = "Translating labels from English to Portuguese"
 }
+};
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        try
+        {
+            // Clear the topics list to help with garbage collection
+            Topics?.Clear();
+            Topics = null;
+        }
+        catch (Exception)
+        {
+            // Ignore disposal errors
+        }
+
+        GC.SuppressFinalize(this);
+        return ValueTask.CompletedTask;
+    }
+}
+
+@implements IAsyncDisposable

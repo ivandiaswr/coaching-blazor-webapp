@@ -34,7 +34,7 @@
                                 <li><i class="fas fa-check"></i> Reclaim your inner peace and authentic self</li>
                                 <li><i class="fas fa-check"></i> Create a roadmap to ignite your future</li>
                             </ul>
-                            <div class="button-container">
+                            <div class="button-service">
                                 <a href="/services/coaching/life-coaching" class="card-link">
                                     <span class="btn-primary">
                                         Start Your Life
@@ -62,7 +62,7 @@
                                 <li><i class="fas fa-check"></i> Self and Skills Actualization</li>
                                 <li><i class="fas fa-check"></i> Mentoring and Career Clarity</li>
                             </ul>
-                            <div class="button-container">
+                            <div class="button-service">
                                 <a href="/services/coaching/career-coaching" class="card-link">
                                     <span class="btn-primary">
                                         Start Your Career
@@ -144,7 +144,7 @@
                 <div class="testimonial-card">
                     <div class="video-wrapper">
                         <div class="video-container" @onclick="() => ToggleVideo(testimonial.Id)">
-                            <video id="video-@testimonial.Id" playsinline controls=true volume="0.5" 
+                            <video id="video-@testimonial.Id" playsinline controls=true volume="0.5" preload="metadata"
                                   @onended="() => OnVideoEnded(testimonial.Id)">           
                                 <source src="@testimonial.Path" type="video/mp4">
                             </video>
@@ -416,7 +416,7 @@
 
                     <div class="right-content">
                         <div class="video-header-container">
-                            <video autoplay muted loop playsinline preload="auto" class="video-header">
+                            <video autoplay muted loop playsinline preload="metadata" class="video-header">
                                 <source src="https://italaveloso.com/Videos/adventure.mp4" type="video/mp4">
                                 Your browser does not support the video tag mp4.
                             </video>
@@ -612,22 +612,29 @@
         {
             await LogService.LogInfo("LoadAvailableSlots", "Starting slot load...");
             var startDate = DateTime.UtcNow.Date.AddDays(2);
+            var endDate = startDate.AddDays(25);
+            
             var sessions = await SessionService.GetAllSessionsAsync(false) ?? new List<Session>();
-            var busyTimes = sessions
-                .Where(c => c != null && c.PreferredDateTime != default && c.PreferredDateTime > DateTime.UtcNow.AddDays(2))
+            var relevantSessions = sessions
+                .Where(c => c != null && c.PreferredDateTime != default && 
+                           c.PreferredDateTime >= startDate && c.PreferredDateTime <= endDate)
+                .ToList();
+                
+            var busyTimes = relevantSessions
                 .Select(c => (
                     Start: new DateTimeOffset(c.PreferredDateTime, TimeSpan.Zero),
                     End: new DateTimeOffset(c.PreferredDateTime.AddMinutes(45), TimeSpan.Zero)
                 ))
                 .ToList();
+                
             var adminUnavailabilities = (await UnavailableTimeService.GetAllUnavailableTimesAsync())?.ToList() ?? new List<UnavailableTime>();
 
             availableSlots = GenerateAvailableSlots(startDate, busyTimes, adminUnavailabilities);
             this.busyTimes = busyTimes;
             this.adminUnavailabilities = adminUnavailabilities;
-            firstAvailableDate = availableSlots.Any() ? availableSlots.Min() : DateTime.UtcNow.AddDays(2);
+            firstAvailableDate = availableSlots.Any() ? availableSlots.Min() : startDate;
 
-            await LogService.LogInfo("LoadAvailableSlots", $"Loaded {availableSlots.Count} available slots. Sessions: {sessions.Count}, Busy times: {busyTimes.Count}, Unavail: {adminUnavailabilities.Count}.");
+            await LogService.LogInfo("LoadAvailableSlots", $"Loaded {availableSlots.Count} available slots from {relevantSessions.Count} relevant sessions (filtered from {sessions.Count} total). Busy times: {busyTimes.Count}, Unavail: {adminUnavailabilities.Count}.");
         }
         catch (Exception ex)
         {
@@ -767,7 +774,8 @@
             StateHasChanged();
             
             var (reviews, rating, total) = await GoogleReviewsService.GetReviewsAsync();
-            googleReviews = reviews;
+            
+            googleReviews = reviews?.Take(10).ToList() ?? new List<GoogleReview>();
             googleRating = rating;
             
             await LogService.LogInfo("LoadGoogleReviews", $"Loaded {googleReviews.Count} Google reviews with average rating {googleRating:F1}");
@@ -781,6 +789,7 @@
         catch (Exception ex)
         {
             await LogService.LogError("LoadGoogleReviewsAsync Error", ex.Message);
+            googleReviews = new List<GoogleReview>();
         }
         finally
         {
@@ -798,13 +807,15 @@
         {        
             var currentTestimonial = testimonials.First(t => t.Id == testimonialId);
 
+            // Pause all other videos
             foreach(var testimonial in testimonials) {
-                if(testimonial.Id != testimonialId){
+                if(testimonial.Id != testimonialId && testimonial.IsPlaying){
                     await JSRuntime.InvokeVoidAsync("pauseVideoById", "video-" + testimonial.Id);
                     testimonial.IsPlaying = false;
                 }
             }
 
+            // Toggle current video
             if(!currentTestimonial.IsPlaying){
                 await JSRuntime.InvokeVoidAsync("playVideoById", "video-" + currentTestimonial.Id);
                 currentTestimonial.IsPlaying = true;
@@ -812,12 +823,12 @@
                 await JSRuntime.InvokeVoidAsync("pauseVideoById", "video-" + currentTestimonial.Id);
                 currentTestimonial.IsPlaying = false;
             }
+            
+            StateHasChanged();
         } 
         catch(Exception ex) {
             await LogService.LogError("Error on ToggleVideo", ex.Message);
         }
-        
-        StateHasChanged();        
     }
 
 
@@ -829,4 +840,29 @@
     }
 
     #endregion
+}
+
+@implements IAsyncDisposable
+
+@code {
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            var videoIds = testimonials.Select(t => $"video-{t.Id}").ToArray();
+            await JSRuntime.InvokeVoidAsync("cleanupVideos", videoIds);
+            
+            testimonials?.Clear();
+            googleReviews?.Clear();
+            availableSlots?.Clear();
+            busyTimes?.Clear();
+            adminUnavailabilities?.Clear();
+        }
+        catch (Exception)
+        {
+            // Ignore disposal errors
+        }
+        
+        GC.SuppressFinalize(this);
+    }
 }

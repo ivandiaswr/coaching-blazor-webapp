@@ -25,8 +25,21 @@ CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo("en-GB");
 builder.Services.AddSignalR(options =>
 {
     options.MaximumReceiveMessageSize = 10 * 1024 * 1024; // 10MB
+    options.EnableDetailedErrors = builder.Environment.IsDevelopment();
+    options.MaximumParallelInvocationsPerClient = 1; // Reduce memory per client
 });
-builder.Logging.SetMinimumLevel(LogLevel.Debug);
+
+// Reduce logging in production
+if (builder.Environment.IsDevelopment())
+{
+    builder.Logging.SetMinimumLevel(LogLevel.Debug);
+}
+else
+{
+    builder.Logging.SetMinimumLevel(LogLevel.Warning);
+    builder.Logging.AddFilter("Microsoft.EntityFrameworkCore", LogLevel.Error);
+    builder.Logging.AddFilter("Microsoft.AspNetCore", LogLevel.Warning);
+}
 
 SQLitePCL.Batteries.Init();
 SQLitePCL.raw.SetProvider(new SQLitePCL.SQLite3Provider_e_sqlite3());
@@ -53,8 +66,21 @@ else
 
 // builder.Configuration.GetConnectionString("DefaultConnection")
 builder.Services.AddDbContext<CoachingDbContext>(options =>
+{
     options.UseSqlite($"Data Source={databasePath}",
-        b => b.MigrationsAssembly(typeof(CoachingDbContext).Assembly.FullName)));
+        b => b.MigrationsAssembly(typeof(CoachingDbContext).Assembly.FullName));
+    options.EnableServiceProviderCaching(false); // Reduces provider cache
+    options.EnableSensitiveDataLogging(false);   // Remove unnecessary logging
+    options.ConfigureWarnings(warnings => warnings.Ignore(
+        Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.MultipleCollectionIncludeWarning,
+        Microsoft.EntityFrameworkCore.Diagnostics.CoreEventId.FirstWithoutOrderByAndFilterWarning));
+    options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking); // Reduce query tracking and memory overhead
+
+    if (!builder.Environment.IsDevelopment())
+    {
+        options.EnableDetailedErrors(false); // Disable detailed errors in production to save memory
+    }
+});
 // .LogTo(message =>
 //            {
 //                if (!message.Contains("An 'IServiceProvider' was created for internal use by Entity Framework."))
