@@ -66,4 +66,19 @@ public class VideoCallService : IVideoCallService
             .OrderByDescending(v => v.ScheduledAt)
             .ToListAsync();
     }
+
+    public async Task<bool> UpdateScheduledTimeAsync(int videoSessionId, DateTime newScheduledTime)
+    {
+        var videoSession = await _context.VideoSessions
+            .FirstOrDefaultAsync(v => v.Id == videoSessionId);
+
+        if (videoSession != null)
+        {
+            videoSession.ScheduledAt = newScheduledTime;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        return false;
+    }
 }

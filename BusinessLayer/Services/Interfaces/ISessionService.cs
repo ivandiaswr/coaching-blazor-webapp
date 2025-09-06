@@ -13,6 +13,7 @@ public interface ISessionService
     Task<bool> CreateSessionWithPackConsumptionAsync(Session session, string userId, string packId, ISessionPackService sessionPackService);
     void UpdateSession(Session session);
     void DeleteSession(int id);
+    Task<bool> UpdateScheduledTimeAsync(int sessionId, DateTime newScheduledTime);
     Task<Session?> GetLatestSessionByEmailAsync(string email);
     Task<Session?> GetSessionByEmailAsync(string email);
     Task<Session> GetPendingSessionByEmailAndPackAsync(string email, string packId, SessionType sessionCategory, DateTime preferredDateTime);

@@ -7,4 +7,5 @@ public interface IVideoCallService
     Task<List<VideoSession>> GetSessionsForUserAsync(string userId);
     Task<bool> MarkSessionAsStartedAsync(string sessionId);
     Task EndSessionAsync(string sessionId);
+    Task<bool> UpdateScheduledTimeAsync(int videoSessionId, DateTime newScheduledTime);
 }

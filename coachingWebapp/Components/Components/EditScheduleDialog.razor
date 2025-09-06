@@ -1,0 +1,119 @@
+@using Microsoft.AspNetCore.Components
+@using ModelLayer.Models
+@using ModelLayer.Models.Enums
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudContainer Style="max-width: 500px;">
+            <MudText Typo="Typo.h6" Class="mb-4">
+                Edit Scheduled Time for @Session?.FullName
+            </MudText>
+
+            <MudText Typo="Typo.body2" Class="mb-3">
+                <strong>Session Category:</strong> @Session?.SessionCategory.GetDisplayName()
+            </MudText>
+
+            <MudText Typo="Typo.body2" Class="mb-4">
+                <strong>Current Time:</strong> @CurrentScheduledTimeLocal.ToString("dddd, MMMM dd, yyyy 'at' HH:mm")
+                (@AdminTimeZone)
+            </MudText>
+
+            <MudForm @ref="form" @bind-IsValid="@isFormValid">
+                <MudGrid>
+                    <MudItem xs="12" sm="6">
+                        <MudDatePicker @bind-Date="selectedDate" Label="New Date" Required="true"
+                            RequiredError="Date is required" MinDate="DateTime.Today" Variant="Variant.Outlined" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudTimePicker @bind-Time="selectedTime" Label="New Time" Required="true"
+                            RequiredError="Time is required" Variant="Variant.Outlined" AmPm="false" />
+                    </MudItem>
+                </MudGrid>
+
+                @if (selectedDate.HasValue && selectedTime.HasValue)
+                {
+                    var combinedDateTime = selectedDate.Value.Date.Add(selectedTime.Value);
+                    var utcDateTime = TimeZoneInfo.ConvertTimeToUtc(combinedDateTime,
+                    TimeZoneInfo.FindSystemTimeZoneById(AdminTimeZone));
+                    <MudAlert Severity="Severity.Info" Class="mt-4">
+                        <strong>New Scheduled Time:</strong> @combinedDateTime.ToString("dddd, MMMM dd, yyyy 'at' HH:mm")
+                        (@AdminTimeZone)
+                        <br />
+                        <small>UTC: @utcDateTime.ToString("yyyy-MM-dd HH:mm:ss")</small>
+                    </MudAlert>
+                }
+            </MudForm>
+        </MudContainer>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Save"
+            Disabled="@(!isFormValid || !selectedDate.HasValue || !selectedTime.HasValue)">
+            Update Schedule
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public Session Session { get; set; }
+
+    [Parameter]
+    public VideoSession VideoSession { get; set; }
+
+    [Parameter]
+    public string AdminTimeZone { get; set; } = "Europe/London";
+
+    private MudForm form;
+    private bool isFormValid;
+    private DateTime? selectedDate;
+    private TimeSpan? selectedTime;
+    private DateTime CurrentScheduledTimeLocal { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (VideoSession != null)
+        {
+            // Convert current UTC time to admin timezone
+            var timeZone = TimeZoneInfo.FindSystemTimeZoneById(AdminTimeZone);
+            CurrentScheduledTimeLocal = TimeZoneInfo.ConvertTimeFromUtc(VideoSession.ScheduledAt, timeZone);
+
+            // Initialize form with current values
+            selectedDate = CurrentScheduledTimeLocal.Date;
+            selectedTime = CurrentScheduledTimeLocal.TimeOfDay;
+        }
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+
+    private void Save()
+    {
+        if (selectedDate.HasValue && selectedTime.HasValue)
+        {
+            try
+            {
+                // Combine date and time
+                var combinedDateTime = selectedDate.Value.Date.Add(selectedTime.Value);
+
+                // Convert from admin timezone to UTC
+                var timeZone = TimeZoneInfo.FindSystemTimeZoneById(AdminTimeZone);
+                var utcDateTime = TimeZoneInfo.ConvertTimeToUtc(combinedDateTime, timeZone);
+
+                MudDialog.Close(DialogResult.Ok(utcDateTime));
+            }
+            catch (Exception ex)
+            {
+                // Handle timezone conversion errors
+                Snackbar.Add($"Error converting time zone: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+}

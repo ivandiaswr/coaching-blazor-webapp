@@ -4,6 +4,12 @@
 
 @inject ILogger<Case_studies> Logger
 
+<SeoComponent Title="@pageTitle" 
+              Description="Real success stories from Ítala Veloso's coaching clients. See how life and career coaching transformed clients' lives through overcoming challenges and achieving breakthrough results."
+              Keywords="coaching success stories, case studies, client testimonials, life coaching results, career coaching success, transformation stories, coaching outcomes"
+              CanonicalUrl="https://italaveloso.com/services/coaching/Case-studies"
+              JsonLdStructuredData="@GetCaseStudiesStructuredData()" />
+
 <PageTitle>@pageTitle</PageTitle>
 
 <div class="case-studies-page">
@@ -201,6 +207,39 @@
         var testimonial = testimonials.First(t => t.Id == testimonialId);
         testimonial.IsPlaying = false;
         StateHasChanged();
+    }
+
+    private string GetCaseStudiesStructuredData()
+    {
+        return @"{
+            ""@context"": ""https://schema.org"",
+            ""@type"": ""CollectionPage"",
+            ""name"": ""Case Studies - Coaching Success Stories"",
+            ""description"": ""Real success stories from Ítala Veloso's coaching clients showing transformation through life and career coaching."",
+            ""url"": ""https://italaveloso.com/services/coaching/Case-studies"",
+            ""about"": {
+                ""@type"": ""Service"",
+                ""name"": ""Life and Career Coaching"",
+                ""provider"": {
+                    ""@type"": ""Person"",
+                    ""name"": ""Ítala Veloso""
+                }
+            },
+            ""mainEntity"": [
+                {
+                    ""@type"": ""Review"",
+                    ""reviewRating"": {
+                        ""@type"": ""Rating"",
+                        ""ratingValue"": ""5""
+                    },
+                    ""author"": {
+                        ""@type"": ""Person"",
+                        ""name"": ""Laviniah""
+                    },
+                    ""reviewBody"": ""Ítala been really helpful in terms of giving me concrete knowledge about things to do with trauma, how it affects our behaviours, thinking, patterns; in order to change our actions and outputs into this world. There has been such growth and work of development and I am very proud with where I am right now.""
+                }
+            ]
+        }";
     }
 
 }

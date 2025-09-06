@@ -381,7 +381,7 @@
             }
             
             if (now > sessionEnd)
-                return $"❌ Session expired with {clientInfo} • Ended at {ConvertToLocalTime(sessionEnd):dd MMM HH:mm} ({CurrentTimeZone})";
+                return $"Session expired with {clientInfo} • Ended at {ConvertToLocalTime(sessionEnd):dd MMM HH:mm} ({CurrentTimeZone})";
                 
             return $"Session with {clientInfo}";
         }
@@ -552,39 +552,3 @@
         return $"{duration.Hours}h {duration.Minutes}m {duration.Seconds}s";
     }
 }
-
-<style>
-    .session-dialog-content {
-        max-height: 80vh;
-        overflow-y: auto;
-    }
-
-    .session-details-grid .mud-grid-item {
-        margin-bottom: 0.5rem;
-    }
-
-    .go-to-session-btn, .session-details-btn {
-        min-width: 140px;
-    }
-
-    .dialog-title {
-        font-weight: 600;
-    }
-
-    .session-detail-item {
-        padding: 0.25rem 0;
-    }
-
-    .full-width {
-        width: 100%;
-    }
-
-    .mud-paper[style*="border-left"] {
-        transition: all 0.2s ease-in-out;
-    }
-
-    .mud-paper[style*="border-left"]:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 20px rgba(0,0,0,0.12);
-    }
-</style>

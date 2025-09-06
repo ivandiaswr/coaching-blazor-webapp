@@ -2,6 +2,12 @@
 
 @rendermode InteractiveServer
 
+<SeoComponent Title="@pageTitle"
+    Description="Advance your career with expert career coaching from Ítala Veloso. Get CV reviews, interview preparation, goal setting, and work-life balance strategies. Book your free consultation today."
+    Keywords="career coaching, CV review, interview preparation, career advancement, work life balance, professional development, career goals, job search, leadership development"
+    CanonicalUrl="https://italaveloso.com/services/coaching/career-coaching"
+    JsonLdStructuredData="@GetServiceStructuredData()" />
+
 <PageTitle>@pageTitle</PageTitle>
 
 <div class="life-coaching-container">
@@ -104,6 +110,34 @@ AltText = "Feedback"
 
         GC.SuppressFinalize(this);
         return ValueTask.CompletedTask;
+    }
+
+    private string GetServiceStructuredData()
+    {
+        return @"{
+""@context"": ""https://schema.org"",
+""@type"": ""Service"",
+""name"": ""Career Coaching"",
+""description"": ""Professional career coaching services including CV reviews, interview preparation, goal setting, and
+work-life balance strategies to advance your career."",
+""provider"": {
+""@type"": ""Person"",
+""name"": ""Ítala Veloso"",
+""jobTitle"": ""Career Coach""
+},
+""serviceType"": ""Career Coaching"",
+""url"": ""https://italaveloso.com/services/coaching/career-coaching"",
+""offers"": {
+""@type"": ""Offer"",
+""availability"": ""https://schema.org/InStock"",
+""price"": ""Varies"",
+""priceCurrency"": ""GBP""
+},
+""areaServed"": {
+""@type"": ""Country"",
+""name"": ""United Kingdom""
+}
+}";
     }
 }
 

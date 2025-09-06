@@ -2,6 +2,12 @@
 
 @rendermode InteractiveServer
 
+<SeoComponent Title="@pageTitle" 
+              Description="Learn about Ítala Veloso's transformative coaching process. Discover how our structured approach helps you overcome challenges, heal from trauma, and achieve personal breakthrough."
+              Keywords="coaching process, transformation process, personal breakthrough, healing process, life coach methodology, coaching approach, self-discovery process"
+              CanonicalUrl="https://italaveloso.com/about/process"
+              JsonLdStructuredData="@GetPageStructuredData()" />
+
 <PageTitle>@pageTitle</PageTitle>
 
 <div class="process-page">
@@ -98,4 +104,28 @@
 
 @code {
     private string pageTitle = "The Process | Ítala Veloso";
+
+    private string GetPageStructuredData()
+    {
+        return @"{
+            ""@context"": ""https://schema.org"",
+            ""@type"": ""Article"",
+            ""headline"": ""The Process - Transformative Coaching Journey"",
+            ""description"": ""Learn about Ítala Veloso's structured coaching process that helps individuals overcome challenges, heal from trauma, and achieve personal breakthrough."",
+            ""author"": {
+                ""@type"": ""Person"",
+                ""name"": ""Ítala Veloso"",
+                ""jobTitle"": ""Life & Career Coach""
+            },
+            ""publisher"": {
+                ""@type"": ""Organization"",
+                ""name"": ""Ítala Veloso Coaching""
+            },
+            ""url"": ""https://italaveloso.com/about/process"",
+            ""mainEntityOfPage"": {
+                ""@type"": ""WebPage"",
+                ""@id"": ""https://italaveloso.com/about/process""
+            }
+        }";
+    }
 }

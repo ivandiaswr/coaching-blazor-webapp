@@ -340,6 +340,23 @@
                             }
                         </CellTemplate>
                     </PropertyColumn>
+                    <TemplateColumn Title="Actions" Sortable="false" Filterable="false">
+                        <CellTemplate>
+                            @if (context.Item.VideoSession != null)
+                            {
+                                <MudTooltip Text="Edit Scheduled Time">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                                 Color="Color.Primary"
+                                                 Size="Size.Small"
+                                                 OnClick="@(() => OpenEditScheduleDialog(context.Item))" />
+                                </MudTooltip>
+                            }
+                            else
+                            {
+                                <span class="text-muted">No Video Session</span>
+                            }
+                        </CellTemplate>
+                    </TemplateColumn>
                     @* <PropertyColumn Property="x => x.PaidAt" Title="PaidAt" Sortable="true" Filterable="false">
                         <CellTemplate>
                             @TimeZoneInfo.ConvertTimeFromUtc(context.Item.PaidAt, TimeZoneInfo.FindSystemTimeZoneById(adminTimeZone)).ToString("dd-MM-yyyy HH:mm:ss") (@adminTimeZone)
@@ -416,6 +433,16 @@
                             @context.Item.CreatedAt.ToString("dd-MM-yyyy HH:mm:ss")
                         </CellTemplate>
                     </PropertyColumn>
+                    <TemplateColumn Title="Action" Sortable="false" Filterable="false">
+                        <CellTemplate>
+                            <MudTooltip Text="Delete Email Subscription">
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                             Color="Color.Error"
+                                             Size="Size.Small"
+                                             OnClick="@(() => ConfirmDeleteEmailSubscription(context.Item.Id))" />
+                            </MudTooltip>
+                        </CellTemplate>
+                    </TemplateColumn>
                 </Columns>
                 <PagerContent>
                     <MudDataGridPager T="EmailSubscription" />
@@ -896,6 +923,48 @@
         }
     }
 
+    private async Task ConfirmDeleteEmailSubscription(int id)
+    {
+        var parameters = new DialogParameters
+        {
+            { "ContentText", "Are you sure you want to delete this email subscription? This action cannot be undone." },
+            { "ButtonText", "Delete" },
+            { "Color", Color.Error }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Confirm Delete", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await DeleteEmailSubscription(id);
+        }
+    }
+
+    private async Task DeleteEmailSubscription(int id)
+    {
+        try
+        {
+            var success = await EmailSubscriptionService.DeleteEmailSubscriptionAsync(id);
+            
+            if (success)
+            {
+                emailSubscriptions = EmailSubscriptionService.GetAllEmailSubscriptions() ?? new();
+                Snackbar.Add("Email subscription deleted successfully.", Severity.Success);
+                StateHasChanged();
+            }
+            else
+            {
+                Snackbar.Add("Failed to delete email subscription.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error deleting email subscription: {ex.Message}", Severity.Error);
+        }
+    }
+
     private async Task AddNewSessionPack(SessionType sessionType)
     {
         try
@@ -1309,6 +1378,80 @@
         catch (Exception ex)
         {
             Snackbar.Add($"Error opening email dialog: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task OpenEditScheduleDialog(Session session)
+    {
+        try
+        {
+            if (session.VideoSession == null)
+            {
+                Snackbar.Add("No video session found for this booking.", Severity.Error);
+                return;
+            }
+
+            var parameters = new DialogParameters
+            {
+                { "Session", session },
+                { "VideoSession", session.VideoSession },
+                { "AdminTimeZone", adminTimeZone }
+            };
+
+            var options = new DialogOptions 
+            { 
+                CloseButton = true,
+                CloseOnEscapeKey = true, 
+                MaxWidth = MaxWidth.Medium, 
+                FullWidth = true 
+            };
+
+            var dialog = await DialogService.ShowAsync<EditScheduleDialog>("Edit Scheduled Time", parameters, options);
+            var result = await dialog.Result;
+
+            if (!result.Canceled && result.Data != null)
+            {
+                var newScheduledTime = (DateTime)result.Data;
+                
+                var success = await SessionService.UpdateScheduledTimeAsync(session.Id, newScheduledTime);
+                
+                if (success)
+                {
+                    // Refresh sessions data from database to ensure consistency
+                    sessions = await SessionService.GetAllSessionsAsync() ?? new();
+                    
+                    // Update calendar and next sessions with fresh data
+                    var adminTimeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(adminTimeZone);
+                    var twoWeeksAgo = DateTime.UtcNow.AddDays(-14);
+                    nextSessions = sessions.Where(s => 
+                        (s.VideoSession != null && s.VideoSession.ScheduledAt >= twoWeeksAgo) ||
+                        (s.VideoSession == null && s.PreferredDateTime >= twoWeeksAgo)
+                    ).OrderBy(s => s.VideoSession?.ScheduledAt ?? s.PreferredDateTime).ToList();
+                    
+                    calendarItems = nextSessions.Select(c => {
+                        var sessionDateTime = c.VideoSession?.ScheduledAt ?? c.PreferredDateTime;
+                        var startLocal = TimeZoneInfo.ConvertTimeFromUtc(sessionDateTime, adminTimeZoneInfo);
+                        var endLocal = TimeZoneInfo.ConvertTimeFromUtc(sessionDateTime.AddMinutes(45), adminTimeZoneInfo);
+                        return new CalendarItem
+                        {
+                            Start = startLocal,
+                            End = endLocal,
+                            Text = $"{c.FullName}: {c.SessionCategory.GetDisplayName().Replace("Coaching", "").Replace("Food", "").Trim()}",
+                        };
+                    }).ToList();
+
+                    Snackbar.Add("Session scheduled time updated successfully!", Severity.Success);
+                    StateHasChanged();
+                }
+                else
+                {
+                    Snackbar.Add("Failed to update scheduled time.", Severity.Error);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error updating scheduled time: {ex.Message}", Severity.Error);
         }
     }
 

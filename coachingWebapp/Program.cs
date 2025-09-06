@@ -123,6 +123,7 @@ builder.Services.AddScoped<ISubscriptionPriceService, SubscriptionPriceService>(
 builder.Services.AddScoped<ISessionPackService, SessionPackService>();
 builder.Services.AddScoped<IUserSubscriptionService, UserSubscriptionService>();
 builder.Services.AddScoped<ICurrencyConversionService, CurrencyConversionService>();
+builder.Services.AddScoped<ISitemapService, SitemapService>();
 
 builder.Services.AddHttpClient<GoogleReviewsService>();
 

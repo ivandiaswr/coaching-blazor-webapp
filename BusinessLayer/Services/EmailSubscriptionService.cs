@@ -295,9 +295,9 @@ public class EmailSubscriptionService : IEmailSubscriptionService
         }
     }
 
-    public async Task<bool> SendCustomEmailAsync(List<string> recipients, string subject, string body, List<(string Name, Stream Content, string ContentType)> attachments = null)
+    public async Task<bool> SendCustomEmailAsync(List<string> recipients, string subject, string body, List<(string Name, Stream Content, string ContentType)>? attachments = null)
     {
-        if (!recipients?.Any() ?? true)
+        if (recipients?.Any() != true)
             throw new ArgumentException("Recipient list is empty.");
         if (string.IsNullOrWhiteSpace(subject))
             throw new ArgumentException("Email subject is required.");
@@ -424,6 +424,31 @@ public class EmailSubscriptionService : IEmailSubscriptionService
         catch (Exception ex)
         {
             await _logService.LogError("SendSimpleEmailAsync", ex.Message);
+            return false;
+        }
+    }
+
+    public async Task<bool> DeleteEmailSubscriptionAsync(int id)
+    {
+        try
+        {
+            var emailSubscription = await _context.EmailSubscriptions.FindAsync(id);
+
+            if (emailSubscription == null)
+            {
+                await _logService.LogWarning("DeleteEmailSubscriptionAsync", $"Email subscription with ID {id} not found");
+                return false;
+            }
+
+            _context.EmailSubscriptions.Remove(emailSubscription);
+            await _context.SaveChangesAsync();
+
+            await _logService.LogInfo("DeleteEmailSubscriptionAsync", $"Email subscription with ID {id} deleted successfully");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            await _logService.LogError("DeleteEmailSubscriptionAsync", $"Error deleting email subscription with ID {id}: {ex.Message}");
             return false;
         }
     }

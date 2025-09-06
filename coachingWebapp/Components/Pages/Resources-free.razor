@@ -5,6 +5,12 @@
 
 @inject ILogger<Resources_free> Logger
 
+<SeoComponent Title="@pageTitle" 
+              Description="Access free personal development resources from Ítala Veloso. Download guides, watch videos, and get tools for life transformation, healing, and personal growth."
+              Keywords="free resources, personal development resources, life coaching tools, self-help resources, transformation guides, healing resources, personal growth tools"
+              CanonicalUrl="https://italaveloso.com/resources/free"
+              JsonLdStructuredData="@GetResourcesStructuredData()" />
+
 <PageTitle>@pageTitle</PageTitle>
 
 <div class="resources-page">
@@ -244,5 +250,24 @@
         {
             _disposed = true;
         }
+    }
+
+    private string GetResourcesStructuredData()
+    {
+        return @"{
+            ""@context"": ""https://schema.org"",
+            ""@type"": ""CollectionPage"",
+            ""name"": ""Free Personal Development Resources"",
+            ""description"": ""Access free personal development resources including guides, videos, and tools for life transformation and personal growth."",
+            ""url"": ""https://italaveloso.com/resources/free"",
+            ""publisher"": {
+                ""@type"": ""Organization"",
+                ""name"": ""Ítala Veloso Coaching""
+            },
+            ""about"": {
+                ""@type"": ""Thing"",
+                ""name"": ""Personal Development Resources""
+            }
+        }";
     }
 }

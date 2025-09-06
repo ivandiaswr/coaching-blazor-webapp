@@ -6,6 +6,7 @@ using MailKit.Net.Smtp;
 using ModelLayer.Models;
 using Microsoft.EntityFrameworkCore;
 using ModelLayer.Models.Enums;
+
 namespace BusinessLayer.Services;
 
 public class SessionService : ISessionService
@@ -457,6 +458,53 @@ public class SessionService : ISessionService
         {
             _logService.LogError("DeleteSession", ex.Message);
             throw;
+        }
+    }
+
+    public async Task<bool> UpdateScheduledTimeAsync(int sessionId, DateTime newScheduledTime)
+    {
+        try
+        {
+            var session = await _context.Sessions
+                .Include(s => s.VideoSession)
+                .FirstOrDefaultAsync(s => s.Id == sessionId);
+
+            if (session == null)
+            {
+                await _logService.LogError("UpdateScheduledTimeAsync", $"Session with ID {sessionId} not found.");
+                return false;
+            }
+
+            // Update the Session's PreferredDateTime
+            session.PreferredDateTime = newScheduledTime;
+            _context.Sessions.Update(session);
+
+            // Update the VideoSession's ScheduledAt if it exists
+            if (session.VideoSession != null)
+            {
+                session.VideoSession.ScheduledAt = newScheduledTime;
+                _context.VideoSessions.Update(session.VideoSession);
+            }
+
+            await _context.SaveChangesAsync();
+
+            // Detach entities to prevent tracking conflicts
+            _context.Entry(session).State = EntityState.Detached;
+            if (session.VideoSession != null)
+            {
+                _context.Entry(session.VideoSession).State = EntityState.Detached;
+            }
+
+            await _logService.LogInfo("UpdateScheduledTimeAsync",
+                $"Successfully updated scheduled time for SessionId: {sessionId} to {newScheduledTime:yyyy-MM-dd HH:mm:ss} UTC");
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            await _logService.LogError("UpdateScheduledTimeAsync",
+                $"Error updating scheduled time for SessionId: {sessionId}. Error: {ex.Message}");
+            return false;
         }
     }
 

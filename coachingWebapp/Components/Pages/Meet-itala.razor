@@ -3,6 +3,12 @@
 @rendermode InteractiveServer
 @inject ILogger<Meet_itala> Logger
 
+<SeoComponent Title="@pageTitle" 
+              Description="Meet Ítala Veloso - Santomean-Portuguese life coach, mentor, and motivational speaker. Expert in trauma healing, personal transformation, and empowering breakthrough coaching."
+              Keywords="Ítala Veloso, about coach, life coach biography, trauma healing expert, motivational speaker, personal transformation coach, Santomean Portuguese coach"
+              CanonicalUrl="https://italaveloso.com/about/meet-itala"
+              JsonLdStructuredData="@GetPersonStructuredData()" />
+
 <PageTitle>@pageTitle</PageTitle>
 
 <section class="hero-container">
@@ -213,5 +219,35 @@
     }
     #endregion
 
+    private string GetPersonStructuredData()
+    {
+        return @"{
+            ""@context"": ""https://schema.org"",
+            ""@type"": ""Person"",
+            ""name"": ""Ítala Veloso"",
+            ""jobTitle"": ""Life & Career Coach, Mentor, Motivational Speaker"",
+            ""description"": ""Santomean-Portuguese Black African Woman, passionate purpose-driven life coach, mentor, motivational speaker, writer, and poet whose work empowers women and men to break through and break free from road and mind blocks, emotional wounds, trauma, and self-limiting beliefs."",
+            ""url"": ""https://italaveloso.com/about/meet-itala"",
+            ""image"": ""https://italaveloso.com/Images/itala-veloso-profile.jpg"",
+            ""nationality"": [""Portugal"", ""São Tomé and Príncipe""],
+            ""alumniOf"": {
+                ""@type"": ""EducationalOrganization"",
+                ""name"": ""Various Professional Coaching Certifications""
+            },
+            ""knowsLanguage"": [""Portuguese"", ""English""],
+            ""address"": {
+                ""@type"": ""PostalAddress"",
+                ""addressLocality"": ""Coventry"",
+                ""addressCountry"": ""GB""
+            },
+            ""sameAs"": [
+                ""https://www.facebook.com/italaveloso.coaching/"",
+                ""https://x.com/itala_veloso"",
+                ""https://www.instagram.com/italaveloso.coaching/"",
+                ""https://www.linkedin.com/in/italaveloso/"",
+                ""https://www.youtube.com/@italaveloso.coaching""
+            ]
+        }";
+    }
 
 }

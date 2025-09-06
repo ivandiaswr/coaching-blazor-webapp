@@ -2,6 +2,12 @@
 
 @rendermode InteractiveServer
 
+<SeoComponent Title="@pageTitle" 
+              Description="Transform your life with expert life coaching from Ítala Veloso. Overcome limiting beliefs, heal from trauma, and create lasting positive change. Start your journey today."
+              Keywords="life coaching, personal development, life transformation, overcome trauma, limiting beliefs, self-discovery, personal growth, life purpose, mindset coaching"
+              CanonicalUrl="https://italaveloso.com/services/coaching/life-coaching"
+              JsonLdStructuredData="@GetServiceStructuredData()" />
+
 <PageTitle>@pageTitle</PageTitle>
 
 <div class="life-coaching-container">
@@ -122,6 +128,33 @@ AltText = "Inner Peace"
 
         GC.SuppressFinalize(this);
         return ValueTask.CompletedTask;
+    }
+
+    private string GetServiceStructuredData()
+    {
+        return @"{
+            ""@context"": ""https://schema.org"",
+            ""@type"": ""Service"",
+            ""name"": ""Life Coaching"",
+            ""description"": ""Expert life coaching services to help you overcome limiting beliefs, heal from trauma, and create lasting positive transformation in your life."",
+            ""provider"": {
+                ""@type"": ""Person"",
+                ""name"": ""Ítala Veloso"",
+                ""jobTitle"": ""Life Coach""
+            },
+            ""serviceType"": ""Life Coaching"",
+            ""url"": ""https://italaveloso.com/services/coaching/life-coaching"",
+            ""offers"": {
+                ""@type"": ""Offer"",
+                ""availability"": ""https://schema.org/InStock"",
+                ""price"": ""Varies"",
+                ""priceCurrency"": ""GBP""
+            },
+            ""areaServed"": {
+                ""@type"": ""Country"",
+                ""name"": ""United Kingdom""
+            }
+        }";
     }
 }
 

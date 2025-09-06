@@ -2,6 +2,12 @@
 
 @rendermode InteractiveServer
 
+<SeoComponent Title="@pageTitle" 
+              Description="Get answers to frequently asked questions about Ítala Veloso's life and career coaching services. Learn about session formats, pricing, booking process, and coaching approach."
+              Keywords="coaching FAQ, life coaching questions, career coaching questions, coaching sessions, coaching pricing, coaching process, coaching appointments"
+              CanonicalUrl="https://italaveloso.com/about/faqs"
+              JsonLdStructuredData="@GetFAQStructuredData()" />
+
 <PageTitle>@pageTitle</PageTitle>
 
 
@@ -135,4 +141,47 @@
 
 @code {
     private string pageTitle = "FAQs | Ítala Veloso";
+
+    private string GetFAQStructuredData()
+    {
+        return @"{
+            ""@context"": ""https://schema.org"",
+            ""@type"": ""FAQPage"",
+            ""mainEntity"": [
+                {
+                    ""@type"": ""Question"",
+                    ""name"": ""What coaching services do you offer?"",
+                    ""acceptedAnswer"": {
+                        ""@type"": ""Answer"",
+                        ""text"": ""I offer life coaching, career coaching, and food regulatory affairs consulting services to help you achieve personal and professional transformation.""
+                    }
+                },
+                {
+                    ""@type"": ""Question"",
+                    ""name"": ""How long are coaching sessions?"",
+                    ""acceptedAnswer"": {
+                        ""@type"": ""Answer"",
+                        ""text"": ""Coaching sessions are typically 60 minutes long, with some packages offering different session lengths based on your needs.""
+                    }
+                },
+                {
+                    ""@type"": ""Question"",
+                    ""name"": ""Do you offer online coaching sessions?"",
+                    ""acceptedAnswer"": {
+                        ""@type"": ""Answer"",
+                        ""text"": ""Yes, I offer both online and in-person coaching sessions to accommodate your preferences and location.""
+                    }
+                },
+                {
+                    ""@type"": ""Question"",
+                    ""name"": ""What is your coaching approach?"",
+                    ""acceptedAnswer"": {
+                        ""@type"": ""Answer"",
+                        ""text"": ""My coaching approach focuses on helping you overcome limiting beliefs, heal from trauma, and create lasting positive transformation through personalized guidance and support.""
+                    }
+                }
+            ],
+            ""url"": ""https://italaveloso.com/about/faqs""
+        }";
+    }
 }

@@ -6,6 +6,12 @@
 <MudPopoverProvider /> 
 <MudSnackbarProvider />
 
+<SeoComponent Title="@pageTitle" 
+              Description="Transform your life with expert life & career coaching from Ítala Veloso. Overcome trauma, break limiting beliefs, and achieve personal growth. Book your free discovery call today."
+              Keywords="life coach, career coach, personal development, trauma healing, life transformation, coaching services, Ítala Veloso, UK coaching, self-discovery, emotional healing, breakthrough coaching, mindset coach"
+              CanonicalUrl="https://italaveloso.com/"
+              JsonLdStructuredData="@GetHomePageStructuredData()" />
+
 <PageTitle>@pageTitle</PageTitle>
 <section id="services" class="services-section">
     <div class="container">
@@ -870,5 +876,59 @@
         }
         
         GC.SuppressFinalize(this);
+    }
+
+    private string GetHomePageStructuredData()
+    {
+        return @"{
+            ""@context"": ""https://schema.org"",
+            ""@type"": ""Organization"",
+            ""name"": ""Ítala Veloso Coaching"",
+            ""description"": ""Expert life and career coaching services helping individuals overcome trauma, break limiting beliefs, and achieve personal transformation."",
+            ""url"": ""https://italaveloso.com/"",
+            ""logo"": ""https://italaveloso.com/Images/iconI.png"",
+            ""founder"": {
+                ""@type"": ""Person"",
+                ""name"": ""Ítala Veloso"",
+                ""jobTitle"": ""Life & Career Coach"",
+                ""description"": ""Passionate purpose-driven life coach, mentor, motivational speaker, writer, and poet whose work empowers women and men to break through and break free from road and mind blocks, emotional wounds, trauma, and self-limiting beliefs.""
+            },
+            ""address"": {
+                ""@type"": ""PostalAddress"",
+                ""addressLocality"": ""Coventry"",
+                ""addressCountry"": ""GB""
+            },
+            ""contactPoint"": {
+                ""@type"": ""ContactPoint"",
+                ""telephone"": ""+44-XXX-XXX-XXXX"",
+                ""contactType"": ""Customer Service"",
+                ""email"": ""jostic@italaveloso.com""
+            },
+            ""sameAs"": [
+                ""https://www.facebook.com/italaveloso.coaching/"",
+                ""https://x.com/itala_veloso"",
+                ""https://www.instagram.com/italaveloso.coaching/"",
+                ""https://www.linkedin.com/in/italaveloso/"",
+                ""https://www.youtube.com/@italaveloso.coaching"",
+                ""https://www.tiktok.com/@italaveloso.coaching""
+            ],
+            ""service"": [
+                {
+                    ""@type"": ""Service"",
+                    ""name"": ""Life Liberation Mastery"",
+                    ""description"": ""Comprehensive life coaching program for personal transformation and breakthrough""
+                },
+                {
+                    ""@type"": ""Service"",
+                    ""name"": ""Career Coaching"",
+                    ""description"": ""Professional career development and advancement coaching""
+                },
+                {
+                    ""@type"": ""Service"",
+                    ""name"": ""Food Regulatory Consulting"",
+                    ""description"": ""Expert food regulatory affairs and compliance consulting""
+                }
+            ]
+        }";
     }
 }

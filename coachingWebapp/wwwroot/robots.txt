@@ -1,0 +1,25 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://italaveloso.com/sitemap.xml
+
+# Specific directives for better crawling
+Crawl-delay: 1
+
+# Disallow admin and private areas
+Disallow: /AdminDashboard
+Disallow: /admin/
+Disallow: /account/
+Disallow: /api/
+Disallow: /login
+Disallow: /register
+
+# Allow important pages
+Allow: /about/
+Allow: /services/
+Allow: /resources/
+Allow: /case-studies/
+Allow: /privacy-policy
+Allow: /terms-and-conditions
+Allow: /faqs

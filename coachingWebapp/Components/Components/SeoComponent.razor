@@ -1,0 +1,65 @@
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+@inject IJSRuntime JSRuntime
+
+<HeadContent>
+    <!-- Primary Meta Tags -->
+    <title>@Title</title>
+    <meta name="title" content="@Title" />
+    <meta name="description" content="@Description" />
+    <meta name="keywords" content="@Keywords" />
+    <meta name="author" content="Ítala Veloso" />
+    <meta name="robots" content="@RobotsContent" />
+    <link rel="canonical" href="@CanonicalUrl" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="@OgType" />
+    <meta property="og:url" content="@CanonicalUrl" />
+    <meta property="og:title" content="@Title" />
+    <meta property="og:description" content="@Description" />
+    <meta property="og:image" content="@ImageUrl" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="Ítala Veloso Coaching" />
+    <meta property="og:locale" content="en_GB" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="@CanonicalUrl" />
+    <meta property="twitter:title" content="@Title" />
+    <meta property="twitter:description" content="@Description" />
+    <meta property="twitter:image" content="@ImageUrl" />
+    <meta property="twitter:site" content="@@itala_veloso" />
+    <meta property="twitter:creator" content="@@itala_veloso" />
+
+    <!-- Additional SEO Meta Tags -->
+    <meta name="theme-color" content="#ff6b35" />
+    <meta name="msapplication-TileColor" content="#ff6b35" />
+    <meta name="format-detection" content="telephone=yes" />
+    <meta name="geo.region" content="GB" />
+    <meta name="geo.placename" content="Coventry, United Kingdom" />
+
+    @if (!string.IsNullOrEmpty(JsonLdStructuredData))
+    {
+        <script type="application/ld+json">@((MarkupString)JsonLdStructuredData)</script>
+    }
+</HeadContent>
+
+@code {
+    [Parameter] public string Title { get; set; } = "Ítala Veloso - Life & Career Coach | Transform Your Life";
+    [Parameter] public string Description { get; set; } = "Transform your life with expert life & career coaching from Ítala Veloso. Overcome trauma, break limiting beliefs, and achieve personal growth. Book your free discovery call today.";
+    [Parameter] public string Keywords { get; set; } = "life coach, career coach, personal development, trauma healing, life transformation, coaching services, Ítala Veloso, UK coaching, self-discovery, emotional healing, breakthrough coaching, mindset coach";
+    [Parameter] public string ImageUrl { get; set; } = "https://italaveloso.com/Images/itala-veloso-coach-og.jpg";
+    [Parameter] public string CanonicalUrl { get; set; } = "https://italaveloso.com/";
+    [Parameter] public string OgType { get; set; } = "website";
+    [Parameter] public string RobotsContent { get; set; } = "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1";
+    [Parameter] public string JsonLdStructuredData { get; set; } = "";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("setTitle", Title);
+        }
+    }
+}

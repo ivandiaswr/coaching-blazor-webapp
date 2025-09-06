@@ -2,6 +2,12 @@
 
 @rendermode InteractiveServer
 
+<SeoComponent Title="@pageTitle" 
+              Description="Expert food regulatory affairs consulting from Ítala Veloso. Get comprehensive formulation compliance, labelling services, HFSS compliance, import/export guidance for UK and EU markets."
+              Keywords="food regulatory consulting, food compliance, labelling services, HFSS compliance, import export compliance, food law consulting, regulatory affairs consultant, UK EU food regulations"
+              CanonicalUrl="https://italaveloso.com/services/regulatory/consulting"
+              JsonLdStructuredData="@GetServiceStructuredData()" />
+
 <PageTitle>@pageTitle</PageTitle>
 
 <div class="life-coaching-container">
@@ -126,6 +132,39 @@ AltText = "Translating labels from English to Portuguese"
 
         GC.SuppressFinalize(this);
         return ValueTask.CompletedTask;
+    }
+
+    private string GetServiceStructuredData()
+    {
+        return @"{
+            ""@context"": ""https://schema.org"",
+            ""@type"": ""Service"",
+            ""name"": ""Food Regulatory Affairs Consulting"",
+            ""description"": ""Comprehensive food regulatory affairs consulting services including formulation compliance, labelling services, HFSS compliance, and import/export guidance for UK and EU markets."",
+            ""provider"": {
+                ""@type"": ""Person"",
+                ""name"": ""Ítala Veloso"",
+                ""jobTitle"": ""Food Regulatory Affairs Consultant""
+            },
+            ""serviceType"": ""Regulatory Consulting"",
+            ""url"": ""https://italaveloso.com/services/regulatory/consulting"",
+            ""offers"": {
+                ""@type"": ""Offer"",
+                ""availability"": ""https://schema.org/InStock"",
+                ""price"": ""Varies"",
+                ""priceCurrency"": ""GBP""
+            },
+            ""areaServed"": [
+                {
+                    ""@type"": ""Country"",
+                    ""name"": ""United Kingdom""
+                },
+                {
+                    ""@type"": ""Place"",
+                    ""name"": ""European Union""
+                }
+            ]
+        }";
     }
 }
 
