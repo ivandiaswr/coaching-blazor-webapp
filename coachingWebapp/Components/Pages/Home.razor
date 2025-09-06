@@ -665,9 +665,15 @@
 
         for (var date = startDate; date <= endDate; date = date.AddDays(1))
         {
+            // Convert to admin local time to determine working hours
+            var adminLocalDate = TimeZoneInfo.ConvertTimeFromUtc(date, adminTimeZone);
+            
             for (var time = workStartTime; time < workEndTime; time = time.Add(slotDuration))
             {
-                var slotStart = date.Date.Add(time);
+                // Create slot time in admin's timezone (London)
+                var slotStartLocal = adminLocalDate.Date.Add(time);
+                // Convert to UTC for storage and comparison
+                var slotStart = TimeZoneInfo.ConvertTimeToUtc(slotStartLocal, adminTimeZone);
                 var slotEnd = slotStart.Add(slotDuration);
 
                 if (slotStart <= DateTime.UtcNow.AddDays(2))
@@ -691,7 +697,7 @@
                         return false;
                     }
 
-                    var slotStartLocal = TimeZoneInfo.ConvertTimeFromUtc(slotStart, adminTimeZone);
+                    // Use the local time for unavailability comparison
                     var slotStartDate = slotStartLocal.Date;
                     var slotStartTime = slotStartLocal.TimeOfDay;
 

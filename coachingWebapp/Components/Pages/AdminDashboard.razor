@@ -604,11 +604,18 @@
             emailSubscriptions = EmailSubscriptionService.GetAllEmailSubscriptions() ?? new();
             _adminUnavailableTimes = (await UnavailableTimeService.GetAllUnavailableTimesAsync()).ToList();
             
-            nextSessions = sessions.Where(s => s.PreferredDateTime >= DateTime.UtcNow).Take(50).ToList();
+            // Show sessions from 2 weeks ago and all future sessions
+            var twoWeeksAgo = DateTime.UtcNow.AddDays(-14);
+            nextSessions = sessions.Where(s => 
+                (s.VideoSession != null && s.VideoSession.ScheduledAt >= twoWeeksAgo) ||
+                (s.VideoSession == null && s.PreferredDateTime >= twoWeeksAgo)
+            ).OrderBy(s => s.VideoSession?.ScheduledAt ?? s.PreferredDateTime).ToList();
             
             calendarItems = nextSessions.Select(c => {
-                var startLocal = TimeZoneInfo.ConvertTimeFromUtc(c.PreferredDateTime, adminTimeZoneInfo);
-                var endLocal = TimeZoneInfo.ConvertTimeFromUtc(c.PreferredDateTime.AddMinutes(45), adminTimeZoneInfo);
+                // Use VideoSession.ScheduledAt if available, otherwise use PreferredDateTime
+                var sessionDateTime = c.VideoSession?.ScheduledAt ?? c.PreferredDateTime;
+                var startLocal = TimeZoneInfo.ConvertTimeFromUtc(sessionDateTime, adminTimeZoneInfo);
+                var endLocal = TimeZoneInfo.ConvertTimeFromUtc(sessionDateTime.AddMinutes(45), adminTimeZoneInfo);
                 return new CalendarItem
                 {
                     Start = startLocal,
@@ -650,8 +657,10 @@
             var itemStartUtc = TimeZoneInfo.ConvertTimeToUtc(item.Start, adminTimeZoneInfo);
             
             var session = sessions.FirstOrDefault(s => 
-                s.PreferredDateTime == itemStartUtc && 
-                item.Text.Contains(s.FullName));
+                {
+                    var sessionDateTime = s.VideoSession?.ScheduledAt ?? s.PreferredDateTime;
+                    return sessionDateTime == itemStartUtc && item.Text.Contains(s.FullName);
+                });
 
             if (session == null)
             {
