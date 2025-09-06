@@ -4,7 +4,7 @@
   padding: 2rem;
   border-radius: 1rem;
   background-color: #fdfdfd;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   text-align: center;
 }
 
@@ -106,10 +106,14 @@
 
 .responsive-calendar,
 .mud-calendar {
-  min-height: 450px !important;
-  max-height: 75vh;
+  min-height: 700px !important;
+  max-height: 75vh !important;
   border-radius: 8px;
   overflow-x: auto;
+}
+
+.mud-data-grid .mud-table-cell .column-header {
+  display: block !important;
 }
 
 /* @media screen and (max-width: 1920px) {
@@ -121,6 +125,7 @@
 } */
 
 @media screen and (max-width: 1366px) {
+
   .responsive-calendar,
   .mud-calendar {
     min-height: 380px !important;
@@ -129,6 +134,7 @@
 }
 
 @media screen and (max-width: 1280px) {
+
   .responsive-calendar,
   .mud-calendar {
     min-height: 340px !important;
@@ -137,6 +143,7 @@
 }
 
 @media screen and (max-width: 1024px) {
+
   .responsive-calendar,
   .mud-calendar {
     min-height: 300px !important;
@@ -145,6 +152,7 @@
 }
 
 @media screen and (max-width: 600px) {
+
   .responsive-calendar,
   .mud-calendar {
     min-height: 250px !important;
@@ -316,64 +324,64 @@
 
 @media (max-width: 960px) {
   .upcoming-calendar-wrapper {
-      max-width: 100%;
-      padding: 0.5rem;
+    max-width: 100%;
+    padding: 0.5rem;
   }
 
   .mud-calendar .mud-day {
-      min-width: 80px;
+    min-width: 80px;
   }
 
   .mud-calendar .mud-day-header {
-      font-size: 0.75rem;
+    font-size: 0.75rem;
   }
 
   .mud-calendar .mud-event {
-      font-size: 0.7rem;
-      padding: 1px 2px;
+    font-size: 0.7rem;
+    padding: 1px 2px;
   }
 
   .chat-wrapper {
-      padding: 1rem;
+    padding: 1rem;
   }
 
   .ai-chat-messages .mud-card {
-      max-width: 90%;
+    max-width: 90%;
   }
 
   .ai-chat-messages .user-message {
-      margin-left: 10%;
+    margin-left: 10%;
   }
 
   .ai-chat-messages .bot-message {
-      margin-right: 10%;
+    margin-right: 10%;
   }
 
   .chat-input {
-      min-width: 100%;
+    min-width: 100%;
   }
 }
 
 @media (max-width: 600px) {
   .dashboard-welcome {
-      padding: 1rem;
+    padding: 1rem;
   }
 
   .booking-options-grid,
   .user-dashboard-request {
-      padding: 1rem;
+    padding: 1rem;
   }
 
   .mud-calendar .mud-day {
-      min-width: 60px;
+    min-width: 60px;
   }
 
   .mud-calendar .mud-day-header {
-      font-size: 0.65rem;
+    font-size: 0.65rem;
   }
 
   .mud-calendar .mud-event {
-      font-size: 0.6rem;
+    font-size: 0.6rem;
   }
 }
 
@@ -382,6 +390,7 @@
 .contact-support-btn {
   font-size: 0.8rem !important;
 }
+
 /* Payment Cancelled */
 #payment-cancelled {
   display: flex;
