@@ -1,16 +1,27 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+
+@implements IDisposable
 
 <div class="container-header">
     <div class="header-content">
         <div class="social-icons">
-            <a href="https://www.facebook.com/italaveloso.coaching/" target="_blank" aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
-            <a href="https://x.com/itala_veloso" target="_blank" aria-label="X"><i class="fa-brands fa-x-twitter"></i></a>
-            <a href="https://www.instagram.com/italaveloso.coaching/" target="_blank" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
-            <a href="https://www.linkedin.com/in/italaveloso/" target="_blank" aria-label="LinkedIn"><i class="fa-brands fa-linkedin"></i></a>
-            <a href="https://www.youtube.com/@@italaveloso.coaching" target="_blank" aria-label="Discord"><i class="fa-brands fa-youtube"></i></a>
-            <a href="https://www.meetup.com/members/222668406/" target="_blank" aria-label="Meetup"><i class="fa-brands fa-meetup"></i></a>
-            <a href="https://www.tiktok.com/@@italaveloso.coaching" target="_blank" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
+            <a href="https://www.facebook.com/italaveloso.coaching/" target="_blank" aria-label="Facebook"><i
+                    class="fa-brands fa-facebook"></i></a>
+            <a href="https://x.com/itala_veloso" target="_blank" aria-label="X"><i
+                    class="fa-brands fa-x-twitter"></i></a>
+            <a href="https://www.instagram.com/italaveloso.coaching/" target="_blank" aria-label="Instagram"><i
+                    class="fa-brands fa-instagram"></i></a>
+            <a href="https://www.linkedin.com/in/italaveloso/" target="_blank" aria-label="LinkedIn"><i
+                    class="fa-brands fa-linkedin"></i></a>
+            <a href="https://www.youtube.com/@@italaveloso.coaching" target="_blank" aria-label="YouTube"><i
+                    class="fa-brands fa-youtube"></i></a>
+            <a href="https://www.meetup.com/members/222668406/" target="_blank" aria-label="Meetup"><i
+                    class="fa-brands fa-meetup"></i></a>
+            <a href="https://www.tiktok.com/@@italaveloso.coaching" target="_blank" aria-label="TikTok"><i
+                    class="fa-brands fa-tiktok"></i></a>
         </div>
         <div class="center-content">
             <NavLink class="name-logo" href="/" Match="NavLinkMatch.All">
@@ -24,47 +35,49 @@
         <nav>
             <ul class="nav-ul">
                 <li class="dropdown">
-                    <a class="nav-li">
+                    <a class="nav-li" tabindex="0" role="button" aria-haspopup="true" aria-expanded="false">
                         About <i class="fa-solid fa-chevron-down arrow"></i>
                     </a>
                     <ul class="dropdown-content">
                         <li><a href="/about/meet-itala">Meet Ítala</a></li>
-                        <li><a href="about/process">The Process</a></li>
-                        <li><a href="about/faqs">FAQ</a></li>
+                        <li><a href="/about/process">The Process</a></li>
+                        <li><a href="/about/faqs">FAQ</a></li>
                     </ul>
                 </li>
                 <li class="dropdown">
-                    <a class="nav-li">
+                    <a class="nav-li" tabindex="0" role="button" aria-haspopup="true" aria-expanded="false">
                         Services <i class="fa-solid fa-chevron-down arrow"></i>
                     </a>
                     <ul class="dropdown-content">
-                        <li class="dropdown-section-title">Coaching Services</li>
-                        <li><a href="services/coaching/life-coaching">Life Coaching</a></li>
-                        <li><a href="services/coaching/career-coaching">Career Coaching</a></li>
-                        <li><a href="services/coaching/case-studies">Success Case Studies</a></li>
-                        <li><hr></li>
-                        <li class="dropdown-section-title">Food Regulatory Services</li>
-                        <li><a href="services/regulatory/consulting">Food Regulatory Consulting</a></li>
-                        <li><a href="services/regulatory/training">Food Regulatory Training</a></li>
+                        <li class="dropdown-section-title">Coaching</li>
+                        <li><a href="/services/coaching/life-coaching">Life Coaching</a></li>
+                        <li><a href="/services/coaching/career-coaching">Career Coaching</a></li>
+                        <li><a href="/services/coaching/case-studies">Success Case Studies</a></li>
+                        <li>
+                            <hr>
+                        </li>
+                        <li class="dropdown-section-title">Food Regulatory</li>
+                        <li><a href="/services/regulatory/consulting">Food Regulatory Consulting</a></li>
+                        <li><a href="/services/regulatory/training">Food Regulatory Training</a></li>
                     </ul>
                 </li>
                 <li class="dropdown">
-                    <a class="nav-li">
+                    <a class="nav-li" tabindex="0" role="button" aria-haspopup="true" aria-expanded="false">
                         Resources <i class="fa-solid fa-chevron-down arrow"></i>
                     </a>
                     <ul class="dropdown-content">
                         <li><a href="/resources/free">Free Guides</a></li>
+                        <li>
+                            <NavLink class="nav-li" href="/resources/coming-soon">
+                                Books
+                            </NavLink>
+                        </li>
+                        <li>
+                            <NavLink class="nav-li" href="/resources/coming-soon">
+                                Podcast
+                            </NavLink>
+                        </li>
                     </ul>
-                </li>
-                <li>
-                    <NavLink class="nav-li" href="/resources/coming-soon">
-                        Books
-                    </NavLink>
-                </li>
-                <li>
-                    <NavLink class="nav-li" href="/resources/coming-soon">
-                        Podcast
-                    </NavLink>
                 </li>
                 <li>
                     <NavLink class="nav-li" href="#contact">
@@ -74,49 +87,45 @@
                 <AuthorizeView>
                     <NotAuthorized>
                         <li class="auth-item">
-                            <NavLink class="nav-li signup-btn" href="/register">
-                            Register
-                            </NavLink>
-                        </li>
-                        <li class="auth-item">
-                            <NavLink class="nav-li login-btn" href="/login">
-                            <i class="fa-solid fa-user"></i> Login
-                            </NavLink>
+                            <div class="auth-button-group">
+                                <NavLink class="nav-li signup-btn" href="/register">
+                                    <i class="fa-solid fa-user-plus"></i> Register
+                                </NavLink>
+                                <NavLink class="nav-li login-btn" href="/login">
+                                    <i class="fa-solid fa-sign-in-alt"></i> Login
+                                </NavLink>
+                            </div>
                         </li>
                     </NotAuthorized>
                     <Authorized>
-                        @if (isHomePage)
-                        {
-                            @if (isAdmin)
-                            {
-                                <li class="auth-item">
-                                    <NavLink class="nav-li dashboard-btn" href="/AdminDashboard">
-                                        <i class="fa-solid fa-gauge"></i> Admin Panel
-                                    </NavLink>
-                                </li>
-                            }
-                            else
-                            {
-                                <li class="auth-item">
-                                    <NavLink class="nav-li dashboard-btn" href="/UserDashboard">
-                                        <i class="fa-solid fa-tachometer-alt"></i> Dashboard
-                                    </NavLink>
-                                </li>
-                            }
-                        }
-                        else if (isDashboardPage)
-                        {
-                            <li class="auth-item">
-                                <NavLink class="nav-li account-btn" href="/account">
-                                    <i class="fa-solid fa-user-circle"></i> Account
-                                </NavLink>
-                            </li>
-                        }
-
                         <li class="auth-item">
-                            <NavLink class="nav-li logout-btn" href="/logout">
-                                <i class="fa-solid fa-sign-out-alt"></i> Logout
-                            </NavLink>
+                            <div class="user-button-group">
+                                @if (isHomePage)
+                                {
+                                    @if (isAdmin)
+                                    {
+                                        <NavLink class="nav-li dashboard-btn" href="/AdminDashboard">
+                                            <i class="fa-solid fa-gauge"></i> Dashboard
+                                        </NavLink>
+                                    }
+                                    else
+                                    {
+                                        <NavLink class="nav-li dashboard-btn" href="/UserDashboard">
+                                            <i class="fa-solid fa-tachometer-alt"></i> Dashboard
+                                        </NavLink>
+                                    }
+                                }
+                                else if (isDashboardPage)
+                                {
+                                    <NavLink class="nav-li account-btn" href="/account">
+                                        <i class="fa-solid fa-user-circle"></i> Account
+                                    </NavLink>
+                                }
+
+                                <NavLink class="nav-li logout-btn" href="/logout">
+                                    <i class="fa-solid fa-sign-out-alt"></i> Logout
+                                </NavLink>
+                            </div>
                         </li>
                     </Authorized>
                 </AuthorizeView>
@@ -132,17 +141,35 @@
 
     protected override async Task OnInitializedAsync()
     {
+        NavigationManager.LocationChanged += OnLocationChanged;
+        await UpdateUserStateAsync();
+    }
+
+    private void OnLocationChanged(object sender, LocationChangedEventArgs e)
+    {
+        UpdatePageState(e.Location);
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task UpdateUserStateAsync()
+    {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
 
-        if (user.Identity is not null && user.Identity.IsAuthenticated)
-        {
-           isAdmin = user.IsInRole("Admin");
-        }
+        isAdmin = user.Identity?.IsAuthenticated == true && user.IsInRole("Admin");
 
-        var uri = NavigationManager.Uri.ToLower();
-        isHomePage = !uri.Contains("dashboard");
-        isDashboardPage = uri.Contains("dashboard");
+        UpdatePageState(NavigationManager.Uri);
+    }
+
+    private void UpdatePageState(string uri)
+    {
+        var lowerUri = uri.ToLower();
+        isHomePage = !lowerUri.Contains("dashboard");
+        isDashboardPage = lowerUri.Contains("dashboard");
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
     }
 }
-

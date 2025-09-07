@@ -24,7 +24,7 @@
 
         <div class="primary-services">
             <div class="services-grid featured">
-                <div class="service-card featured animate-on-scroll">
+                <div class="service-card featured animate-on-scroll delay-1 floating-element">
                         <div class="card-header">
                             <div class="service-icon">
                                 <i class="fas fa-rocket"></i>
@@ -43,7 +43,7 @@
                             <div class="button-service">
                                 <a href="/services/coaching/life-coaching" class="card-link">
                                     <span class="btn-primary">
-                                        Start Your Life
+                                        <span>Start Your Life</span>
                                         <i class="fas fa-arrow-right"></i>
                                     </span>
                                 </a>
@@ -52,7 +52,7 @@
                      
                 </div>
 
-                <div class="service-card featured animate-on-scroll">
+                <div class="service-card featured animate-on-scroll delay-2">
                         <div class="card-header">
                             <div class="service-icon">
                                 <i class="fas fa-chart-line"></i>
@@ -71,7 +71,7 @@
                             <div class="button-service">
                                 <a href="/services/coaching/career-coaching" class="card-link">
                                     <span class="btn-primary">
-                                        Start Your Career
+                                        <span>Start Your Career</span>
                                         <i class="fas fa-arrow-right"></i>
                                     </span>
                                 </a>
@@ -149,12 +149,18 @@
             {
                 <div class="testimonial-card">
                     <div class="video-wrapper">
-                        <div class="video-container" @onclick="() => ToggleVideo(testimonial.Id)">
-                            <video id="video-@testimonial.Id" playsinline controls=true volume="0.5" preload="metadata"
-                                  @onended="() => OnVideoEnded(testimonial.Id)">           
+                        <div class="video-container">
+                            <video id="video-@testimonial.Id" 
+                                   playsinline 
+                                   controls="@testimonial.IsPlaying" 
+                                   volume="0.5" 
+                                   preload="metadata"
+                                   @onended="() => OnVideoEnded(testimonial.Id)">           
                                 <source src="@testimonial.Path" type="video/mp4">
+                                Your browser does not support the video tag.
                             </video>
-                            <div class="play-overlay @(testimonial.IsPlaying ? "hidden" : "")">
+                            <div class="play-overlay @(testimonial.IsPlaying ? "hidden" : "")" 
+                                 @onclick="() => ToggleVideo(testimonial.Id)">
                                 <div class="play-button">
                                     <i class="@(testimonial.IsPlaying ? "fas fa-pause" : "fas fa-play")"></i>
                                 </div>
@@ -178,8 +184,8 @@
         </div>
     </div>
     
-    <div class="cta-section">
-            <a href="#contact" class="services-cta-button">
+    <div class="cta-section animate-on-scroll delay-3">
+            <a href="#contact" class="services-cta-button pulse-subtle">
                 <span class="cta-icon"><i class="fas fa-calendar-check"></i></span>
                 <span class="cta-text">
                     <span class="primary-text">Book Your Free Discovery Call</span>
@@ -189,6 +195,8 @@
             </a>
         </div>
 </section>
+
+<div class="section-divider"></div>
 
 <section id="google-reviews" class="google-reviews-section">
     <div class="container">
@@ -470,7 +478,7 @@
         {
             Id = 2,
             Path = "https://italaveloso.com/Testimonials/testimonial_Fran.mp4",
-            Results = "When I started my coaching journey with Itala, I thought I had things pretty well sorted. What extra help I could get was going to be great. Little did I know I was going to get a lot of help. Ideas that have been floating around in my entrepreneurial brain, some for more than a decade, are now on paper in a roadmap. They are tangible, and it’s fantastic I can now implement them. Itala really is a bright spark of joy. Sometimes, if I didn't feel that great going into a session, I felt like a million bucks afterwards because her personality is so bubbly and bright. I just love working with her, and I can't imagine a better life coach. If you're thinking about coaching, give Itala a chance because you really won't regret it. There's no way I could have thought of these things on my own, but with the right guidance, it's come together wonderfully. Itala, thank you from the bottom of my heart. You're amazing, and I can't wait to continue the journey with you.",
+            Results = "When I started my coaching journey with Itala, I thought I had things pretty well sorted. Itala really is a bright spark of joy, with the right guidance, it's come together wonderfully. Itala, thank you from the bottom of my heart. You're amazing, and I can't wait to continue the journey with you.",
             Author = "Fran",
             Role = "- Civil Servant"
         },
@@ -538,6 +546,9 @@
                 await JSRuntime.InvokeVoidAsync("initializeReviewsSlider");
             }
             
+            // Initialize scroll animations
+            await JSRuntime.InvokeVoidAsync("initScrollAnimations");
+            
             StateHasChanged();
         }
     }
@@ -545,7 +556,10 @@
     #region ContactMessage
     private async Task CreateSessionAsync()
     {
-        await sessionForm?.Validate();
+        if (sessionForm != null)
+        {
+            await sessionForm.Validate();
+        }
         if (!sessionForm?.IsValid ?? true)
         {
             return;
@@ -709,16 +723,17 @@
 
                     if (u.IsRecurring)
                     {
-                        return slotStartLocal.DayOfWeek == u.DayOfWeek.Value &&
-                            slotStartTime >= u.StartTime.Value &&
-                            slotStartTime < u.EndTime.Value;
+                        return u.DayOfWeek.HasValue && slotStartLocal.DayOfWeek == u.DayOfWeek.Value &&
+                            u.StartTime.HasValue && slotStartTime >= u.StartTime.Value &&
+                            u.EndTime.HasValue && slotStartTime < u.EndTime.Value;
                     }
                     else
                     {
+                        if (!u.Date.HasValue) return false;
                         var unavailableDate = u.Date.Value.Date;
                         return slotStartDate == unavailableDate &&
-                            slotStartTime >= u.StartTime.Value &&
-                            slotStartTime < u.EndTime.Value;
+                            u.StartTime.HasValue && slotStartTime >= u.StartTime.Value &&
+                            u.EndTime.HasValue && slotStartTime < u.EndTime.Value;
                     }
                 });
 

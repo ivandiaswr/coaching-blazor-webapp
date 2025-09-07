@@ -291,3 +291,38 @@ window.initializeReviewsSlider = function () {
     }
 };
 
+// Scroll animation observer
+window.initScrollAnimations = function () {
+    const animateElements = document.querySelectorAll('.animate-on-scroll');
+
+    if (animateElements.length === 0) return;
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('animate-visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    });
+
+    animateElements.forEach(element => {
+        observer.observe(element);
+    });
+};
+
+// Initialize scroll animations when the page loads
+document.addEventListener('DOMContentLoaded', function () {
+    window.initScrollAnimations();
+});
+
+// Also initialize after Blazor page loads
+window.addEventListener('load', function () {
+    setTimeout(() => {
+        window.initScrollAnimations();
+    }, 100);
+});
+

@@ -638,7 +638,7 @@ table .mud-table-head .mud-icon-button,
 
 /* Pricing header gradient */
 .pricing-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, var(--accent-orange) 0%, var(--accent-orange-hover) 100%);
     border-radius: 12px 12px 0 0;
     color: white;
 }
@@ -756,8 +756,8 @@ table .mud-table-head .mud-icon-button,
 }
 
 .mud-tabs .mud-tab.mud-tab-active {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    color: var(--accent-orange);
+    font-weight: 600;
 }
 
 /* Responsive improvements */

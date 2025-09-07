@@ -1,4 +1,5 @@
-public class Testimonial {
+public class Testimonial
+{
     public int Id { get; set; }
     public string? Path { get; set; }
     public string? Challenge { get; set; }
@@ -8,4 +9,5 @@ public class Testimonial {
     public string? Role { get; set; }
     public string? Duration { get; set; }
     public bool IsPlaying { get; set; }
+    public bool IsLoading { get; set; }
 }

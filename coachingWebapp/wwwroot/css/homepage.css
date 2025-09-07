@@ -17,6 +17,147 @@
   /*outline: 1px solid red;*/
 }
 
+/* Mobile-first improvements */
+@media (max-width: 768px) {
+
+  .btn-primary,
+  .btn-secondary {
+    min-height: 44px;
+    min-width: 44px;
+    -webkit-tap-highlight-color: rgba(255, 107, 53, 0.2);
+    padding: 0.8rem 1.2rem;
+    font-size: 0.9rem;
+    border-radius: 25px !important;
+  }
+
+  .service-benefits li {
+    padding: 0.25rem 0;
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .testimonial-text,
+  .review-text {
+    line-height: 1.6;
+    font-size: 0.8rem;
+  }
+
+  .service-card,
+  .testimonial-card,
+  .google-review-card {
+    transition: transform 0.2s ease;
+    margin: 0 0.5rem;
+    border-radius: 16px;
+    transform: none !important;
+    /* Disable complex animations on mobile */
+  }
+
+  .service-card:hover,
+  .testimonial-card:hover {
+    transform: translateY(-4px) !important;
+    /* Simpler hover effect */
+  }
+
+  .service-card:active,
+  .testimonial-card:active {
+    transform: scale(0.98);
+  }
+
+  .play-overlay {
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7));
+  }
+
+  .mud-input-root {
+    margin-bottom: 1rem;
+  }
+
+  /* CTA buttons */
+  .services-cta-button,
+  .testimonials-button {
+    min-height: 48px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(255, 107, 53, 0.2);
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+    border-radius: 8px;
+  }
+
+  .services-grid,
+  .testimonials-grid {
+    width: 100%;
+    overflow-x: hidden;
+    gap: 1.5rem;
+  }
+
+  * {
+    -webkit-touch-callout: default;
+    -webkit-user-select: text;
+    -khtml-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+    -webkit-tap-highlight-color: rgba(255, 107, 53, 0.3);
+  }
+
+  .btn-primary span,
+  .btn-secondary span {
+    font-weight: 600;
+  }
+
+  .btn-primary:focus,
+  .btn-secondary:focus,
+  .services-cta-button:focus,
+  .testimonials-button:focus {
+    outline: 3px solid var(--accent-orange);
+    outline-offset: 2px;
+  }
+
+  /* Reduce complex animations on mobile */
+  .floating-element {
+    animation: none;
+  }
+
+  .pulse-subtle {
+    animation-duration: 6s;
+    /* Slower pulse on mobile */
+  }
+
+  .btn-primary span,
+  .btn-secondary span {
+    white-space: nowrap;
+  }
+
+  .btn-primary:focus,
+  .btn-secondary:focus,
+  .services-cta-button:focus,
+  .testimonials-button:focus {
+    outline: 2px solid var(--accent-orange);
+    outline-offset: 2px;
+  }
+}
+
+@media (max-width: 320px) {
+  .services-header h1 {
+    font-size: 1.4rem;
+  }
+
+  .service-card h2 {
+    font-size: 1.1rem;
+  }
+
+  .testimonial-text {
+    font-size: 0.8rem;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    font-size: 0.85rem;
+    padding: 0.75rem 1rem;
+  }
+}
+
 html {
   font-size: 15px;
   font-family: 'Montserrat', Helvetica, Arial, sans-serif;
@@ -173,7 +314,6 @@ h1:focus {
 }
 
 /* Header */
-
 .container-header {
   position: fixed;
   top: 0;
@@ -247,40 +387,105 @@ h1:focus {
   color: #636363;
 }
 
+
+
+/* Auth button group - unified design */
+.auth-button-group {
+  display: flex;
+  border: 2px solid var(--accent-orange);
+  border-radius: 20px;
+  overflow: hidden;
+  background: white;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.1);
+}
+
+.auth-button-group:hover {
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.15);
+  transform: translateY(-1px);
+}
+
+.signup-btn {
+  background: transparent;
+  color: var(--accent-orange);
+  border: none;
+  border-radius: 0;
+  border-right: 1px solid var(--accent-orange);
+  padding: 8px 16px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.95rem;
+  flex: 1;
+  justify-content: center;
+}
+
+.signup-btn:hover {
+  background: rgba(255, 107, 53, 0.1);
+  color: var(--accent-orange-hover);
+}
+
+.signup-btn i {
+  transition: transform 0.3s ease;
+}
+
+.signup-btn:hover i {
+  transform: scale(1.05);
+}
+
 .nav-ul .login-btn {
   background: var(--accent-orange);
   color: white;
+  border: none;
+  border-radius: 0;
   padding: 8px 16px;
-  border-radius: 5px;
   text-decoration: none;
-  transition: background 0.3s ease;
+  font-weight: 500;
+  transition: all 0.3s ease;
   display: inline-flex;
   align-items: center;
-}
-
-.nav-ul .login-btn i {
-  margin-right: 6px;
+  gap: 6px;
+  font-size: 0.95rem;
+  flex: 1;
+  justify-content: center;
 }
 
 .nav-ul .login-btn:hover {
   background: var(--accent-orange-hover);
+  color: white;
 }
 
-.signup-btn {
-  color: #555;
-  text-decoration: none;
-  padding: 8px 16px;
+.nav-ul .login-btn i {
+  transition: transform 0.3s ease;
 }
 
-.signup-btn:hover {
-  color: var(--accent-orange-hover);
+.nav-ul .login-btn:hover i {
+  transform: scale(1.1);
 }
 
-.nav-ul .auth-item:first-of-type {
-  border-left: 1px solid #161212;
-  padding-left: 16px;
-  margin-left: 8px;
+/* Focus states for accessibility */
+.signup-btn:focus,
+.nav-ul .login-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.2);
 }
+
+.signup-btn:active,
+.nav-ul .login-btn:active {
+  transform: translateY(0);
+}
+
+/* Removed pulse animation for cleaner look */
+
+.nav-ul .auth-item {
+  display: flex;
+  align-items: center;
+}
+
+/* No more spacing needed since buttons are grouped together */
 
 /* Dropdown */
 .dropdown {
@@ -354,8 +559,7 @@ h1:focus {
 }
 
 .nav-ul .dashboard-btn,
-.nav-ul .account-btn,
-.nav-ul .login-btn {
+.nav-ul .account-btn {
   display: inline-flex;
   align-items: center;
   white-space: nowrap;
@@ -367,6 +571,98 @@ h1:focus {
 
 .nav-ul .dashboard-btn {
   color: var(--accent-orange)
+}
+
+/* User button group for authenticated users */
+.user-button-group {
+  display: flex;
+  border: 2px solid rgba(255, 107, 53, 0.3);
+  border-radius: 20px;
+  overflow: hidden;
+  background: white;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.08);
+}
+
+.user-button-group:hover {
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.12);
+  transform: translateY(-1px);
+  border-color: rgba(255, 107, 53, 0.4);
+}
+
+.nav-ul .dashboard-btn,
+.nav-ul .account-btn {
+  background: transparent;
+  color: var(--accent-orange);
+  border: none;
+  border-radius: 0;
+  border-right: 1px solid rgba(255, 107, 53, 0.3);
+  padding: 8px 16px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.nav-ul .dashboard-btn:hover,
+.nav-ul .account-btn:hover {
+  background: rgba(255, 107, 53, 0.1);
+  color: var(--accent-orange-hover);
+}
+
+.nav-ul .logout-btn {
+  background: rgba(255, 107, 53, 0.1);
+  color: var(--accent-orange);
+  border: none;
+  border-radius: 0;
+  padding: 8px 16px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.nav-ul .logout-btn:hover {
+  background: #ff4444;
+  color: white;
+}
+
+/* Icon animations for user buttons */
+.nav-ul .dashboard-btn i,
+.nav-ul .account-btn i,
+.nav-ul .logout-btn i {
+  transition: transform 0.3s ease;
+}
+
+.nav-ul .dashboard-btn:hover i,
+.nav-ul .account-btn:hover i {
+  transform: scale(1.05);
+}
+
+.nav-ul .logout-btn:hover i {
+  transform: scale(1.05) rotate(-5deg);
+}
+
+/* Focus states for user buttons */
+.nav-ul .dashboard-btn:focus,
+.nav-ul .account-btn:focus,
+.nav-ul .logout-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.2);
+}
+
+.nav-ul .dashboard-btn:active,
+.nav-ul .account-btn:active,
+.nav-ul .logout-btn:active {
+  transform: translateY(0);
 }
 
 @media screen and (max-width: 1200px) {
@@ -425,6 +721,29 @@ h1:focus {
 
   .mobile-menu-btn {
     margin-left: auto;
+  }
+
+  .signup-btn,
+  .nav-ul .login-btn {
+    padding: 6px 12px;
+    font-size: 0.9rem;
+    gap: 4px;
+  }
+
+  .auth-button-group {
+    border-radius: 18px;
+  }
+
+  .user-button-group {
+    border-radius: 18px;
+  }
+
+  .nav-ul .dashboard-btn,
+  .nav-ul .account-btn,
+  .nav-ul .logout-btn {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    gap: 4px;
   }
 }
 
@@ -521,14 +840,46 @@ h1:focus {
   transition: all 0.4s ease;
   backdrop-filter: blur(1px);
   opacity: 0;
-  animation: fadeIn 1s ease-out 0.9s forwards;
+  animation: fadeIn 1s ease-out 0.9s forwards, ctaPulse 3s ease-in-out 2s infinite;
+  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.cta-button:hover::before {
+  left: 100%;
 }
 
 .cta-button:hover {
   background-color: white;
   color: black;
-  transform: translateY(-3px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes ctaPulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2);
+  }
+
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 8px 30px rgba(255, 255, 255, 0.4);
+  }
 }
 
 .bottom-right-image {
@@ -827,12 +1178,41 @@ h1:focus {
   border-radius: 1.5rem;
   overflow: hidden;
   box-shadow: 0 4px 24px rgba(26, 26, 26, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.service-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 107, 53, 0.05), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
 }
 
 .service-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 8px 32px rgba(26, 26, 26, 0.15);
+  transform: translateY(-12px) scale(1.02);
+  box-shadow: 0 12px 40px rgba(26, 26, 26, 0.2);
+  border: 1px solid rgba(255, 107, 53, 0.2);
+}
+
+.service-card:hover::before {
+  opacity: 1;
+}
+
+.service-card:hover .service-icon {
+  transform: scale(1.1) rotate(5deg);
+  color: var(--accent-orange-hover);
+}
+
+.service-card:hover .btn-primary {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255, 107, 53, 0.4);
 }
 
 .card-link {
@@ -858,6 +1238,7 @@ h1:focus {
 .service-icon {
   font-size: 2.5rem;
   color: var(--accent-orange);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .service-card h2 {
@@ -946,26 +1327,60 @@ h1:focus {
   border-radius: 3rem !important;
   font-weight: 600;
   text-decoration: none;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::before,
+.btn-secondary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn-primary:hover::before,
+.btn-secondary:hover::before {
+  left: 100%;
 }
 
 .btn-primary {
   background-color: var(--accent-orange);
   color: var(--primary-white);
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
 }
 
 .btn-primary:hover {
   background-color: var(--accent-orange-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(255, 107, 53, 0.4);
+  color: var(--primary-white);
+}
+
+.btn-primary i {
+  transition: transform 0.3s ease;
+}
+
+.btn-primary:hover i {
+  transform: translateX(3px);
 }
 
 .btn-secondary {
   background-color: var(--soft-gray);
   color: var(--primary-black);
+  border: 2px solid transparent;
 }
 
 .btn-secondary:hover {
   background-color: var(--text-gray);
   color: var(--primary-white);
+  transform: translateY(-2px);
+  border-color: var(--accent-orange);
 }
 
 .button-service {
@@ -1005,14 +1420,39 @@ h1:focus {
   border-radius: 1rem;
   box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
   text-decoration: none;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.services-cta-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.services-cta-button:hover::before {
+  left: 100%;
 }
 
 .services-cta-button:hover {
   background-color: var(--accent-orange-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 30px rgba(255, 107, 53, 0.5);
   color: #ffffff;
+}
+
+.services-cta-button i {
+  transition: transform 0.3s ease;
+}
+
+.services-cta-button:hover i {
+  transform: translateX(5px) scale(1.1);
 }
 
 .cta-text {
@@ -1032,40 +1472,206 @@ h1:focus {
 
 @media (max-width: 768px) {
   .services-section {
-    padding: 4rem 0;
+    padding: 3rem 0 2rem;
+  }
+
+  .container {
+    padding: 0 1rem;
+  }
+
+  .services-header {
+    margin-bottom: 3rem;
+    padding: 0 1rem;
   }
 
   .services-header h1 {
-    font-size: 2.5rem;
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    line-height: 1.2;
+  }
+
+  .header-description {
+    font-size: 1.1rem;
+    line-height: 1.5;
   }
 
   .services-grid.featured {
     grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .service-card {
+    margin: 0 0.5rem;
+  }
+
+  .card-content {
+    padding: 1.5rem;
+  }
+
+  .service-card h2 {
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .service-card p {
+    font-size: 0.95rem;
+    min-height: auto;
+    margin-bottom: 1rem;
+  }
+
+  .service-benefits {
+    margin-bottom: 1.5rem;
+  }
+
+  .service-benefits li {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
   }
 
   .secondary-services {
-    padding: 2rem;
+    padding: 2rem 1rem;
+    margin: 0 1rem 2rem;
+  }
+
+  .services-grid.compact {
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
 
   .cta-section {
-    padding: 2rem;
+    padding: 2rem 1rem;
+    margin: 0 1rem;
   }
 
   .cta-content h2 {
-    font-size: 1.75rem;
+    font-size: clamp(1.5rem, 4vw, 1.75rem);
+    line-height: 1.3;
+  }
+
+  .services-cta-button {
+    padding: 0.875rem 1.5rem;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+
+  .cta-text .primary-text {
+    font-size: 1rem;
+  }
+
+  .cta-text .secondary-text {
+    font-size: 0.8rem;
   }
 }
 
 @media (max-width: 480px) {
+  .services-section {
+    padding: 2rem 0 1.5rem;
+  }
+
+  .services-header {
+    margin-bottom: 2rem;
+    padding: 0 0.5rem;
+  }
+
+  .services-header h1 {
+    font-size: clamp(1.6rem, 6vw, 2rem);
+  }
+
+  .header-description {
+    font-size: 1rem;
+  }
+
+  .service-card {
+    margin: 0;
+    border-radius: 1rem;
+  }
+
   .card-header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1.5rem;
+  }
+
+  .card-content {
+    padding: 1rem 1.5rem 1.5rem;
+  }
+
+  .service-card h2 {
+    font-size: 1.3rem;
+  }
+
+  .service-benefits li {
+    font-size: 0.85rem;
+  }
+
+  .button-service {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: stretch;
+  }
+
+  .btn-primary,
+  .btn-secondary {
+    padding: 0.875rem 1.25rem;
+    font-size: 0.9rem;
+    text-align: center;
+    justify-content: center;
+  }
+
+  .secondary-services {
+    padding: 1.5rem 0.5rem;
+    margin: 0 0.5rem 1.5rem;
+  }
+
+  .secondary-header h2 {
+    font-size: 1.5rem;
+    line-height: 1.3;
+  }
+
+  .services-grid.compact {
     gap: 1rem;
+  }
+
+  .service-card.compact {
+    padding: 1.5rem;
+  }
+
+  .service-card.compact h3 {
+    font-size: 1.2rem;
+    line-height: 1.3;
+  }
+
+  .cta-section {
+    padding: 1.5rem 0.5rem;
+    margin: 0 0.5rem;
+  }
+
+  .cta-content h2 {
+    font-size: clamp(1.3rem, 5vw, 1.5rem);
+    margin-bottom: 0.75rem;
+  }
+
+  .cta-content p {
+    font-size: 0.95rem;
+  }
+
+  .services-cta-button {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
   }
 
   .cta-text {
     align-items: center;
     text-align: center;
+  }
+
+  .cta-text .primary-text {
+    font-size: 0.9rem;
+  }
+
+  .cta-text .secondary-text {
+    font-size: 0.75rem;
   }
 }
 
@@ -1117,26 +1723,50 @@ h1:focus {
 
 .testimonial-card {
   background: white;
-  backdrop-filter: blur(12px);
-  border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  transition: all 0.4s ease;
+  border-radius: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  position: relative;
+}
+
+.testimonial-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, transparent, rgba(255, 107, 53, 0.02));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
 }
 
 .testimonial-card:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.3);
-  border-color: var(--accent-orange);
+  transform: translateY(-12px) scale(1.02);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.18);
+  border-color: rgba(255, 107, 53, 0.2);
+}
+
+.testimonial-card:hover::before {
+  opacity: 1;
 }
 
 .video-wrapper {
   position: relative;
   width: 100%;
-  padding-top: 56.25%;
-  background: #000;
   height: 500px;
-  border-radius: 24px;
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border-radius: 20px;
   overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  transition: box-shadow 0.3s ease;
+}
+
+.video-wrapper:hover {
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.16);
 }
 
 .testimonials-container .video-container {
@@ -1146,7 +1776,8 @@ h1:focus {
   width: 100%;
   height: 100%;
   cursor: pointer;
-  border-radius: 24px;
+  border-radius: 20px;
+  background: #000;
 }
 
 .testimonials-container video {
@@ -1154,7 +1785,12 @@ h1:focus {
   height: 100%;
   object-fit: contain;
   filter: contrast(1.1) brightness(1.05);
-  border-radius: 24px;/
+  border-radius: 20px;
+  transition: filter 0.3s ease;
+}
+
+.testimonials-container video:hover {
+  filter: contrast(1.15) brightness(1.1);
 }
 
 .play-overlay {
@@ -1163,52 +1799,105 @@ h1:focus {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.4);
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.6));
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
+  transition: all 0.4s ease;
+  backdrop-filter: blur(2px);
+  border-radius: 20px;
 }
 
 .play-overlay.hidden {
-  display: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.95);
 }
 
 .play-overlay.playing {
-  background: rgba(0, 0, 0, 0.2);
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.4));
 }
 
 .play-button {
-  width: 70px;
-  height: 70px;
-  background: var(--accent-orange);
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, var(--accent-orange), var(--accent-orange-hover));
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 8px 32px rgba(255, 107, 53, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+.play-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent);
+  border-radius: 50%;
+  transition: opacity 0.3s ease;
+}
+
+.play-button:hover::before {
+  opacity: 0.3;
 }
 
 .play-button i {
   color: white;
-  font-size: 24px;
-  transition: transform 0.3s ease;
+  font-size: 28px;
+  margin-left: 3px;
+  /* Slightly offset play icon for better visual balance */
+  transition: all 0.3s ease;
+  z-index: 1;
 }
 
 .video-container:hover .play-button {
   transform: scale(1.1);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 12px 40px rgba(255, 107, 53, 0.5);
 }
 
-.testimonial-content {
-  padding: 30px;
-  position: relative;
+.video-container:hover .play-button i {
+  transform: scale(1.1);
 }
 
-.testimonial-quote {
-  position: relative;
-  margin-bottom: 20px;
+/* Video loading state */
+.video-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  z-index: 10;
+}
+
+.video-loading .loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 107, 53, 0.3);
+  border-top: 3px solid var(--accent-orange);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .quote-icon {
@@ -1221,15 +1910,28 @@ h1:focus {
 .testimonial-text {
   color: var(--text-gray);
   font-size: 0.85rem;
-  line-height: 1.6;
+  line-height: 1.5;
   margin: 0;
+  text-align: justify;
+  hyphens: auto;
+  overflow-wrap: break-word;
+}
+
+.testimonial-content {
+  padding: 2rem;
+  position: relative;
+}
+
+.testimonial-quote {
+  position: relative;
+  margin-bottom: 2rem;
 }
 
 .testimonial-author-info {
   display: flex;
   align-items: center;
-  margin-top: 25px;
-  padding-top: 25px;
+  margin-top: 35px;
+  padding-top: 30px;
   border-top: 1px solid rgba(17, 17, 17, 0.2);
 }
 
@@ -1268,17 +1970,44 @@ h1:focus {
   background-color: var(--accent-orange);
   border-radius: 4px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
   min-height: 44px;
   min-width: 44px;
   max-width: 90vw;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+}
+
+.testimonials-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.testimonials-button:hover::before {
+  left: 100%;
 }
 
 .testimonials-button:hover {
   background-color: var(--accent-orange-hover);
   color: var(--primary-white);
-  transform: translateY(-2px);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(255, 107, 53, 0.4);
+}
+
+.testimonials-button i {
+  transition: transform 0.3s ease;
+}
+
+.testimonials-button:hover i {
+  transform: scale(1.1) rotate(5deg);
 }
 
 .testimonials-button i {
@@ -1291,26 +2020,193 @@ h1:focus {
 
 @media (max-width: 768px) {
   #testimonials {
-    padding: 80px 0;
+    padding: 3rem 0;
+  }
+
+  .testimonials-container {
+    padding: 0 1rem;
   }
 
   .section-title {
-    font-size: 2.2rem;
+    font-size: clamp(1.8rem, 5vw, 2.2rem);
+    line-height: 1.2;
+  }
+
+  .section-subtitle {
+    font-size: clamp(0.9rem, 3vw, 1.1rem);
+    margin-bottom: 2rem;
   }
 
   .testimonials-grid {
     grid-template-columns: 1fr;
-    gap: 25px;
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+  }
+
+  .testimonial-card {
+    margin: 0 0.5rem;
+    border-radius: 16px;
+  }
+
+  .video-wrapper {
+    height: 400px;
+    border-radius: 16px;
+  }
+
+  .testimonials-container .video-container {
+    border-radius: 16px;
+  }
+
+  .testimonials-container video {
+    border-radius: 16px;
+  }
+
+  .play-overlay {
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.7));
+  }
+
+  .testimonial-content {
+    padding: 1.75rem;
+  }
+
+  .testimonial-text {
+    font-size: 0.8rem;
+    line-height: 1.4;
+  }
+
+  .testimonial-author {
+    font-size: 1rem;
+  }
+
+  .author-role {
+    font-size: 0.85rem;
+  }
+
+  .testimonials-button {
+    padding: 1rem 2rem;
+    font-size: 1rem;
+    margin: 0 1rem;
+  }
+
+  .play-button {
+    width: 70px;
+    height: 70px;
+  }
+
+  .play-button i {
+    font-size: 24px;
+  }
+
+  /* Improve mobile video interaction */
+  .testimonial-card:hover {
+    transform: translateY(-6px) scale(1.01);
+  }
+
+  .video-container:hover .play-button {
+    transform: scale(1.05);
   }
 }
 
 @media (max-width: 480px) {
-  .testimonial-content {
-    padding: 20px;
+  #testimonials {
+    padding: 2.5rem 0;
+  }
+
+  .testimonials-container {
+    padding: 0 0.5rem;
+  }
+
+  .title-section {
+    margin-bottom: 2rem;
+    padding: 0 0.5rem;
   }
 
   .section-title {
-    font-size: 2rem;
+    font-size: clamp(1.5rem, 6vw, 1.8rem);
+  }
+
+  .section-subtitle {
+    font-size: clamp(0.85rem, 4vw, 1rem);
+    margin-bottom: 1.5rem;
+  }
+
+  .testimonials-grid {
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .testimonial-card {
+    margin: 0;
+    border-radius: 12px;
+  }
+
+  .video-wrapper {
+    height: 320px;
+    border-radius: 12px;
+  }
+
+  .testimonials-container .video-container {
+    border-radius: 12px;
+  }
+
+  .testimonials-container video {
+    border-radius: 12px;
+  }
+
+  .play-overlay {
+    border-radius: 12px;
+  }
+
+  .testimonial-content {
+    padding: 1.5rem;
+  }
+
+  .testimonial-text {
+    font-size: 0.75rem;
+    line-height: 1.4;
+  }
+
+  .testimonial-author {
+    font-size: 0.95rem;
+  }
+
+  .author-role {
+    font-size: 0.8rem;
+  }
+
+  .testimonial-author-info {
+    margin-top: 1rem;
+    padding-top: 1rem;
+  }
+
+  .testimonials-button {
+    padding: 0.875rem 1.5rem;
+    font-size: 0.9rem;
+    margin: 0 0.5rem;
+  }
+
+  .play-button {
+    width: 60px;
+    height: 60px;
+  }
+
+  .play-button i {
+    font-size: 20px;
+    margin-left: 2px;
+  }
+
+  .cta-container {
+    margin-top: 2rem;
+  }
+
+  /* Optimize mobile touch interactions */
+  .testimonial-card:hover {
+    transform: translateY(-4px);
+  }
+
+  .video-container:hover .play-button {
+    transform: scale(1.02);
   }
 }
 
@@ -1535,15 +2431,72 @@ h1:focus {
 }
 
 @media (max-width: 768px) {
+  .google-reviews-section {
+    padding: 3rem 0;
+  }
+
+  .google-reviews-section .container {
+    padding: 0 1rem;
+  }
+
+  .google-reviews-section .title-section {
+    margin-bottom: 2rem;
+  }
+
   .google-reviews-content {
     grid-template-columns: 1fr;
-    gap: 30px;
+    gap: 2rem;
+    padding: 0;
   }
 
   .google-rating-summary {
-    flex-direction: column;
-    gap: 20px;
-    text-align: center;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .rating-display {
+    gap: 10px;
+  }
+
+  .rating-score {
+    font-size: 24px;
+  }
+
+  .rating-source {
+    font-size: 12px;
+  }
+
+  .google-logo img {
+    height: 30px;
+  }
+
+  .reviews-grid {
+    gap: 1rem;
+  }
+
+  .google-review-card {
+    padding: 1.5rem;
+  }
+
+  .add-review-card {
+    padding: 1.5rem;
+  }
+
+  .add-review-header h3 {
+    font-size: 1.5rem;
+  }
+
+  .reviews-slider-container {
+    margin: 0 -0.5rem;
+  }
+
+  .review-slide {
+    padding: 1rem;
+    margin: 0 0.5rem;
   }
 }
 
@@ -1744,9 +2697,26 @@ h1:focus {
 }
 
 @media (max-width: 768px) {
+  #contact {
+    padding: 3rem 0;
+  }
+
+  .contact-container {
+    max-width: none;
+  }
+
+  .contact-form-container {
+    padding: 1rem;
+  }
+
+  .contact-wrapper {
+    padding: 1.5rem;
+    border-radius: 1rem;
+  }
+
   .content-grid {
     grid-template-columns: 1fr;
-    gap: 30px;
+    gap: 2rem;
   }
 
   .content-grid::before {
@@ -1758,8 +2728,31 @@ h1:focus {
     padding: 0;
   }
 
-  .unified-container {
-    padding: 20px;
+  .video-header-container {
+    margin-bottom: 1.5rem;
+  }
+
+  .video-header {
+    border-radius: 8px;
+  }
+
+  .contact-header .header-icon {
+    font-size: 2.5rem !important;
+    margin-bottom: 10px;
+  }
+
+  .contact-subtitle {
+    font-size: 1.1rem;
+  }
+
+  .benefits-content {
+    gap: 1rem;
+  }
+
+  .book-submit-button {
+    width: 100%;
+    font-size: 1rem;
+    padding: 1rem;
   }
 }
 
@@ -2450,5 +3443,221 @@ h1:focus {
     font-size: 10px;
     -webkit-line-clamp: 3;
     line-clamp: 3;
+  }
+}
+
+/* ===== UI OPTIMIZATION ENHANCEMENTS ===== */
+
+/* Scroll-triggered animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-on-scroll {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.animate-on-scroll.animate-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.animate-on-scroll.delay-1.animate-visible {
+  transition-delay: 0.1s;
+}
+
+.animate-on-scroll.delay-2.animate-visible {
+  transition-delay: 0.2s;
+}
+
+.animate-on-scroll.delay-3.animate-visible {
+  transition-delay: 0.3s;
+}
+
+.animate-left {
+  animation: fadeInLeft 0.8s ease-out forwards;
+}
+
+.animate-right {
+  animation: fadeInRight 0.8s ease-out forwards;
+}
+
+/* Floating elements */
+@keyframes floatGentle {
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.floating-element {
+  animation: floatGentle 3s ease-in-out infinite;
+}
+
+/* Pulse animation for important elements */
+@keyframes subtlePulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+.pulse-subtle {
+  animation: subtlePulse 4s ease-in-out infinite;
+}
+
+/* Enhanced focus states for accessibility */
+.service-card:focus-within,
+.testimonial-card:focus-within {
+  outline: 2px solid var(--accent-orange);
+  outline-offset: 2px;
+}
+
+/* Loading states */
+@keyframes shimmer {
+  0% {
+    background-position: -468px 0;
+  }
+
+  100% {
+    background-position: 468px 0;
+  }
+}
+
+/* Global performance optimizations */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.service-card,
+.testimonial-card,
+.google-review-card,
+.btn-primary,
+.btn-secondary,
+.services-cta-button,
+.testimonials-button {
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Reduce animations for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+
+  .service-card,
+  .testimonial-card,
+  .google-review-card {
+    border: 2px solid;
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .services-cta-button,
+  .testimonials-button {
+    border: 2px solid;
+    font-weight: 700;
+  }
+}
+
+.loading-shimmer {
+  background: linear-gradient(90deg, #f1f1f1 25%, #e0e0e0 50%, #f1f1f1 75%);
+  background-size: 400% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Enhanced visual hierarchy */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 107, 53, 0.3), transparent);
+  margin: 4rem 0;
+}
+
+/* Sticky navigation enhancement (if needed later) */
+.header-sticky {
+  backdrop-filter: blur(10px);
+  background-color: rgba(255, 255, 255, 0.95);
+}
+
+/* Improved contrast and accessibility */
+@media (prefers-reduced-motion: reduce) {
+
+  .animate-on-scroll,
+  .floating-element,
+  .pulse-subtle,
+  .cta-button {
+    animation: none !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+
+  .service-card,
+  .testimonial-card {
+    border: 2px solid var(--primary-black);
+  }
+
+  .btn-primary,
+  .services-cta-button,
+  .testimonials-button {
+    border: 2px solid var(--primary-black);
   }
 }

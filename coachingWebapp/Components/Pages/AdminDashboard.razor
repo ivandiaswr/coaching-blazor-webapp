@@ -8,8 +8,6 @@
 @attribute [Authorize(Roles = "Admin")]
 <PageTitle>@pageTitle</PageTitle>
 
-<link href="~/css/adminDashboard.css" rel="stylesheet" />
-
 <section id="adminDashboard">
     <div class="dashboard-header">
         <div>
@@ -484,7 +482,6 @@
         </MudTabPanel>
 
         <MudTabPanel Text="Pricing Configuration">
-            <!-- Pricing Overview Header -->
             <MudPaper Class="pa-4 mb-4" Elevation="1" Style="background: linear-gradient(45deg, #f5f5f5 30%, #e3f2fd 90%);">
                 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
                     <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Size="Size.Large" Color="Color.Primary" />
