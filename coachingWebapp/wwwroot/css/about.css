@@ -1,118 +1,209 @@
 .hero-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding: 4rem 0;
-    max-width: 1400px;
-    margin: 0 auto;
-    font-size: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 4rem 0;
+  max-width: 1400px;
+  margin: 0 auto;
+  font-size: 1rem;
+  gap: 3rem;
 }
 
-.hero-left, .hero-right {
-    flex: 1;
-    padding: 1rem;
-    max-width: 900px;
+.hero-left,
+.hero-right {
+  flex: 1;
+  padding: 1rem;
 }
 
 .hero-left {
-    padding-top: 5rem;
+  padding-top: 5rem;
+  max-width: 700px;
 }
 
 .hero-left p {
   font-size: 1.15rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.intro-paragraph {
+  font-size: 1.2rem !important;
+  font-weight: 500;
+  color: var(--primary-black);
+}
+
+.transformation-message {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 1.5rem;
+  border-left: 4px solid var(--accent-orange);
+  border-radius: 8px;
+  margin: 2rem 0;
+}
+
+.credentials-summary {
+  background-color: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin: 1.5rem 0;
+}
+
+.coaching-approach {
+  font-style: italic;
+  color: var(--text-gray);
 }
 
 .hero-right {
-    max-width: 400px;
+  max-width: 400px;
 }
 
 .hero-card {
-    background-color: var(--primary-white);
-    border-radius: 15px;
-    margin-bottom: 2rem;
-    overflow: hidden;
+  background-color: var(--primary-white);
+  border-radius: 15px;
+  margin-bottom: 2rem;
+  overflow: hidden;
 }
 
 .coach-image {
-    width: 100%;
-    height: auto;
-    object-fit: cover;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
 }
 
-.coach-info h2{
-    padding-top: 2rem;
-    text-align: center;
+.coach-info h2 {
+  padding-top: 2rem;
+  text-align: center;
 }
 
 .credentials-container {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 .credentials-container h3 {
-    color: var(--primary-black);
-    font-size: 1.3rem;
-    margin-bottom: 0.5rem;
-    font-weight: bold;
+  color: var(--primary-black);
+  font-size: 1.3rem;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
 }
 
 .credentials-container ul {
-    list-style-type: none;
-    padding: 0;
-    font-size: 1rem;
-    color: var(--text-gray);
+  list-style-type: none;
+  padding: 0;
+  font-size: 1rem;
+  color: var(--text-gray);
 }
 
 .credentials-container li {
-    margin-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 .coaching-credentials ul,
 .regulatory-credentials ul {
-    list-style-type: disc;
-    padding-left: 1.5rem;
-    margin: 0.5rem 0;
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
 }
 
 .hero-button {
-    background-color: var(--accent-orange);
-    color: var(--primary-white);
-    border: none;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-weight: bold;
-    opacity: 0;
-    animation: slideInLeft 1s ease-out 0.2s forwards;
+  background-color: var(--accent-orange);
+  color: var(--primary-white);
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: bold;
+  text-decoration: none;
+  display: inline-block;
+  margin-right: 1rem;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+  opacity: 0;
+  animation: slideInLeft 1s ease-out 0.2s forwards;
 }
 
 .hero-button:hover {
-    transform: scale(1.05);
-    background-color: var(--accent-orange-hover);
-    color: #ffffff
+  transform: scale(1.05);
+  background-color: var(--accent-orange-hover);
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.hero-button.secondary {
+  background-color: transparent;
+  color: var(--accent-orange);
+  border: 2px solid var(--accent-orange);
+}
+
+.hero-button.secondary:hover {
+  background-color: var(--accent-orange);
+  color: var(--primary-white);
 }
 
 .hero-button i {
-  padding-right: 1rem;
+  padding-right: 0.5rem;
+}
+
+.hero-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 2rem;
 }
 
 .bio-container {
-  background-color: var(--primary-white);
-    padding: 10rem 0rem 2rem;
+  background-color: var(--soft-gray);
+  padding: 4rem 0;
+  margin-top: 2rem;
 }
 
 .bio-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.bio-text {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.bio-text h2 {
+  margin-bottom: 2rem;
+  font-size: 2.2rem;
+  color: var(--primary-black);
   display: flex;
-  align-items: start;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1rem;
 }
 
-.bio-text h3 {
+.logo-container {
   margin-bottom: 1rem;
-  font-size: 1.8rem;
 }
 
-.bio-text p {
+.jostic-title {
+  font-size: 1.8rem;
+  line-height: 1.3;
+  color: var(--primary-black);
+}
+
+.jostic-content {
+  text-align: left;
+}
+
+.foundation-info {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--primary-black);
+  margin-bottom: 1.5rem;
+}
+
+.mission-statement p {
   font-size: 1.15rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+  color: var(--text-gray);
 }
 
 .jostic-brand {
@@ -130,9 +221,10 @@
 }
 
 .logo-extended {
-  width: 200px;
+  width: 180px;
   height: auto;
-  object-fit: cover;
+  object-fit: contain;
+  display: block;
 }
 
 /* Gift */
@@ -210,67 +302,119 @@
 
 @media (max-width: 768px) {
   .hero-container {
-      flex-direction: column-reverse;
-      align-items: center;
-      padding: 5rem 1rem;
+    flex-direction: column-reverse;
+    align-items: center;
+    padding: 3rem 1rem;
+    gap: 2rem;
   }
 
   .hero-left {
-      order: 1;
-      padding: 0;
+    order: 1;
+    padding: 0;
+    padding-top: 0;
+    max-width: 100%;
   }
 
-  .hero-buttons{
+  .hero-buttons {
+    justify-content: center;
     margin-bottom: 2rem;
   }
 
+  .hero-button {
+    margin-right: 0;
+    flex: 1;
+    text-align: center;
+    min-width: 200px;
+  }
+
   .hero-right {
-      order: 2;
-      margin-bottom: 2rem;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
+    order: 2;
+    margin-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    max-width: 400px;
   }
 
   .coach-image {
-      width: 80%;
-      height: auto;
-      display: block;
-      margin: 0 auto;
+    width: 80%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
   }
 
   .bio-container {
-      padding: 2rem 1rem;
+    padding: 2rem 1rem;
+    margin-top: 1rem;
   }
 
-  .bio-text h3 {
-      font-size: 1.5rem;
+  .bio-content {
+    padding: 0 1rem;
   }
 
-  .bio-text p {
-      font-size: 1rem;
+  .bio-text h2 {
+    font-size: 1.8rem;
+  }
+
+  .jostic-title {
+    font-size: 1.4rem;
+  }
+
+  .logo-extended {
+    width: 150px;
+  }
+
+  .foundation-info {
+    font-size: 1.1rem;
+  }
+
+  .mission-statement p {
+    font-size: 1rem;
   }
 }
 
 @media (max-width: 480px) {
   .hero-container {
-      padding: 1rem;
+    padding: 2rem 0.5rem;
   }
 
-  .bio-container {
-      padding: 1rem;
+  .hero-buttons {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .hero-button {
+    min-width: auto;
+    width: 100%;
+    margin-bottom: 0.5rem;
   }
 
   .coach-image {
-      width: 60%;
+    width: 80%;
   }
 
-  .bio-text h3 {
-      font-size: 1.2rem;
+  .bio-container {
+    padding: 1.5rem 1rem;
   }
 
-  .bio-text p {
-      font-size: 0.9rem;
+  .bio-text h2 {
+    font-size: 1.5rem;
+  }
+
+  .jostic-title {
+    font-size: 1.2rem;
+  }
+
+  .logo-extended {
+    width: 120px;
+  }
+
+  .foundation-info {
+    font-size: 1rem;
+  }
+
+  .mission-statement p {
+    font-size: 0.95rem;
   }
 }

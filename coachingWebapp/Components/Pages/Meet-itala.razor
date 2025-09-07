@@ -1,7 +1,11 @@
 @page "/about/meet-itala"
 
+@using ModelLayer.Models
+@using ModelLayer.Models.Enums
+@using Microsoft.AspNetCore.Components.Web
 @rendermode InteractiveServer
 @inject ILogger<Meet_itala> Logger
+@inject BusinessLayer.Services.Interfaces.IEmailSubscriptionService EmailSubscriptionService
 
 <SeoComponent Title="@pageTitle" 
               Description="Meet Ítala Veloso - Santomean-Portuguese life coach, mentor, and motivational speaker. Expert in trauma healing, personal transformation, and empowering breakthrough coaching."
@@ -13,59 +17,71 @@
 
 <section class="hero-container">
     <div class="hero-left">
-        <h1>About Ítala Veloso</h1>
-            <p>
+        <header>
+            <h1>About Ítala Veloso</h1>
+        </header>
+            <p class="intro-paragraph">
                 Ítala Veloso is a Santomean-Portuguese Black African Woman. A child of God, currently living in the UK, Coventry and an advocate for peace, love, faith and growth.
-                Speaks both Portuguese and English, which means all her services can be delivered in each of these languages.
+                <strong>Speaks both Portuguese and English</strong>, which means all her services can be delivered in each of these languages.
             </p>
-            <p>
-                A passionate purpose-driven life coach, mentor, motivational speaker, writer, and poet whose work empowers women and men to break through and break free from road and mind blocks, emotional wounds, trauma, and self-limiting beliefs. 
-                Empowering You to Transform Emotional Wounds into Strength. Even if you've tried it all and somehow still feel stuck in life, not progressing or like you've lost your way in life.
-                With a BSc in Food Engineering, an MSc in Public Health, and nearly 6 years of experience in Food Regulatory Affairs. In addition, Ítala is certified in Life Coaching, and a Mental Health First Aider.
-                Ítala Veloso brings a unique, holistic approach to life coaching. Channeling her many gifts into her words, both spoken and written, much like her coaching, opens pathways to deep self-awareness, inner peace, and action plan and steps. 
-                Allowing you to break free from old patterns and step into your true, authentic, awakened, empowered self. 
-            </p>
-            <p class="quote">"Her words and work are woven with a message of empowerment, love, freedom and transformation."</p>
-            <div class="hero-buttons">
-                <a href="#contact" class="hero-button">
-                    <i class="fa-solid fa-gift"></i> Book Your Free Discovery Call Now
-                </a>
-            </div>
-        <section class="bio-container">
-            <div class="bio-content">
-                <div class="bio-text">
-                    <h3><span><img src="Images/logoExtended.png" alt="JOSTIC" class="logo-extended"></span></h3>
-                    <h3> Journey of Survivors Turned into more than Conquerors</h3>
+            <div class="about-details">
+                <p>
+                    A passionate purpose-driven life coach, mentor, motivational speaker, writer, and poet whose work empowers women and men to break through and break free from road and mind blocks, emotional wounds, trauma, and self-limiting beliefs.
+                </p>
+                
+                <p class="transformation-message">
+                    <strong>Empowering You to Transform Emotional Wounds into Strength.</strong> Even if you've tried it all and somehow still feel stuck in life, not progressing or like you've lost your way in life.
+                </p>
+                
+                <div class="credentials-summary">
                     <p>
-                        Founded in May 2021 and active since, <span class="jostic-brand">JOSTIC</span> it's a movement of transformation.
-                    </p>
-                    <p>
-                        Ítala’s work is rooted in the belief that every person deserves to live and become fully themselves. Free from the shadows of the past into the Light.
-                        Her mission is to guide individuals on a transformational journey of self-discovery, self-love, career and spiritual growth. 
-                    </p>
-                    <p>
-                        Helping you unlock direction and boost self-confidence, healing and reclaim the life you deserve. A life with purpose. 
-                        Through her poetry, life coaching and mentoring, Ítala offers not just inspiration but transformation—guiding others from pain to peace, from existing to truly living authentically.
-                        To empower you to embrace the wholeness of who you are and finding the courage to live your higher purpose, plans, and passion.                   
+                        With a BSc in Food Engineering, an MSc in Public Health, and nearly 6 years of experience in Food Regulatory Affairs. In addition, Ítala is certified in Life Coaching, and a Mental Health First Aider.
                     </p>
                 </div>
+                
+                <p class="coaching-approach">
+                    Ítala Veloso brings a unique, holistic approach to life coaching. Channeling her many gifts into her words, both spoken and written, much like her coaching, opens pathways to deep self-awareness, inner peace, and action plan and steps. 
+                    Allowing you to break free from old patterns and step into your true, authentic, awakened, empowered self.
+                </p>
             </div>
-        </section> 
+            <blockquote class="quote" role="complementary">
+                "Her words and work are woven with a message of empowerment, love, freedom and transformation."
+            </blockquote>
+            <div class="hero-buttons">
+                <a href="#contact" class="hero-button" aria-label="Book your free discovery call with Ítala Veloso">
+                    <i class="fa-solid fa-gift" aria-hidden="true"></i> 
+                    <span>Book Your Free Discovery Call Now</span>
+                </a>
+                <button type="button" 
+                        class="hero-button secondary" 
+                        @onclick="() => ShowGiftOffer(GiftCategory.Gift1)"
+                        aria-label="Get free guide - Find Your Calm, Shape Your Power">
+                    <i class="fa-solid fa-download" aria-hidden="true"></i> 
+                    <span>Get Free Guide</span>
+                </button>
+            </div>
     </div>
 
     <div class="hero-right">
         <div class="hero-card">
-            <img src="Images/italaHero.webp" alt="Ítala, Life Coach" class="coach-image">
+            <div class="image-container">
+                <img src="Images/italaHero.webp" 
+                     alt="Ítala Veloso - Professional life coach, mentor, and motivational speaker" 
+                     class="coach-image"
+                     loading="lazy"
+                     width="300"
+                     height="400" />
+            </div>
             <div class="coach-info">
                 <h2>Ítala Veloso</h2>
-                <p>Your dedicated Life Liberation and Self-Discovery Coach</p>
+                <p class="coach-title">Your dedicated Life Liberation and Self-Discovery Coach</p>
             </div>
         </div>
 
         <div class="credentials-container">
             <div class="coaching-credentials">
                 <h3><span class="highlight">Coaching</span> Credentials</h3>
-                <ul>
+                <ul role="list">
                     <li>Certified UPW Life Coaching - Unleash Your Power Within, Tony Robbins</li>
                     <li>Certified CEH - Life and Emotional Coaching, Mindset Academy</li>
                     <li>Life Christian Coaching</li>
@@ -73,7 +89,7 @@
             </div>
             <div class="regulatory-credentials">
                 <h3><span class="highlight">Food Regulatory Affairs</span> Credentials</h3>
-                <ul>
+                <ul role="list">
                     <li>BSc in Food Engineering</li>
                     <li>MSc in Public Health</li>
                     <li>7 years in Food Regulatory Affairs</li>
@@ -81,52 +97,118 @@
             </div>
         </div>
     </div>
+</section>
+
+<section class="bio-container" aria-labelledby="jostic-heading">
+    <div class="bio-content">
+        <div class="bio-text">
+            <h2 id="jostic-heading">
+                <span class="logo-container">
+                    <img src="Images/logoExtended.png" 
+                         alt="JOSTIC Logo" 
+                         class="logo-extended"
+                         loading="lazy" />
+                </span>
+                <span class="jostic-title">Journey of Survivors Turned into more than Conquerors</span>
+            </h2>
+            
+            <div class="jostic-content">
+                <p class="foundation-info">
+                    Founded in May 2021 and active since, <span class="jostic-brand">JOSTIC</span> it's a movement of transformation.
+                </p>
+                
+                <div class="mission-statement">
+                    <p>
+                        Ítala's work is rooted in the belief that every person deserves to live and become fully themselves. Free from the shadows of the past into the Light.
+                        Her mission is to guide individuals on a transformational journey of self-discovery, self-love, career and spiritual growth.
+                    </p>
+                    
+                    <p>
+                        Helping you unlock direction and boost self-confidence, healing and reclaim the life you deserve. A life with purpose.
+                        Through her poetry, life coaching and mentoring, Ítala offers not just inspiration but transformation—guiding others from pain to peace, from existing to truly living authentically.
+                        To empower you to embrace the wholeness of who you are and finding the courage to live your higher purpose, plans, and passion.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="gift-modal-section">
     @if (showGiftOffer)
     {
-        <div class="gift-modal" @onclick="CloseGiftOfferIfClickedOutside">
+                <div class="gift-modal" 
+             @onclick="CloseGiftOfferIfClickedOutside"
+             @onkeydown="OnModalKeyDown"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="modal-title"
+             tabindex="-1">
             <div class="gift-modal-content" @onclick:stopPropagation>
-                <h3>Unlock Your Free Guide!</h3>
-                <p>Get instant access to expert tips and strategies to jumpstart your journey. <b>Your success story begins here.</b></p>
-                <EditForm Model="@emailSubscription" OnValidSubmit="GetGiftBySubscribeNewsLetter" FormName="emailSubscriptionGiftForm">
-                    <DataAnnotationsValidator />
+                <header class="modal-header">
+                    <h3 id="modal-title">Unlock Your Free Guide!</h3>
+                    <button type="button" 
+                            class="close-button" 
+                            @onclick="CloseGiftOffer"
+                            aria-label="Close modal">
+                        <i class="fa-solid fa-circle-xmark" aria-hidden="true"></i>
+                    </button>
+                </header>
+                
+                <div class="modal-body">
+                    <p>Get instant access to expert tips and strategies to jumpstart your journey. <strong>Your success story begins here.</strong></p>
                     
-                    @if (isSubscribing)
-                    {
-                        <div class="text-center">
-                            <div class="spinner-border" role="status">
+                    <EditForm Model="@emailSubscription" 
+                              OnValidSubmit="GetGiftBySubscribeNewsLetter" 
+                              FormName="emailSubscriptionGiftForm"
+                              class="subscription-form">
+                        <DataAnnotationsValidator />
+                        
+                        @if (isSubscribing)
+                        {
+                            <div class="loading-container text-center" role="status" aria-live="polite">
+                                <div class="spinner-border" aria-hidden="true"></div>
+                                <span class="loading-text">Subscribing...</span>
                                 <span class="visually-hidden">Loading...</span>
                             </div>
-                            <p>Subscribing...</p>
-                        </div>
-                    }
-                    else
-                    {
-                        <InputText id="email" class="form-control" @bind-Value="emailSubscription.Email" placeholder="Enter your email" />
-                        <div class="row">
-                            <div class="col">
-                                <ValidationMessage For="@(() => emailSubscription.Email)" class="text-danger" />
+                        }
+                        else
+                        {
+                            <div class="form-group">
+                                <label for="email" class="visually-hidden">Email Address</label>
+                                <InputText id="email" 
+                                          class="form-control" 
+                                          @bind-Value="emailSubscription.Email" 
+                                          placeholder="Enter your email"
+                                          aria-describedby="email-error" />
+                                <ValidationMessage For="@(() => emailSubscription.Email)" 
+                                                 class="text-danger" 
+                                                 id="email-error" />
                             </div>
+                            
+                            <button type="submit" class="btn btn-primary btn-block">
+                                <i class="fa-solid fa-gift" aria-hidden="true"></i>
+                                Get Free Guide
+                            </button>
+                            
+                            <p class="privacy-notice">
+                                By signing up, you're agreeing to receive marketing emails from Ítala Veloso. 
+                                You can unsubscribe at any time. For more details, check out our 
+                                <a href="/privacy-policy" target="_blank" rel="noopener">Privacy Policy</a> and 
+                                <a href="/terms-and-conditions" target="_blank" rel="noopener">Terms & Conditions</a>.
+                            </p>
+                        }
+                    </EditForm>
+
+                    @if (!string.IsNullOrEmpty(subscriptionMessage))
+                    {
+                        <div class="alert @(subscriptionSuccess ? "alert-success" : "alert-danger") mt-3" 
+                             role="alert" 
+                             aria-live="polite">
+                            @subscriptionMessage
                         </div>
-                        <button type="submit" class="btn btn-primary">Get Free Guide</button>
-                        <p class="privacy-notice">By signing up, you’re agreeing to receive marketing emails from Ítala Veloso. You can unsubscribe at any time. For more details, check out our <a href="/privacy-policy">Privacy Policy</a> and <a href="/terms-and-conditions">Terms & Conditions</a>.</p>
                     }
-                </EditForm>
-
-                @if (!string.IsNullOrEmpty(subscriptionMessage) && !subscriptionSuccess)
-                {
-                    <div class="alert alert-danger mt-3" role="alert">
-                        @subscriptionMessage
-                    </div>
-                }
-                
-                @if (subscriptionSuccess)
-                {
-                    <div class="alert alert-success" role="alert">
-                        @subscriptionMessage
-                    </div>
-                }
-
-                <button class="close-button" @onclick="CloseGiftOffer"><i class="fa-solid fa-circle-xmark"></i></button>
+                </div>
             </div>
         </div>
     }
@@ -204,15 +286,30 @@
         showGiftOffer = true;
         subscriptionMessage = string.Empty;
         subscriptionSuccess = false;
+        StateHasChanged();
     }
+    
     public void CloseGiftOffer()
     {
         showGiftOffer = false;
+        emailSubscription = new EmailSubscription(); // Reset form
+        subscriptionMessage = string.Empty;
+        subscriptionSuccess = false;
         StateHasChanged();
     }
+    
     private void CloseGiftOfferIfClickedOutside()
     {
         if (showGiftOffer)
+        {
+            CloseGiftOffer();
+        }
+    }
+
+    // Add keyboard event handling for accessibility
+    private void OnModalKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
         {
             CloseGiftOffer();
         }

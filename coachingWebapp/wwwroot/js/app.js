@@ -214,80 +214,121 @@ window.logout = function () {
 
 // Google Reviews Carousel functionality
 window.initializeReviewsSlider = function () {
-    const sliderContainer = document.querySelector('.reviews-slider-container');
-    const slider = document.querySelector('.reviews-slider');
-    const slides = document.querySelectorAll('.review-slide');
+    const sliderContainer = document.querySelector('#reviewsSliderContainer');
+    const slider = document.querySelector('#reviewsSlider');
+    const originalSlides = document.querySelectorAll('.review-slide:not(.clone)');
 
-    if (!slider || !slides.length) return;
+    if (!slider || !sliderContainer || !originalSlides.length) {
+        console.log('Missing required elements for slider initialization');
+        return;
+    }
+
+    const existingClones = slider.querySelectorAll('.review-slide.clone');
+    existingClones.forEach(clone => clone.remove());
 
     // Calculate slide width including gap based on screen size
-    let slideWidth = 300; // 280px width + 20px gap
+    let slideWidth = 320; // 300px width + 20px gap
 
     // Adjust for responsive breakpoints
     if (window.innerWidth <= 480) {
-        slideWidth = 290; // 280px width + 10px gap on mobile
+        slideWidth = 310; // 300px width + 10px gap on mobile
     } else if (window.innerWidth <= 768) {
-        slideWidth = 252; // 240px width + 12px gap on tablet
+        slideWidth = 330; // 320px width + 10px gap on tablet
     }
 
     let currentOffset = 0;
     let isPaused = false;
+    let animationId = null;
 
-    // Clone all slides to create seamless loop
-    const originalSlides = Array.from(slides);
-    originalSlides.forEach(slide => {
-        const clone = slide.cloneNode(true);
+    // Always clone slides for infinite loop - clone enough for seamless scrolling
+    const cloneCount = Math.max(originalSlides.length * 3, 10); // Ensure enough clones
+    for (let i = 0; i < cloneCount; i++) {
+        const slideIndex = i % originalSlides.length;
+        const clone = originalSlides[slideIndex].cloneNode(true);
+        clone.classList.add('clone');
         slider.appendChild(clone);
-    });
+    }
+
+    // Set initial position to start from the middle of cloned content
+    const initialOffset = -slideWidth * originalSlides.length;
+    currentOffset = initialOffset;
+    slider.style.transform = `translateX(${currentOffset}px)`;
 
     function autoScrollLoop() {
-        if (!isPaused) {
-            currentOffset -= 0.3; // Smooth scroll speed (lower = slower, higher = faster)
+        if (!isPaused && slider.parentElement) {
+            currentOffset -= 0.5 // Smooth scroll speed
 
-            // Reset position when we've scrolled past the first set of slides
-            if (Math.abs(currentOffset) >= slideWidth * originalSlides.length) {
-                currentOffset = 0;
+            // Get total width of original slides
+            const originalWidth = slideWidth * originalSlides.length;
+
+            // Reset position when we've scrolled past one full cycle
+            // This creates the infinite loop effect
+            if (currentOffset <= initialOffset - originalWidth) {
+                currentOffset = initialOffset;
             }
 
             slider.style.transform = `translateX(${currentOffset}px)`;
         }
-        requestAnimationFrame(autoScrollLoop);
+
+        if (slider.parentElement) {
+            animationId = requestAnimationFrame(autoScrollLoop);
+        }
     }
 
     // Pause on hover
-    if (sliderContainer) {
-        sliderContainer.addEventListener('mouseenter', () => {
-            isPaused = true;
-        });
+    const handleMouseEnter = () => {
+        isPaused = true;
+    };
 
-        sliderContainer.addEventListener('mouseleave', () => {
-            isPaused = false;
-        });
-    }
+    const handleMouseLeave = () => {
+        isPaused = false;
+    };
+
+    sliderContainer.addEventListener('mouseenter', handleMouseEnter);
+    sliderContainer.addEventListener('mouseleave', handleMouseLeave);
 
     // Handle window resize
     let resizeTimeout;
-    window.addEventListener('resize', () => {
+    const handleResize = () => {
         clearTimeout(resizeTimeout);
         resizeTimeout = setTimeout(() => {
             // Recalculate slide width on resize
             if (window.innerWidth <= 480) {
-                slideWidth = 290;
+                slideWidth = 310;
             } else if (window.innerWidth <= 768) {
-                slideWidth = 252;
+                slideWidth = 330;
             } else {
-                slideWidth = 300;
+                slideWidth = 320;
             }
+
+            // Recalculate positions
+            const newInitialOffset = -slideWidth * originalSlides.length;
+            const progress = (currentOffset - initialOffset) / (slideWidth * originalSlides.length);
+            currentOffset = newInitialOffset + (progress * slideWidth * originalSlides.length);
+            slider.style.transform = `translateX(${currentOffset}px)`;
         }, 250);
-    });
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    // Store cleanup function
+    sliderContainer._cleanup = () => {
+        if (animationId) {
+            cancelAnimationFrame(animationId);
+        }
+        sliderContainer.removeEventListener('mouseenter', handleMouseEnter);
+        sliderContainer.removeEventListener('mouseleave', handleMouseLeave);
+        window.removeEventListener('resize', handleResize);
+    };
 
     // Start the animation
+    console.log('Starting infinite slider animation...');
     autoScrollLoop();
 }; window.disposeReviewsSlider = function () {
     // Clean up event listeners if needed
-    const sliderContainer = document.querySelector('.reviews-slider-container');
-    if (sliderContainer) {
-        sliderContainer.replaceWith(sliderContainer.cloneNode(true));
+    const sliderContainer = document.querySelector('#reviewsSliderContainer');
+    if (sliderContainer && sliderContainer._cleanup) {
+        sliderContainer._cleanup();
     }
 };
 

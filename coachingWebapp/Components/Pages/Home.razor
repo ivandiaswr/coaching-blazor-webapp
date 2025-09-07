@@ -205,106 +205,115 @@
             <p class="section-subtitle">See what our clients say about their experience</p>
         </div>
 
-        <div class="google-reviews-content">
-            <div class="reviews-showcase">
-                <div class="google-rating-summary">
-                    <div class="rating-display">
-                        <div class="stars">
-                            @for (int i = 1; i <= 5; i++)
-                            {
-                                <i class="fas fa-star @(i <= Math.Round(googleRating) ? "filled" : "empty")"></i>
-                            }
-                        </div>
-                        <div class="rating-text">
-                            <span class="rating-score">@googleRating.ToString("F1")</span>
-                            <span class="rating-source">@totalGoogleReviews Google Reviews</span>
-                        </div>
+        <!-- Google Rating Summary -->
+        <div class="google-rating-summary-container">
+            <div class="google-rating-summary">
+                <div class="rating-display">
+                    <div class="stars">
+                        @for (int i = 1; i <= 5; i++)
+                        {
+                            <i class="fas fa-star @(i <= Math.Round(googleRating) ? "filled" : "empty")"></i>
+                        }
                     </div>
-                    <div class="google-logo">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" />
+                    <div class="rating-text">
+                        <span class="rating-score">@googleRating.ToString("F1")</span>
+                        <span class="rating-source">@totalGoogleReviews Google Reviews</span>
                     </div>
                 </div>
+                <div class="google-logo">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" />
+                </div>
+            </div>
+        </div>
 
-                @if (isLoadingReviews)
-                {
-                    <div class="reviews-loading">
-                        <MudProgressCircular Color="Color.Primary" Size="Size.Medium" Indeterminate="true" />
-                        <p>Loading reviews...</p>
-                    </div>
-                }
-                else
-                {
-                    <div class="reviews-slider-container">
-                        <div class="reviews-slider">
-                            @foreach (var review in googleReviews)
-                            {
-                                <div class="review-slide">
-                                    <div class="slide-reviewer-info">
-                                        <div class="slide-reviewer-avatar">
-                                            @if (!string.IsNullOrEmpty(review.ProfilePhotoUrl))
+        <!-- Reviews Carousel -->
+        <div class="reviews-showcase">
+            @if (isLoadingReviews)
+            {
+                <div class="reviews-loading">
+                    <MudProgressCircular Color="Color.Primary" Size="Size.Medium" Indeterminate="true" />
+                    <p>Loading reviews...</p>
+                </div>
+            }
+            else if (googleReviews.Any())
+            {
+                <div class="reviews-slider-container" id="reviewsSliderContainer">
+                    <div class="reviews-slider" id="reviewsSlider">
+                        @foreach (var review in googleReviews)
+                        {
+                            <div class="review-slide">
+                                <div class="slide-reviewer-info">
+                                    <div class="slide-reviewer-avatar">
+                                        @if (!string.IsNullOrEmpty(review.ProfilePhotoUrl))
+                                        {
+                                            <img src="@review.ProfilePhotoUrl" alt="@review.ReviewerName" class="profile-photo" />
+                                        }
+                                        else
+                                        {
+                                            @review.ReviewerName.Substring(0, 1).ToUpper()
+                                        }
+                                    </div>
+                                    <div class="slide-reviewer-details">
+                                        <h4>@review.ReviewerName</h4>
+                                        <div class="slide-review-stars">
+                                            @for (int i = 1; i <= 5; i++)
                                             {
-                                                <img src="@review.ProfilePhotoUrl" alt="@review.ReviewerName" class="profile-photo" />
-                                            }
-                                            else
-                                            {
-                                                @review.ReviewerName.Substring(0, 1).ToUpper()
+                                                <i class="fas fa-star @(i <= review.Rating ? "filled" : "empty")"></i>
                                             }
                                         </div>
-                                        <div class="slide-reviewer-details">
-                                            <h4>@review.ReviewerName</h4>
-                                            <div class="slide-review-stars">
-                                                @for (int i = 1; i <= 5; i++)
-                                                {
-                                                    <i class="fas fa-star @(i <= review.Rating ? "filled" : "empty")"></i>
-                                                }
-                                            </div>
-                                            <div class="slide-review-date">
-                                                @review.ReviewDate.ToString("MMM yyyy")
-                                            </div>
+                                        <div class="slide-review-date">
+                                            @review.ReviewDate.ToString("MMM yyyy")
                                         </div>
                                     </div>
-                                    <p class="slide-review-text">@review.ReviewText</p>
                                 </div>
-                            }
-                        </div>
+                                <p class="slide-review-text">@review.ReviewText</p>
+                            </div>
+                        }
                     </div>
-                }
-            </div>
+                </div>
+            }
+            else
+            {
+                <div class="no-reviews-message">
+                    <p>Reviews will appear here once loaded.</p>
+                </div>
+            }
+        </div>
 
-            <div class="add-review-section">
-                <div class="add-review-card">
-                    <div class="add-review-header">
-                        <h3>Share Your Experience</h3>
-                        <p>Help others discover the transformative power of coaching</p>
-                    </div>
-                    <div class="add-review-content">
-                        <div class="review-benefits">
-                            <div class="benefit-item">
-                                <i class="fas fa-heart"></i>
-                                <span>Share your success story</span>
-                            </div>
-                            <div class="benefit-item">
-                                <i class="fas fa-users"></i>
-                                <span>Help others on their journey</span>
-                            </div>
-                            <div class="benefit-item">
-                                <i class="fas fa-star"></i>
-                                <span>Support our community</span>
-                            </div>
+        <!-- Share Your Experience Section (moved below reviews) -->
+        <div class="add-review-section">
+            <div class="add-review-card">
+                <div class="add-review-header">
+                    <h3>Share Your Experience</h3>
+                    <p>Help others discover the transformative power of coaching</p>
+                </div>
+                <div class="add-review-content">
+                    <div class="review-benefits">
+                        <div class="benefit-item">
+                            <i class="fas fa-heart"></i>
+                            <span>Share your success story</span>
                         </div>
-                        <a href="https://g.page/r/CWXw4ssna8vtEAE/review" target="_blank" rel="noopener noreferrer" class="add-review-button">
-                            <div class="button-content">
-                                <div class="button-icon">
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" />
-                                </div>
-                                <div class="button-text">
-                                    <span class="primary-text">Write a Google Review</span>
-                                    <span class="secondary-text">Takes less than 1 minute</span>
-                                </div>
-                                <i class="fas fa-external-link-alt"></i>
-                            </div>
-                        </a>
+                        <div class="benefit-item">
+                            <i class="fas fa-users"></i>
+                            <span>Help others on their journey</span>
+                        </div>
+                        <div class="benefit-item">
+                            <i class="fas fa-star"></i>
+                            <span>Support our community</span>
+                        </div>
                     </div>
+                    <a href="https://g.page/r/CWXw4ssna8vtEAE/review" target="_blank" rel="noopener noreferrer" class="add-review-button">
+                        <div class="button-content">
+                            <div class="button-icon">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Google" />
+                            </div>
+                            <div class="button-text">
+                                <span class="primary-text">Write a Google Review</span>
+                                <span class="secondary-text">Takes less than 1 minute</span>
+                            </div>
+                            <i class="fas fa-external-link-alt"></i>
+                        </div>
+                    </a>
                 </div>
             </div>
         </div>
@@ -313,79 +322,162 @@
 
 <section id="contact">
     <div class="contact-container">
+        <div class="contact-hero-banner">
+            <div class="hero-content">
+                <div class="urgency-badge animate-on-scroll">
+                    <i class="fas fa-clock"></i>
+                    <span>Limited Spots Available This Month</span>
+                </div>
+                <h2 class="hero-title animate-on-scroll delay-1">Ready to Transform Your Life?</h2>
+                <p class="hero-subtitle animate-on-scroll delay-2">Join 20+ clients who've already started their journey to success</p>
+                <div class="social-proof-stats animate-on-scroll delay-3">
+                    <div class="stat-item">
+                        <span class="stat-number">20+</span>
+                        <span class="stat-label">Lives Transformed</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">5.0</span>
+                        <span class="stat-label">⭐ Average Rating</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">100%</span>
+                        <span class="stat-label">Satisfaction Rate</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="contact-form-container">
             <div class="contact-wrapper">
                 <div class="content-grid">
                     <div class="form-section">
-                        <MudText Typo="Typo.h3" Align="Align.Center" Class="mb-4"><b>Schedule <span class="highlight">Discovery Call</span></b></MudText>
+                        <div class="form-header">
+                            <MudText Typo="Typo.h3" Align="Align.Center" Class="mb-2 form-title">
+                                <b>Book Your <span class="highlight">FREE</span> Discovery Call</b>
+                            </MudText>
+                            <div class="value-proposition mb-4">
+                                <div class="value-item">
+                                    <i class="fas fa-gift"></i>
+                                    <span>100% Free - No Strings Attached</span>
+                                </div>
+                                <div class="value-item">
+                                    <i class="fas fa-clock"></i>
+                                    <span>30 Minutes - Maximum Impact</span>
+                                </div>
+                                @* <div class="value-item">
+                                    <i class="fas fa-shield-alt"></i>
+                                    <span>Completely Confidential</span>
+                                </div> *@
+                            </div>
+                        </div>
+                        
+                        <div class="form-progress mb-4">
+                            <div class="progress-steps">
+                                <div class="step active" id="step-1">
+                                    <span class="step-number">1</span>
+                                    <span class="step-text">Your Details</span>
+                                </div>
+                                <div class="step" id="step-2">
+                                    <span class="step-number">2</span>
+                                    <span class="step-text">Session Type</span>
+                                </div>
+                                <div class="step" id="step-3">
+                                    <span class="step-number">3</span>
+                                    <span class="step-text">Schedule</span>
+                                </div>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progress-fill" style="width: 33%"></div>
+                            </div>
+                        </div>
                         <MudForm @ref="sessionForm" Model="@session">
-                            <MudTextField Label="First Name"
-                                          @bind-Value="session.FirstName"
-                                          For="@(() => session.FirstName)"
-                                          Placeholder="First Name"
-                                          Class="mb-4"
-                                          Required="true"
-                                          RequiredError="First name is required" />
-
-                            <MudTextField Label="Last Name"
-                                          @bind-Value="session.LastName"
-                                          For="@(() => session.LastName)"
-                                          Placeholder="Last Name"
-                                          Class="mb-4"
-                                          Required="true"
-                                          RequiredError="Last name is required" />
-
-                            <MudTextField Label="Email"
-                                          @bind-Value="session.Email"
-                                          For="@(() => session.Email)"
-                                          Placeholder="Your Email"
-                                          Class="mb-4"
-                                          InputType="InputType.Email"
-                                          Required="true"
-                                          RequiredError="A valid email is required" />
-
-                            <MudSelect T="SessionType" PopoverClass="custom-popper"
-                                       Label="Session Category"
-                                       @bind-Value="session.SessionCategory"
-                                       For="@(() => session.SessionCategory)"
-                                       Class="mb-4">
-                                @foreach (var type in Enum.GetValues(typeof(SessionType)).Cast<SessionType>())
-                                {
-                                    <MudSelectItem Value="@type">
-                                        @((type.GetType().GetField(type.ToString())?.GetCustomAttributes(typeof(DisplayAttribute), false).FirstOrDefault() as DisplayAttribute)?.Name ?? type.ToString())
-                                    </MudSelectItem>
-                                }
-                            </MudSelect>
-
-                            <MudPaper Class="hoverable-input mb-4" @onclick="ToggleCalendarAsync" Style="cursor: pointer;">
-                                <MudTextField Label="Preferred Date & Time"
-                                              Value="@session.PreferredDateTimeString"
-                                              For="@(() => session.PreferredDateTimeString)"
-                                              ReadOnly="true"
-                                              Adornment="Adornment.End"
-                                              AdornmentIcon="@Icons.Material.Filled.CalendarMonth"
-                                              Placeholder="Select date and time"
+                            <div class="form-step" id="form-step-1">
+                                <MudTextField Label="First Name"
+                                              @bind-Value="session.FirstName"
+                                              For="@(() => session.FirstName)"
+                                              Placeholder="Enter your first name"
+                                              Class="mb-4 enhanced-input"
                                               Required="true"
-                                              RequiredError="Preferred date and time are required" />
-                            </MudPaper>
+                                              RequiredError="First name is required"
+                                              @onfocusin="() => UpdateProgress(1)"
+                                              @onblur="() => UpdateProgress(1)" />
 
-                            @if (showTimeSlots)
-                            {
-                                <Calendar @bind-IsVisible="showTimeSlots"
-                                          OnSlotSelected="HandleSlotSelectedAsync"
-                                          CurrentTimeZoneDisplay="@userTimeZoneDisplay"
-                                          AvailableSlots="@availableSlots"
-                                          BusyTimes="@busyTimes"
-                                          AdminUnavailabilities="@adminUnavailabilities"
-                                          FirstAvailableDate="@firstAvailableDate" />
-                            }
+                                <MudTextField Label="Last Name"
+                                              @bind-Value="session.LastName"
+                                              For="@(() => session.LastName)"
+                                              Placeholder="Enter your last name"
+                                              Class="mb-4 enhanced-input"
+                                              Required="true"
+                                              RequiredError="Last name is required"
+                                              @onblur="() => UpdateProgress(1)" />
 
-                            <MudTextField Label="Message"
-                                          @bind-Value="session.Message"
-                                          For="@(() => session.Message)"
-                                          Lines="6"
-                                          Placeholder="Share what's on your mind"
-                                          Class="mb-4" />
+                                <MudTextField Label="Email Address"
+                                              @bind-Value="session.Email"
+                                              For="@(() => session.Email)"
+                                              Placeholder="your.email@example.com"
+                                              Class="mb-4 enhanced-input"
+                                              InputType="InputType.Email"
+                                              Required="true"
+                                              RequiredError="A valid email is required"
+                                              @onblur="() => UpdateProgress(1)" />
+                            </div>
+
+                            <div class="form-step" id="form-step-2">
+                                <MudSelect T="SessionType?" PopoverClass="custom-popper"
+                                           Label="What area would you like to focus on?"
+                                           Value="sessionCategoryNullable"
+                                           ValueChanged="OnSessionCategoryChanged"
+                                           For="@(() => sessionCategoryNullable)"
+                                           Class="mb-4 enhanced-select"
+                                           @onfocusin="() => UpdateProgress(2)"
+                                           Placeholder="Please select an area..."
+                                           Required="true">
+                                    <MudSelectItem Value="@((SessionType?)null)">
+                                        <em style="color: #999;">-- Please select an area --</em>
+                                    </MudSelectItem>
+                                    @foreach (var type in Enum.GetValues(typeof(SessionType)).Cast<SessionType>())
+                                    {
+                                        <MudSelectItem Value="@((SessionType?)type)">
+                                            @((type.GetType().GetField(type.ToString())?.GetCustomAttributes(typeof(DisplayAttribute), false).FirstOrDefault() as DisplayAttribute)?.Name ?? type.ToString())
+                                        </MudSelectItem>
+                                    }
+                                </MudSelect>
+                            </div>
+
+                            <div class="form-step" id="form-step-3">
+                                <MudPaper Class="hoverable-input mb-4 enhanced-date-picker" 
+                                          @onclick="ToggleCalendarAsync" 
+                                          Style="cursor: pointer;"
+                                          @onfocusin="() => UpdateProgress(3)">
+                                    <MudTextField Label="Choose Your Preferred Date & Time"
+                                                  Value="@session.PreferredDateTimeString"
+                                                  For="@(() => session.PreferredDateTimeString)"
+                                                  ReadOnly="true"
+                                                  Adornment="Adornment.End"
+                                                  AdornmentIcon="@Icons.Material.Filled.CalendarMonth"
+                                                  Placeholder="Click to select your ideal time"
+                                                  Required="true"
+                                                  RequiredError="Preferred date and time are required" />
+                                </MudPaper>
+
+                                @if (showTimeSlots)
+                                {
+                                    <Calendar @bind-IsVisible="showTimeSlots"
+                                              OnSlotSelected="HandleSlotSelectedAsync"
+                                              CurrentTimeZoneDisplay="@userTimeZoneDisplay"
+                                              AvailableSlots="@availableSlots"
+                                              BusyTimes="@busyTimes"
+                                              AdminUnavailabilities="@adminUnavailabilities"
+                                              FirstAvailableDate="@firstAvailableDate" />
+                                }
+
+                                <MudTextField Label="Tell me about your biggest challenge"
+                                              @bind-Value="session.Message"
+                                              For="@(() => session.Message)"
+                                              Lines="4"
+                                              Placeholder="What's your biggest obstacle right now? What would you like to achieve?"
+                                              Class="mb-4 enhanced-textarea" />
+                            </div>
 
                             <div class="form-status mb-4">
                                 @if (isLoggingIn)
@@ -410,15 +502,36 @@
                                 }
                             </div>
 
-                            <MudButton Variant="Variant.Filled"
-                                       Color="Color.Primary"
-                                       StartIcon="@Icons.Material.Filled.CalendarToday"
-                                       Type="submit"
-                                       Disabled="@isLoggingIn"
-                                       Class="mb-4 book-submit-button"
-                                       OnClick="CreateSessionAsync">
-                                Book Your Free Discovery Call
-                            </MudButton>
+                            <div class="cta-button-container">
+                                <MudButton Variant="Variant.Filled"
+                                           Color="Color.Primary"
+                                           StartIcon="@Icons.Material.Filled.CalendarToday"
+                                           Type="submit"
+                                           Disabled="@isLoggingIn"
+                                           Class="mb-4 enhanced-submit-button pulse-subtle"
+                                           OnClick="CreateSessionAsync">
+                                    <div class="button-content">
+                                        <span class="button-main-text">Claim My FREE Discovery Call</span>
+                                        <span class="button-sub-text">→ Start Your Transformation Today</span>
+                                    </div>
+                                </MudButton>
+                                
+                                @* <div class="guarantee-badge">
+                                    <i class="fas fa-shield-check"></i>
+                                    <span>100% Risk-Free • No Pressure • Just Value</span>
+                                </div> *@
+                            </div>
+
+                            <div class="trust-indicators mb-4">
+                                <div class="trust-item">
+                                    <i class="fas fa-lock"></i>
+                                    <span>Your information is 100% secure</span>
+                                </div>
+                                @* <div class="trust-item">
+                                    <i class="fas fa-user-shield"></i>
+                                    <span>Certified Life Coach - 1+ years experience</span>
+                                </div> *@
+                            </div>
 
                             <MudText Typo="Typo.caption" Class="privacy-notice">
                                 By scheduling a session, you’re agreeing to receive marketing emails from Ítala Veloso. You can unsubscribe at any time. For more details, check out our
@@ -444,14 +557,51 @@
                         </div>
                         <div class="benefits-section">
                             <div class="benefits-content">
-                                <MudText Typo="Typo.h6" Class="mb-2">Your Path to Growth</MudText>
-                                <MudList T="string">
-                                    <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" Class="benefits-icon">Live a Purpose-Driven Life</MudListItem>
-                                    <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" Class="benefits-icon">Get Clear and Focused Goals</MudListItem>
-                                    <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" Class="benefits-icon">Change every area of your Life</MudListItem>
-                                    <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" Class="benefits-icon">1:1 and Group Life Coaching Sessions</MudListItem>
+                                <div class="benefits-header">
+                                    <MudText Typo="Typo.h6" Class="mb-3 benefits-title">What You'll Get From This Call</MudText>
+                                </div>
+                                <MudList T="string" Class="enhanced-benefits-list">
+                                    <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" Class="benefits-icon enhanced-benefit-item">
+                                        <div class="benefit-content">
+                                            <strong>Crystal Clear Clarity</strong>
+                                            <span>Discover what's really holding you back</span>
+                                        </div>
+                                    </MudListItem>
+                                    <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" Class="benefits-icon enhanced-benefit-item">
+                                        <div class="benefit-content">
+                                            <strong>Personalized Action Plan</strong>
+                                            <span>Get your custom roadmap to success</span>
+                                        </div>
+                                    </MudListItem>
+                                    <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" Class="benefits-icon enhanced-benefit-item">
+                                        <div class="benefit-content">
+                                            <strong>Breakthrough Strategy</strong>
+                                            <span>Leave with immediate steps to take</span>
+                                        </div>
+                                    </MudListItem>
+                                    <MudListItem T="string" Icon="@Icons.Material.Filled.CheckCircle" Class="benefits-icon enhanced-benefit-item">
+                                        <div class="benefit-content">
+                                            <strong>No-Pressure Environment</strong>
+                                            <span>Just valuable insights and support</span>
+                                        </div>
+                                    </MudListItem>
                                 </MudList>
-                                <MudText Typo="Typo.caption" Class="benefits-note">A confidential commitment to yourself, for self-development, growth and expansion</MudText>
+                                
+                                <div class="testimonial-snippet">
+                                    <div class="snippet-content">
+                                        <i class="fas fa-quote-left quote-icon"></i>
+                                        <p>"Ítala helped me gain concrete knowledge about trauma and how it affects our behaviors. There has been such growth and I am very proud of where I am right now."</p>
+                                        <div class="snippet-author">
+                                            <strong>- Laviniah</strong>
+                                            <span>Cyber Security Analyst</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                @* <div class="urgency-reminder">
+                                    <i class="fas fa-clock"></i>
+                                    <span>Limited spots available!</span>
+                                </div> *@
                             </div>
                         </div>
                     </div>
@@ -464,6 +614,10 @@
 @code {
     private string pageTitle = "Home | Ítala Veloso";
     private Session session = new Session();
+    
+    // Nullable session category for better UX
+    private SessionType? sessionCategoryNullable;
+    
     private List<Testimonial> testimonials = new List<Testimonial>
     {
         new Testimonial
@@ -554,6 +708,53 @@
     }
 
     #region ContactMessage
+    
+    private async Task OnSessionCategoryChanged(SessionType? value)
+    {
+        sessionCategoryNullable = value;
+        await UpdateProgress(2);
+        StateHasChanged();
+    }
+    
+    private async Task UpdateProgress(int step)
+    {
+        // Determine actual progress based on form completion
+        int actualStep = 1;
+        
+        // Step 1: Basic info filled
+        if (!string.IsNullOrEmpty(session.FirstName) && 
+            !string.IsNullOrEmpty(session.LastName) && 
+            !string.IsNullOrEmpty(session.Email))
+        {
+            actualStep = 2;
+        }
+        
+        // Step 2: Session category selected
+        if (actualStep >= 2 && sessionCategoryNullable != null)
+        {
+            actualStep = 3;
+        }
+        
+        // Step 3: Date/time selected
+        if (actualStep >= 3 && !string.IsNullOrEmpty(session.PreferredDateTimeString))
+        {
+            actualStep = 3; // Keep at 3, this is the final step
+        }
+        
+        // Use the higher of requested step or actual completion
+        int progressStep = Math.Max(step, actualStep);
+        
+        var progressWidth = progressStep switch
+        {
+            1 => "33%",
+            2 => "66%", 
+            3 => "100%",
+            _ => "33%"
+        };
+        
+        await JSRuntime.InvokeVoidAsync("updateFormProgress", progressStep, progressWidth);
+    }
+
     private async Task CreateSessionAsync()
     {
         if (sessionForm != null)
@@ -565,11 +766,23 @@
             return;
         }
 
+        // Validate that a session category has been selected
+        if (sessionCategoryNullable == null)
+        {
+            sessionStatus = "Please select an area you'd like to focus on.";
+            isSuccess = false;
+            StateHasChanged();
+            return;
+        }
+
         try
         {
             isLoggingIn = true;
             sessionStatus = string.Empty;
             StateHasChanged();
+
+            // Assign the selected category to the session
+            session.SessionCategory = sessionCategoryNullable.Value;
 
             var existingSession = await SessionService.GetSessionByEmailAsync(session.Email);
             if (existingSession != null)
@@ -594,6 +807,7 @@
                 session.UpdateFullName();
                 var subscriptionResult = await EmailSubscriptionService.SubscriptionAsync(new EmailSubscription { Name = session.FullName, Email = session.Email });
                 session = new Session();
+                sessionCategoryNullable = null; // Reset the nullable category
                 await LoadAvailableSlotsAsync();
             }            
         }
@@ -807,19 +1021,27 @@
             
             await LogService.LogInfo("LoadGoogleReviews", $"Loaded {googleReviews.Count} Google reviews with average rating {googleRating:F1}");
             
+            isLoadingReviews = false;
+            StateHasChanged();
+            
             if (googleReviews.Count > 0)
             {
-                await Task.Delay(100); // Small delay to ensure DOM is updated
-                await JSRuntime.InvokeVoidAsync("initializeReviewsSlider");
+                // Ensure DOM is fully updated before initializing slider
+                await Task.Delay(200);
+                try
+                {
+                    await JSRuntime.InvokeVoidAsync("initializeReviewsSlider");
+                }
+                catch (Exception sliderEx)
+                {
+                    await LogService.LogError("Slider Initialization Error", sliderEx.Message);
+                }
             }
         }
         catch (Exception ex)
         {
             await LogService.LogError("LoadGoogleReviewsAsync Error", ex.Message);
             googleReviews = new List<GoogleReview>();
-        }
-        finally
-        {
             isLoadingReviews = false;
             StateHasChanged();
         }
