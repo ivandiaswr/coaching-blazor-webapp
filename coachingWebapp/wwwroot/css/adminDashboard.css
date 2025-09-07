@@ -377,7 +377,6 @@
 
 
 /* Send Email Popup */
-/* Custom styling for the email dialog */
 .email-dialog .mud-dialog-content {
     padding: 16px;
     background-color: #f9f9f9;
@@ -474,7 +473,6 @@
     margin-right: 4px;
 }
 
-/* Make DataGrid column header icons always visible */
 .mud-table-head .mud-table-cell .mud-button-root {
     opacity: 1 !important;
     visibility: visible !important;
@@ -490,26 +488,22 @@
     visibility: visible !important;
 }
 
-/* Ensure filter and menu icons are always shown */
 .mud-table-head .mud-table-cell .mud-table-head-cell-content .mud-icon-button {
     display: inline-flex !important;
     opacity: 1 !important;
 }
 
-/* Specifically target the column menu (three dots) */
 .mud-table-head .mud-table-cell .mud-table-column-header .mud-icon-button {
     opacity: 1 !important;
     visibility: visible !important;
     display: inline-flex !important;
 }
 
-/* Target MudBlazor DataGrid column options menu */
 .mud-data-grid .mud-table-head .mud-table-cell .mud-icon-button {
     opacity: 1 !important;
     visibility: visible !important;
 }
 
-/* Force show all header buttons and icons */
 .mud-data-grid-header .mud-icon-button,
 .mud-table-head-cell .mud-icon-button,
 .mud-table-column-header .mud-icon-button {
@@ -518,7 +512,6 @@
     display: inline-flex !important;
 }
 
-/* More aggressive targeting for MudBlazor column menu icons */
 .mud-table .mud-table-head .mud-table-row .mud-table-cell .mud-icon-button,
 .mud-data-grid .mud-table-container .mud-table .mud-table-head .mud-table-cell .mud-icon-button,
 .mud-table-head .mud-table-cell>.mud-icon-button,
@@ -528,7 +521,6 @@
     display: inline-flex !important;
 }
 
-/* Target any button with "more" icon (three dots) */
 .mud-table-head .mud-icon-button[aria-label*="more"],
 .mud-table-head .mud-icon-button[title*="more"],
 .mud-table-head .mud-icon-button[aria-label*="menu"],
@@ -538,7 +530,6 @@
     display: inline-flex !important;
 }
 
-/* Nuclear option - show ALL icon buttons in table headers */
 table .mud-table-head .mud-icon-button,
 .mud-table .mud-table-head .mud-icon-button,
 *[class*="mud-table"] *[class*="mud-table-head"] .mud-icon-button {
@@ -547,15 +538,13 @@ table .mud-table-head .mud-icon-button,
     display: inline-flex !important;
 }
 
-/* Mobile responsive improvements */
+/* Mobile */
 @media (max-width: 768px) {
 
-    /* Tab panels mobile optimization */
     .mud-tabs .mud-tab-panel {
         padding: 0.5rem !important;
     }
 
-    /* Data grid mobile optimization */
     .mud-data-grid {
         font-size: 0.875rem;
     }
@@ -564,23 +553,19 @@ table .mud-table-head .mud-icon-button,
         padding: 4px 8px !important;
     }
 
-    /* Calendar mobile optimization */
     .mud-calendar {
         font-size: 0.875rem;
     }
 
-    /* Form elements mobile optimization */
     .mud-form .mud-text-field {
         margin-bottom: 8px;
     }
 
-    /* Button optimization for mobile */
     .mud-button {
         min-width: auto !important;
         padding: 6px 12px !important;
     }
 
-    /* Dialog optimization for mobile */
     .mud-dialog {
         margin: 8px !important;
         max-width: calc(100vw - 16px) !important;
@@ -593,7 +578,6 @@ table .mud-table-head .mud-icon-button,
 
 @media (max-width: 480px) {
 
-    /* Extra small screens */
     .mud-tabs .mud-tab {
         font-size: 0.8rem;
         min-width: auto;
@@ -605,7 +589,6 @@ table .mud-table-head .mud-icon-button,
         font-size: 0.8rem;
     }
 
-    /* Stack toolbar items vertically on very small screens */
     .mud-data-grid .mud-toolbar {
         flex-direction: column;
         align-items: stretch;
@@ -616,7 +599,6 @@ table .mud-table-head .mud-icon-button,
     }
 }
 
-/* Horizontal scroll container for tables on small screens */
 @media (max-width: 768px) {
     .mud-data-grid-container {
         overflow-x: auto;
@@ -628,7 +610,6 @@ table .mud-table-head .mud-icon-button,
     }
 }
 
-/* Improve touch targets for mobile */
 @media (hover: none) and (pointer: coarse) {
 
     .mud-button,
@@ -641,4 +622,200 @@ table .mud-table-head .mud-icon-button,
     .mud-table-row {
         cursor: pointer;
     }
+}
+
+/* Admin Dashboard Pricing Configuration Styles */
+
+.pricing-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    border-radius: 12px !important;
+}
+
+.pricing-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Pricing header gradient */
+.pricing-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px 12px 0 0;
+    color: white;
+}
+
+/* Individual pricing section colors */
+.single-session-card {
+    border-left: 4px solid #2196F3 !important;
+}
+
+.single-session-card .mud-card-header {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+}
+
+.session-pack-card {
+    border-left: 4px solid #FF9800 !important;
+}
+
+.session-pack-card .mud-card-header {
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+}
+
+.subscription-card {
+    border-left: 4px solid #9C27B0 !important;
+}
+
+.subscription-card .mud-card-header {
+    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+}
+
+/* Empty state styling */
+.empty-state {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 2px dashed #dee2e6;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.empty-state:hover {
+    border-color: #6c757d;
+    background: linear-gradient(135deg, #f1f3f4 0%, #e2e6ea 100%);
+}
+
+/* Price breakdown styling */
+.price-breakdown {
+    background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c8 100%);
+    border-left: 4px solid #4caf50 !important;
+    border-radius: 8px;
+}
+
+.price-warning {
+    background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+    border-left: 4px solid #ff9800 !important;
+    border-radius: 8px;
+}
+
+/* Form field enhancements */
+.mud-input-outlined .mud-input-slot {
+    border-radius: 8px;
+}
+
+.mud-button-filled {
+    border-radius: 8px !important;
+    font-weight: 600;
+}
+
+/* Save button styling */
+.save-button {
+    background: linear-gradient(135deg, #4caf50 0%, #45a049 100%) !important;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+    border: none !important;
+}
+
+.save-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+}
+
+/* Delete button styling */
+.delete-button {
+    background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%) !important;
+    box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);
+}
+
+.delete-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(244, 67, 54, 0.4);
+}
+
+/* Animation for newly added items */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.new-item {
+    animation: slideInUp 0.5s ease-out;
+}
+
+/* Alert styling improvements */
+.mud-alert {
+    border-radius: 8px !important;
+}
+
+/* Tab styling */
+.mud-tabs .mud-tab {
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+.mud-tabs .mud-tab.mud-tab-active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .pricing-card {
+        margin-bottom: 1rem;
+    }
+
+    .mud-grid .mud-grid-item {
+        padding: 8px !important;
+    }
+
+    .mud-card-content {
+        padding: 16px !important;
+    }
+}
+
+/* Icon styling */
+.pricing-icon {
+    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+/* Tooltip improvements */
+.mud-tooltip {
+    border-radius: 6px !important;
+    font-size: 0.875rem;
+}
+
+/* Loading states */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    z-index: 1000;
+}
+
+/* Success animation */
+@keyframes pulse-success {
+    0% {
+        background-color: #e8f5e8;
+    }
+
+    50% {
+        background-color: #c8e6c8;
+    }
+
+    100% {
+        background-color: #e8f5e8;
+    }
+}
+
+.success-pulse {
+    animation: pulse-success 2s ease-in-out;
 }

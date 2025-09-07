@@ -8,6 +8,8 @@
 @attribute [Authorize(Roles = "Admin")]
 <PageTitle>@pageTitle</PageTitle>
 
+<link href="~/css/adminDashboard.css" rel="stylesheet" />
+
 <section id="adminDashboard">
     <div class="dashboard-header">
         <div>
@@ -482,197 +484,409 @@
         </MudTabPanel>
 
         <MudTabPanel Text="Pricing Configuration">
+            <!-- Pricing Overview Header -->
+            <MudPaper Class="pa-4 mb-4" Elevation="1" Style="background: linear-gradient(45deg, #f5f5f5 30%, #e3f2fd 90%);">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Size="Size.Large" Color="Color.Primary" />
+                    <div>
+                        <MudText Typo="Typo.h5" Color="Color.Primary">
+                            Manage Your Pricing
+                        </MudText>
+                    </div>
+                </MudStack>
+                
+                <MudAlert Severity="Severity.Info" Class="mt-3" Dense="true" NoIcon="false">
+                    <MudText Typo="Typo.body2">
+                        <strong>💡 Tips:</strong> 
+                        • Single sessions are for one-time bookings 
+                        • Packages offer discounts for multiple sessions 
+                        • Subscriptions are monthly recurring payments
+                    </MudText>
+                </MudAlert>
+            </MudPaper>
+
             <MudTabs Elevation="1" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-4">
                 @foreach (var sessionType in Enum.GetValues(typeof(SessionType)).Cast<SessionType>())
                 {
                     <MudTabPanel Text="@sessionType.GetDisplayName()">
                         <MudGrid Spacing="4" Justify="Justify.Center">
-                            <!-- Single Session Price -->
+                            
+                            <!-- Single Session Price Section -->
                             <MudItem xs="12">
-                                <MudCard Class="pa-4 mb-4" Elevation="2">
-                                    <MudCardContent>
-                                        <MudText Typo="Typo.h6" GutterBottom="true">@BookingType.SingleSession.GetDisplayName()</MudText>
+                                <MudCard Class="pricing-card" Elevation="3" Style="border-left: 4px solid #2196F3;">
+                                    <MudCardHeader>
+                                        <CardHeaderContent>
+                                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                                <MudIcon Icon="@Icons.Material.Filled.Person" Color="Color.Primary" />
+                                                <div>
+                                                    <MudText Typo="Typo.h6" Color="Color.Primary">
+                                                        🎯 Individual Session
+                                                    </MudText>
+                                                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                                        Price for a single @sessionType.GetDisplayName().ToLower() session
+                                                    </MudText>
+                                                </div>
+                                            </MudStack>
+                                        </CardHeaderContent>
+                                    </MudCardHeader>
+                                    <MudCardContent Class="pa-6">
                                         <MudForm @ref="singleForms[sessionType]">
-                                            <MudGrid Spacing="3">
+                                            <MudGrid Spacing="3" AlignItems="AlignItems.End">
                                                 <MudItem xs="12" sm="6">
-                                                    <MudNumericField Label="Price (£)"
+                                                    <MudNumericField Label="Session Price"
+                                                                    HelperText="How much do you charge for one session?"
                                                                     @bind-Value="singlePrices[sessionType].PriceGBP"
                                                                     For="@(() => singlePrices[sessionType].PriceGBP)"
                                                                     Adornment="Adornment.Start"
                                                                     AdornmentText="£"
                                                                     Required="true"
-                                                                    RequiredError="Price is required"
+                                                                    RequiredError="Please enter a price"
                                                                     Min="0"
-                                                                    Variant="Variant.Outlined" />
+                                                                    Variant="Variant.Outlined"
+                                                                    Style="font-size: 1.2em;" />
+                                                </MudItem>
+                                                <MudItem xs="12" sm="6">
+                                                    <MudButton Variant="Variant.Filled"
+                                                            Color="Color.Success"
+                                                            OnClick="@(() => SaveSinglePrice(sessionType))"
+                                                            Size="Size.Large"
+                                                            StartIcon="@Icons.Material.Filled.Save"
+                                                            FullWidth="true">
+                                                        💾 Save Price
+                                                    </MudButton>
                                                 </MudItem>
                                             </MudGrid>
                                         </MudForm>
-                                        <MudButton Variant="Variant.Filled"
-                                                Color="Color.Primary"
-                                                OnClick="@(() => SaveSinglePrice(sessionType))"
-                                                Class="mt-4"
-                                                StartIcon="@Icons.Material.Filled.Save">
-                                            Save Single Price
-                                        </MudButton>
+                                        
+                                        @if (singlePrices[sessionType].PriceGBP > 0)
+                                        {
+                                            <MudPaper Class="pa-3 mt-4" Elevation="0" Style="background-color: #e8f5e8; border-left: 3px solid #4caf50;">
+                                                <MudText Typo="Typo.body2" Color="Color.Success">
+                                                    ✅ Current price: <strong>£@singlePrices[sessionType].PriceGBP</strong> per session
+                                                </MudText>
+                                            </MudPaper>
+                                        }
                                     </MudCardContent>
                                 </MudCard>
                             </MudItem>
 
-                            <!-- Session Packs -->
+                            <!-- Session Packs Section -->
                             <MudItem xs="12">
-                                <MudText Typo="Typo.h6" GutterBottom="true">@BookingType.SessionPack.GetDisplayName()</MudText>
-                                @foreach (var pack in packPrices[sessionType])
-                                {
-                                    <MudCard Class="pa-4 mb-4" Elevation="2">
-                                        <MudCardContent>
-                                            <MudForm @ref="packForms[(sessionType, pack.Id)]">
-                                                <MudGrid Spacing="3">
-                                                    <MudItem xs="12" sm="6">
-                                                        <MudTextField Label="Pack Name"
-                                                                    @bind-Value="pack.Name"
-                                                                    For="@(() => pack.Name)"
-                                                                    Required="true"
-                                                                    RequiredError="Name is required"
-                                                                    Variant="Variant.Outlined" />
-                                                    </MudItem>
-                                                    <MudItem xs="12" sm="6">
-                                                        <MudTextField Label="Pack Description"
-                                                                    @bind-Value="pack.Description"
-                                                                    For="@(() => pack.Description)"
-                                                                    Variant="Variant.Outlined" />
-                                                    </MudItem>
-                                                    <MudItem xs="12" sm="4">
-                                                        <MudNumericField Label="Total Sessions"
-                                                                        @bind-Value="pack.TotalSessions"
-                                                                        For="@(() => pack.TotalSessions)"
-                                                                        Required="true"
-                                                                        RequiredError="Total sessions is required"
-                                                                        Min="1"
-                                                                        Variant="Variant.Outlined" />
-                                                    </MudItem>
-                                                    <MudItem xs="12" sm="4">
-                                                        <MudNumericField Label="Price (£)"
-                                                                        @bind-Value="pack.PriceGBP"
-                                                                        For="@(() => pack.PriceGBP)"
-                                                                        Adornment="Adornment.Start"
-                                                                        AdornmentText="£"
-                                                                        Required="true"
-                                                                        RequiredError="Price is required"
-                                                                        Min="0"
-                                                                        Variant="Variant.Outlined" />
-                                                    </MudItem>
-                                                </MudGrid>
-                                            </MudForm>
-                                            <MudButton Variant="Variant.Filled"
-                                                    Color="Color.Error"
-                                                    OnClick="@(() => ConfirmDeleteSessionPack(sessionType, pack.Id))"
-                                                    Class="mt-4 mr-2"
-                                                    StartIcon="@Icons.Material.Filled.Delete">
-                                                Delete Pack
+                                <MudCard Class="pricing-card" Elevation="3" Style="border-left: 4px solid #FF9800;">
+                                    <MudCardHeader>
+                                        <CardHeaderContent>
+                                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                                <MudIcon Icon="@Icons.Material.Filled.Inventory" Color="Color.Warning" />
+                                                <div>
+                                                    <MudText Typo="Typo.h6" Color="Color.Warning">
+                                                        📦 Session Packages
+                                                    </MudText>
+                                                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                                        Offer multiple sessions at a discounted rate
+                                                    </MudText>
+                                                </div>
+                                            </MudStack>
+                                        </CardHeaderContent>
+                                        <CardHeaderActions>
+                                            <MudButton Variant="Variant.Outlined"
+                                                    Color="Color.Warning"
+                                                    OnClick="@(() => AddNewSessionPack(sessionType))"
+                                                    Disabled="@(packPrices[sessionType].Count >= MAX_PACKS)"
+                                                    StartIcon="@Icons.Material.Filled.Add"
+                                                    Size="Size.Small">
+                                                ➕ Add Package
                                             </MudButton>
-                                        </MudCardContent>
-                                    </MudCard>
-                                }
-                                <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mb-4">
-                                    <MudButton Variant="Variant.Filled"
-                                            Color="Color.Primary"
-                                            OnClick="@(() => AddNewSessionPack(sessionType))"
-                                            Disabled="@(packPrices[sessionType].Count >= MAX_PACKS)"
-                                            StartIcon="@Icons.Material.Filled.Add">
-                                        Add New Pack
-                                    </MudButton>
-                                    @if (packPrices[sessionType].Count >= MAX_PACKS)
-                                    {
-                                        <MudText Color="Color.Error">Maximum of @MAX_PACKS session packs reached.</MudText>
-                                    }
-                                </MudStack>
-                                <MudButton Variant="Variant.Filled"
-                                        Color="Color.Primary"
-                                        OnClick="@(() => SaveSessionPacks(sessionType))"
-                                        StartIcon="@Icons.Material.Filled.Save"
-                                        Class="mt-2">
-                                    Save All Packs
-                                </MudButton>
+                                        </CardHeaderActions>
+                                    </MudCardHeader>
+                                    <MudCardContent Class="pa-6">
+                                        @if (!packPrices[sessionType].Any())
+                                        {
+                                            <MudPaper Class="pa-6 text-center" Elevation="0" Style="background-color: #fff3e0;">
+                                                <MudIcon Icon="@Icons.Material.Filled.Inventory" Size="Size.Large" Color="Color.Warning" Class="mb-3" />
+                                                <MudText Typo="Typo.h6" Color="Color.Warning" Class="mb-2">No packages yet</MudText>
+                                                <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">
+                                                    Create session packages to offer discounts for multiple sessions
+                                                </MudText>
+                                                <MudButton Variant="Variant.Filled"
+                                                        Color="Color.Warning"
+                                                        OnClick="@(() => AddNewSessionPack(sessionType))"
+                                                        StartIcon="@Icons.Material.Filled.Add">
+                                                    Create Your First Package
+                                                </MudButton>
+                                            </MudPaper>
+                                        }
+                                        else
+                                        {
+                                            @foreach (var pack in packPrices[sessionType])
+                                            {
+                                                <MudPaper Class="pa-4 mb-4" Elevation="2" Style="border: 1px solid #FFE0B2;">
+                                                    <MudForm @ref="packForms[(sessionType, pack.Id)]">
+                                                        <MudGrid Spacing="3">
+                                                            <MudItem xs="12">
+                                                                <MudTextField Label="📝 Package Name"
+                                                                            HelperText="Give your package a catchy name (e.g., 'Starter Pack', '3-Session Bundle')"
+                                                                            @bind-Value="pack.Name"
+                                                                            For="@(() => pack.Name)"
+                                                                            Required="true"
+                                                                            RequiredError="Please enter a package name"
+                                                                            Variant="Variant.Outlined" />
+                                                            </MudItem>
+                                                            <MudItem xs="12">
+                                                                <MudTextField Label="📄 Description (Optional)"
+                                                                            HelperText="Describe what's included in this package"
+                                                                            @bind-Value="pack.Description"
+                                                                            For="@(() => pack.Description)"
+                                                                            Lines="2"
+                                                                            Variant="Variant.Outlined" />
+                                                            </MudItem>
+                                                            <MudItem xs="12" sm="6">
+                                                                <MudNumericField Label="🔢 Number of Sessions"
+                                                                                HelperText="How many sessions are included?"
+                                                                                @bind-Value="pack.TotalSessions"
+                                                                                For="@(() => pack.TotalSessions)"
+                                                                                Required="true"
+                                                                                RequiredError="Please enter number of sessions"
+                                                                                Min="1"
+                                                                                Variant="Variant.Outlined" />
+                                                            </MudItem>
+                                                            <MudItem xs="12" sm="6">
+                                                                <MudNumericField Label="💷 Package Price"
+                                                                                HelperText="Total price for all sessions"
+                                                                                @bind-Value="pack.PriceGBP"
+                                                                                For="@(() => pack.PriceGBP)"
+                                                                                Adornment="Adornment.Start"
+                                                                                AdornmentText="£"
+                                                                                Required="true"
+                                                                                RequiredError="Please enter a price"
+                                                                                Min="0"
+                                                                                Variant="Variant.Outlined" />
+                                                            </MudItem>
+                                                        </MudGrid>
+                                                        
+                                                        @if (pack.TotalSessions > 0 && pack.PriceGBP > 0 && singlePrices[sessionType].PriceGBP > 0)
+                                                        {
+                                                            var individualTotal = pack.TotalSessions * singlePrices[sessionType].PriceGBP;
+                                                            var savings = individualTotal - pack.PriceGBP;
+                                                            var pricePerSession = pack.PriceGBP / pack.TotalSessions;
+                                                            
+                                                            <MudPaper Class="pa-3 mt-3" Elevation="0" Style="background-color: #e8f5e8; border-left: 3px solid #4caf50;">
+                                                                <MudText Typo="Typo.body2" Color="Color.Success">
+                                                                    <strong>💰 Price Breakdown:</strong>
+                                                                </MudText>
+                                                                <MudText Typo="Typo.body2">
+                                                                    • Price per session: £@pricePerSession.ToString("F2")
+                                                                </MudText>
+                                                                @if (savings > 0)
+                                                                {
+                                                                    <MudText Typo="Typo.body2" Color="Color.Success">
+                                                                        • Savings vs individual: £@savings.ToString("F2") (@((savings/individualTotal*100).ToString("F1"))% discount)
+                                                                    </MudText>
+                                                                }
+                                                                else if (savings < 0)
+                                                                {
+                                                                    <MudText Typo="Typo.body2" Color="Color.Warning">
+                                                                        • This package costs £@Math.Abs(savings).ToString("F2") more than individual sessions
+                                                                    </MudText>
+                                                                }
+                                                            </MudPaper>
+                                                        }
+                                                    </MudForm>
+                                                    
+                                                    <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-4" Spacing="2">
+                                                        <MudButton Variant="Variant.Outlined"
+                                                                Color="Color.Error"
+                                                                OnClick="@(() => ConfirmDeleteSessionPack(sessionType, pack.Id))"
+                                                                StartIcon="@Icons.Material.Filled.Delete"
+                                                                Size="Size.Small">
+                                                            🗑️ Remove
+                                                        </MudButton>
+                                                    </MudStack>
+                                                </MudPaper>
+                                            }
+                                            
+                                            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mt-4">
+                                                <div>
+                                                    @if (packPrices[sessionType].Count >= MAX_PACKS)
+                                                    {
+                                                        <MudText Typo="Typo.body2" Color="Color.Warning">
+                                                            ⚠️ You've reached the maximum of @MAX_PACKS packages
+                                                        </MudText>
+                                                    }
+                                                </div>
+                                                <MudButton Variant="Variant.Filled"
+                                                        Color="Color.Success"
+                                                        OnClick="@(() => SaveSessionPacks(sessionType))"
+                                                        StartIcon="@Icons.Material.Filled.Save"
+                                                        Size="Size.Large">
+                                                    💾 Save All Packages
+                                                </MudButton>
+                                            </MudStack>
+                                        }
+                                    </MudCardContent>
+                                </MudCard>
                             </MudItem>
 
-                            <!-- Subscriptions -->
+                            <!-- Subscriptions Section -->
                             <MudItem xs="12">
-                                <MudText Typo="Typo.h6" GutterBottom="true">@BookingType.Subscription.GetDisplayName()</MudText>
-                                @foreach (var subscription in subscriptionPrices[sessionType])
-                                {
-                                    <MudCard Class="pa-4 mb-4" Elevation="2">
-                                        <MudCardContent>
-                                            <MudForm @ref="subscriptionForms[(sessionType, subscription.Id)]">
-                                                <MudGrid Spacing="3">
-                                                    <MudItem xs="12" sm="6">
-                                                        <MudTextField Label="Subscription Name"
-                                                                    @bind-Value="subscription.Name"
-                                                                    For="@(() => subscription.Name)"
-                                                                    Required="true"
-                                                                    RequiredError="Name is required"
-                                                                    Variant="Variant.Outlined" />
-                                                    </MudItem>
-                                                    <MudItem xs="12" sm="6">
-                                                        <MudTextField Label="Subscription Description"
-                                                                    @bind-Value="subscription.Description"
-                                                                    For="@(() => subscription.Description)"
-                                                                    Variant="Variant.Outlined" />
-                                                    </MudItem>
-                                                    <MudItem xs="12" sm="4">
-                                                        <MudNumericField Label="Monthly Session Limit"
-                                                                        @bind-Value="subscription.MonthlyLimit"
-                                                                        For="@(() => subscription.MonthlyLimit)"
-                                                                        Required="true"
-                                                                        RequiredError="Monthly limit is required"
-                                                                        Min="1"
-                                                                        Variant="Variant.Outlined" />
-                                                    </MudItem>
-                                                    <MudItem xs="12" sm="4">
-                                                        <MudNumericField Label="Price (£)"
-                                                                        @bind-Value="subscription.PriceGBP"
-                                                                        For="@(() => subscription.PriceGBP)"
-                                                                        Adornment="Adornment.Start"
-                                                                        AdornmentText="£"
-                                                                        Required="true"
-                                                                        RequiredError="Price is required"
-                                                                        Min="0"
-                                                                        Variant="Variant.Outlined" />
-                                                        <MudTooltip Text="A Stripe price will be created if the price is greater than 0.">
-                                                            <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" />
-                                                        </MudTooltip>
-                                                    </MudItem>
-                                                </MudGrid>
-                                            </MudForm>
-                                            <MudButton Variant="Variant.Filled"
-                                                    Color="Color.Error"
-                                                    OnClick="@(() => ConfirmDeleteSubscription(sessionType, subscription.Id))"
-                                                    Class="mt-4 mr-2"
-                                                    StartIcon="@Icons.Material.Filled.Delete">
-                                                Delete Subscription
+                                <MudCard Class="pricing-card" Elevation="3" Style="border-left: 4px solid #9C27B0;">
+                                    <MudCardHeader>
+                                        <CardHeaderContent>
+                                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                                <MudIcon Icon="@Icons.Material.Filled.Subscriptions" Color="Color.Secondary" />
+                                                <div>
+                                                    <MudText Typo="Typo.h6" Color="Color.Secondary">
+                                                        🔄 Monthly Subscriptions
+                                                    </MudText>
+                                                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                                        Recurring monthly plans with session limits
+                                                    </MudText>
+                                                </div>
+                                            </MudStack>
+                                        </CardHeaderContent>
+                                        <CardHeaderActions>
+                                            <MudButton Variant="Variant.Outlined"
+                                                    Color="Color.Secondary"
+                                                    OnClick="@(() => AddNewSubscription(sessionType))"
+                                                    Disabled="@(subscriptionPrices[sessionType].Count >= MAX_SUBSCRIPTIONS)"
+                                                    StartIcon="@Icons.Material.Filled.Add"
+                                                    Size="Size.Small">
+                                                ➕ Add Subscription
                                             </MudButton>
-                                        </MudCardContent>
-                                    </MudCard>
-                                }
-                                <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mb-4">
-                                    <MudButton Variant="Variant.Filled"
-                                            Color="Color.Primary"
-                                            OnClick="@(() => AddNewSubscription(sessionType))"
-                                            Disabled="@(subscriptionPrices[sessionType].Count >= MAX_SUBSCRIPTIONS)"
-                                            StartIcon="@Icons.Material.Filled.Add">
-                                        Add New Subscription
-                                    </MudButton>
-                                    @if (subscriptionPrices[sessionType].Count >= MAX_SUBSCRIPTIONS)
-                                    {
-                                        <MudText Color="Color.Error">Maximum of @MAX_SUBSCRIPTIONS subscriptions reached.</MudText>
-                                    }
-                                </MudStack>
-                                <MudButton Variant="Variant.Filled"
-                                        Color="Color.Primary"
-                                        OnClick="@(() => SaveSubscriptions(sessionType))"
-                                        StartIcon="@Icons.Material.Filled.Save"
-                                        Class="mt-2">
-                                    Save All Subscriptions
-                                </MudButton>
+                                        </CardHeaderActions>
+                                    </MudCardHeader>
+                                    <MudCardContent Class="pa-6">
+                                        @if (!subscriptionPrices[sessionType].Any())
+                                        {
+                                            <MudPaper Class="pa-6 text-center" Elevation="0" Style="background-color: #f3e5f5;">
+                                                <MudIcon Icon="@Icons.Material.Filled.Subscriptions" Size="Size.Large" Color="Color.Secondary" Class="mb-3" />
+                                                <MudText Typo="Typo.h6" Color="Color.Secondary" Class="mb-2">No subscriptions yet</MudText>
+                                                <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-4">
+                                                    Create subscription plans for clients who want regular monthly sessions
+                                                </MudText>
+                                                <MudButton Variant="Variant.Filled"
+                                                        Color="Color.Secondary"
+                                                        OnClick="@(() => AddNewSubscription(sessionType))"
+                                                        StartIcon="@Icons.Material.Filled.Add">
+                                                    Create Your First Subscription
+                                                </MudButton>
+                                            </MudPaper>
+                                        }
+                                        else
+                                        {
+                                            @foreach (var subscription in subscriptionPrices[sessionType])
+                                            {
+                                                <MudPaper Class="pa-4 mb-4" Elevation="2" Style="border: 1px solid #E1BEE7;">
+                                                    <MudForm @ref="subscriptionForms[(sessionType, subscription.Id)]">
+                                                        <MudGrid Spacing="3">
+                                                            <MudItem xs="12">
+                                                                <MudTextField Label="📝 Subscription Name"
+                                                                            HelperText="Give your subscription a name (e.g., 'Monthly Wellness', 'Premium Plan')"
+                                                                            @bind-Value="subscription.Name"
+                                                                            For="@(() => subscription.Name)"
+                                                                            Required="true"
+                                                                            RequiredError="Please enter a subscription name"
+                                                                            Variant="Variant.Outlined" />
+                                                            </MudItem>
+                                                            <MudItem xs="12">
+                                                                <MudTextField Label="📄 Description (Optional)"
+                                                                            HelperText="Describe what's included in this monthly plan"
+                                                                            @bind-Value="subscription.Description"
+                                                                            For="@(() => subscription.Description)"
+                                                                            Lines="2"
+                                                                            Variant="Variant.Outlined" />
+                                                            </MudItem>
+                                                            <MudItem xs="12" sm="6">
+                                                                <MudNumericField Label="📅 Sessions Per Month"
+                                                                                HelperText="How many sessions can clients book monthly?"
+                                                                                @bind-Value="subscription.MonthlyLimit"
+                                                                                For="@(() => subscription.MonthlyLimit)"
+                                                                                Required="true"
+                                                                                RequiredError="Please enter the monthly session limit"
+                                                                                Min="1"
+                                                                                Variant="Variant.Outlined" />
+                                                            </MudItem>
+                                                            <MudItem xs="12" sm="6">
+                                                                <MudStack Spacing="2">
+                                                                    <MudNumericField Label="💷 Monthly Price"
+                                                                                    HelperText="How much per month?"
+                                                                                    @bind-Value="subscription.PriceGBP"
+                                                                                    For="@(() => subscription.PriceGBP)"
+                                                                                    Adornment="Adornment.Start"
+                                                                                    AdornmentText="£"
+                                                                                    Required="true"
+                                                                                    RequiredError="Please enter a monthly price"
+                                                                                    Min="0"
+                                                                                    Variant="Variant.Outlined" />
+                                                                    <MudAlert Severity="Severity.Info" Dense="true" NoIcon="false" Class="mt-2">
+                                                                        <MudText Typo="Typo.caption">
+                                                                            💳 This will create a recurring payment plan through Stripe
+                                                                        </MudText>
+                                                                    </MudAlert>
+                                                                </MudStack>
+                                                            </MudItem>
+                                                        </MudGrid>
+                                                        
+                                                        @if (subscription.MonthlyLimit > 0 && subscription.PriceGBP > 0 && singlePrices[sessionType].PriceGBP > 0)
+                                                        {
+                                                            var monthlyTotal = subscription.MonthlyLimit * singlePrices[sessionType].PriceGBP;
+                                                            var savings = monthlyTotal - subscription.PriceGBP;
+                                                            var pricePerSession = subscription.PriceGBP / subscription.MonthlyLimit;
+                                                            
+                                                            <MudPaper Class="pa-3 mt-3" Elevation="0" Style="background-color: #e8f5e8; border-left: 3px solid #4caf50;">
+                                                                <MudText Typo="Typo.body2" Color="Color.Success">
+                                                                    <strong>💰 Subscription Value:</strong>
+                                                                </MudText>
+                                                                <MudText Typo="Typo.body2">
+                                                                    • Effective price per session: £@pricePerSession.ToString("F2")
+                                                                </MudText>
+                                                                @if (savings > 0)
+                                                                {
+                                                                    <MudText Typo="Typo.body2" Color="Color.Success">
+                                                                        • Monthly savings: £@savings.ToString("F2") (@((savings/monthlyTotal*100).ToString("F1"))% discount)
+                                                                    </MudText>
+                                                                }
+                                                                else if (savings < 0)
+                                                                {
+                                                                    <MudText Typo="Typo.body2" Color="Color.Warning">
+                                                                        • This costs £@Math.Abs(savings).ToString("F2") more than individual sessions
+                                                                    </MudText>
+                                                                }
+                                                            </MudPaper>
+                                                        }
+                                                    </MudForm>
+                                                    
+                                                    <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-4" Spacing="2">
+                                                        <MudButton Variant="Variant.Outlined"
+                                                                Color="Color.Error"
+                                                                OnClick="@(() => ConfirmDeleteSubscription(sessionType, subscription.Id))"
+                                                                StartIcon="@Icons.Material.Filled.Delete"
+                                                                Size="Size.Small">
+                                                            🗑️ Remove
+                                                        </MudButton>
+                                                    </MudStack>
+                                                </MudPaper>
+                                            }
+                                            
+                                            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mt-4">
+                                                <div>
+                                                    @if (subscriptionPrices[sessionType].Count >= MAX_SUBSCRIPTIONS)
+                                                    {
+                                                        <MudText Typo="Typo.body2" Color="Color.Warning">
+                                                            ⚠️ You've reached the maximum of @MAX_SUBSCRIPTIONS subscriptions
+                                                        </MudText>
+                                                    }
+                                                </div>
+                                                <MudButton Variant="Variant.Filled"
+                                                        Color="Color.Success"
+                                                        OnClick="@(() => SaveSubscriptions(sessionType))"
+                                                        StartIcon="@Icons.Material.Filled.Save"
+                                                        Size="Size.Large">
+                                                    💾 Save All Subscriptions
+                                                </MudButton>
+                                            </MudStack>
+                                        }
+                                    </MudCardContent>
+                                </MudCard>
                             </MudItem>
                         </MudGrid>
                     </MudTabPanel>
@@ -750,7 +964,6 @@
         }
         else
         {
-            // Future sessions - upcoming
             return "🔵"; // Blue for upcoming scheduled sessions
         }
     }
