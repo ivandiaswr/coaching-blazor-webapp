@@ -1,146 +1,301 @@
 @page "/session/{SessionId}"
 @rendermode @(new Microsoft.AspNetCore.Components.Web.InteractiveServerRenderMode(prerender: false))
-@inject IJSRuntime JSRuntime
-@inject AuthenticationStateProvider AuthenticationStateProvider
-@inject ISnackbar Snackbar
+@inject ILogger<VideoCall> Logger
 @implements IAsyncDisposable
 
+<MudPopoverProvider/>
 <MudSnackbarProvider />
+<MudDialogProvider />
 
 <PageTitle>@pageTitle</PageTitle>
 
 <section id="video-session" class="services-section">
     <div class="container">
         <header class="services-header">
-            <h1>Video Session</h1>
-            <p class="header-description">Join your session below.</p>
+            <h1>
+                <MudIcon Icon="@Icons.Material.Filled.VideoCall" Class="mr-2" Size="Size.Large" />
+                Video Session
+            </h1>
+            <p class="header-description">Professional coaching session - Secure and private</p>
+            
+            @if (!string.IsNullOrEmpty(connectionStatus))
+            {
+                <MudChip T="string" Color="@GetConnectionStatusColor()" Size="Size.Small" Icon="@GetConnectionStatusIcon()">
+                    @connectionStatus.ToUpper()
+                </MudChip>
+            }
         </header>
 
         @if (isAdmin)
         {
-            <MudAlert Severity="Severity.Success"><b>Admin:</b> You’re managing this session.</MudAlert>
+            <MudAlert Severity="Severity.Success" Variant="Variant.Filled" Class="mb-3">
+                <div style="display: flex; align-items: center;">
+                    <MudIcon Icon="@Icons.Material.Filled.AdminPanelSettings" Class="mr-2" />
+                    <div>
+                        <strong>Admin Session</strong><br />
+                        <small>You're managing this coaching session</small>
+                    </div>
+                </div>
+            </MudAlert>
         }
         else if (isUser)
         {
-            <MudAlert Severity="Severity.Info"><b>Welcome back!</b> You're joining this session as a client.</MudAlert>
+            <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Class="mb-3">
+                <div style="display: flex; align-items: center;">
+                    <MudIcon Icon="@Icons.Material.Filled.Person" Class="mr-2" />
+                    <div>
+                        <strong>Welcome to Your Session</strong><br />
+                        <small>Your coaching session with Ítala</small>
+                    </div>
+                </div>
+            </MudAlert>
         }
         else
         {
-            <MudAlert Severity="Severity.Warning"><b>Guest access:</b> You can join this session as a guest.</MudAlert>
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mb-3">
+                <div style="display: flex; align-items: center;">
+                    <MudIcon Icon="@Icons.Material.Filled.Warning" Class="mr-2" />
+                    <div>
+                        <strong>Guest Access</strong><br />
+                        <small>You're joining as a guest participant</small>
+                    </div>
+                </div>
+            </MudAlert>
         }
 
         <MudPaper Class="session-paper">
-            <p><b>Session:</b> @SessionId</p>
+            <MudGrid Spacing="2" Class="mb-4">
+                <MudItem xs="12" md="8">
+                    <MudStack Row Spacing="2">
+                        <MudIcon Icon="@Icons.Material.Filled.Key" />
+                        <div>
+                            <MudText Typo="Typo.caption" Color="Color.Primary">Session ID</MudText>
+                            <MudText Typo="Typo.body2" Style="font-family: monospace;">@SessionId</MudText>
+                        </div>
+                    </MudStack>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <div class="d-flex justify-end">
+                        <MudChip T="string" Color="@(isSessionValid ? Color.Success : Color.Error)" 
+                                Icon="@(isSessionValid ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Error)">
+                            @(isSessionValid ? "Valid Session" : "Invalid Session")
+                        </MudChip>
+                    </div>
+                </MudItem>
+            </MudGrid>
 
             <div class="video-container">
                 <div class="video-position">
+                    <div class="video-header">
+                        <MudText Typo="Typo.caption" Color="Color.Primary">
+                            <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" Class="mr-1" />
+                            You (@(isAdmin ? "Coach" : "Client"))
+                        </MudText>
+                        @if (isCallActive)
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Success" Style="font-size: 0.7rem;">
+                                <MudIcon Icon="@Icons.Material.Filled.Circle" Size="Size.Small" Style="color: #4caf50;" />
+                                LIVE
+                            </MudText>
+                        }
+                    </div>
+                    
                     <video id="localVideo" autoplay muted controls="false" class="video-element"
                         style="@(!isLocalStreamActive ? "display: none;" : "")"></video>
+                    
                     @if (!isCallActive)
                     {
-                        <div class="session-video-overlay pulsing"><span class="overlay-text">You need to connect...</span>
+                        <div class="session-video-overlay pulsing">
+                            <MudIcon Icon="@Icons.Material.Filled.VideoCall" Size="Size.Large" Class="mb-2" />
+                            <span class="overlay-text">Ready to Connect</span>
+                            <span class="overlay-subtext">Click the call button to start</span>
                         </div>
                     }
                     else if (isCallActive && !isLocalStreamActive)
                     {
-                        <div class="session-video-overlay"><span class="overlay-text">Camera/Mic Not Available</span></div>
+                        <div class="session-video-overlay">
+                            <MudIcon Icon="@Icons.Material.Filled.Warning" Size="Size.Large" Class="mb-2" />
+                            <span class="overlay-text">Camera/Mic Not Available</span>
+                            <span class="overlay-subtext">Check your permissions</span>
+                        </div>
                     }
                 </div>
+                
                 <div class="video-position">
+                    <div class="video-header">
+                        <MudText Typo="Typo.caption" Color="Color.Primary">
+                            <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" Class="mr-1" />
+                            @(!isAdmin ? "Ítala (Coach)" : "Client")
+                        </MudText>
+                        @if (isRemoteConnected)
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Success" Style="font-size: 0.7rem;">
+                                <MudIcon Icon="@Icons.Material.Filled.Circle" Size="Size.Small" Style="color: #4caf50;" />
+                                CONNECTED
+                            </MudText>
+                        }
+                    </div>
+                    
                     <video id="remoteVideo" autoplay playsinline class="video-element" controls
                         controlsList="nodownload nofullscreen" volume="0.5"></video>
+                    
                     @if (!isCallActive)
                     {
-                        <div class="session-video-overlay"><span class="overlay-text pulsing">Waiting for @(!isAdmin ?
-                                                            "Ítala" : "Client")...</span></div>
+                        <div class="session-video-overlay">
+                            <MudIcon Icon="@Icons.Material.Filled.HourglassEmpty" Size="Size.Large" Class="mb-2 pulsing" />
+                            <span class="overlay-text pulsing">Waiting for @(!isAdmin ? "Ítala" : "Client")...</span>
+                        </div>
                     }
                     else if (isCallActive && !isRemoteConnected)
                     {
                         @if (isOtherParticipantPresent)
                         {
                             <div class="session-video-overlay">
-                                <span class="overlay-text pulsing">Connecting to @(!isAdmin ? "Ítala" :
-                                                                "Client")...</span><br />
+                                <MudIcon Icon="@Icons.Material.Filled.Sync" Size="Size.Large" Class="mb-2 pulsing" />
+                                <span class="overlay-text pulsing">Connecting to @(!isAdmin ? "Ítala" : "Client")...</span><br />
                                 <span class="overlay-subtext">(in session)</span>
                             </div>
                         }
                         else
                         {
-                            <div class="session-video-overlay"><span class="overlay-text">Waiting for @(!isAdmin ? "Ítala" :
-                                                                "Client")...</span></div>
+                            <div class="session-video-overlay">
+                                <MudIcon Icon="@Icons.Material.Filled.HourglassEmpty" Size="Size.Large" Class="mb-2" />
+                                <span class="overlay-text">Waiting for @(!isAdmin ? "Ítala" : "Client")...</span>
+                            </div>
                         }
                     }
                 </div>
             </div>
 
+            <!-- Enhanced Control Panel -->
             <div class="button-container">
-                <MudIconButton Icon="@(isCallActive? Icons.Material.Filled.Call : Icons.Material.Filled.Call)"
-                    Color="@(isCallActive ? Color.Success : Color.Default)"
-                    Variant="@(isCallActive ? Variant.Filled : Variant.Outlined)" OnClick="@JoinCall"
-                    ToolTip="@(isCallActive ? "Call Active" : "Start/Join Call")" />
+                <MudTooltip Text="@(isCallActive ? "Call Active" : "Start/Join Call")">
+                    <MudIconButton Icon="@Icons.Material.Filled.Call"
+                        Color="@(isCallActive ? Color.Success : Color.Primary)"
+                        Variant="@(isCallActive ? Variant.Filled : Variant.Outlined)" 
+                        Size="Size.Large"
+                        OnClick="@JoinCall" />
+                </MudTooltip>
 
-                <MudIconButton Icon="@(isMuted? Icons.Material.Filled.MicOff : Icons.Material.Filled.Mic)"
-                    Color="@(isMuted ? Color.Secondary : Color.Default)"
-                    Variant="@(isMuted ? Variant.Filled : Variant.Outlined)" OnClick="@ToggleMic"
-                    ToolTip="@(isMuted ? "Unmute Microphone" : "Mute Microphone")" />
+                <MudTooltip Text="@(isMuted ? "Unmute Microphone" : "Mute Microphone")">
+                    <MudIconButton Icon="@(isMuted? Icons.Material.Filled.MicOff : Icons.Material.Filled.Mic)"
+                        Color="@(isMuted ? Color.Error : Color.Default)"
+                        Variant="@(isMuted ? Variant.Filled : Variant.Outlined)" 
+                        Size="Size.Large"
+                        OnClick="@ToggleMic" />
+                </MudTooltip>
 
-                <MudIconButton
-                    Icon="@(isCameraOff ? Icons.Material.Filled.VideocamOff : Icons.Material.Filled.Videocam)"
-                    Color="@(isCameraOff ? Color.Secondary : Color.Default)"
-                    Variant="@(isCameraOff ? Variant.Filled : Variant.Outlined)" OnClick="@ToggleCamera"
-                    ToolTip="@(isCameraOff ? "Turn On Camera" : "Turn Off Camera")" />
+                <MudTooltip Text="@(isCameraOff ? "Turn On Camera" : "Turn Off Camera")">
+                    <MudIconButton
+                        Icon="@(isCameraOff ? Icons.Material.Filled.VideocamOff : Icons.Material.Filled.Videocam)"
+                        Color="@(isCameraOff ? Color.Error : Color.Default)"
+                        Variant="@(isCameraOff ? Variant.Filled : Variant.Outlined)" 
+                        Size="Size.Large"
+                        OnClick="@ToggleCamera" />
+                </MudTooltip>
 
-                <MudIconButton
-                    Icon="@(isScreenSharing ? Icons.Material.Filled.StopScreenShare : Icons.Material.Filled.ScreenShare)"
-                    Color="@(isScreenSharing ? Color.Info : Color.Default)"
-                    Variant="@(isScreenSharing ? Variant.Filled : Variant.Outlined)" OnClick="@ShareScreen"
-                    ToolTip="@(isScreenSharing ? "Stop Sharing" : "Share Screen")" />
+                <MudTooltip Text="@(isScreenSharing ? "Stop Sharing" : "Share Screen")">
+                    <MudIconButton
+                        Icon="@(isScreenSharing ? Icons.Material.Filled.StopScreenShare : Icons.Material.Filled.ScreenShare)"
+                        Color="@(isScreenSharing ? Color.Info : Color.Default)"
+                        Variant="@(isScreenSharing ? Variant.Filled : Variant.Outlined)" 
+                        Size="Size.Large"
+                        OnClick="@ShareScreen" />
+                </MudTooltip>
 
-                <MudIconButton Icon="@Icons.Material.Filled.CallEnd" Color="Color.Error" Variant="Variant.Filled"
-                    OnClick="@EndCall" ToolTip="End Call" />
+                <MudTooltip Text="End Call">
+                    <MudIconButton Icon="@Icons.Material.Filled.CallEnd" 
+                        Color="Color.Error" 
+                        Variant="Variant.Filled" 
+                        Size="Size.Large"
+                        OnClick="@EndCall" />
+                </MudTooltip>
 
-                <MudIconButton Icon="@Icons.Material.Filled.Fullscreen" Color="Color.Primary" Variant="Variant.Outlined"
-                    OnClick="@ToggleFullscreen" ToolTip="Fullscreen Remote Video" />
+                <MudTooltip Text="Fullscreen Remote Video">
+                    <MudIconButton Icon="@Icons.Material.Filled.Fullscreen" 
+                        Color="Color.Secondary" 
+                        Variant="Variant.Outlined" 
+                        Size="Size.Large"
+                        OnClick="@ToggleFullscreen" />
+                </MudTooltip>
 
-                <div style="display: flex; align-items: center; gap: 0.5rem; min-width: 120px;">
-                    <MudIcon Icon="@Icons.Material.Filled.VolumeUp" Style="color: #666;" />
-                    <MudSlider T="double" Value="remoteVideoVolume" Min="0" Max="1" Step="0.1" Style="min-width: 80px;"
-                        ToolTip="Remote Video Volume" ValueChanged="@OnVolumeChanged" />
+                <!-- Enhanced Volume Control -->
+                <div class="volume-control">
+                    <MudIcon Icon="@Icons.Material.Filled.VolumeUp" />
+                    <MudSlider T="double" Value="remoteVideoVolume" Min="0" Max="1" Step="0.1" 
+                        Style="min-width: 100px;"
+                        ValueChanged="@OnVolumeChanged" />
+                    <MudText Typo="Typo.caption">@((int)(remoteVideoVolume * 100))%</MudText>
                 </div>
             </div>
 
+            <!-- Enhanced Chat Container -->
             <div class="chat-container">
-                <div class="chat-messages" id="chat-box">
-                    @foreach (var message in chatMessages)
-                    {
-                        <div class="message @(message.IsSentByCurrentUser ? "sent" : "received")">
-                            <div class="message-header">
-                                <span class="username">@message.DisplayName</span>
-                                <span class="timestamp">@message.Timestamp</span>
+                <MudStack Spacing="0">
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem; background: #f8fafc; border-bottom: 1px solid rgba(226, 232, 240, 0.8);">
+                        <MudStack Row Spacing="1">
+                            <MudIcon Icon="@Icons.Material.Filled.Chat" Size="Size.Small" />
+                            <MudText Typo="Typo.body2" Style="font-weight: 600;">Session Chat</MudText>
+                        </MudStack>
+                        <MudBadge Content="@chatMessages.Count" Color="Color.Primary" Overlap="true" Bordered="true">
+                            <MudIcon Icon="@Icons.Material.Filled.Message" Size="Size.Small" />
+                        </MudBadge>
+                    </div>
+                    
+                    <div class="chat-messages" id="chat-box">
+                        @if (chatMessages.Count == 0)
+                        {
+                            <div style="text-align: center; padding: 2rem; color: #64748b;">
+                                <MudIcon Icon="@Icons.Material.Filled.QuestionAnswer" Size="Size.Large" />
+                                <MudText Typo="Typo.body2" Style="margin-top: 0.5rem;">
+                                    Start the conversation...
+                                </MudText>
                             </div>
-                            <div class="message-content">
-                                <span class="text">@message.Message</span>
-                            </div>
-                        </div>
-                    }
-                </div>
-                <div class="chat-input">
-                    <MudTextField @ref="chatInputRef" @bind-Value="chatMessage" Label="Type a message..."
-                        Variant="Variant.Outlined" Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Send"
-                        OnAdornmentClick="SendChatMessage" OnKeyUp="HandleChatInputKeyUp" />
-                </div>
+                        }
+                        else
+                        {
+                            @foreach (var message in chatMessages)
+                            {
+                                <div class="message @(message.IsSentByCurrentUser ? "sent" : "received")">
+                                    <div class="message-header">
+                                        <span class="username">@message.DisplayName</span>
+                                        <span class="timestamp">@message.Timestamp</span>
+                                    </div>
+                                    <div class="message-content">
+                                        <span class="text">@message.Message</span>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                    
+                    <div class="chat-input">
+                        <MudTextField @ref="chatInputRef" @bind-Value="chatMessage" 
+                            Label="Type your message..." 
+                            Variant="Variant.Outlined" 
+                            Adornment="Adornment.End" 
+                            AdornmentIcon="@Icons.Material.Filled.Send"
+                            AdornmentColor="Color.Primary"
+                            OnAdornmentClick="SendChatMessage" 
+                            OnKeyUp="HandleChatInputKeyUp"
+                            MaxLength="500" />
+                    </div>
+                </MudStack>
             </div>
         </MudPaper>
     </div>
 </section>
 
 @code {
+    #nullable disable
     [Parameter]
-    public string? SessionId { get; set; }
+    public string SessionId { get; set; }
+    
     public string pageTitle => "Video Call - Coaching WebApp";
-    private IJSObjectReference? module;
-    private DotNetObjectReference<VideoCall>? dotNetRef;
+    private IJSObjectReference module;
+    private DotNetObjectReference<VideoCall> dotNetRef;
 
+    // Enhanced state management
     private bool isCallActive = false;
     private bool isMuted = false;
     private bool isCameraOff = false;
@@ -150,8 +305,11 @@
     private bool isOtherParticipantPresent = false;
     private bool isAdmin = false;
     private bool isUser = false;
+    private bool isSessionValid = true;
     private double remoteVideoVolume = 0.5;
     private string chatMessage = string.Empty;
+    private string connectionStatus = string.Empty;
+    
     private List<ChatMessage> chatMessages = new List<ChatMessage>();
     private MudTextField<string> chatInputRef = new();
 
@@ -166,12 +324,40 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-        if (user.Identity != null && user.Identity.IsAuthenticated)
+        try
         {
-            isAdmin = user.IsInRole("Admin");
-            isUser = !isAdmin;
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            if (user.Identity != null && user.Identity.IsAuthenticated)
+            {
+                isAdmin = user.IsInRole("Admin");
+                isUser = !isAdmin;
+            }
+
+            // Validate session
+            await ValidateSession();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error initializing video call component");
+            Snackbar.Add("Failed to initialize video call", Severity.Error);
+        }
+    }
+
+    private async Task ValidateSession()
+    {
+        try
+        {
+            isSessionValid = await VideoCallService.IsSessionValidAsync(SessionId);
+            if (!isSessionValid)
+            {
+                Snackbar.Add("Invalid or expired session", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error validating session {SessionId}", SessionId);
+            isSessionValid = false;
         }
     }
 
@@ -179,9 +365,17 @@
     {
         if (firstRender)
         {
-            module = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "/js/videoCall.js");
-            dotNetRef = DotNetObjectReference.Create(this);
-            await module.InvokeVoidAsync("init", SessionId, dotNetRef);
+            try
+            {
+                module = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "/js/videoCall.js");
+                dotNetRef = DotNetObjectReference.Create(this);
+                await module.InvokeVoidAsync("init", SessionId, dotNetRef);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error initializing JavaScript module");
+                Snackbar.Add("Failed to initialize video system", Severity.Error);
+            }
         }
     }
 
@@ -189,9 +383,20 @@
     {
         if (module != null)
         {
-            await module.InvokeVoidAsync("setCallStarted", true);
-            await module.InvokeVoidAsync("startCall");
-            Snackbar.Add("Joining call...", Severity.Info);
+            try
+            {
+                await module.InvokeVoidAsync("setCallStarted", true);
+                await module.InvokeVoidAsync("startCall");
+                Snackbar.Add("Joining call...", Severity.Info);
+                
+                // Mark session as started in database
+                await VideoCallService.MarkSessionAsStartedAsync(SessionId);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error joining call");
+                Snackbar.Add("Failed to join call", Severity.Error);
+            }
         }
     }
 
@@ -199,8 +404,19 @@
     {
         if (module != null)
         {
-            await module.InvokeVoidAsync("endCall");
-            Snackbar.Add("Call ended", Severity.Error);
+            try
+            {
+                await module.InvokeVoidAsync("endCall");
+                Snackbar.Add("Call ended", Severity.Warning);
+                
+                // Mark session as ended in database
+                await VideoCallService.EndSessionAsync(SessionId);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error ending call");
+                Snackbar.Add("Failed to end call properly", Severity.Warning);
+            }
         }
     }
 
@@ -208,11 +424,19 @@
     {
         if (module != null)
         {
-            isMuted = await module.InvokeAsync<bool>("toggleMic");
-            var message = isMuted ? "Microphone muted" : "Microphone unmuted";
-            var severity = isMuted ? Severity.Warning : Severity.Success;
-            Snackbar.Add(message, severity);
-            StateHasChanged();
+            try
+            {
+                isMuted = await module.InvokeAsync<bool>("toggleMic");
+                var message = isMuted ? "Microphone muted" : "Microphone unmuted";
+                var severity = isMuted ? Severity.Warning : Severity.Success;
+                Snackbar.Add(message, severity);
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error toggling microphone");
+                Snackbar.Add("Failed to toggle microphone", Severity.Error);
+            }
         }
     }
 
@@ -220,11 +444,19 @@
     {
         if (module != null)
         {
-            isCameraOff = await module.InvokeAsync<bool>("toggleCamera");
-            var message = isCameraOff ? "Camera turned off" : "Camera turned on";
-            var severity = isCameraOff ? Severity.Warning : Severity.Success;
-            Snackbar.Add(message, severity);
-            StateHasChanged();
+            try
+            {
+                isCameraOff = await module.InvokeAsync<bool>("toggleCamera");
+                var message = isCameraOff ? "Camera turned off" : "Camera turned on";
+                var severity = isCameraOff ? Severity.Warning : Severity.Success;
+                Snackbar.Add(message, severity);
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error toggling camera");
+                Snackbar.Add("Failed to toggle camera", Severity.Error);
+            }
         }
     }
 
@@ -232,29 +464,52 @@
     {
         if (module != null)
         {
-            isScreenSharing = await module.InvokeAsync<bool>("shareScreen");
-            var message = isScreenSharing ? "Screen sharing started" : "Screen sharing stopped";
-            var severity = isScreenSharing ? Severity.Info : Severity.Normal;
-            Snackbar.Add(message, severity);
-            StateHasChanged();
+            try
+            {
+                isScreenSharing = await module.InvokeAsync<bool>("shareScreen");
+                var message = isScreenSharing ? "Screen sharing started" : "Screen sharing stopped";
+                var severity = isScreenSharing ? Severity.Info : Severity.Normal;
+                Snackbar.Add(message, severity);
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error sharing screen");
+                Snackbar.Add("Failed to share screen", Severity.Error);
+            }
         }
     }
 
     private async Task ToggleFullscreen()
     {
-        Snackbar.Add("Toggling fullscreen...", Severity.Info);
-        if (module != null)
+        try
         {
-            await module.InvokeVoidAsync("toggleFullscreen");
+            Snackbar.Add("Toggling fullscreen...", Severity.Info);
+            if (module != null)
+            {
+                await module.InvokeVoidAsync("toggleFullscreen");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error toggling fullscreen");
+            Snackbar.Add("Failed to toggle fullscreen", Severity.Error);
         }
     }
 
     private async Task OnVolumeChanged(double newValue)
     {
-        remoteVideoVolume = newValue;
-        if (module != null)
+        try
         {
-            await module.InvokeVoidAsync("setRemoteVideoVolume", remoteVideoVolume);
+            remoteVideoVolume = newValue;
+            if (module != null)
+            {
+                await module.InvokeVoidAsync("setRemoteVideoVolume", remoteVideoVolume);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error changing volume");
         }
     }
 
@@ -273,12 +528,20 @@
     {
         if (module != null && !string.IsNullOrWhiteSpace(chatMessage))
         {
-            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            var userName = authState.User.Identity?.Name ?? "Guest";
-            await module.InvokeVoidAsync("sendChatMessage", userName, chatMessage);
-            chatMessage = string.Empty;
-            await chatInputRef.Clear();
-            StateHasChanged();
+            try
+            {
+                var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+                var userName = authState.User.Identity?.Name ?? "Guest";
+                await module.InvokeVoidAsync("sendChatMessage", userName, chatMessage);
+                chatMessage = string.Empty;
+                await chatInputRef.Clear();
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error sending chat message");
+                Snackbar.Add("Failed to send message", Severity.Error);
+            }
         }
     }
 
@@ -290,6 +553,30 @@
         }
     }
 
+    // Helper methods for connection status
+    private Color GetConnectionStatusColor()
+    {
+        return connectionStatus switch
+        {
+            "connected" => Color.Success,
+            "connecting" or "reconnecting" => Color.Warning,
+            "disconnected" or "error" => Color.Error,
+            _ => Color.Default
+        };
+    }
+
+    private string GetConnectionStatusIcon()
+    {
+        return connectionStatus switch
+        {
+            "connected" => Icons.Material.Filled.CheckCircle,
+            "connecting" or "reconnecting" => Icons.Material.Filled.Sync,
+            "disconnected" or "error" => Icons.Material.Filled.Error,
+            _ => Icons.Material.Filled.Help
+        };
+    }
+
+    // JavaScript interop methods
     [JSInvokable]
     public bool IsCurrentUserAdmin() => isAdmin;
 
@@ -308,6 +595,7 @@
         isRemoteConnected = false;
         isLocalStreamActive = false;
         isOtherParticipantPresent = false;
+        connectionStatus = "disconnected";
         if (module != null)
         {
             module.InvokeVoidAsync("setCallStarted", false);
@@ -319,6 +607,7 @@
     public void OnRemoteStreamConnected()
     {
         isRemoteConnected = true;
+        Snackbar.Add("Participant connected", Severity.Success);
         StateHasChanged();
     }
 
@@ -345,40 +634,76 @@
     public void OnOtherParticipantChanged(bool present)
     {
         isOtherParticipantPresent = present;
+        var message = present ? "Participant joined session" : "Participant left session";
+        var severity = present ? Severity.Info : Severity.Warning;
+        Snackbar.Add(message, severity);
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public void OnConnectionStatusChanged(string status)
+    {
+        connectionStatus = status;
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public void OnError(string errorMessage)
+    {
+        Logger.LogError("JavaScript error: {ErrorMessage}", errorMessage);
+        Snackbar.Add(errorMessage, Severity.Error);
         StateHasChanged();
     }
 
     [JSInvokable]
     public async Task OnChatMessageReceived(string userName, string timestamp, string message, string userRole)
     {
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        var currentUser = authState.User.Identity?.Name ?? "Guest";
-        chatMessages.Add(new ChatMessage
+        try
         {
-            UserName = userName,
-            DisplayName = GetDisplayName(userName, userRole),
-            Timestamp = timestamp,
-            Message = message,
-            IsSentByCurrentUser = (userName == currentUser)
-        });
-        StateHasChanged();
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var currentUser = authState.User.Identity?.Name ?? "Guest";
+            chatMessages.Add(new ChatMessage
+            {
+                UserName = userName,
+                DisplayName = GetDisplayName(userName, userRole),
+                Timestamp = timestamp,
+                Message = message,
+                IsSentByCurrentUser = (userName == currentUser)
+            });
+            StateHasChanged();
+            
+            // Auto-scroll to bottom
+            await Task.Delay(100);
+            await JSRuntime.InvokeVoidAsync("eval", "document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error processing chat message");
+        }
     }
 
     [JSInvokable]
-    public void OnFileAttachmentReceived(string userName, string timestamp, string fileName, string base64Data, string
-    contentType)
+    public void OnFileAttachmentReceived(string userName, string timestamp, string fileName, string base64Data, string contentType)
     {
-        Console.WriteLine($"File received: {fileName} from {userName}");
+        Logger.LogInformation("File received: {FileName} from {UserName}", fileName, userName);
+        // TODO: Implement file handling
     }
 
     public async ValueTask DisposeAsync()
     {
-        if (module != null)
+        try
         {
-            await module.InvokeVoidAsync("cleanup");
-            await module.DisposeAsync();
+            if (module != null)
+            {
+                await module.InvokeVoidAsync("cleanup");
+                await module.DisposeAsync();
+            }
+            dotNetRef?.Dispose();
         }
-        dotNetRef?.Dispose();
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error disposing video call component");
+        }
         GC.SuppressFinalize(this);
     }
 }

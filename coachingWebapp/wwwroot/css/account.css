@@ -1,81 +1,146 @@
 .account-settings {
-    max-width: 600px;
+    max-width: 700px;
     margin: 2rem auto;
     padding: 2rem;
-    background-color: var(--primary-white);
+    background-color: var(--soft-gray);
     border-radius: 16px;
-    box-shadow: 0 0 12px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.08);
 }
 
-.account-settings h1 {
+.account-settings .mud-card {
+    background-color: var(--primary-white);
+    border-radius: 12px;
+    border: none;
+    transition: box-shadow 0.2s ease;
+}
+
+.account-settings .mud-card:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.account-settings .mud-card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    border-radius: 12px 12px 0 0;
+}
+
+.account-settings .mud-card-header .mud-card-header-content {
+    padding: 1rem 1.5rem;
+}
+
+.account-settings .mud-card-content {
+    padding: 2rem 1.5rem;
+}
+
+.account-settings h1,
+.account-settings .mud-typography-h4 {
     font-size: 2rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
     color: var(--text-gray);
     text-align: center;
-}
-
-.account-settings .form-group {
-    margin-bottom: 1.25rem;
-}
-
-.account-settings label {
-    display: block;
-    margin-bottom: 0.5rem;
     font-weight: 600;
+}
+
+.account-settings .mud-card-header .mud-typography-h6 {
     color: var(--text-gray);
-}
-
-.account-settings input[type="text"],
-.account-settings input[type="email"],
-.account-settings input[type="password"],
-.account-settings select {
-    width: 100%;
-    padding: 0.6rem;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    background-color: var(--soft-gray);
-    color: var(--primary-black);
-    transition: border-color 0.2s ease-in-out, background-color 0.2s;
-    font-size: 1rem;
-}
-
-.account-settings input:focus {
-    border-color: var(--accent-orange);
-    outline: none;
-    background-color: #fff;
-}
-
-.account-settings button.btn {
-    padding: 0.7rem 1.5rem;
-    border: none;
-    border-radius: 8px;
-    background-color: var(--accent-orange);
-    color: var(--primary-white);
-    font-size: 1rem;
     font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.2s ease-in-out;
+    margin: 0;
 }
 
-.account-settings button.btn:hover {
-    background-color: var(--accent-orange-hover);
+.account-settings .mud-input-control {
+    margin-bottom: 1rem;
 }
 
-.account-settings .alert {
-    margin-top: 1rem;
-    padding: 1rem;
+.account-settings .mud-input {
     border-radius: 8px;
+    background-color: var(--primary-white);
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease;
+}
+
+.account-settings .mud-input:focus-within {
+    box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.1);
+}
+
+.account-settings .mud-button {
+    border-radius: 8px;
+    font-weight: 600;
+    text-transform: none;
+    font-size: 1rem;
+    padding: 0.75rem 2rem;
+    transition: all 0.2s ease-in-out;
+    min-height: 48px;
+}
+
+.account-settings .mud-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+}
+
+.account-settings .mud-button:disabled {
+    opacity: 0.7;
+    transform: none;
+    box-shadow: none;
+}
+
+.account-settings .mud-alert {
+    border-radius: 8px;
+    font-size: 0.875rem;
+}
+
+.account-settings .mud-input-helper-text {
+    color: var(--text-gray);
+    font-size: 0.75rem;
+}
+
+.account-settings .mud-input-helper-text:has-text("✓") {
+    color: #28a745;
     font-weight: 500;
 }
 
-.account-settings .alert-success {
-    background-color: #e6f4ea;
-    color: #207d45;
-    border: 1px solid #b1e0c5;
+/* Icon spacing */
+.account-settings .mud-icon {
+    color: var(--accent-orange);
 }
 
-.account-settings .alert-danger {
-    background-color: #fdecea;
-    color: #a94442;
-    border: 1px solid #f5c6cb;
+.account-settings .mr-3 {
+    margin-right: 0.75rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .account-settings {
+        margin: 1rem;
+        padding: 1.5rem;
+        border-radius: 12px;
+    }
+
+    .account-settings .mud-card-content {
+        padding: 1.5rem 1rem;
+    }
+
+    .account-settings .mud-card-header .mud-card-header-content {
+        padding: 0.75rem 1rem;
+    }
+
+    .account-settings .mud-button {
+        width: 100%;
+        margin-top: 1rem;
+    }
+}
+
+/* Focus and validation improvements */
+.account-settings .mud-input-control.mud-input-error .mud-input {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.1);
+}
+
+.account-settings .mud-form-validation-error {
+    color: #dc3545;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+/* Loading state for progress circular */
+.account-settings .mud-progress-circular {
+    color: var(--primary-white);
 }

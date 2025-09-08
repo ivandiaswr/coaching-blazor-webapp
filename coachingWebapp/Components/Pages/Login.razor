@@ -3,83 +3,179 @@
 
 <PageTitle>@pageTitle</PageTitle>
 
-<section id="login">
-    <EditForm Model="@loginModel" OnValidSubmit="HandleLogin" FormName="loginForm" class="login-form">
-        <DataAnnotationsValidator />
+<MudSnackbarProvider />
 
-        <div class="form-group">
-            <label for="email">Email</label>
-            <InputText id="email" @bind-Value="loginModel.Email" class="form-control" placeholder="Your Email" autocomplete="email" required />
-            <ValidationMessage For="@(() => loginModel.Email)" class="text-danger" />
-        </div>
+<div class="login-container">
+    <div class="login-header">
+        <MudText Typo="Typo.h4" Class="mb-2">Welcome Back</MudText>
+        <MudText Typo="Typo.subtitle1" Class="mb-4" Color="Color.Secondary">
+            Sign in to continue your coaching journey
+        </MudText>
+    </div>
 
-        <div class="form-group">
-            <label for="password">Password</label>
-            <InputText id="password" type="password" @bind-Value="loginModel.Password" class="form-control" placeholder="Your Password" autocomplete="current-password" required />
-            <ValidationMessage For="@(() => loginModel.Password)" class="text-danger" />
-        </div>
+    <MudCard Class="login-card" Elevation="3">
+        <MudCardContent>
+            <MudForm Model="@loginModel" @ref="form" ValidationDelay="0" PreventDefault="true"
+                @onkeydown="HandleKeyDown">
+                <MudTextField Label="Email Address" @bind-Value="loginModel.Email" For="@(() => loginModel.Email)"
+                    InputType="InputType.Email" Required="true" RequiredError="Email is required"
+                    Variant="Variant.Outlined" Class="mb-4" TabIndex="1" Placeholder="your.email@example.com"
+                    Adornment="Adornment.Start" AdornmentIcon="Icons.Material.Filled.Email" AutoComplete="email" />
 
-        <p class="mt-2">
-            <a href="/forgot-password">Forgot your password?</a>
-        </p>
+                <MudTextField Label="Password" @bind-Value="loginModel.Password" For="@(() => loginModel.Password)"
+                    InputType="@(IsPasswordVisible? InputType.Text: InputType.Password)" Required="true"
+                    RequiredError="Password is required" Variant="Variant.Outlined" Class="mb-4" TabIndex="2"
+                    Placeholder="Enter your password" Adornment="Adornment.End"
+                    AdornmentIcon="@(IsPasswordVisible? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
+                    OnAdornmentClick="TogglePasswordVisibility" AutoComplete="current-password" />
 
-        <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
-            @if (isSubmitting)
+                <div class="login-actions mb-4">
+                    <MudCheckBox T="bool" @bind-Checked="loginModel.RememberMe" Label="Remember me"
+                        Color="Color.Primary" Dense="true" />
+                    <MudLink Href="/forgot-password" Color="Color.Primary" Class="forgot-password-link">
+                        Forgot password?
+                    </MudLink>
+                </div>
+
+                <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                    StartIcon="@(isSubmitting ? "" : Icons.Material.Filled.Login)" Type="submit" Class="login-button"
+                    Size="Size.Large" FullWidth="true" Disabled="@isSubmitting" OnClick="HandleLogin">
+                    @if (isSubmitting)
+                    {
+                        <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
+                        <span>Signing in...</span>
+                    }
+                    else
+                    {
+                        <span>Sign In</span>
+                    }
+                </MudButton>
+            </MudForm>
+
+            @if (!string.IsNullOrEmpty(loginError))
             {
-                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                <span> Logging in...</span>
+                <MudAlert Severity="Severity.Error" Class="mt-4" Dense="true">
+                    @loginError
+                    @if (loginError.Contains("No account exists"))
+                    {
+                        <MudText Typo="Typo.body2" Class="mt-2">
+                            Need an account? <MudLink Href="/register" Color="Color.Primary">Register here</MudLink>
+                        </MudText>
+                    }
+                </MudAlert>
             }
-            else
-            {
-                <span>Login</span>
-            }
-        </button>
 
-        @if (!string.IsNullOrEmpty(loginError))
-        {
-            <div class="alert alert-danger mt-3" role="alert">
-                @loginError
-                @if (loginError.Contains("No account exists"))
-                {
-                    <p class="mt-2">Need an account? <a href="/register">Register here</a>.</p>
-                }
-            </div>
-        }
-    </EditForm>
-</section>
+            @* <MudDivider Class="my-4" />
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Align="Align.Center" Class="mb-3">
+                or continue with
+            </MudText>
+
+            <!-- Social Login Placeholder -->
+            <div class="social-login-section">
+                <MudButton Variant="Variant.Outlined" FullWidth="true" StartIcon="@Icons.Custom.Brands.Google"
+                    Class="social-button mb-3" Disabled="true">
+                    <span>Continue with Google</span>
+                    <MudText Typo="Typo.caption" Class="ml-2">(Coming Soon)</MudText>
+                </MudButton>
+            </div> *@
+        </MudCardContent>
+    </MudCard>
+
+    <MudText Typo="Typo.body2" Align="Align.Center" Class="mb-4">
+        Don't have an account? <MudLink Href="/register" Color="Color.Primary">Create one here</MudLink>
+    </MudText>
+
+    <!-- Security Notice -->
+    <MudPaper Class="security-notice mt-3" Elevation="0">
+        <div style="display: flex; align-items: center; justify-content: center;">
+            <MudIcon Icon="Icons.Material.Filled.Shield" Size="Size.Small" Class="mr-2" />
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                Your data is protected with enterprise-grade security
+            </MudText>
+        </div>
+    </MudPaper>
+</div>
 
 @code {
-    private string pageTitle = "Login | Ítala Veloso";
+    private string pageTitle = "Sign In | Ítala Veloso";
     private LoginModel loginModel = new();
+    private MudForm form;
     private string loginError = string.Empty;
     private bool isSubmitting = false;
+    private bool IsPasswordVisible = false;
+
+    private void TogglePasswordVisibility() => IsPasswordVisible = !IsPasswordVisible;
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !isSubmitting)
+        {
+            await HandleLogin();
+        }
+    }
 
     private async Task HandleLogin()
     {
-        if (isSubmitting) return;
+        if (isSubmitting || form is null) return;
 
         isSubmitting = true;
         loginError = string.Empty;
 
         try
         {
+            // Validate form first
+            await form.Validate();
+            if (!form.IsValid)
+            {
+                await LogService.LogInfo("HandleLogin", "Form validation failed");
+                Snackbar.Add("Please correct the errors in the form.", Severity.Error);
+                return;
+            }
+
             await LogService.LogInfo("HandleLogin", $"Starting login attempt for email: {loginModel.Email}");
+
+            // Show progress message
+            Snackbar.Add("Signing you in...", Severity.Info);
+
             var result = await JSRuntime.InvokeAsync<SessionResult>("login", loginModel);
 
             if (!result.Success)
             {
                 loginError = result.Error ?? "Invalid email or password.";
                 await LogService.LogWarning("HandleLogin", $"Login failed for email: {loginModel.Email}. Error: {loginError}");
+
+                // More user-friendly error messages
+                if (loginError.Contains("No account exists"))
+                {
+                    Snackbar.Add("No account found with this email address.", Severity.Error);
+                }
+                else if (loginError.Contains("Invalid password"))
+                {
+                    Snackbar.Add("Incorrect password. Try again or reset your password.", Severity.Error);
+                }
+                else if (loginError.Contains("locked"))
+                {
+                    Snackbar.Add("Account temporarily locked. Please try again later.", Severity.Warning);
+                }
+                else
+                {
+                    Snackbar.Add("Sign in failed. Please check your credentials.", Severity.Error);
+                }
             }
             else
             {
                 await LogService.LogInfo("HandleLogin", $"Successful login for email: {loginModel.Email}");
+                Snackbar.Add("Welcome back! Redirecting...", Severity.Success);
+
+                // Small delay to show success message
+                await Task.Delay(500);
             }
         }
         catch (Exception ex)
         {
-            loginError = "An error occurred during login. Please try again.";
+            loginError = "An error occurred during sign in. Please try again.";
             await LogService.LogError("HandleLogin", $"Login error for email: {loginModel.Email}. Exception: {ex.Message}");
+            Snackbar.Add("An unexpected error occurred. Please try again.", Severity.Error);
         }
         finally
         {

@@ -2,71 +2,203 @@
 
 <PageTitle>Reset Password</PageTitle>
 
-<h3>Reset your password</h3>
+<link href="~/css/resetPassword.css" rel="stylesheet" />
 
-@if (!string.IsNullOrEmpty(resultMessage))
-{
-    <div class="alert @alertClass mt-3">@resultMessage</div>
-}
-else
-{
-    <EditForm Model="@model" OnValidSubmit="HandleResetPassword" class="w-50" FormName="resetPasswordForm">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
+<div class="reset-password-container">
+    <div class="reset-password-card">
+        @if (!string.IsNullOrEmpty(resultMessage))
+        {
+            <div class="alert @alertClass">
+                @resultMessage
+                @if (resetSuccessful)
+                {
+                    <div class="success-actions">
+                        <button @onclick="NavigateToLogin" class="btn-link">
+                            Go to Sign In
+                        </button>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="reset-password-header">
+                <h3>Reset your password</h3>
+                <p>Enter your new password below. Make sure it meets all the security requirements.</p>
+            </div>
 
-        <input type="hidden" @bind="model.Email" />
-        <input type="hidden" @bind="model.Token" />
+            <EditForm Model="@model" OnValidSubmit="HandleResetPassword" FormName="resetPasswordForm">
+                <DataAnnotationsValidator />
+                
+                @if (hasValidationErrors)
+                {
+                    <div class="validation-summary">
+                        <ValidationSummary />
+                    </div>
+                }
 
-        <div class="form-group">
-            <label>New Password</label>
-            <InputText @bind-Value="model.Password" type="password" class="form-control" placeholder="New password" />
-            <ValidationMessage For="@(() => model.Password)" />
-        </div>
+                <input type="hidden" @bind="model.Email" />
+                <input type="hidden" @bind="model.Token" />
 
-        <div class="form-group mt-2">
-            <label>Confirm Password</label>
-            <InputText @bind-Value="model.ConfirmPassword" type="password" class="form-control" placeholder="Confirm password" />
-            <ValidationMessage For="@(() => model.ConfirmPassword)" />
-        </div>
+                <div class="password-requirements">
+                    <h5>Password Requirements</h5>
+                    <div class="password-requirement @(HasMinLength ? "valid" : "invalid")">
+                        <span class="requirement-icon">@(HasMinLength ? "✓" : "•")</span>
+                        At least 6 characters
+                    </div>
+                    <div class="password-requirement @(HasMatchingPasswords ? "valid" : "invalid")">
+                        <span class="requirement-icon">@(HasMatchingPasswords ? "✓" : "•")</span>
+                        Passwords match
+                    </div>
+                </div>
 
-        <button class="btn btn-success mt-3">Reset Password</button>
-    </EditForm>
-}
+                <div class="form-group">
+                    <label class="form-label">New Password</label>
+                    <InputText @bind-Value="model.Password" 
+                               type="password" 
+                               class="form-control" 
+                               placeholder="Enter your new password"
+                               @oninput="OnPasswordChanged"
+                               disabled="@isSubmitting" />
+                    <ValidationMessage For="@(() => model.Password)" class="validation-message" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Confirm Password</label>
+                    <InputText @bind-Value="model.ConfirmPassword" 
+                               type="password" 
+                               class="form-control" 
+                               placeholder="Confirm your new password"
+                               @oninput="OnConfirmPasswordChanged"
+                               disabled="@isSubmitting" />
+                    <ValidationMessage For="@(() => model.ConfirmPassword)" class="validation-message" />
+                </div>
+
+                <button type="submit" class="btn-reset" disabled="@(isSubmitting || !IsFormValid)">
+                    @if (isSubmitting)
+                    {
+                        <div class="loading-spinner"></div>
+                        <span>Resetting Password...</span>
+                    }
+                    else
+                    {
+                        <span>Reset Password</span>
+                    }
+                </button>
+            </EditForm>
+        }
+    </div>
+</div>
 
 @code {
     private ResetPasswordModel model = new();
     private string resultMessage = string.Empty;
     private string alertClass = "alert-info";
+    private bool isSubmitting = false;
+    private bool resetSuccessful = false;
+    private bool hasValidationErrors = false;
 
-    [Parameter] public string? email { get; set; }
-    [Parameter] public string? token { get; set; }
+    [Parameter] public string email { get; set; } = "";
+    [Parameter] public string token { get; set; } = "";
+
+    // Password validation properties
+    private bool HasMinLength => !string.IsNullOrEmpty(model.Password) && model.Password.Length >= 6;
+    private bool HasMatchingPasswords => !string.IsNullOrEmpty(model.Password) && !string.IsNullOrEmpty(model.ConfirmPassword) && model.Password == model.ConfirmPassword;
+    private bool IsFormValid => HasMinLength && HasMatchingPasswords && !string.IsNullOrWhiteSpace(model.Email) && !string.IsNullOrWhiteSpace(model.Token);
 
     protected override void OnInitialized()
     {
         model.Email = email ?? "";
         model.Token = token ?? "";
+
+        // Check if email or token are missing
+        if (string.IsNullOrWhiteSpace(model.Email) || string.IsNullOrWhiteSpace(model.Token))
+        {
+            resultMessage = "Invalid or expired reset link. Please request a new password reset.";
+            alertClass = "alert-danger";
+        }
+    }
+
+    private void OnPasswordChanged(ChangeEventArgs e)
+    {
+        model.Password = e.Value?.ToString() ?? "";
+        StateHasChanged();
+    }
+
+    private void OnConfirmPasswordChanged(ChangeEventArgs e)
+    {
+        model.ConfirmPassword = e.Value?.ToString() ?? "";
+        StateHasChanged();
+    }
+
+    private void NavigateToLogin()
+    {
+        NavigationManager.NavigateTo("/login");
     }
 
     private async Task HandleResetPassword()
     {
-        var user = await UserManager.FindByEmailAsync(model.Email);
-        if (user == null)
+        if (!IsFormValid)
         {
-            resultMessage = "Invalid request.";
-            alertClass = "alert-danger";
+            hasValidationErrors = true;
             return;
         }
 
-        var result = await UserManager.ResetPasswordAsync(user, model.Token, model.Password);
-        if (result.Succeeded)
+        isSubmitting = true;
+        hasValidationErrors = false;
+        StateHasChanged();
+
+        try
         {
-            resultMessage = "Your password has been reset successfully. You can now log in.";
-            alertClass = "alert-success";
+            var user = await UserManager.FindByEmailAsync(model.Email);
+            if (user == null)
+            {
+                resultMessage = "Invalid reset request. This link may have expired or been used already.";
+                alertClass = "alert-danger";
+                await LogService.LogWarning("ResetPassword", $"Reset password attempted for non-existent email: {model.Email}");
+                return;
+            }
+
+            var result = await UserManager.ResetPasswordAsync(user, model.Token, model.Password);
+            if (result.Succeeded)
+            {
+                resultMessage = "🎉 Your password has been reset successfully! You can now sign in with your new password.";
+                alertClass = "alert-success";
+                resetSuccessful = true;
+                await LogService.LogInfo("ResetPassword", $"Password reset successfully for user: {user.Email}");
+            }
+            else
+            {
+                var errors = result.Errors.Select(e => e.Description).ToList();
+                
+                // Check for specific error types and provide user-friendly messages
+                if (errors.Any(e => e.Contains("Invalid token") || e.Contains("invalid")))
+                {
+                    resultMessage = "This reset link is invalid or has expired. Please request a new password reset.";
+                }
+                else if (errors.Any(e => e.Contains("Password")))
+                {
+                    resultMessage = "Password doesn't meet requirements: " + string.Join("; ", errors);
+                }
+                else
+                {
+                    resultMessage = "Unable to reset password: " + string.Join("; ", errors);
+                }
+                
+                alertClass = "alert-danger";
+                await LogService.LogError("ResetPassword", $"Password reset failed for {user.Email}: {string.Join(", ", errors)}");
+            }
         }
-        else
+        catch (Exception ex)
         {
-            resultMessage = string.Join("; ", result.Errors.Select(e => e.Description));
+            resultMessage = "An unexpected error occurred. Please try again or request a new reset link.";
             alertClass = "alert-danger";
+            await LogService.LogError("ResetPassword", $"Exception during password reset for {model.Email}: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
         }
     }
 }

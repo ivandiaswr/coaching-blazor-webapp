@@ -1,17 +1,208 @@
-.dashboard-welcome {
-  max-width: 850px;
-  margin: 2rem auto 1rem auto;
-  padding: 2rem;
-  border-radius: 1rem;
-  background-color: #fdfdfd;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  text-align: center;
+/* Remove MudBlazor default table header backgrounds */
+.mud-table-head .mud-table-cell {
+  background-color: transparent !important;
 }
 
-.dashboard-welcome .welcome-title {
-  font-weight: bold;
+.mud-table-head {
+  background-color: transparent !important;
+}
+
+.mud-table thead th {
+  background-color: transparent !important;
+}
+
+/* Remove MudBlazor default tab backgrounds */
+.mud-tab-active,
+.mud-tab.mud-tab-active {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+.mud-tabs-toolbar {
+  background-color: transparent !important;
+}
+
+/* Enhanced Dashboard Welcome Section */
+.dashboard-welcome {
+  max-width: 1000px;
+  margin: 2rem auto 2rem auto;
+  padding: 3rem 2.5rem;
+  border-radius: 2rem;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafe 50%, #eef7ff 100%);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08), 0 8px 32px rgba(33, 150, 243, 0.06);
+  text-align: center;
+  position: relative;
+  border: 1px solid rgba(33, 150, 243, 0.08);
+}
+
+.dashboard-welcome::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #ff6200 0%, #2196f3 50%, #4caf50 100%);
+  border-radius: 2rem 2rem 0 0;
+}
+
+.welcome-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.welcome-icon {
+  font-size: 3rem !important;
+  color: #ff6200;
   margin-bottom: 1rem;
-  color: #333;
+  animation: gentle-bounce 2s ease-in-out infinite;
+}
+
+@keyframes gentle-bounce {
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.welcome-title {
+  font-weight: 700 !important;
+  margin-bottom: 0.5rem !important;
+  color: #1a1a1a;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2196f3 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.welcome-subtitle {
+  color: #666 !important;
+  font-style: italic;
+  margin-bottom: 2rem !important;
+}
+
+.next-session-alert,
+.no-sessions-alert {
+  border-radius: 16px !important;
+  margin-bottom: 1.5rem;
+  border: none !important;
+  box-shadow: 0 8px 24px rgba(76, 175, 80, 0.15);
+}
+
+.no-sessions-alert {
+  box-shadow: 0 8px 24px rgba(33, 150, 243, 0.15);
+  background: linear-gradient(135deg, #e3f2fd 0%, #ffffff 100%) !important;
+  border: 2px solid rgba(33, 150, 243, 0.2) !important;
+}
+
+.book-session-btn {
+  border-radius: 14px !important;
+  padding: 16px 32px !important;
+  font-weight: 700 !important;
+  font-size: 1.1rem !important;
+  text-transform: none !important;
+  box-shadow: 0 8px 32px rgba(33, 150, 243, 0.3) !important;
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%) !important;
+  transition: all 0.3s ease !important;
+}
+
+.book-session-btn:hover {
+  box-shadow: 0 12px 40px rgba(33, 150, 243, 0.4) !important;
+  transform: translateY(-3px) scale(1.02);
+}
+
+/* Enhanced Active Bookings Section */
+.active-bookings-card {
+  border-radius: 20px !important;
+  border: 1px solid rgba(0, 0, 0, 0.04) !important;
+  background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.03);
+  max-width: 1000px;
+  margin: 0 auto 2.5rem auto;
+}
+
+.active-booking-item {
+  padding: 1.8rem;
+  margin-bottom: 1.2rem;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.active-booking-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 4px;
+  transition: all 0.3s ease;
+}
+
+.active-booking-item:hover {
+  background: linear-gradient(135deg, #f8fafe 0%, #eef7ff 100%);
+  transform: translateX(6px) translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.pack-item::before {
+  background: linear-gradient(180deg, #2196f3 0%, #1976d2 100%);
+}
+
+.pack-item:hover::before {
+  width: 8px;
+}
+
+.subscription-item::before {
+  background: linear-gradient(180deg, #4caf50 0%, #388e3c 100%);
+}
+
+.subscription-item:hover::before {
+  width: 8px;
+}
+
+.booking-icon {
+  background: linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%);
+  border-radius: 50%;
+  padding: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.active-booking-item:hover .booking-icon {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+}
+
+.sessions-remaining-badge {
+  border-radius: 12px !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  padding: 10px 16px !important;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  text-transform: none !important;
+}
+
+.cancel-sub-btn {
+  font-size: 0.75rem !important;
+  padding: 6px 12px !important;
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+  transition: all 0.3s ease !important;
+}
+
+.cancel-sub-btn:hover {
+  background-color: rgba(244, 67, 54, 0.1) !important;
+  transform: scale(1.05);
 }
 
 .booking-option-card {
@@ -20,6 +211,46 @@
   padding: 16px;
   background: #fff;
   border-radius: 8px;
+}
+
+/* Reserved Time Slot Styling */
+.reserved-time-slot {
+  background-color: #e8f5e8 !important;
+  border: 2px solid #4caf50 !important;
+}
+
+.reserved-time-slot .mud-input-slot {
+  color: #2e7d32 !important;
+  font-weight: 500 !important;
+}
+
+.reserved-time-slot .mud-input-adornment .mud-icon-root {
+  color: #4caf50 !important;
+}
+
+.hoverable-input:hover .reserved-time-slot {
+  background-color: #dcedc8 !important;
+  transform: scale(1.01);
+  transition: all 0.2s ease-in-out;
+}
+
+/* Enhanced Tabs Styling */
+.main-tabs {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafe 100%);
+  border-radius: 20px;
+  margin: 2rem auto;
+  max-width: 1200px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.06), 0 4px 16px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+}
+
+.tabs-header {
+  border-bottom: 3px solid #2196f3;
+  padding: 1rem 0;
+}
+
+.tab-panel {
+  min-height: 600px;
 }
 
 .mud-tabs {
@@ -33,6 +264,10 @@
   justify-content: center;
   width: auto !important;
   margin-bottom: 1.4rem !important;
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
 .mud-tabs-tabbar-inner {
@@ -52,11 +287,25 @@
   width: auto !important;
 }
 
-.mud-table-cell {
-  text-align: center !important;
+.mud-tab {
+  border-radius: 12px !important;
+  margin: 0 4px !important;
+  font-weight: 600 !important;
+  padding: 12px 24px !important;
+  transition: all 0.3s ease !important;
 }
 
-.mud-table-row .column-header {
+.mud-tab:hover {
+  background: rgba(33, 150, 243, 0.1) !important;
+  transform: translateY(-2px);
+}
+
+.mud-tab.mud-tab-active {
+  color: black !important;
+  box-shadow: 0 4px 16px rgba(33, 150, 243, 0.3) !important;
+}
+
+.mud-table-cell {
   text-align: center !important;
 }
 
@@ -160,36 +409,37 @@
   }
 }
 
-/* Booking Options and Request Form */
+/* Enhanced Booking Options */
 .booking-options-grid,
 .user-dashboard-request {
-  background-color: #fff;
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 0 12px rgba(0, 0, 0, 0.06);
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafe 100%);
+  border-radius: 24px;
+  padding: 2.5rem;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(33, 150, 243, 0.04);
   height: 100%;
   width: 100%;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   margin: 0 auto;
+  border: 1px solid rgba(33, 150, 243, 0.08);
+  position: relative;
+}
+
+.booking-options-grid::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #2196f3 0%, #4caf50 50%, #ff6200 100%);
+  border-radius: 24px 24px 0 0;
 }
 
 .booking-options-grid {
   max-width: 100%;
   margin: 0;
-}
-
-.single-session {
-  border-left: 5px solid #9e9e9e;
-}
-
-.session-pack {
-  border-left: 5px solid #2196f3;
-}
-
-.subscription {
-  border-left: 5px solid #4caf50;
 }
 
 .option-card {
@@ -198,24 +448,168 @@
   flex-direction: column;
   justify-content: space-between;
   margin-bottom: 1.5rem;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border-radius: 20px !important;
+  overflow: hidden;
+  position: relative;
+  border: 2px solid rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Single Session Cards - Light Gray Background */
+.single-session {
+  background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 50%, #ffffff 100%);
+  border-color: rgba(117, 117, 117, 0.08) !important;
+}
+
+/* Session Pack Cards - Light Blue Background */
+.session-pack,
+.purchase-pack {
+  background: linear-gradient(135deg, #f8fafe 0%, #eef7ff 50%, #ffffff 100%);
+  border-color: rgba(33, 150, 243, 0.08) !important;
+}
+
+/* Available Pack Cards - Special Blue-Green Background */
+.available-pack {
+  background: linear-gradient(135deg, #e8f5e8 0%, #f0f8ff 50%, #ffffff 100%);
+  border-color: rgba(76, 175, 80, 0.2) !important;
+}
+
+/* Subscription Cards - Light Green Background */
+.subscription,
+.purchase-subscription {
+  background: linear-gradient(135deg, #f1f8e9 0%, #e8f5e8 50%, #ffffff 100%);
+  border-color: rgba(76, 175, 80, 0.08) !important;
+}
+
+/* Available Subscription Cards - Rich Green Background */
+.available-subscription {
+  background: linear-gradient(135deg, #e8f5e8 0%, #dcedc8 50%, #f8f9fa 100%);
+  border-color: rgba(76, 175, 80, 0.3) !important;
+}
+
+.option-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  transition: all 0.3s ease;
 }
 
 .option-card:hover {
+  transform: translateY(-8px) scale(1.03);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+/* Single Session hover - Gray */
+.single-session:hover {
+  border-color: rgba(117, 117, 117, 0.3) !important;
+}
+
+/* Session Pack hover - Blue */
+.session-pack:hover,
+.available-pack:hover,
+.purchase-pack:hover {
+  border-color: rgba(33, 150, 243, 0.3) !important;
+}
+
+/* Subscription hover - Green */
+.subscription:hover,
+.available-subscription:hover,
+.purchase-subscription:hover {
+  border-color: rgba(76, 175, 80, 0.3) !important;
+}
+
+/* Type-specific styling */
+.single-session::before {
+  background: linear-gradient(90deg, #9e9e9e 0%, #757575 100%);
+}
+
+.session-pack::before,
+.available-pack::before,
+.purchase-pack::before {
+  background: linear-gradient(90deg, #2196f3 0%, #1976d2 100%);
+}
+
+.subscription::before,
+.available-subscription::before,
+.purchase-subscription::before {
+  background: linear-gradient(90deg, #4caf50 0%, #388e3c 100%);
+}
+
+.option-card:hover::before {
+  height: 6px;
+}
+
+/* Selected state styling */
+.option-card.selected {
+  border-width: 3px !important;
   transform: scale(1.02);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
 .option-card.selected.single-session {
-  border: 2px solid #9e9e9e;
+  background: linear-gradient(135deg, #f5f5f5 0%, #eeeeee 50%, #fafafa 100%);
+  border-color: #757575 !important;
+  box-shadow: 0 0 0 4px rgba(117, 117, 117, 0.15), 0 12px 40px rgba(117, 117, 117, 0.1);
 }
 
-.option-card.selected.session-pack {
-  border: 2px solid #1976d2;
+.option-card.selected.session-pack,
+.option-card.selected.purchase-pack {
+  background: linear-gradient(135deg, #eef7ff 0%, #e3f2fd 50%, #f8fafe 100%);
+  border-color: #2196f3 !important;
+  box-shadow: 0 0 0 4px rgba(33, 150, 243, 0.15), 0 12px 40px rgba(33, 150, 243, 0.2);
 }
 
-.option-card.selected.subscription {
-  border: 2px solid #388e3c;
+.option-card.selected.available-pack {
+  background: linear-gradient(135deg, #dcedc8 0%, #c8e6c8 50%, #e8f5e8 100%);
+  border-color: #4caf50 !important;
+  box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.2), 0 12px 40px rgba(76, 175, 80, 0.2);
+}
+
+.option-card.selected.subscription,
+.option-card.selected.purchase-subscription {
+  background: linear-gradient(135deg, #e8f5e8 0%, #dcedc8 50%, #f1f8e9 100%);
+  border-color: #4caf50 !important;
+  box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.15), 0 12px 40px rgba(76, 175, 80, 0.2);
+}
+
+.option-card.selected.available-subscription {
+  background: linear-gradient(135deg, #dcedc8 0%, #c8e6c8 50%, #e8f5e8 100%);
+  border-color: #388e3c !important;
+  box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.25), 0 12px 40px rgba(76, 175, 80, 0.3);
+}
+
+/* Card Price Styling */
+.card-price {
+  margin-top: auto;
+  padding-top: 0.75rem;
+}
+
+.card-price .MudText-root {
+  font-weight: 700 !important;
+  font-size: 1rem !important;
+  margin: 0 !important;
+}
+
+/* Single Session Price - Gray */
+.single-session .card-price .MudText-root {
+  color: #757575 !important;
+}
+
+/* Session Pack Price - Blue */
+.session-pack .card-price .MudText-root,
+.available-pack .card-price .MudText-root,
+.purchase-pack .card-price .MudText-root {
+  color: #2196f3 !important;
+}
+
+/* Subscription Price - Green */
+.subscription .card-price .MudText-root,
+.available-subscription .card-price .MudText-root,
+.purchase-subscription .card-price .MudText-root {
+  color: #4caf50 !important;
 }
 
 .user-dashboard-request {
@@ -237,26 +631,15 @@
   background-color: #e55a00;
 }
 
-/* Sessions and Chat */
-.session-filters-wrapper {
-  max-width: 900px;
-  margin: 2rem auto 1rem auto;
-  padding: 0 1rem;
-}
-
-.sessions-wrapper .mud-table {
-  margin: 1rem auto 3rem auto;
-  max-width: 900px;
-  border-radius: 1rem;
-  background-color: #fff;
-}
-
+/* Enhanced Chat Interface */
 .chat-wrapper {
-  max-width: 900px;
+  max-width: 1000px;
   margin: 2rem auto 1rem auto;
-  padding: 1.5rem;
-  border-radius: 1rem;
-  background-color: #fafafa;
+  padding: 2rem;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #f8fafe 0%, #eef7ff 100%);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(33, 150, 243, 0.06);
+  border: 1px solid rgba(33, 150, 243, 0.08);
 }
 
 .ai-chat-messages {
@@ -264,37 +647,85 @@
   width: 100%;
   overflow-y: auto;
   box-sizing: border-box;
-  border: 2px dotted #e6e6fa;
-  border-radius: 12px;
-  background-color: #ffffff;
-  padding: 1rem;
+  border: 3px solid rgba(33, 150, 243, 0.2);
+  border-radius: 20px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafe 100%);
+  padding: 1.5rem;
+  position: relative;
 }
 
-.ai-chat-messages .user-message {
+.ai-chat-messages::before {
+  content: '💬 Chat with your AI Coach';
+  position: sticky;
+  top: 0;
+  display: block;
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 15px 15px 0 0;
+  margin: -1.5rem -1.5rem 1rem -1.5rem;
+  font-weight: 600;
+  text-align: center;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+}
+
+.user-message {
   margin-left: auto;
   margin-right: 5%;
-  background-color: #e3f2fd;
-  border-radius: 12px;
-  margin-bottom: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  border-radius: 18px 18px 4px 18px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 16px rgba(33, 150, 243, 0.3);
   width: fit-content;
-  font-size: small;
+  max-width: 75%;
+  color: white;
+  animation: slideInFromRight 0.3s ease-out;
 }
 
-.ai-chat-messages .bot-message {
+.bot-message {
   margin-right: auto;
   margin-left: 5%;
-  background-color: #f5f5f5;
-  border-radius: 12px;
-  margin-bottom: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #ffffff 0%, #f5f7fa 100%);
+  border: 2px solid rgba(0, 0, 0, 0.04);
+  border-radius: 18px 18px 18px 4px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   width: fit-content;
+  max-width: 75%;
+  animation: slideInFromLeft 0.3s ease-out;
+}
+
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .ai-chat-messages .mud-card {
-  max-width: 70%;
+  max-width: 100%;
   word-break: break-word;
   white-space: normal;
+  border-radius: 16px;
+  border: none;
 }
 
 .chat-input-form {
@@ -302,6 +733,7 @@
   align-items: center;
   gap: 1rem;
   flex-wrap: wrap;
+  margin-top: 1.5rem;
 }
 
 .chat-input {
@@ -310,78 +742,161 @@
   max-width: 100%;
 }
 
+.chat-input .mud-input-root {
+  border-radius: 20px !important;
+  background: white !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+  border: 2px solid rgba(33, 150, 243, 0.2) !important;
+}
+
+.chat-input .mud-input-root:hover,
+.chat-input .mud-input-root:focus-within {
+  border-color: #2196f3 !important;
+  box-shadow: 0 6px 24px rgba(33, 150, 243, 0.15) !important;
+}
+
 .clear-chat-button {
-  background-color: #ff6200 !important;
-  border-radius: 20px;
-  padding: 4px 12px;
-  font-size: 0.8rem;
-  transition: background-color 0.2s ease-in-out;
+  background: linear-gradient(135deg, #ff6200 0%, #e55a00 100%) !important;
+  border-radius: 15px !important;
+  padding: 8px 16px !important;
+  font-size: 0.9rem !important;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 16px rgba(255, 98, 0, 0.3) !important;
 }
 
 .clear-chat-button:hover {
-  background-color: #e55a00;
+  background: linear-gradient(135deg, #e55a00 0%, #d84315 100%) !important;
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 6px 24px rgba(255, 98, 0, 0.4) !important;
 }
 
-@media (max-width: 960px) {
-  .upcoming-calendar-wrapper {
-    max-width: 100%;
-    padding: 0.5rem;
+/* Enhanced Sessions Section */
+.session-filters-wrapper {
+  max-width: 1000px;
+  margin: 2rem auto 1rem auto;
+  padding: 0 1rem;
+}
+
+.sessions-wrapper {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafe 100%);
+  border-radius: 24px;
+  padding: 2rem;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(33, 150, 243, 0.04);
+  margin: 2rem auto;
+  max-width: 1000px;
+  border: 1px solid rgba(33, 150, 243, 0.08);
+}
+
+.sessions-wrapper .mud-table {
+  margin: 1rem auto 2rem auto;
+  max-width: 100%;
+  border-radius: 16px;
+  background-color: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.mud-table-cell {
+  text-align: center !important;
+  padding: 16px 12px !important;
+}
+
+.mud-table-row .column-header {
+  text-align: center !important;
+  font-weight: 700 !important;
+  color: #333 !important;
+}
+
+.mud-table-row:hover {
+  background: linear-gradient(135deg, #f8fafe 0%, #eef7ff 100%) !important;
+  transition: all 0.3s ease;
+}
+
+/* Enhanced Responsive Design */
+@media (max-width: 1200px) {
+  .booking-options-grid .mud-grid-item {
+    flex-basis: 100% !important;
+    max-width: 100% !important;
   }
 
-  .mud-calendar .mud-day {
-    min-width: 80px;
+  .booking-options-grid .mud-stack {
+    margin-bottom: 2rem;
   }
 
-  .mud-calendar .mud-day-header {
-    font-size: 0.75rem;
+  .main-tabs {
+    margin: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-welcome {
+    padding: 2rem 1.5rem;
+    margin: 1rem;
   }
 
-  .mud-calendar .mud-event {
-    font-size: 0.7rem;
-    padding: 1px 2px;
+  .booking-options-grid,
+  .user-dashboard-request {
+    padding: 1.5rem;
+    border-radius: 20px;
+    margin: 1rem;
   }
 
-  .chat-wrapper {
-    padding: 1rem;
+  .option-card {
+    margin-bottom: 1rem;
   }
 
-  .ai-chat-messages .mud-card {
-    max-width: 90%;
+  .active-bookings-card {
+    margin: 1rem;
   }
 
-  .ai-chat-messages .user-message {
-    margin-left: 10%;
+  .chat-wrapper,
+  .sessions-wrapper {
+    margin: 1rem;
+    padding: 1.5rem;
+    border-radius: 20px;
   }
 
-  .ai-chat-messages .bot-message {
-    margin-right: 10%;
+  .welcome-icon {
+    font-size: 2.5rem !important;
   }
 
-  .chat-input {
-    min-width: 100%;
+  .welcome-title {
+    font-size: 1.8rem !important;
+  }
+
+  .book-session-btn {
+    padding: 14px 28px !important;
+    font-size: 1rem !important;
   }
 }
 
 @media (max-width: 600px) {
   .dashboard-welcome {
-    padding: 1rem;
+    padding: 1.5rem 1rem;
   }
 
   .booking-options-grid,
   .user-dashboard-request {
-    padding: 1rem;
+    padding: 1.2rem;
   }
 
-  .mud-calendar .mud-day {
-    min-width: 60px;
+  .welcome-icon {
+    font-size: 2rem !important;
   }
 
-  .mud-calendar .mud-day-header {
-    font-size: 0.65rem;
+  .welcome-title {
+    font-size: 1.5rem !important;
   }
 
-  .mud-calendar .mud-event {
-    font-size: 0.6rem;
+  .active-booking-item {
+    padding: 1.2rem;
+  }
+
+  .sessions-remaining-badge {
+    font-size: 0.75rem !important;
+    padding: 8px 12px !important;
   }
 }
 
@@ -463,4 +978,467 @@
   margin-top: 1rem;
   width: 100%;
   max-width: 240px;
+}
+
+/* Booking Tab Layout Improvements */
+.booking-tab-wrapper {
+  max-width: 1600px !important;
+  margin: 0 auto !important;
+  padding: 2rem !important;
+}
+
+/* Sticky Form for Better UX */
+.sticky-form {
+  position: -webkit-sticky;
+  position: sticky;
+  top: 2rem;
+  height: fit-content;
+  z-index: 100;
+}
+
+.form-title {
+  color: #1a1a1a !important;
+  font-weight: 700 !important;
+  border-bottom: 2px solid #2196f3;
+  padding-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+}
+
+/* Responsive sticky behavior */
+@media (max-width: 1200px) {
+  .sticky-form {
+    position: static;
+    margin-top: 2rem;
+  }
+}
+
+/* Section Headers */
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Single Session Section Header - Gray Theme */
+.section-header:has(.section-icon[class*="Person"]) {
+  border-left: 4px solid #757575;
+}
+
+.section-header:has(.section-icon[class*="Person"]) .section-icon {
+  font-size: 1.5rem !important;
+  color: #757575 !important;
+  padding: 8px;
+  background: rgba(117, 117, 117, 0.1);
+  border-radius: 50%;
+}
+
+/* Session Pack Section Header - Blue Theme */
+.section-header:has(.section-icon[class*="Inventory"]) {
+  border-left: 4px solid #2196f3;
+}
+
+.section-header:has(.section-icon[class*="Inventory"]) .section-icon {
+  font-size: 1.5rem !important;
+  color: #2196f3 !important;
+  padding: 8px;
+  background: rgba(33, 150, 243, 0.1);
+  border-radius: 50%;
+}
+
+/* Subscription Section Header - Green Theme */
+.section-header:has(.section-icon[class*="Subscriptions"]) {
+  border-left: 4px solid #4caf50;
+}
+
+.section-header:has(.section-icon[class*="Subscriptions"]) .section-icon {
+  font-size: 1.5rem !important;
+  color: #4caf50 !important;
+  padding: 8px;
+  background: rgba(76, 175, 80, 0.1);
+  border-radius: 50%;
+}
+
+/* Fallback for generic section icons */
+.section-icon {
+  font-size: 1.5rem !important;
+  color: #757575 !important;
+  padding: 8px;
+  background: rgba(117, 117, 117, 0.1);
+  border-radius: 50%;
+}
+
+.section-title {
+  font-weight: 700 !important;
+  color: #1a1a1a !important;
+  margin: 0 !important;
+}
+
+/* Responsive section headers */
+@media (max-width: 768px) {
+  .section-header {
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Responsive themed section icons */
+  .section-header:has(.section-icon[class*="Person"]) .section-icon,
+  .section-header:has(.section-icon[class*="Inventory"]) .section-icon,
+  .section-header:has(.section-icon[class*="Subscriptions"]) .section-icon,
+  .section-icon {
+    font-size: 1.25rem !important;
+    padding: 6px;
+  }
+
+  .section-title {
+    font-size: 1rem !important;
+  }
+}
+
+/* Compact Card Layout for Booking Options */
+.compact-card-content {
+  padding: 1rem !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 160px;
+  text-align: left;
+  overflow: hidden;
+  width: 100%;
+}
+
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  min-height: 36px;
+  width: 100%;
+}
+
+.card-header .card-type-icon {
+  flex-shrink: 0;
+  font-size: 1.1rem !important;
+  margin-top: 1px;
+  width: 18px;
+  height: 18px;
+}
+
+/* Single Session Card Icons - Gray */
+.single-session .card-header .card-type-icon {
+  color: #757575;
+}
+
+/* Session Pack Card Icons - Blue */
+.session-pack .card-header .card-type-icon,
+.available-pack .card-header .card-type-icon,
+.purchase-pack .card-header .card-type-icon {
+  color: #2196f3;
+}
+
+/* Subscription Card Icons - Green */
+.subscription .card-header .card-type-icon,
+.available-subscription .card-header .card-type-icon,
+.purchase-subscription .card-header .card-type-icon {
+  color: #4caf50;
+}
+
+/* Special icons for available items */
+.available-pack .card-header .available-icon,
+.available-subscription .card-header .available-icon {
+  color: #4caf50 !important;
+}
+
+.card-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+  width: calc(100% - 30px);
+}
+
+.card-info .card-title {
+  font-weight: 700 !important;
+  margin: 0 !important;
+  color: #1a1a1a !important;
+  line-height: 1.3;
+  font-size: 0.95rem !important;
+  white-space: normal;
+  word-break: break-word;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.card-info .card-subtitle {
+  color: rgba(0, 0, 0, 0.6) !important;
+  margin: 0 !important;
+  font-size: 0.8rem !important;
+  line-height: 1.2;
+  white-space: normal;
+  word-break: break-word;
+  max-width: 100%;
+}
+
+.card-features {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0.5rem 0;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 18px;
+}
+
+.feature-item .mud-icon-root {
+  flex-shrink: 0;
+  font-size: 0.8rem !important;
+  width: 14px !important;
+  height: 14px !important;
+}
+
+/* Single Session Feature Icons - Gray */
+.single-session .feature-item .mud-icon-root {
+  color: rgba(117, 117, 117, 0.8);
+}
+
+/* Session Pack Feature Icons - Blue */
+.session-pack .feature-item .mud-icon-root,
+.available-pack .feature-item .mud-icon-root,
+.purchase-pack .feature-item .mud-icon-root {
+  color: rgba(33, 150, 243, 0.8);
+}
+
+/* Subscription Feature Icons - Green */
+.subscription .feature-item .mud-icon-root,
+.available-subscription .feature-item .mud-icon-root,
+.purchase-subscription .feature-item .mud-icon-root {
+  color: rgba(76, 175, 80, 0.8);
+}
+
+.feature-item .mud-text {
+  margin: 0 !important;
+  font-size: 0.75rem !important;
+  line-height: 1.2;
+  color: rgba(0, 0, 0, 0.7) !important;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  flex: 1;
+  min-width: 0;
+}
+
+.card-description {
+  flex-grow: 1;
+  margin: 0.4rem 0;
+}
+
+.card-description .description-text {
+  font-size: 0.75rem !important;
+  line-height: 1.2;
+  color: rgba(0, 0, 0, 0.6) !important;
+  margin: 0 !important;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.card-price {
+  margin-top: auto;
+  padding-top: 0.5rem;
+  text-align: center;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.card-price .mud-text {
+  margin: 0 !important;
+  font-weight: 700 !important;
+  font-size: 1rem !important;
+}
+
+.recommended-chip {
+  position: absolute !important;
+  top: 6px !important;
+  right: 12px !important;
+  background: linear-gradient(135deg, #ff6200 0%, #e55a00 100%) !important;
+  color: white !important;
+  font-weight: 600 !important;
+  font-size: 0.45rem !important;
+  padding: 1px 3px !important;
+  border-radius: 4px !important;
+  box-shadow: 0 1px 2px rgba(255, 98, 0, 0.3) !important;
+  z-index: 10 !important;
+  max-width: 35px !important;
+  width: 35px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  line-height: 1 !important;
+  min-height: 12px !important;
+  height: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Ensure recommended cards have proper overflow handling */
+.recommended-card {
+  overflow: hidden !important;
+  position: relative !important;
+}
+
+.recommended-card .compact-card-content {
+  position: relative !important;
+  overflow: hidden !important;
+  padding-top: 1.5rem !important;
+  padding-right: 1.5rem !important;
+}
+
+/* Hide icon in recommended chip to save space */
+.recommended-chip .mud-icon-root {
+  display: none !important;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+  .compact-card-content {
+    padding: 1rem !important;
+    min-height: 160px;
+  }
+
+  .card-header {
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .card-header .card-type-icon {
+    font-size: 1.1rem !important;
+    width: 18px;
+    height: 18px;
+  }
+
+  .card-info .card-title {
+    font-size: 0.9rem !important;
+  }
+
+  .card-info .card-subtitle {
+    font-size: 0.75rem !important;
+  }
+
+  .feature-item .mud-text {
+    font-size: 0.75rem !important;
+  }
+
+  .card-description .description-text {
+    font-size: 0.75rem !important;
+  }
+
+  .recommended-chip {
+    top: 4px !important;
+    right: 8px !important;
+    font-size: 0.4rem !important;
+    padding: 1px 2px !important;
+    max-width: 30px !important;
+    width: 30px !important;
+    border-radius: 3px !important;
+    min-height: 10px !important;
+    height: 10px !important;
+  }
+
+  .recommended-card .compact-card-content {
+    padding-top: 1rem !important;
+    padding-right: 1rem !important;
+  }
+}
+
+/* Enhanced booking options cards with consistent sizing */
+.option-card {
+  width: 100% !important;
+  min-width: 220px !important;
+  max-width: 280px !important;
+  border-radius: 12px !important;
+  transition: all 0.3s ease !important;
+  border: 2px solid transparent !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08) !important;
+  margin: 0 auto !important;
+}
+
+.option-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12) !important;
+  border-color: rgba(33, 150, 243, 0.3) !important;
+}
+
+.option-card.selected {
+  border-color: #2196f3 !important;
+  box-shadow: 0 4px 20px rgba(33, 150, 243, 0.2) !important;
+  transform: translateY(-1px) !important;
+}
+
+.booking-options-grid .mud-item {
+  display: flex !important;
+  justify-content: center !important;
+}
+
+.booking-options-grid .mud-stack {
+  width: 100% !important;
+  align-items: center !important;
+  max-width: 290px !important;
+  margin: 0 auto !important;
+}
+
+/* Compact cards maintain consistent height */
+.compact-card-content {
+  padding: 1.25rem !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 200px;
+  text-align: left;
+  overflow: hidden;
+  width: 100%;
+}
+
+/* Override MudBlazor orange theme for session category dropdown */
+.mud-select-input {
+  background-color: transparent !important;
+}
+
+.mud-popover .mud-list {
+  background-color: #ffffff !important;
+}
+
+.mud-popover .mud-list-item {
+  background-color: transparent !important;
+  color: #333333 !important;
+}
+
+.mud-popover .mud-list-item:hover {
+  background-color: #f5f5f5 !important;
+  color: #333333 !important;
+}
+
+.mud-popover .mud-list-item.mud-selected {
+  background-color: #e3f2fd !important;
+  color: #2196f3 !important;
+}
+
+.mud-popover .mud-list-item.mud-selected:hover {
+  background-color: #bbdefb !important;
+  color: #1976d2 !important;
+}
+
+/* Specific override for session category dropdown */
+.mud-select .mud-select-input {
+  color: #333333 !important;
+}
+
+.mud-input-control {
+  background-color: transparent !important;
 }

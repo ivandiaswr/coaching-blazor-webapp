@@ -2,104 +2,313 @@
 
 @rendermode InteractiveServer
 
-<SeoComponent Title="@pageTitle" 
-              Description="Learn about Ítala Veloso's transformative coaching process. Discover how our structured approach helps you overcome challenges, heal from trauma, and achieve personal breakthrough."
-              Keywords="coaching process, transformation process, personal breakthrough, healing process, life coach methodology, coaching approach, self-discovery process"
-              CanonicalUrl="https://italaveloso.com/about/process"
-              JsonLdStructuredData="@GetPageStructuredData()" />
+<SeoComponent Title="@pageTitle"
+    Description="Learn about Ítala Veloso's transformative coaching process. Discover how our structured approach helps you overcome challenges, heal from trauma, and achieve personal breakthrough."
+    Keywords="coaching process, transformation process, personal breakthrough, healing process, life coach methodology, coaching approach, self-discovery process"
+    CanonicalUrl="https://italaveloso.com/about/process" JsonLdStructuredData="@GetPageStructuredData()" />
 
 <PageTitle>@pageTitle</PageTitle>
 
+<link href="~/css/process.css" rel="stylesheet" />
+<script src="~/js/process-enhancements.js" defer></script>
+
 <div class="process-page">
-    <h1 class="process-title">The <span class="highlight">Process</span></h1>
-
-    <div class="process-intro">
-        <p>
-            Have you ever felt lost? Stuck? Not knowing what to do next with your life? 
-            Feeling like no matter how many therapies you tried or where you turned to before, nothing seemed to work? It’s as if you’d reached the end of the road, shattered by circumstances or by what others did to you or those you love.
-        </p>
-        <p>
-            Perhaps the answer is no. However, you have recently graduated but do not know where to turn to, next? Or maybe you do know what and where to turn next, but do not want to follow the conventional 9-5 conventions of working for someone else? And would like to start something afresh, for yourself?
-        </p>
-        <p>
-            Or maybe, you just find yourself in that stage in life where you feel stagnated? Or you have been sensing that you could be doing much more, but something keeps holding back? Want to find out what such blockers are and let go and let yourself grow?
-            Are you finding yourself overwhelmed and stressed, lately?
-        </p>
-        <p>
-            Whatever your reason. If you are reading this, could it be that you are searching for a significance, change, and peace in your life? A shift in your midset? A shift in your decision and planning process, to help you close the gap between where you ar right now and where you would like to be, instead?
-        </p>
-        <p>
-            Or simply, you are ready for a change?
-            And you want to see transformational and impactful changes in your life? While searching for a shift in behavioural patterns and on how things have been unfolding in your life?
-        </p>
-        <p class="bold-text">You are not alone. I’ve been there too.</p>
-        <p>
-            Search no more. Let's embark on a journey of Life Coaching Together with me, shall we?
-            Here’s where everything can change: This is where you <strong>stop merely existing</strong> and <strong>start truly living</strong>.
-        </p>
-        <p>
-            Ítala here, your Life Coach and Mentor and founder of JOSTIC — a lived and proven Life Liberation MethodologyTM. It’s designed to empower and help you release your true authentic self. While guiding you and empowering you to experience a mindset shift, break the barriers of limiting beliefs, develop new healthier habits, unlock and unblock paths that will lead you to continue moving forward and transform your life.
-            This methodology isn’t just about healing, selfdiscovery, getting unstuck—it’s about mastering your journey and empowering every aspect of your life.
-        </p>
-    </div>
-
-    <div class="methodology-section">
-        <h2>Introducing JOSTIC</h2>
-        <p>
-            I retrained as a Life Coach and Mentor and developed <strong>JOSTIC</strong>, a lived and proven 
-            <em>Life Liberation Methodology™</em>. It’s designed to empower and give a voice to the suppressed, confused, and trapped emotions we all carry inside, 
-            while guiding people to break free and start thriving in every area of life.
-        </p>
-        <p><strong>What does this mean for you?</strong></p>
-        <p>
-            This methodology isn’t just about healing or self-discovery—it’s about mastering your journey and empowering every aspect of your life.
-        </p>
-    </div>
-
-    <div class="outcomes-section">
-        <h2>What Can You Achieve?</h2>
-        <p>Start the Most Popular 10-session Life Coaching Programme with Ítala Veloso now, and discover how you can:</p>
-        <ul class="outcomes-list">
-            <li>Move from feeling stuck to truly thriving</li>
-            <li>Reclaim your inner peace and reignite your passion for life</li>
-            <li>Find clarity and break free from limiting beliefs and patterns</li>
-            <li>Design and roadmap your future with confidence and purpose</li>
-            <li>Build healthier, stronger, more fulfilling relationships</li>
-            <li>Balance work-life pressures while enhancing wellness and nurturing mental health</li>
-            <li>Achieve career clarity, including career path mapping, CV re-assessment, and interview preparation</li>
-            <li>Align your self-awareness and skills with your dreams and goals</li>
-        </ul>
-        <p>Whether it’s your work-life, relationships, wellness, or finances—this journey is about transformation. It’s about helping you reclaim inner peace and start living fully and freely.</p>
-    </div>
-
-    <div class="who-section">
-        <h2>Who is This For?</h2>
-        <p>
-            This isn’t just for one type of person or one type of struggle. My services are available in both <strong>English</strong> and <strong>Portuguese</strong>, 
-            for both <strong>Female</strong> and <strong>Male</strong>, making them accessible to a diverse community. 
-            Wherever you are on your journey, I’m here to guide you—whether you need coaching, mentoring, or clarity in life and career.
-        </p>
-    </div>
-
-    <div class="cta-section">
-        <div class="cta-content">
-            <h2>Are You Ready to Transform Your Life?</h2>
-            <p>
-                Unleash your life—it’s not over yet. No matter what it feels like right now. Mine wasn’t, and neither is yours. 
-                This can be the beginning of your transformation. Let’s uncover the best version of you that is fearless, alive, strong, 
-                and more powerful than you’ve ever imagined.
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1 class="process-title">The <span class="highlight">Process</span></h1>
+            <p class="hero-subtitle">
+                Discover a transformative journey that guides you from feeling stuck to truly thriving in every area of
+                your life.
             </p>
-            <p class="bold-text">Because You are More Than A Conqueror™</p>
         </div>
-        <a href="#contact" class="services-cta-button">
-            <span class="cta-icon"><i class="fas fa-calendar-check"></i></span>
-            <span class="cta-text">
-                <span class="primary-text">Book Your Free Discovery Call</span>
-                <span class="secondary-text">30 minutes, zero obligation</span>
-            </span>
-            <i class="fas fa-arrow-right"></i>
-        </a>
-    </div>
+    </section>
+
+    <main class="process-content">
+        <section class="content-section" style="--delay: 0.1s;">
+            <div class="section-card">
+                <h2 class="section-title">
+                    <div class="section-icon">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    Are You Ready for Change?
+                </h2>
+
+                <div class="question-text">
+                    Have you ever felt lost? Stuck? Not knowing what to do next with your life?
+                </div>
+
+                <p class="section-text">
+                    Feeling like no matter how many therapies you tried or where you turned to before, nothing seemed to
+                    work?
+                    It's as if you'd reached the end of the road, shattered by circumstances or by what others did to
+                    you or those you love.
+                </p>
+
+                <div class="question-text">
+                    Perhaps you've recently graduated but don't know where to turn next?
+                </div>
+
+                <p class="section-text">
+                    Or maybe you know what you want to do but don't want to follow conventional 9-5 patterns?
+                    You'd like to start something fresh, for yourself?
+                </p>
+
+                <div class="question-text">
+                    Do you find yourself stagnated, sensing you could be doing much more?
+                </div>
+
+                <p class="section-text">
+                    Want to discover what's holding you back and finally let yourself grow?
+                    Are you finding yourself overwhelmed and stressed lately?
+                </p>
+
+                <div class="highlight-quote">
+                    Whatever your reason, if you're reading this, you might be searching for significance, change, and
+                    peace in your life.
+                    A shift in your mindset and decision-making process to help you close the gap between where you are
+                    right now and where you'd like to be.
+                </div>
+
+                <p class="section-text">
+                    <strong>You are not alone. I've been there too.</strong>
+                </p>
+
+                <p class="section-text">
+                    Search no more. Let's embark on a journey of Life Coaching together, shall we?
+                    Here's where everything can change: This is where you <strong>stop merely existing</strong> and
+                    <strong>start truly living</strong>.
+                </p>
+            </div>
+        </section>
+
+        <section class="content-section" style="--delay: 0.2s;">
+            <div class="section-card">
+                <h2 class="section-title">
+                    <div class="section-icon">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    Meet Your Guide
+                </h2>
+
+                <p class="section-text">
+                    Ítala here, your Life Coach and Mentor, and founder of <span
+                        class="methodology-highlight">JOSTIC</span> —
+                    a lived and proven Life Liberation Methodology™. It's designed to empower and help you release your
+                    true authentic self,
+                    guiding you to experience a mindset shift, break the barriers of limiting beliefs, develop new
+                    healthier habits,
+                    and unlock paths that will lead you to continue moving forward and transform your life.
+                </p>
+
+                <p class="section-text">
+                    This methodology isn't just about healing or self-discovery—it's about mastering your journey and
+                    empowering every aspect of your life.
+                </p>
+            </div>
+        </section>
+
+        <section class="content-section" style="--delay: 0.3s;">
+            <div class="section-card">
+                <h2 class="section-title">
+                    <div class="section-icon">
+                        <i class="fas fa-compass"></i>
+                    </div>
+                    Introducing JOSTIC
+                </h2>
+
+                <div class="methodology-logo">JOSTIC</div>
+
+                <p class="section-text">
+                    I retrained as a Life Coach and Mentor and developed <strong>JOSTIC</strong>, a lived and proven
+                    <em>Life Liberation Methodology™</em>. It's designed to empower and give a voice to the suppressed,
+                    confused,
+                    and trapped emotions we all carry inside, while guiding people to break free and start thriving in
+                    every area of life.
+                </p>
+
+                <div class="highlight-quote">
+                    What does this mean for you? This methodology isn't just about healing or self-discovery—it's about
+                    mastering your journey and empowering every aspect of your life.
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section" style="--delay: 0.4s;">
+            <div class="section-card">
+                <h2 class="section-title">
+                    <div class="section-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    What Can You Achieve?
+                </h2>
+
+                <p class="section-text">
+                    Start the Most Popular 10-session Life Coaching Programme with Ítala Veloso now, and discover how
+                    you can:
+                </p>
+
+                <div class="outcomes-grid">
+                    <div class="outcome-card">
+                        <div class="outcome-icon">
+                            <i class="fas fa-rocket"></i>
+                        </div>
+                        <p class="outcome-text">Move from feeling stuck to truly thriving</p>
+                    </div>
+
+                    <div class="outcome-card">
+                        <div class="outcome-icon">
+                            <i class="fas fa-peace"></i>
+                        </div>
+                        <p class="outcome-text">Reclaim your inner peace and reignite your passion for life</p>
+                    </div>
+
+                    <div class="outcome-card">
+                        <div class="outcome-icon">
+                            <i class="fas fa-lightbulb"></i>
+                        </div>
+                        <p class="outcome-text">Find clarity and break free from limiting beliefs and patterns</p>
+                    </div>
+
+                    <div class="outcome-card">
+                        <div class="outcome-icon">
+                            <i class="fas fa-map"></i>
+                        </div>
+                        <p class="outcome-text">Design and roadmap your future with confidence and purpose</p>
+                    </div>
+
+                    <div class="outcome-card">
+                        <div class="outcome-icon">
+                            <i class="fas fa-heart-pulse"></i>
+                        </div>
+                        <p class="outcome-text">Build healthier, stronger, more fulfilling relationships</p>
+                    </div>
+
+                    <div class="outcome-card">
+                        <div class="outcome-icon">
+                            <i class="fas fa-balance-scale"></i>
+                        </div>
+                        <p class="outcome-text">Balance work-life pressures while enhancing wellness and nurturing
+                            mental health</p>
+                    </div>
+
+                    <div class="outcome-card">
+                        <div class="outcome-icon">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                        <p class="outcome-text">Achieve career clarity, including career path mapping, CV re-assessment,
+                            and interview preparation</p>
+                    </div>
+
+                    <div class="outcome-card">
+                        <div class="outcome-icon">
+                            <i class="fas fa-target"></i>
+                        </div>
+                        <p class="outcome-text">Align your self-awareness and skills with your dreams and goals</p>
+                    </div>
+                </div>
+
+                <p class="section-text">
+                    Whether it's your work-life, relationships, wellness, or finances—this journey is about
+                    transformation.
+                    It's about helping you reclaim inner peace and start living fully and freely.
+                </p>
+            </div>
+        </section>
+
+        <section class="content-section" style="--delay: 0.5s;">
+            <div class="section-card">
+                <h2 class="section-title">
+                    <div class="section-icon">
+                        <i class="fas fa-route"></i>
+                    </div>
+                    Your Journey Steps
+                </h2>
+
+                <div class="journey-steps">
+                    <div class="journey-step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h3 class="step-title">Discovery & Assessment</h3>
+                            <p class="step-description">We start by understanding where you are now, what's holding you
+                                back, and what you truly want to achieve.</p>
+                        </div>
+                    </div>
+
+                    <div class="journey-step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h3 class="step-title">JOSTIC Framework Application</h3>
+                            <p class="step-description">Using the proven Life Liberation Methodology™, we begin breaking
+                                through limiting beliefs and patterns.</p>
+                        </div>
+                    </div>
+
+                    <div class="journey-step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h3 class="step-title">Transformation & Growth</h3>
+                            <p class="step-description">Through structured sessions, you'll develop new habits, gain
+                                clarity, and experience profound mindset shifts.</p>
+                        </div>
+                    </div>
+
+                    <div class="journey-step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h3 class="step-title">Integration & Mastery</h3>
+                            <p class="step-description">You'll learn to integrate your new insights and skills, creating
+                                lasting change and continued growth.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="content-section" style="--delay: 0.6s;">
+            <div class="section-card">
+                <h2 class="section-title">
+                    <div class="section-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    Who is This For?
+                </h2>
+
+                <p class="section-text">
+                    This isn't just for one type of person or one type of struggle. My services are available in both
+                    <strong>English</strong> and <strong>Portuguese</strong>, for both <strong>Female</strong> and
+                    <strong>Male</strong>,
+                    making them accessible to a diverse community.
+                </p>
+
+                <p class="section-text">
+                    Wherever you are on your journey, I'm here to guide you—whether you need coaching, mentoring,
+                    or clarity in life and career.
+                </p>
+            </div>
+        </section>
+
+        <section class="cta-section">
+            <div class="cta-content">
+                <h2 class="cta-title">Are You Ready to Transform Your Life?</h2>
+                <p class="cta-text">
+                    Unleash your life—it's not over yet. No matter what it feels like right now. Mine wasn't, and
+                    neither is yours.
+                    This can be the beginning of your transformation. Let's uncover the best version of you that is
+                    fearless, alive,
+                    strong, and more powerful than you've ever imagined.
+                </p>
+                <div class="highlight-quote"
+                    style="background: rgba(255, 255, 255, 0.1); border-color: white; color: white;">
+                    Because You are More Than A Conqueror™
+                </div>
+                <a href="#contact" class="cta-button">
+                    <i class="fas fa-calendar-check"></i>
+                    <span>Book Your Free Discovery Call</span>
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+        </section>
+    </main>
 </div>
 
 @code {
@@ -108,24 +317,25 @@
     private string GetPageStructuredData()
     {
         return @"{
-            ""@context"": ""https://schema.org"",
-            ""@type"": ""Article"",
-            ""headline"": ""The Process - Transformative Coaching Journey"",
-            ""description"": ""Learn about Ítala Veloso's structured coaching process that helps individuals overcome challenges, heal from trauma, and achieve personal breakthrough."",
-            ""author"": {
-                ""@type"": ""Person"",
-                ""name"": ""Ítala Veloso"",
-                ""jobTitle"": ""Life & Career Coach""
-            },
-            ""publisher"": {
-                ""@type"": ""Organization"",
-                ""name"": ""Ítala Veloso Coaching""
-            },
-            ""url"": ""https://italaveloso.com/about/process"",
-            ""mainEntityOfPage"": {
-                ""@type"": ""WebPage"",
-                ""@id"": ""https://italaveloso.com/about/process""
-            }
-        }";
+""@context"": ""https://schema.org"",
+""@type"": ""Article"",
+""headline"": ""The Process - Transformative Coaching Journey"",
+""description"": ""Learn about Ítala Veloso's structured coaching process that helps individuals overcome challenges,
+heal from trauma, and achieve personal breakthrough."",
+""author"": {
+""@type"": ""Person"",
+""name"": ""Ítala Veloso"",
+""jobTitle"": ""Life & Career Coach""
+},
+""publisher"": {
+""@type"": ""Organization"",
+""name"": ""Ítala Veloso Coaching""
+},
+""url"": ""https://italaveloso.com/about/process"",
+""mainEntityOfPage"": {
+""@type"": ""WebPage"",
+""@id"": ""https://italaveloso.com/about/process""
+}
+}";
     }
 }

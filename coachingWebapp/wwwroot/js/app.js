@@ -47,6 +47,24 @@ window.scrollToFragment = function () {
     }
 };
 
+window.scrollToElement = function (elementId) {
+    requestAnimationFrame(() => {
+        try {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            } else {
+                console.warn(`Element with id '${elementId}' not found`);
+            }
+        } catch (error) {
+            console.error("Error in scrollToElement:", error);
+        }
+    });
+};
+
 let lastUrl = window.location.href;
 
 document.addEventListener('DOMContentLoaded', () => {

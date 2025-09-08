@@ -11,7 +11,7 @@
 <section id="adminDashboard">
     <div class="dashboard-header">
         <div>
-            <h1><span class="highlight">Admin</span> Dashboard</h1>
+            @* <h1><span class="highlight">Admin</span> Dashboard</h1> *@
         
             <MudPaper Class="dashboard-welcome" Elevation="1">
                 <MudText Typo="Typo.h5" Class="welcome-title">
@@ -482,25 +482,14 @@
         </MudTabPanel>
 
         <MudTabPanel Text="Pricing Configuration">
-            <MudPaper Class="pa-4 mb-4" Elevation="1" Style="background: linear-gradient(45deg, #f5f5f5 30%, #e3f2fd 90%);">
-                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-3">
-                    <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Size="Size.Large" Color="Color.Primary" />
-                    <div>
-                        <MudText Typo="Typo.h5" Color="Color.Primary">
-                            Manage Your Pricing
-                        </MudText>
-                    </div>
-                </MudStack>
-                
-                <MudAlert Severity="Severity.Info" Class="mt-3" Dense="true" NoIcon="false">
+            <MudAlert Severity="Severity.Info" Class="mt-3 mb-3" Dense="true" NoIcon="false">
                     <MudText Typo="Typo.body2">
                         <strong>💡 Tips:</strong> 
                         • Single sessions are for one-time bookings 
                         • Packages offer discounts for multiple sessions 
                         • Subscriptions are monthly recurring payments
                     </MudText>
-                </MudAlert>
-            </MudPaper>
+            </MudAlert>
 
             <MudTabs Elevation="1" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-4">
                 @foreach (var sessionType in Enum.GetValues(typeof(SessionType)).Cast<SessionType>())

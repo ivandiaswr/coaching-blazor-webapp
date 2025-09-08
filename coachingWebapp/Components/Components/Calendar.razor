@@ -1,44 +1,119 @@
 @using MudBlazor
 @using System.Globalization
 
-<div class="calendar-modal @(IsVisible ? "show" : "")" @onclick="Close">
+<div class="calendar-modal @(IsVisible ? "show" : "")" @onclick="Close" role="dialog" aria-labelledby="calendar-title" aria-modal="true">
     <div class="calendar-modal-content" @onclick:stopPropagation="true">
-        <div class="timezone-info">
-            Timezone: <strong>@CurrentTimeZoneDisplay</strong>
+        <div class="calendar-header">
+            <button type="button" class="calendar-close-btn" @onclick="Close" @onclick:preventDefault="true" aria-label="Close calendar">
+                <i class="fas fa-times"></i>
+            </button>
+            <h3 id="calendar-title" class="calendar-title">
+                <i class="fas fa-calendar-alt"></i>
+                Choose Your Perfect Time
+            </h3>
+            <p class="calendar-subtitle">Select an available 45-minute slot that works for you</p>
         </div>
 
-        @if (IsTimeZoneValid)
+        @if (IsLoading)
         {
-            <MudCalendar T="CalendarItem"
-                @ref="calendar"
-                Items="@calendarItems"
-                View="@CurrentView"
-                StartDate="@InitialDateTime"
-                ShowTodayButton="true"
-                SlotDuration="00:45:00"
-                StartHour="0"
-                EndHour="23"
-                lang="en"
-                id="calendarEventTarget"
-                ItemClicked="OnSlotClicked"
-                Class="responsive-calendar" />
+            <div class="calendar-loading">
+                <div class="loading-spinner"></div>
+                <p>Loading your available times...</p>
+            </div>
         }
         else
         {
-            <MudText>Invalid time zone: @CurrentTimeZoneDisplay. Using UTC.</MudText>
-            <MudCalendar T="CalendarItem"
-                @ref="calendar"
-                Items="@calendarItems"
-                View="@CurrentView"
-                StartDate="@InitialDateTime"
-                ShowTodayButton="true"
-                SlotDuration="00:45:00"
-                StartHour="0"
-                EndHour="23"
-                lang="en"
-                id="calendarEventTarget"
-                ItemClicked="OnSlotClicked"
-                Class="responsive-calendar" />
+            <!-- Time Zone Display -->
+            <div class="calendar-controls">
+                <div class="timezone-display">
+                    <i class="fas fa-globe-americas"></i>
+                    <span>Times shown in your timezone: <strong>@CurrentTimeZoneDisplay</strong></span>
+                </div>
+            </div>
+
+            <div class="date-selection-section">
+                <h4><i class="fas fa-calendar-day"></i> Step 1: Choose Your Date</h4>
+                <div class="date-picker-container">
+                    <MudDatePicker 
+                        Date="selectedDate"
+                        DateChanged="OnDateSelected"
+                        Label="Select a date"
+                        MinDate="@DateTime.Today.AddDays(2)"
+                        MaxDate="@DateTime.Today.AddDays(35)"
+                        IsDateDisabledFunc="@IsDateDisabled"
+                        Class="booking-date-picker"
+                        Variant="Variant.Outlined"
+                        Color="Color.Primary"
+                        HelperText="Dates without available slots are disabled" />
+                </div>
+            </div>
+
+            @if (selectedDate.HasValue)
+            {
+                <div class="time-slots-section">
+                    <h4><i class="fas fa-clock"></i> Step 2: Pick Your Time</h4>
+                    <div class="date-header">
+                        <strong>@selectedDate.Value.ToString("dddd, MMMM dd, yyyy")</strong>
+                        <small style="color: #666; display: block; margin-top: 4px;">
+                            All sessions are 45 minutes long
+                        </small>
+                    </div>
+                    
+                    @if (IsLoadingSlots)
+                    {
+                        <div class="slots-loading">
+                            <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                            <span>Loading available times...</span>
+                        </div>
+                    }
+                    else if (timeSlotsForDate.Any())
+                    {
+                        <div class="time-slots-grid">
+                            @foreach (var slot in timeSlotsForDate)
+                            {
+                                var isSelected = SelectedSlot.HasValue && SelectedSlot.Value == slot.DateTime;
+                                <button type="button" 
+                                        class="time-slot-btn @(slot.Status.ToLower()) @(isSelected ? "selected" : "")"
+                                        @onclick="@(() => SelectTimeSlot(slot))"
+                                        @onclick:preventDefault="true"
+                                        disabled="@(!slot.IsClickable)"
+                                        title="@($"{slot.DisplayTime} - {slot.Status}")">
+                                    <div class="slot-time">@slot.DisplayTime</div>
+                                    <div class="slot-status">
+                                        <i class="@GetStatusIcon(slot.Status)"></i>
+                                        <span>@GetStatusText(slot.Status)</span>
+                                    </div>
+                                </button>
+                            }
+                        </div>
+                        
+                        @if (!timeSlotsForDate.Any(s => s.IsClickable))
+                        {
+                            <div class="info-message mt-3">
+                                <i class="fas fa-info-circle text-warning"></i>
+                                <span>All slots on <strong>@selectedDate.Value.ToString("dddd, MMMM dd")</strong> are currently unavailable.</span>
+                                @if (selectedDate.Value.DayOfWeek == DayOfWeek.Saturday || selectedDate.Value.DayOfWeek == DayOfWeek.Sunday)
+                                {
+                                    <small class="d-block mt-1 text-muted">Weekend availability may be limited due to admin settings.</small>
+                                }
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="no-slots-message">
+                            <i class="fas fa-calendar-times"></i>
+                            <h5>No Available Times</h5>
+                            <p>All time slots are unavailable for <strong>@selectedDate.Value.ToString("dddd, MMMM dd")</strong>.</p>
+                            @if (selectedDate.Value.DayOfWeek == DayOfWeek.Saturday || selectedDate.Value.DayOfWeek == DayOfWeek.Sunday)
+                            {
+                                <p><i class="fas fa-info-circle text-info"></i> Weekend appointments may have limited availability.</p>
+                            }
+                            <p>Please try selecting another date.</p>
+                        </div>
+                    }
+                </div>
+            }
         }
     </div>
 </div>
@@ -52,17 +127,369 @@
     [Parameter] public DateTime? FirstAvailableDate { get; set; }
     [Parameter] public EventCallback<string> OnSlotSelected { get; set; }
     [Parameter] public string CurrentTimeZoneDisplay { get; set; } = "UTC";
-    private bool IsTimeZoneValid { get; set; } = false;
     [Parameter] public EventCallback<CalendarItem> OnEventClick { get; set; }
+    
+    private bool IsTimeZoneValid { get; set; } = false;
+    private bool IsLoading { get; set; } = true;
+    private DateTime? SelectedSlot { get; set; }
+    private CalendarView currentView = CalendarView.Week;
+    private int calendarKey = 0; // force calendar refresh
+    
+    private DateTime? selectedDate;
+    private bool IsLoadingSlots = false;
+    private List<TimeSlotInfo> timeSlotsForDate = new();
+
+    public class TimeSlotInfo
+    {
+        public DateTime DateTime { get; set; }
+        public string Status { get; set; } = ""; // Available, Busy, Unavailable
+        public string DisplayTime { get; set; } = "";
+        public string StatusIcon { get; set; } = "";
+        public bool IsClickable => Status == "Available";
+    }
 
     private MudCalendar calendar;
     private List<CalendarItem> calendarItems = new();
-    private DateTime InitialDateTime => FirstAvailableDate?.ToUniversalTime() ?? DateTime.UtcNow.AddDays(2);
-    private CalendarView CurrentView => WindowWidth <= 1024 ? CalendarView.Day : CalendarView.Week;
+    private DateTime InitialDateTime => DateTime.UtcNow.AddDays(2).Date; // Always start 2 days from now
+    private CalendarView CurrentView 
+    { 
+        get => WindowWidth <= 768 ? CalendarView.Day : CalendarView.Week; // Show Week view on desktop
+        set => currentView = value;
+    }
     private int WindowWidth { get; set; } = 1920;
+
+    public class QuickDateOption
+    {
+        public DateTime Date { get; set; }
+        public string Label { get; set; } = "";
+        public string DateText { get; set; } = "";
+        public int AvailableCount { get; set; }
+        public bool HasAvailableSlots => AvailableCount > 0;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Initialize with first available date (2 days from now) instead of today
+        selectedDate = DateTime.Today.AddDays(2); // Set default selected date
+        
+        // Don't call LoadSlotsForDate here since parameters aren't set yet
+        // Just set loading to false and let OnParametersSetAsync handle the rest
+        await Task.Delay(500);
+        IsLoading = false;
+        StateHasChanged();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        
+        // Only load slots if the calendar is visible and we have parameters
+        if (IsVisible && selectedDate.HasValue && !timeSlotsForDate.Any() && AvailableSlots.Any())
+        {
+            await LoadSlotsForDate(selectedDate.Value);
+        }
+    }
+
+    private async Task OnDateSelected(DateTime? date)
+    {
+        selectedDate = date;
+        if (date.HasValue)
+        {
+            await LoadSlotsForDate(date.Value);
+        }
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task LoadSlotsForDate(DateTime date)
+    {
+        try
+        {
+            IsLoadingSlots = true;
+            await InvokeAsync(StateHasChanged);
+            
+            await LogService.LogInfo("Calendar.LoadSlotsForDate", $"Loading slots for date: {date:yyyy-MM-dd}");
+            
+            timeSlotsForDate.Clear();
+            
+            // Get user timezone info
+            var userTimeZone = TimeZoneInfo.FindSystemTimeZoneById(CurrentTimeZoneDisplay);
+            var adminTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Europe/London");
+            
+            await LogService.LogInfo("Calendar.LoadSlotsForDate", $"User selected date: {date:yyyy-MM-dd} in timezone {CurrentTimeZoneDisplay}");
+            
+            // Find all available slots that, when converted to user timezone, fall on the selected date
+            var availableSlotsForThisDate = new List<DateTime>();
+            
+            foreach (var slotUtc in AvailableSlots)
+            {
+                // Convert UTC slot to user timezone to see what date it appears on
+                var slotInUserTime = TimeZoneInfo.ConvertTimeFromUtc(slotUtc, userTimeZone);
+                
+                // If this slot appears on the selected date in user timezone, include it
+                if (slotInUserTime.Date == date.Date)
+                {
+                    availableSlotsForThisDate.Add(slotUtc);
+                }
+            }
+            
+            availableSlotsForThisDate = availableSlotsForThisDate.OrderBy(slot => slot).ToList();
+                
+            await LogService.LogInfo("Calendar.LoadSlotsForDate", $"Found {availableSlotsForThisDate.Count} available slots for user date {date:yyyy-MM-dd}");
+            
+            if (availableSlotsForThisDate.Any())
+            {
+                var sampleSlots = availableSlotsForThisDate.Take(3).Select(s => 
+                {
+                    var userTime = TimeZoneInfo.ConvertTimeFromUtc(s, userTimeZone);
+                    return $"{s:HH:mm}UTC→{userTime:HH:mm}";
+                }).ToList();
+                await LogService.LogInfo("Calendar.LoadSlotsForDate", $"Sample slot conversions: {string.Join(", ", sampleSlots)}");
+            }
+            
+            // Only show slots that exist in AvailableSlots - no custom generation
+            foreach (var slotUtc in availableSlotsForThisDate)
+            {
+                // Convert UTC slot back to user timezone for display
+                var slotInUserTime = TimeZoneInfo.ConvertTimeFromUtc(slotUtc, userTimeZone);
+                
+                var slotInfo = new TimeSlotInfo
+                {
+                    DateTime = slotUtc, // Keep UTC for processing
+                    DisplayTime = slotInUserTime.ToString("h:mm tt"), // Display in user timezone
+                    Status = "Available", // These are pre-filtered available slots
+                    StatusIcon = "fas fa-clock text-success"
+                };
+                
+                // Double-check if it's busy (already booked) - just in case
+                bool isBusy = BusyTimes.Any(b => 
+                    slotUtc >= b.Start.UtcDateTime && 
+                    slotUtc < b.End.UtcDateTime);
+                
+                if (isBusy)
+                {
+                    slotInfo.Status = "Busy";
+                    slotInfo.StatusIcon = "fas fa-ban text-danger";
+                }
+                else
+                {
+                    // Double-check admin unavailabilities - just in case
+                    bool isAdminUnavailable = AdminUnavailabilities.Any(u =>
+                    {
+                        if (u.StartTime == null || u.EndTime == null || (u.IsRecurring && !u.DayOfWeek.HasValue) || (!u.IsRecurring && !u.Date.HasValue))
+                        {
+                            return false;
+                        }
+                        
+                        // Convert slot to admin timezone for comparison
+                        var slotInAdminTime = TimeZoneInfo.ConvertTimeFromUtc(slotUtc, adminTimeZone);
+                        var slotStartDate = slotInAdminTime.Date;
+                        var slotStartTime = slotInAdminTime.TimeOfDay;
+                        
+                        if (u.IsRecurring)
+                        {
+                            return slotInAdminTime.DayOfWeek == u.DayOfWeek!.Value &&
+                                slotStartTime >= u.StartTime.Value &&
+                                slotStartTime < u.EndTime.Value;
+                        }
+                        else
+                        {
+                            var unavailableDate = u.Date!.Value.Date;
+                            bool matchesDate = slotStartDate == unavailableDate;
+                            bool inTimeRange = slotStartTime >= u.StartTime.Value && slotStartTime < u.EndTime.Value;
+                            
+                            return matchesDate && inTimeRange;
+                        }
+                    });
+                    
+                    if (isAdminUnavailable)
+                    {
+                        slotInfo.Status = "Unavailable";
+                        slotInfo.StatusIcon = "fas fa-times-circle text-warning";
+                    }
+                }
+                
+                timeSlotsForDate.Add(slotInfo);
+            }
+            
+            await LogService.LogInfo("Calendar.LoadSlotsForDate", $"Successfully loaded {timeSlotsForDate.Count} slots for {date:yyyy-MM-dd}. Available: {timeSlotsForDate.Count(s => s.Status == "Available")}");
+        }
+        catch (Exception ex)
+        {
+            await LogService.LogError("Calendar.LoadSlotsForDate", $"Error loading slots for {date:yyyy-MM-dd}: {ex.Message}");
+            timeSlotsForDate = new List<TimeSlotInfo>();
+        }
+        finally
+        {
+            IsLoadingSlots = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task SelectTimeSlot(TimeSlotInfo slotInfo)
+    {
+        try
+        {
+            if (!slotInfo.IsClickable)
+            {
+                await LogService.LogWarning("Calendar.SelectTimeSlot", $"User tried to select non-clickable slot: {slotInfo.DisplayTime} - Status: {slotInfo.Status}");
+                return;
+            }
+                
+            SelectedSlot = slotInfo.DateTime;
+            
+            await LogService.LogInfo("Calendar.SelectTimeSlot", $"User selected time slot: {slotInfo.DisplayTime} ({slotInfo.DateTime:yyyy-MM-dd HH:mm:ss} UTC)");
+            
+            // Convert to user's timezone for display and callback
+            var userTimeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(CurrentTimeZoneDisplay);
+            var slotInUserTimeZone = TimeZoneInfo.ConvertTimeFromUtc(slotInfo.DateTime, userTimeZoneInfo);
+            
+            await OnSlotSelected.InvokeAsync(slotInUserTimeZone.ToString("o"));
+            
+            // Automatically close the calendar after selection
+            await Close();
+        }
+        catch (Exception ex)
+        {
+            await LogService.LogError("Calendar.SelectTimeSlot", $"Error selecting time slot {slotInfo.DisplayTime}: {ex.Message}");
+        }
+    }
+
+    private string GetStatusIcon(string status)
+    {
+        return status switch
+        {
+            "Available" => "fas fa-clock text-success",
+            "Busy" => "fas fa-ban text-danger",
+            "Unavailable" => "fas fa-times-circle text-warning",
+            _ => "fas fa-question-circle text-muted"
+        };
+    }
+
+    private string GetStatusText(string status)
+    {
+        return status switch
+        {
+            "Available" => "Available",
+            "Busy" => "Booked",
+            "Unavailable" => "Not available",
+            _ => "Unknown"
+        };
+    }
+
+    private async Task ChangeView(CalendarView view)
+    {
+        try
+        {
+            currentView = view;
+            await LogService.LogInfo("Calendar.ChangeView", $"Changed calendar view to: {view}");
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            await LogService.LogError("Calendar.ChangeView", $"Error changing view to {view}: {ex.Message}");
+        }
+    }
+
+    private async Task NavigateToDate(DateTime date)
+    {
+        try
+        {
+            await LogService.LogInfo("Calendar.NavigateToDate", $"Navigating to date: {date:yyyy-MM-dd}");
+            
+            // Update the selected date
+            selectedDate = date;
+            
+            // Force calendar to refresh by incrementing the key
+            calendarKey++;
+            
+            // Force immediate UI update
+            await InvokeAsync(StateHasChanged);
+            
+            // Wait for calendar to fully render before scrolling
+            await Task.Delay(800);
+            
+            // Scroll to working hours
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("scrollCalendarToHour", "calendarEventTarget", 10);
+            }
+            catch (Exception jsEx)
+            {
+                await LogService.LogWarning("Calendar.NavigateToDate", $"JS scrollCalendarToHour failed: {jsEx.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            await LogService.LogError("Calendar.NavigateToDate", $"Error navigating to date {date:yyyy-MM-dd}: {ex.Message}");
+        }
+    }
+
+    private async Task OnQuickDateClick(DateTime date, string label)
+    {
+        try
+        {
+            await LogService.LogInfo("Calendar.OnQuickDateClick", $"Quick date clicked: {label} ({date:yyyy-MM-dd})");
+            await NavigateToDate(date);
+        }
+        catch (Exception ex)
+        {
+            await LogService.LogError("Calendar.OnQuickDateClick", $"Error handling quick date click for {label}: {ex.Message}");
+        }
+    }
+
+    private List<QuickDateOption> GetQuickDates()
+    {
+        var quickDates = new List<QuickDateOption>();
+        
+        try
+        {
+            // Use the same base date as the calendar initialization
+            var startDate = (FirstAvailableDate?.Date ?? DateTime.UtcNow.AddDays(2).Date);
+            var userTimeZone = TimeZoneInfo.FindSystemTimeZoneById(CurrentTimeZoneDisplay);
+            
+            // Add "This Week" options
+            for (int i = 0; i < 7; i++)
+            {
+                var date = startDate.AddDays(i);
+                
+                // Convert the date to UTC for comparison with AvailableSlots
+                var dateWithKind = DateTime.SpecifyKind(date.Date, DateTimeKind.Unspecified);
+                var dateUtc = TimeZoneInfo.ConvertTimeToUtc(dateWithKind, userTimeZone);
+                var daySlots = AvailableSlots.Where(s => s.Date == dateUtc.Date).ToList();
+                
+                string label = i switch
+                {
+                    0 => "Today + 2",
+                    1 => "Tomorrow + 2", 
+                    _ => date.DayOfWeek.ToString()
+                };
+
+                quickDates.Add(new QuickDateOption
+                {
+                    Date = date,
+                    Label = label,
+                    DateText = date.ToString("MMM dd"),
+                    AvailableCount = daySlots.Count
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            LogService.LogError("Calendar.GetQuickDates", $"Error generating quick dates: {ex.Message}").GetAwaiter().GetResult();
+        }
+
+        return quickDates;
+    }
 
     protected override void OnParametersSet()
     {
+        // Don't do anything if the calendar is not visible
+        if (!IsVisible)
+        {
+            IsLoading = false;
+            return;
+        }
+
         calendarItems.Clear();
         TimeZoneInfo userTimeZoneInfo;
 
@@ -70,11 +497,9 @@
         {
             userTimeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(CurrentTimeZoneDisplay);
             IsTimeZoneValid = true;
-            LogService.LogInfo("Calendar.OnParametersSet", $"Using time zone: {CurrentTimeZoneDisplay}");
         }
-        catch (TimeZoneNotFoundException ex)
+        catch (TimeZoneNotFoundException)
         {
-            LogService.LogError("Calendar.OnParametersSet", $"Invalid time zone: {CurrentTimeZoneDisplay}. Falling back to UTC. Exception: {ex.Message}");
             userTimeZoneInfo = TimeZoneInfo.Utc;
             IsTimeZoneValid = false;
             CurrentTimeZoneDisplay = "UTC";
@@ -82,8 +507,6 @@
 
         try
         {
-            LogService.LogInfo("Calendar.OnParametersSet", $"Processing {AvailableSlots.Count} slots, {BusyTimes.Count} busy times, {AdminUnavailabilities.Count} unavailabilities.");
-
             foreach (var busy in BusyTimes)
             {
                 calendarItems.Add(new CalendarItem
@@ -109,14 +532,13 @@
             {
                 if (unavailable.StartTime == null || unavailable.EndTime == null)
                 {
-                    LogService.LogWarning("Calendar.OnParametersSet", $"Skipping unavailability with null StartTime/EndTime: {(unavailable.IsRecurring ? $"Recurring {unavailable.DayOfWeek}" : $"Date {unavailable.Date:yyyy-MM-dd}")}");
                     continue;
                 }
 
                 if (unavailable.IsRecurring)
                 {
                     var startDate = (FirstAvailableDate ?? DateTime.UtcNow).Date;
-                    var endDate = startDate.AddDays(25);
+                    var endDate = startDate.AddDays(35);
                     for (var date = startDate; date <= endDate; date = date.AddDays(1))
                     {
                         if (date.DayOfWeek == unavailable.DayOfWeek)
@@ -134,7 +556,7 @@
                         }
                     }
                 }
-                else
+                else if (unavailable.Date.HasValue)
                 {
                     var bstStart = new DateTime(unavailable.Date.Value.Year, unavailable.Date.Value.Month, unavailable.Date.Value.Day, unavailable.StartTime.Value.Hours, unavailable.StartTime.Value.Minutes, 0, DateTimeKind.Unspecified);
                     var bstEnd = new DateTime(unavailable.Date.Value.Year, unavailable.Date.Value.Month, unavailable.Date.Value.Day, unavailable.EndTime.Value.Hours, unavailable.EndTime.Value.Minutes, 0, DateTimeKind.Unspecified);
@@ -148,32 +570,46 @@
                     });
                 }
             }
-
-            LogService.LogInfo("Calendar.OnParametersSet", $"Populated {calendarItems.Count} calendar items: {calendarItems.Count(c => c.Text.Contains("Available"))} available, {calendarItems.Count(c => c.Text.Contains("Busy"))} busy, {calendarItems.Count(c => c.Text.Contains("🔴"))} unavailable.");
         }
         catch (Exception ex)
         {
-            LogService.LogError("Calendar.OnParametersSet", $"Error populating calendar items: {ex.Message}, StackTrace: {ex.StackTrace}");
+            LogService.LogError("Calendar.OnParametersSet", $"Error in OnParametersSet: {ex.Message}").GetAwaiter().GetResult();
             calendarItems.Clear();
+        }
+        finally
+        {
+            IsLoading = false;
         }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        // Only run if the calendar is visible
+        if (!IsVisible)
+            return;
+
         if (firstRender)
         {
-            WindowWidth = await JSRuntime.InvokeAsync<int>("eval", "window.innerWidth");
-            await JSRuntime.InvokeVoidAsync("window.colorCalendarSlots");
-            StateHasChanged();
+            try
+            {
+                WindowWidth = await JSRuntime.InvokeAsync<int>("eval", "window.innerWidth");
+                StateHasChanged();
+            }
+            catch
+            {
+                // Ignore JS errors on first render
+            }
         }
 
+        // Skip JS calls if calendar is not visible
         try
         {
+            await JSRuntime.InvokeVoidAsync("window.colorCalendarSlots");
             await JSRuntime.InvokeVoidAsync("scrollCalendarToHour", "calendarEventTarget", 10);
         }
         catch (Exception ex)
         {
-            await LogService.LogError("ScrollCalendarToHour JS Error", $"Exception: {ex.Message}");
+            await LogService.LogWarning("Calendar.OnAfterRenderAsync", $"JS interop error: {ex.Message}");
         }
     }
 
@@ -181,15 +617,84 @@
     {
         if (item.Text.Contains("Available"))
         {
+            SelectedSlot = item.Start;
             await OnSlotSelected.InvokeAsync(item.Start.ToString("o"));
         }
 
         await OnEventClick.InvokeAsync(item);
     }
 
-    private async void Close()
+    private async Task Close()
     {
         IsVisible = false;
+        SelectedSlot = null;
         await IsVisibleChanged.InvokeAsync(IsVisible);
+    }
+
+    private bool IsDateDisabled(DateTime date)
+    {
+        // Disable past dates
+        if (date.Date < DateTime.Now.Date)
+            return true;
+            
+        // Disable dates that have no available slots
+        return !HasAvailableSlots(date);
+    }
+
+    private bool HasAvailableSlots(DateTime date)
+    {
+        try
+        {
+            // Check if any slots in AvailableSlots exist for this date
+            // Use the same logic as LoadSlotsForDate - find UTC slots that appear on this date in user timezone
+            var userTimeZone = TimeZoneInfo.FindSystemTimeZoneById(CurrentTimeZoneDisplay);
+            
+            // Find any UTC slot that, when converted to user timezone, falls on the selected date
+            bool hasAvailableSlots = AvailableSlots.Any(slotUtc =>
+            {
+                var slotInUserTime = TimeZoneInfo.ConvertTimeFromUtc(slotUtc, userTimeZone);
+                return slotInUserTime.Date == date.Date;
+            });
+            
+            // Second check: manually verify if this day should be available based on admin unavailabilities
+            // Check if there's a recurring unavailability that covers the entire day for this day of week
+            var dayOfWeekUnavailability = AdminUnavailabilities.FirstOrDefault(u => 
+                u.IsRecurring && 
+                u.DayOfWeek.HasValue && 
+                u.StartTime.HasValue && 
+                u.EndTime.HasValue &&
+                u.StartTime.Value == TimeSpan.Zero && 
+                u.EndTime.Value >= new TimeSpan(23, 59, 0) &&
+                u.DayOfWeek.Value == date.DayOfWeek);
+            
+            if (dayOfWeekUnavailability != null)
+            {
+                hasAvailableSlots = false;
+            }
+            
+            // Third check: check for one-time unavailabilities that cover the entire day
+            var specificDateUnavailability = AdminUnavailabilities.FirstOrDefault(u => 
+                !u.IsRecurring && 
+                u.Date.HasValue && 
+                u.StartTime.HasValue && 
+                u.EndTime.HasValue &&
+                u.StartTime.Value == TimeSpan.Zero && 
+                u.EndTime.Value >= new TimeSpan(23, 59, 0) &&
+                u.Date.Value.Date == date.Date);
+            
+            if (specificDateUnavailability != null)
+            {
+                hasAvailableSlots = false;
+            }
+            
+            return hasAvailableSlots;
+        }
+        catch (Exception ex)
+        {
+            LogService.LogError("Calendar.HasAvailableSlots", $"Error checking available slots for {date:yyyy-MM-dd}: {ex.Message}").GetAwaiter().GetResult();
+            // If there's an error checking slots, allow the date to be selected
+            // This prevents the calendar from breaking if there are timezone issues
+            return true;
+        }
     }
 }

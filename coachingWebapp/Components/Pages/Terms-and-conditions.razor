@@ -8,111 +8,252 @@
 
 <PageTitle>@pageTitle</PageTitle>
 
-<div class="terms-and-conditions-container">
-    <div>
-        <p>LAST UPDATED: 01/01/2025</p>
+<div class="terms-container">
+    <div class="terms-hero">
+        <div class="hero-content">
+            <h1 class="page-title">Terms & Conditions</h1>
+            <p class="hero-subtitle">Clear, transparent guidelines for our coaching services</p>
+            <div class="last-updated">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Last updated: January 1, 2025</span>
+            </div>
+        </div>
     </div>
 
-    <h3>Terms & Conditions</h3>
+    <div class="terms-content">
+        <div class="table-of-contents">
+            <h3>Quick Navigation</h3>
+            <ul>
+                <li><button type="button" class="nav-link" @onclick="@(() => ScrollToSection("engagement"))">1. Engagement</button></li>
+                <li><button type="button" class="nav-link" @onclick="@(() => ScrollToSection("contact"))">2. Contact Information</button></li>
+                <li><button type="button" class="nav-link" @onclick="@(() => ScrollToSection("contract"))">3. Contract Formation</button></li>
+                <li><button type="button" class="nav-link" @onclick="@(() => ScrollToSection("conduct"))">4. Your Conduct</button></li>
+                <li><button type="button" class="nav-link" @onclick="@(() => ScrollToSection("confidentiality"))">5. Confidentiality</button></li>
+                <li><button type="button" class="nav-link" @onclick="@(() => ScrollToSection("service"))">6. Service Provision</button></li>
+                <li><button type="button" class="nav-link" @onclick="@(() => ScrollToSection("excluded"))">7. Excluded Services</button></li>
+                <li><button type="button" class="nav-link" @onclick="@(() => ScrollToSection("payment"))">8. Payment Terms</button></li>
+                <li><button type="button" class="nav-link" @onclick="@(() => ScrollToSection("ending-consumer"))">9. Ending Contract (Consumers)</button></li>
+                <li><button type="button" class="nav-link" @onclick="@(() => ScrollToSection("ending-business"))">10. Ending Contract (Business)</button></li>
+                <li><button type="button" class="nav-link" @onclick="@(() => ScrollToSection("liability"))">11. Liability</button></li>
+                <li><button type="button" class="nav-link" @onclick="@(() => ScrollToSection("contact-us"))">12. Contact Us</button></li>
+            </ul>
+        </div>
 
-    <h2>1. Engagement</h2>
-    <p>Ítala Veloso (“we” or “us”) is a company providing products and services from 483 Green Lane, London, N13 4BS,
-        United Kingdom. We may work with joint venture partners (“Partners”) to deliver services on a consultancy basis.
-    </p>
-    <p>These terms (“Terms”) apply to all products and services we or our Partners provide. Additional terms from our
-        Partners may also apply.</p>
-    <p>By signing the Order Form, you agree to these Terms, forming a binding contract between you and us.</p>
+        <div class="terms-sections">
+            <section id="engagement" class="term-section">
+                <div class="section-header">
+                    <span class="section-number">01</span>
+                    <h2>Engagement</h2>
+                </div>
+                <div class="section-content">
+                    <p>Ítala Veloso ("we" or "us") is a company providing products and services from <strong>483 Green Lane, London, N13 4BS, United Kingdom</strong>. We may work with joint venture partners ("Partners") to deliver services on a consultancy basis.</p>
+                    <p>These terms ("Terms") apply to all products and services we or our Partners provide. Additional terms from our Partners may also apply.</p>
+                    <p>By signing the Order Form, you agree to these Terms, forming a binding contract between you and us.</p>
+                </div>
+            </section>
 
-    <h2>2. Contact Information</h2>
-    <p>For faster responses, contact us via email at <a href="mailto:jostic@italaveloso.com">jostic@italaveloso.com</a>.
-        You can also write to us at 483 Green Lane, London, N13 4BS, United Kingdom.</p>
+            <section id="contact" class="term-section">
+                <div class="section-header">
+                    <span class="section-number">02</span>
+                    <h2>Contact Information</h2>
+                </div>
+                <div class="section-content">
+                    <div class="contact-highlight">
+                        <i class="fas fa-envelope"></i>
+                        <div>
+                            <p>For faster responses, contact us via email at <a href="mailto:jostic@italaveloso.com">jostic@italaveloso.com</a></p>
+                            <p>You can also write to us at <strong>483 Green Lane, London, N13 4BS, United Kingdom</strong>.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-    <h2>3. Contract Formation</h2>
-    <p>Your contract with us starts when we accept your signed Order Form. If we cannot accept it, we will inform you
-        without any charges.</p>
+            <section id="contract" class="term-section">
+                <div class="section-header">
+                    <span class="section-number">03</span>
+                    <h2>Contract Formation</h2>
+                </div>
+                <div class="section-content">
+                    <p>Your contract with us starts when we accept your signed Order Form. If we cannot accept it, we will inform you without any charges.</p>
+                </div>
+            </section>
 
-    <h2>4. Your Conduct</h2>
-    <p>We ask that you maintain a positive attitude and stay focused on solutions. Do not contact clients outside
-        approved groups set up by Ítala Veloso.</p>
+            <section id="conduct" class="term-section">
+                <div class="section-header">
+                    <span class="section-number">04</span>
+                    <h2>Your Conduct</h2>
+                </div>
+                <div class="section-content">
+                    <div class="highlight-box">
+                        <i class="fas fa-handshake"></i>
+                        <p>We ask that you maintain a positive attitude and stay focused on solutions. Do not contact clients outside approved groups set up by Ítala Veloso.</p>
+                    </div>
+                </div>
+            </section>
 
-    <h2>5. Confidentiality</h2>
-    <p>All materials, notes, and sessions are strictly confidential. Sharing any materials without consent may result in
-        immediate termination of the contract and legal action. Additionally, no unauthorized audio, video, or photo
-        recordings are allowed.</p>
-    <p>For promotional purposes, we may take photos or recordings of our events. By joining, you consent to this use
-        without compensation.</p>
+            <section id="confidentiality" class="term-section">
+                <div class="section-header">
+                    <span class="section-number">05</span>
+                    <h2>Confidentiality</h2>
+                </div>
+                <div class="section-content">
+                    <div class="warning-box">
+                        <i class="fas fa-shield-alt"></i>
+                        <div>
+                            <p><strong>Strict Confidentiality:</strong> All materials, notes, and sessions are strictly confidential. Sharing any materials without consent may result in immediate termination of the contract and legal action.</p>
+                            <p><strong>No Recordings:</strong> Unauthorized audio, video, or photo recordings are not allowed.</p>
+                        </div>
+                    </div>
+                    <p>For promotional purposes, we may take photos or recordings of our events. By joining, you consent to this use without compensation.</p>
+                </div>
+            </section>
 
-    <h2>6. Service Provision</h2>
-    <p>We will provide products and services as scheduled unless unforeseen events cause delays. If delays occur, we
-        will contact you and work to minimize the impact.</p>
-    <p>You may need to provide us with specific information for service delivery. Failure to provide such information
-        may result in delays or additional charges.</p>
+            <section id="service" class="term-section">
+                <div class="section-header">
+                    <span class="section-number">06</span>
+                    <h2>Service Provision</h2>
+                </div>
+                <div class="section-content">
+                    <p>We will provide products and services as scheduled unless unforeseen events cause delays. If delays occur, we will contact you and work to minimize the impact.</p>
+                    <p>You may need to provide us with specific information for service delivery. Failure to provide such information may result in delays or additional charges.</p>
+                </div>
+            </section>
 
-    <h2>7. Excluded Services</h2>
-    <p>Partners may offer additional services (“Excluded Services”) independently from us. We are not liable for these
-        services, and you accept them at your own risk.</p>
+            <section id="excluded" class="term-section">
+                <div class="section-header">
+                    <span class="section-number">07</span>
+                    <h2>Excluded Services</h2>
+                </div>
+                <div class="section-content">
+                    <p>Partners may offer additional services ("Excluded Services") independently from us. We are not liable for these services, and you accept them at your own risk.</p>
+                </div>
+            </section>
 
-    <h2>8. Payment Terms</h2>
-    <p>You must pay the agreed amount in full or in installments as specified in the Order Form. Payments should be made
-        as instructed, and if payments are late, we may charge interest or revoke access to services.</p>
+            <section id="payment" class="term-section">
+                <div class="section-header">
+                    <span class="section-number">08</span>
+                    <h2>Payment Terms</h2>
+                </div>
+                <div class="section-content">
+                    <div class="info-box">
+                        <i class="fas fa-credit-card"></i>
+                        <p>You must pay the agreed amount in full or in installments as specified in the Order Form. Payments should be made as instructed, and if payments are late, we may charge interest or revoke access to services.</p>
+                    </div>
+                </div>
+            </section>
 
-    <h2>9. Ending the Contract (Consumers)</h2>
-    <p>You may end the contract if:</p>
-    <ul>
-        <li>You change your mind within 14 days (cooling-off period).</li>
-        <li>You are legally entitled to do so due to our changes or errors.</li>
-    </ul>
-    <p>Certain products, like digital downloads, cannot be refunded once accessed. To cancel, contact us by email or
-        mail with your details. Refunds will be processed within 14 days.</p>
+            <section id="ending-consumer" class="term-section">
+                <div class="section-header">
+                    <span class="section-number">09</span>
+                    <h2>Ending the Contract (Consumers)</h2>
+                </div>
+                <div class="section-content">
+                    <p>You may end the contract if:</p>
+                    <ul class="styled-list">
+                        <li>You change your mind within 14 days (cooling-off period)</li>
+                        <li>You are legally entitled to do so due to our changes or errors</li>
+                    </ul>
+                    <div class="note-box">
+                        <i class="fas fa-info-circle"></i>
+                        <p><strong>Important:</strong> Certain products, like digital downloads, cannot be refunded once accessed. To cancel, contact us by email or mail with your details. Refunds will be processed within 14 days.</p>
+                    </div>
+                </div>
+            </section>
 
-    <h2>10. Ending the Contract (Businesses)</h2>
-    <p>If you are a business, you must notify us within 7 days if you wish to end the contract. Refunds may be given for
-        services not yet provided, minus any processing costs.</p>
-    <p>We may end the contract if you fail to make payments or if your actions breach these Terms.</p>
+            <section id="ending-business" class="term-section">
+                <div class="section-header">
+                    <span class="section-number">10</span>
+                    <h2>Ending the Contract (Businesses)</h2>
+                </div>
+                <div class="section-content">
+                    <p>If you are a business, you must notify us within 7 days if you wish to end the contract. Refunds may be given for services not yet provided, minus any processing costs.</p>
+                    <p>We may end the contract if you fail to make payments or if your actions breach these Terms.</p>
+                    
+                    <div class="sub-section">
+                        <h3>Withdrawal of Clients</h3>
+                        <p>We reserve the right to remove any client from a program if deemed unsuitable. Refunds for any unused services will be processed within 30 days.</p>
+                    </div>
+                </div>
+            </section>
 
-    <h2>11. Withdrawal of Clients</h2>
-    <p>We reserve the right to remove any client from a program if deemed unsuitable. Refunds for any unused services
-        will be processed within 30 days.</p>
+            <section id="liability" class="term-section">
+                <div class="section-header">
+                    <span class="section-number">11</span>
+                    <h2>Liability & Important Disclaimers</h2>
+                </div>
+                <div class="section-content">
+                    <div class="sub-section">
+                        <h3>Liability Limits</h3>
+                        <p>For consumers, we are not liable for commercial or business losses. For businesses, our liability is limited to the amount paid in the previous year. We are not liable for indirect or consequential losses.</p>
+                    </div>
+                    
+                    <div class="sub-section">
+                        <h3>Force Majeure</h3>
+                        <p>We are not liable for delays or cancellations caused by events beyond our control, such as natural disasters, strikes, or technical issues.</p>
+                    </div>
 
-    <h2>12. Liability</h2>
-    <p>For consumers, we are not liable for commercial or business losses. For businesses, our liability is limited to
-        the amount paid in the previous year. We are not liable for indirect or consequential losses.</p>
+                    <div class="disclaimer-box">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <div>
+                            <h4>Important Results Disclaimer</h4>
+                            <p><strong>Results may not be typical nor expected for every person.</strong> This is not a "get healed quick, nor a get results quick" scheme. All information provided is for educational purposes only. Individual results will vary greatly according to effort, determination, hard work, accountability and ability to follow guidance.</p>
+                            <p>We do not provide financial, legal, or accounting advice. You accept full responsibility for your decisions made after participating in our events.</p>
+                        </div>
+                    </div>
 
-    <h2>13. Force Majeure</h2>
-    <p>We are not liable for delays or cancellations caused by events beyond our control, such as natural disasters,
-        strikes, or technical issues.</p>
+                    <div class="sub-section">
+                        <h3>Downloads</h3>
+                        <p>No refunds are available for digital downloads once accessed. Sharing or reproducing content without our permission is prohibited.</p>
+                    </div>
 
-    <h2>14. General Terms</h2>
-    <ul>
-        <li>Any changes to these Terms must be made in writing.</li>
-        <li>We may transfer our rights and obligations to another organization, ensuring it does not affect your rights.
-        </li>
-        <li>The contract is solely between you and us.</li>
-    </ul>
+                    <div class="sub-section">
+                        <h3>General Terms</h3>
+                        <ul class="styled-list">
+                            <li>Any changes to these Terms must be made in writing</li>
+                            <li>We may transfer our rights and obligations to another organization, ensuring it does not affect your rights</li>
+                            <li>The contract is solely between you and us</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
 
-    <h2>15. Indemnification</h2>
-    <p>Results may not be typical nor expected for every person. This is not a "get healed quick, nor a get results
-        quick" scheme. All information provided on this website and through our tailored services are based on best
-        practices and for educational-purposes only. Individual results will vary. No results are guaranteed with the
-        help of our training and systems. All the products and services we provide are foreducation, coaching and
-        information purposes only. If there testimonials where people have created results using our products and
-        services, you can't assume you will get the same results. There are those who will not earn any money at all
-        with our products and services. Individual results will vary greatly according to effort, determination, hard
-        work, accountability and ability to follow guidance or directions.
-        Our courses and training are for informational purposes only. We do not provide financial, legal, or accounting
-        advice. You accept full responsibility for your decisions made after participating in our events.</p>
-
-    <h2>16. Downloads</h2>
-    <p>No refunds are available for digital downloads once accessed. Sharing or reproducing content without our
-        permission is prohibited.</p>
-
-    <h2>12. Contact Us</h2>
-    <p>For questions about this Terms and Conditions, please contact us at:</p>
-    <ul>
-        <li>Email: <a href="mailto:jostic@italaveloso.com">jostic@italaveloso.com</a></li>
-        <li>Address: 483 Green Lane, London, N13 4BS, United Kingdom</li>
-    </ul>
+            <section id="contact-us" class="term-section">
+                <div class="section-header">
+                    <span class="section-number">12</span>
+                    <h2>Contact Us</h2>
+                </div>
+                <div class="section-content">
+                    <div class="contact-card">
+                        <h3>Questions about these Terms?</h3>
+                        <p>We're here to help clarify anything you need.</p>
+                        <div class="contact-methods">
+                            <div class="contact-method">
+                                <i class="fas fa-envelope"></i>
+                                <div>
+                                    <strong>Email</strong>
+                                    <a href="mailto:jostic@italaveloso.com">jostic@italaveloso.com</a>
+                                </div>
+                            </div>
+                            <div class="contact-method">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <div>
+                                    <strong>Address</strong>
+                                    <span>483 Green Lane, London, N13 4BS, United Kingdom</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
 </div>
+
 @code {
     private string pageTitle = "Terms Policy | Ítala Veloso";
+
+    private async Task ScrollToSection(string sectionId)
+    {
+        await JSRuntime.InvokeVoidAsync("scrollToElement", sectionId);
+    }
 }

@@ -887,9 +887,9 @@
     private List<DateTime> GenerateAvailableSlots(DateTime startDate, List<(DateTimeOffset Start, DateTimeOffset End)> busyTimes, List<UnavailableTime> adminUnavailabilities)
     {
         var slots = new List<DateTime>();
-        var endDate = startDate.AddDays(25);
-        var workStartTime = new TimeSpan(10, 0, 0);
-        var workEndTime = new TimeSpan(21, 0, 0);
+        var endDate = startDate.AddDays(35); // Extended from 25 to 35 days for more options
+        var workStartTime = new TimeSpan(9, 0, 0); // Start earlier at 9 AM
+        var workEndTime = new TimeSpan(21, 0, 0); // End at 9 PM
         var slotDuration = TimeSpan.FromMinutes(45);
         var adminTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Europe/London");
 
@@ -968,6 +968,8 @@
         {
             // Parse the ISO string which is already in the user's timezone
             var dateInUserTimeZone = DateTime.Parse(isoString);
+            // Ensure the DateTime kind is properly specified
+            dateInUserTimeZone = DateTime.SpecifyKind(dateInUserTimeZone, DateTimeKind.Unspecified);
             var userTimeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(userTimeZoneDisplay);
             
             // Convert the user timezone date to UTC for storage

@@ -1,82 +1,211 @@
 @page "/register"
 @rendermode InteractiveServer
 
+<PageTitle>Create Account | Ítala Veloso</PageTitle>
+
 <MudSnackbarProvider />
 
 <div class="register-container">
-    <MudText Typo="Typo.h4" Class="mb-4">Create Account</MudText>
+    <div class="register-header">
+        <MudText Typo="Typo.h4" Class="mb-2">Create Your Account</MudText>
+        <MudText Typo="Typo.subtitle1" Class="mb-4" Color="Color.Secondary">
+            Join us to start your coaching journey
+        </MudText>
+    </div>
 
-    <MudForm Model="@newUser" @ref="form" ValidationDelay="0" PreventDefault="true">
-        <MudTextField Label="First Name"
-                      @bind-Value="newUser.FirstName"
-                      For="@(() => newUser.FirstName)"
-                      Required="true"
-                      RequiredError="First name is required"
-                      Variant="Variant.Outlined"
-                      Class="mb-4" />
+    <MudForm Model="@newUser" @ref="form" ValidationDelay="0" PreventDefault="true" @onkeydown="HandleKeyDown">
+        <!-- Personal Information Section -->
+        <MudCard Class="mb-4" Elevation="2">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <div style="display: flex; align-items: center;">
+                        <MudIcon Icon="Icons.Material.Filled.Person" Class="mr-3" />
+                        <MudText Typo="Typo.h6">Personal Information</MudText>
+                    </div>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudGrid>
+                    <MudItem xs="12" sm="6">
+                        <MudTextField Label="First Name"
+                                      @bind-Value="newUser.FirstName"
+                                      For="@(() => newUser.FirstName)"
+                                      Required="true"
+                                      RequiredError="First name is required"
+                                      Variant="Variant.Outlined"
+                                      Class="mb-4"
+                                      TabIndex="1"
+                                      Placeholder="Enter your first name" />
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudTextField Label="Last Name"
+                                      @bind-Value="newUser.LastName"
+                                      For="@(() => newUser.LastName)"
+                                      Required="true"
+                                      RequiredError="Last name is required"
+                                      Variant="Variant.Outlined"
+                                      Class="mb-4"
+                                      TabIndex="2"
+                                      Placeholder="Enter your last name" />
+                    </MudItem>
+                </MudGrid>
 
-        <MudTextField Label="Last Name"
-                      @bind-Value="newUser.LastName"
-                      For="@(() => newUser.LastName)"
-                      Required="true"
-                      RequiredError="Last name is required"
-                      Variant="Variant.Outlined"
-                      Class="mb-4" />
+                <MudTextField Label="Email Address"
+                              @bind-Value="newUser.Email"
+                              For="@(() => newUser.Email)"
+                              InputType="InputType.Email"
+                              Required="true"
+                              RequiredError="Email is required"
+                              Variant="Variant.Outlined"
+                              Class="mb-4"
+                              TabIndex="3"
+                              Placeholder="your.email@example.com"
+                              HelperText="We'll use this for login and important notifications"
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="Icons.Material.Filled.Email" />
+            </MudCardContent>
+        </MudCard>
 
-        <MudTextField Label="Email"
-                      @bind-Value="newUser.Email"
-                      For="@(() => newUser.Email)"
-                      InputType="InputType.Email"
-                      Required="true"
-                      RequiredError="Email is required"
-                      Variant="Variant.Outlined"
-                      Class="mb-4" />
+        <!-- Account Security Section -->
+        <MudCard Class="mb-4" Elevation="2">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <div style="display: flex; align-items: center;">
+                        <MudIcon Icon="Icons.Material.Filled.Security" Class="mr-3" />
+                        <MudText Typo="Typo.h6">Account Security</MudText>
+                    </div>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudAlert Severity="Severity.Info" Class="mb-4" Dense="true">
+                    <MudText Typo="Typo.caption">
+                        Password must be at least 12 characters and include an uppercase letter
+                    </MudText>
+                </MudAlert>
 
-        <MudTextField Label="Password"
-                      @bind-Value="newUser.Password"
-                      For="@(() => newUser.Password)"
-                      InputType="InputType.Password"
-                      Required="true"
-                      RequiredError="Password is required"
-                      Variant="Variant.Outlined"
-                      Class="mb-4" />
+                <MudTextField Label="Password"
+                              @bind-Value="newUser.Password"
+                              For="@(() => newUser.Password)"
+                              InputType="@(IsPasswordVisible ? InputType.Text : InputType.Password)"
+                              Required="true"
+                              RequiredError="Password is required"
+                              Variant="Variant.Outlined"
+                              Class="mb-4"
+                              TabIndex="4"
+                              HelperText="@GetPasswordHelperText()"
+                              HelperTextOnFocus="true"
+                              Adornment="Adornment.End"
+                              AdornmentIcon="@(IsPasswordVisible ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
+                              OnAdornmentClick="TogglePasswordVisibility" />
 
-        <MudTextField Label="Confirm Password"
-                      @bind-Value="newUser.ConfirmPassword"
-                      For="@(() => newUser.ConfirmPassword)"
-                      InputType="InputType.Password"
-                      Required="true"
-                      RequiredError="Confirm password is required"
-                      Variant="Variant.Outlined"
-                      Class="mb-4" />
+                <MudTextField Label="Confirm Password"
+                              @bind-Value="newUser.ConfirmPassword"
+                              For="@(() => newUser.ConfirmPassword)"
+                              InputType="@(IsConfirmPasswordVisible ? InputType.Text : InputType.Password)"
+                              Required="true"
+                              RequiredError="Confirm password is required"
+                              Variant="Variant.Outlined"
+                              Class="mb-4"
+                              TabIndex="5"
+                              HelperText="@GetConfirmPasswordHelperText()"
+                              Adornment="Adornment.End"
+                              AdornmentIcon="@(IsConfirmPasswordVisible ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
+                              OnAdornmentClick="ToggleConfirmPasswordVisibility" />
+            </MudCardContent>
+        </MudCard>
 
         <MudButton Variant="Variant.Filled"
                    Color="Color.Primary"
-                   StartIcon="@Icons.Material.Filled.AccountCircle"
+                   StartIcon="@(isSubmitting ? "" : Icons.Material.Filled.PersonAdd)"
                    Type="submit"
                    Class="mt-4"
+                   Size="Size.Large"
+                   FullWidth="true"
                    Disabled="@isSubmitting"
                    OnClick="HandleRegister">
-            Register
+            @if (isSubmitting)
+            {
+                <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
+                <span>Creating Account...</span>
+            }
+            else
+            {
+                <span>Create Account</span>
+            }
         </MudButton>
-        <MudText Typo="Typo.caption" Class="privacy-notice">
-            By registering, you’re agreeing to receive marketing emails from Ítala Veloso. You can unsubscribe at any time. For more details, check out our
-            <a Href="/privacy-policy">Privacy Policy</a> and
-            <a Href="/terms-and-conditions">Terms & Conditions</a>.
+
+        <MudDivider Class="my-4" />
+        
+        <MudText Typo="Typo.body2" Align="Align.Center" Class="mb-4">
+            Already have an account? <MudLink Href="/login" Color="Color.Primary">Sign in here</MudLink>
         </MudText>
+        
+        <MudPaper Class="privacy-notice-card mt-4" Elevation="1">
+            <MudCardContent>
+                <div style="display: flex; align-items: flex-start;">
+                    <MudIcon Icon="Icons.Material.Filled.Info" Class="mr-2 mt-1" Color="Color.Primary" Size="Size.Small" />
+                    <div>
+                        <MudText Typo="Typo.caption" Class="privacy-notice">
+                            By creating an account, you agree to receive marketing emails from Ítala Veloso. 
+                            You can unsubscribe at any time. For more details, review our
+                            <MudLink Href="/privacy-policy" Color="Color.Primary">Privacy Policy</MudLink> and
+                            <MudLink Href="/terms-and-conditions" Color="Color.Primary">Terms & Conditions</MudLink>.
+                        </MudText>
+                    </div>
+                </div>
+            </MudCardContent>
+        </MudPaper>
     </MudForm>
 
     @if (!string.IsNullOrEmpty(debugMessage))
     {
-        <MudText Color="Color.Error" Class="mt-4">@debugMessage</MudText>
+        <MudAlert Severity="Severity.Error" Class="mt-4">@debugMessage</MudAlert>
     }
 </div>
 
 @code {
     private RegisterUser newUser = new();
-    private MudForm? form;
+    private MudForm form;
     private bool isSubmitting = false;
-    private string? debugMessage;
+    private string debugMessage = string.Empty;
+    private bool IsPasswordVisible = false;
+    private bool IsConfirmPasswordVisible = false;
+
+    private string GetPasswordHelperText()
+    {
+        if (string.IsNullOrEmpty(newUser.Password))
+            return "Minimum 12 characters, must include uppercase letter";
+        
+        var requirements = new List<string>();
+        if (newUser.Password.Length < 12)
+            requirements.Add("At least 12 characters");
+        if (!newUser.Password.Any(char.IsUpper))
+            requirements.Add("Include uppercase letter");
+        
+        return requirements.Any() ? string.Join(", ", requirements) : "✓ Password meets requirements";
+    }
+
+    private string GetConfirmPasswordHelperText()
+    {
+        if (string.IsNullOrEmpty(newUser.ConfirmPassword))
+            return "Re-enter your password to confirm";
+        
+        if (newUser.Password != newUser.ConfirmPassword)
+            return "Passwords do not match";
+        
+        return "✓ Passwords match";
+    }
+
+    private void TogglePasswordVisibility() => IsPasswordVisible = !IsPasswordVisible;
+    private void ToggleConfirmPasswordVisibility() => IsConfirmPasswordVisible = !IsConfirmPasswordVisible;
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && (e.CtrlKey || e.MetaKey))
+        {
+            await HandleRegister();
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -85,48 +214,60 @@
 
     private async Task HandleRegister()
     {
-        if (form is null)
+        if (form is null || isSubmitting)
         {
-            debugMessage = "Form reference is null.";
-            await LogService.LogError("HandleRegister", debugMessage);
-            Snackbar.Add(debugMessage, Severity.Error);
+            debugMessage = "Form reference is null or submission in progress.";
+            if (form is null) await LogService.LogError("HandleRegister", debugMessage);
             return;
         }
 
         isSubmitting = true;
-        debugMessage = null;
+        debugMessage = string.Empty;
         await LogService.LogInfo("HandleRegister", $"Starting registration for email: {newUser.Email}");
-
-        await form.Validate();
-        if (!form.IsValid)
-        {
-            isSubmitting = false;
-            debugMessage = "Form validation failed.";
-            await LogService.LogWarning("HandleRegister", debugMessage);
-            Snackbar.Add("Please correct the errors in the form.", Severity.Error);
-            return;
-        }
-
-        var existingUser = await UserManager.FindByEmailAsync(newUser.Email);
-        if (existingUser != null)
-        {
-            isSubmitting = false;
-            debugMessage = "Email already registered.";
-            await LogService.LogWarning("HandleRegister", $"Registration attempt with existing email: {newUser.Email}");
-            Snackbar.Add("This email is already registered. Please log in or click 'Forgot Password' on the login page to reset your password.", Severity.Error);
-            return;
-        }
-
-        var user = new ApplicationUser
-        {
-            UserName = newUser.Email,
-            Email = newUser.Email,
-            FirstName = newUser.FirstName,
-            LastName = newUser.LastName
-        };
 
         try
         {
+            await form.Validate();
+            if (!form.IsValid)
+            {
+                debugMessage = "Please correct the errors in the form.";
+                await LogService.LogWarning("HandleRegister", "Form validation failed");
+                Snackbar.Add("Please correct the errors in the form.", Severity.Error);
+                return;
+            }
+
+            // Additional client-side password validation
+            if (newUser.Password.Length < 12 || !newUser.Password.Any(char.IsUpper))
+            {
+                debugMessage = "Password must be at least 12 characters and include an uppercase letter.";
+                Snackbar.Add(debugMessage, Severity.Error);
+                return;
+            }
+
+            if (newUser.Password != newUser.ConfirmPassword)
+            {
+                debugMessage = "Passwords do not match.";
+                Snackbar.Add(debugMessage, Severity.Error);
+                return;
+            }
+
+            var existingUser = await UserManager.FindByEmailAsync(newUser.Email);
+            if (existingUser != null)
+            {
+                debugMessage = "An account with this email already exists.";
+                await LogService.LogWarning("HandleRegister", $"Registration attempt with existing email: {newUser.Email}");
+                Snackbar.Add("This email is already registered. Please sign in or use 'Forgot Password' if needed.", Severity.Error);
+                return;
+            }
+
+            var user = new ApplicationUser
+            {
+                UserName = newUser.Email,
+                Email = newUser.Email,
+                FirstName = newUser.FirstName,
+                LastName = newUser.LastName
+            };
+
             var result = await UserManager.CreateAsync(user, newUser.Password);
 
             if (result.Succeeded)
@@ -134,21 +275,26 @@
                 await LogService.LogInfo("HandleRegister", $"User {newUser.Email} created successfully");
                 await UserManager.AddToRoleAsync(user, "User");
 
+                Snackbar.Add("Account created successfully! Signing you in...", Severity.Success);
+
                 var loginModel = new { Email = newUser.Email, Password = newUser.Password };
                 var loginResult = await JSRuntime.InvokeAsync<SessionResult>("login", loginModel);
 
                 if (loginResult.Success)
                 {
                     await LogService.LogInfo("HandleRegister", $"Sign-in successful for {newUser.Email}");
-                    Snackbar.Add("Registration successful! Welcome!", Severity.Success);
+                    Snackbar.Add("Welcome! Redirecting to your dashboard...", Severity.Success);
+                    await Task.Delay(1000);
                     await LogService.LogInfo("HandleRegister", $"Navigating to /UserDashboard for {newUser.Email}");
                     await JSRuntime.InvokeVoidAsync("window.location.assign", "/UserDashboard");
                 }
                 else
                 {
-                    debugMessage = loginResult.Error ?? "Sign-in failed after registration.";
+                    debugMessage = loginResult.Error ?? "Sign-in failed after registration. Please try signing in manually.";
                     await LogService.LogError("HandleRegister", $"Sign-in failed for {newUser.Email}: {debugMessage}");
-                    Snackbar.Add(debugMessage, Severity.Error);
+                    Snackbar.Add("Account created but sign-in failed. Please try signing in manually.", Severity.Warning);
+                    await Task.Delay(2000);
+                    NavigationManager.NavigateTo("/login");
                 }
             }
             else
@@ -156,14 +302,26 @@
                 var errorMessage = string.Join(", ", result.Errors.Select(e => e.Description));
                 debugMessage = $"Registration failed: {errorMessage}";
                 await LogService.LogError("HandleRegister", $"Failed to register user {newUser.Email}: {errorMessage}");
-                Snackbar.Add("Something went wrong during registration. Please check your details and try again.", Severity.Error);
+                
+                if (errorMessage.Contains("Password"))
+                {
+                    Snackbar.Add("Password doesn't meet requirements. Please check the requirements and try again.", Severity.Error);
+                }
+                else if (errorMessage.Contains("Email"))
+                {
+                    Snackbar.Add("There's an issue with the email address. Please check and try again.", Severity.Error);
+                }
+                else
+                {
+                    Snackbar.Add("Registration failed. Please check your information and try again.", Severity.Error);
+                }
             }
         }
         catch (Exception ex)
         {
             debugMessage = $"Unexpected error: {ex.Message}";
             await LogService.LogError("HandleRegister", $"Unexpected error during registration for {newUser.Email}: {ex.Message}");
-            Snackbar.Add("An unexpected error occurred during registration. Please try again.", Severity.Error);
+            Snackbar.Add("An unexpected error occurred. Please try again or contact support if the problem persists.", Severity.Error);
         }
         finally
         {

@@ -1,170 +1,268 @@
 @rendermode InteractiveServer
 
-@inject ILogger<Home> Logger
+@inject ILogger<Footer> Logger
+@inject IEmailSubscriptionService EmailSubscriptionService
+@inject NavigationManager NavigationManager
 
 @using BusinessLayer.Services.Interfaces
 @using ModelLayer
 @using ModelLayer.Models
-@using global::coachingWebapp.Components.Pages
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Forms
+@using System.ComponentModel.DataAnnotations
 
-<section id="footer">
-    <hr>
+<footer id="footer" role="contentinfo" aria-labelledby="footer-heading">
+    <div class="footer-divider" role="separator" aria-hidden="true"></div>
+
+    <!-- Structured Data for SEO -->
+    <script type="application/ld+json">
+    {
+        "@@context": "https://schema.org",
+        "@@type": "Organization",
+        "name": "Ítala Veloso Coaching",
+        "url": "@(NavigationManager.BaseUri)",
+        "logo": "@(NavigationManager.BaseUri)Images/logo.png",
+        "sameAs": [
+            "https://www.facebook.com/italaveloso.coaching/",
+            "https://x.com/itala_veloso",
+            "https://www.instagram.com/italaveloso.coaching/",
+            "https://www.linkedin.com/in/italaveloso/",
+            "https://www.youtube.com/@@italaveloso.coaching",
+            "https://www.tiktok.com/@@italaveloso.coaching"
+        ],
+        "contactPoint": {
+            "@@type": "ContactPoint",
+            "email": "jostic@italaveloso.com",
+            "contactType": "customer service"
+        }
+    }
+    </script>
+
     <div class="footer-container">
-        <div class="footer-section">
-            <div>
-                <h4>Let's Connect</h4>
-                <p class="footer-tagline">Follow us for daily self-discovery tips, overcoming trauma, and nurturing mental health, peace, and self-love</p>
-                <div class="social-icons">
-                    <a href="https://www.facebook.com/italaveloso.coaching/" target="_blank" aria-label="Facebook"><i class="fa-brands  fa-facebook"></i></a>
-                    <a href="https://x.com/itala_veloso" target="_blank" aria-label="X"><i class="fa-brands fa-x-twitter"></i></a>
-                    <a href="https://www.instagram.com/italaveloso.coaching/" target="_blank" aria-label="Instagram"><i class="fa-brands  fa-instagram"></i></a>
-                    <a href="https://www.linkedin.com/in/italaveloso/" target="_blank" aria-label="LinkedIn"><i class="fa-brands  fa-linkedin"></i></a>
-                    <a href="https://www.youtube.com/@@italaveloso.coaching" target="_blank" aria-label="Discord"><i class="fa-brands  fa-youtube"></i></a>
-                    <a href="https://www.meetup.com/members/222668406/" target="_blank" aria-label="Meetup"><i class="fa-brands fa-meetup"></i></a>
-                    <a href="https://www.tiktok.com/@@italaveloso.coaching" target="_blank" aria-label="TikTok"><i class="fa-brands fa-tiktok"></i></a>
-                </div>
-            </div>
-            <div class="disclaimer-info">
-                <h4>Disclaimer</h4>
-                <p> Results vary for each individual and are not guaranteed. Our coaching and resources are designed for educational and informational purposes only and are not a "quick fix" solution. Success depends on your effort, commitment, accountability, and ability to follow guidance. Testimonials shared on this site reflect individual experiences and may not be typical. While our tools and strategies aim to support growth and transformation, outcomes depend on personal determination and action.</p>
-            </div>
-        </div>
-        <div class="footer-section newsletter-section">
-            <div>
-                <h4>Newsletter</h4>
-                <p class="newsletter-tagline">Stay tuned and join our break through, break free newsletter</p>
-                    <EditForm Model="@emailSubscription" OnValidSubmit="SubscribeToNewsLetter" FormName="emailSubscriptionForm">
-                            <DataAnnotationsValidator />
-                            
-                            @if (isSubscribing)
-                            {
-                                <div class="text-center">
-                                    <div class="spinner-border" role="status">
-                                        <span class="visually-hidden">Loading...</span>
-                                    </div>
-                                    <p>Subscribing...</p>
-                                </div>
-                            }
-                            else
-                            {
-                                <div class="row g-2 align-items-center">
-                                    <div class="col">
-                                        <div class="newsletter-form">
-                                            <InputText id="email" class="form-control" @bind-Value="emailSubscription.Email" placeholder="Enter your email" />
-                                            <button type="submit" class="btn btn-primary">Subscribe</button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <div class="col">
-                                        <ValidationMessage For="@(() => emailSubscription.Email)" class="text-danger" />
-                                    </div>
-                                </div>
-                                <p class="privacy-notice">By subscribing, you’re agreeing to receive marketing emails from Ítala Veloso. You can unsubscribe at any time. For more details, check out our <a href="/privacy-policy">Privacy Policy</a>.</p>
-                            }
-                        </EditForm>
-
-                @if (!string.IsNullOrEmpty(subscriptionMessage) && !subscriptionSuccess)
-                {
-                    <div class="alert alert-danger mt-3" role="alert">
-                        @subscriptionMessage
-                    </div>
-                }
-                    
-                @if (subscriptionSuccess)
-                {
-                    <div class="alert alert-success" role="alert">
-                        @subscriptionMessage
-                    </div>
-                }
-            </div>
-        </div>
-        <div class="footer-section">
-            <div class="quick-links">
-                <h4>Quick Access</h4>
-                <nav aria-label="Footer navigation">
-                    <ul class="footer-nav">
-                        <li><a href="/about/meet-itala">About</a></li>
-                        <li><a href="/services/coaching/life-coaching">Life Coaching</a></li>
-                        <li><a href="/services/coaching/career-coaching">Career Coaching</a></li>
-                        <li><a href="#contact">Contact</a></li>
-                        <li><a href="/privacy-policy">Privacy Policy</a></li>
+        <div class="footer-main-content">
+            <section class="footer-section social-section" aria-labelledby="social-heading">
+                <h3 id="social-heading" class="footer-heading">Let's Connect</h3>
+                <p class="footer-tagline">Follow us for daily self-discovery tips, overcoming trauma, and nurturing
+                    mental health, peace, and self-love</p>
+                <nav aria-label="Social media links" class="social-nav">
+                    <ul class="social-icons" role="list">
+                        <li><a href="https://www.facebook.com/italaveloso.coaching/" target="_blank"
+                                rel="noopener noreferrer" aria-label="Follow us on Facebook"
+                                class="social-link facebook"><i class="fa-brands fa-facebook"
+                                    aria-hidden="true"></i><span class="sr-only">Facebook</span></a></li>
+                        <li><a href="https://x.com/itala_veloso" target="_blank" rel="noopener noreferrer"
+                                aria-label="Follow us on X (formerly Twitter)" class="social-link twitter"><i
+                                    class="fa-brands fa-x-twitter" aria-hidden="true"></i><span class="sr-only">X
+                                    (Twitter)</span></a></li>
+                        <li><a href="https://www.instagram.com/italaveloso.coaching/" target="_blank"
+                                rel="noopener noreferrer" aria-label="Follow us on Instagram"
+                                class="social-link instagram"><i class="fa-brands fa-instagram"
+                                    aria-hidden="true"></i><span class="sr-only">Instagram</span></a></li>
+                        <li><a href="https://www.linkedin.com/in/italaveloso/" target="_blank" rel="noopener noreferrer"
+                                aria-label="Connect with us on LinkedIn" class="social-link linkedin"><i
+                                    class="fa-brands fa-linkedin" aria-hidden="true"></i><span
+                                    class="sr-only">LinkedIn</span></a></li>
+                        <li><a href="https://www.youtube.com/@@italaveloso.coaching" target="_blank"
+                                rel="noopener noreferrer" aria-label="Subscribe to our YouTube channel"
+                                class="social-link youtube"><i class="fa-brands fa-youtube" aria-hidden="true"></i><span
+                                    class="sr-only">YouTube</span></a></li>
+                        <li><a href="https://www.meetup.com/members/222668406/" target="_blank"
+                                rel="noopener noreferrer" aria-label="Join our Meetup group"
+                                class="social-link meetup"><i class="fa-brands fa-meetup" aria-hidden="true"></i><span
+                                    class="sr-only">Meetup</span></a></li>
+                        <li><a href="https://www.tiktok.com/@@italaveloso.coaching" target="_blank"
+                                rel="noopener noreferrer" aria-label="Follow us on TikTok" class="social-link tiktok"><i
+                                    class="fa-brands fa-tiktok" aria-hidden="true"></i><span
+                                    class="sr-only">TikTok</span></a></li>
                     </ul>
                 </nav>
+            </section>
+
+            <section class="footer-section newsletter-section" aria-labelledby="newsletter-heading">
+                <h3 id="newsletter-heading" class="footer-heading">Newsletter</h3>
+                <p class="newsletter-tagline">Stay tuned and join our breakthrough, break free newsletter</p>
+
+                <div class="newsletter-form-wrapper">
+                    <EditForm Model="@emailSubscription" OnValidSubmit="SubscribeToNewsLetter"
+                        FormName="emailSubscriptionForm" class="newsletter-form-container">
+                        <DataAnnotationsValidator />
+
+                        @if (isSubscribing)
+                        {
+                            <div class="newsletter-loading" aria-live="polite">
+                                <div class="spinner-border" role="status" aria-label="Subscribing to newsletter">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p>Subscribing...</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="newsletter-form" role="group" aria-labelledby="newsletter-heading">
+                                <label for="newsletter-email" class="visually-hidden">Enter your email address</label>
+                                <InputText id="newsletter-email" class="form-control newsletter-input"
+                                    @bind-Value="emailSubscription.Email" placeholder="Enter your email address"
+                                    aria-describedby="email-help email-validation" autocomplete="email" type="email"
+                                    required />
+                                <button type="submit" class="btn btn-primary newsletter-submit"
+                                    aria-describedby="newsletter-benefits">
+                                    <span>Subscribe</span>
+                                    <i class="fas fa-paper-plane" aria-hidden="true"></i>
+                                </button>
+                            </div>
+
+                            <div id="email-validation" aria-live="assertive">
+                                <ValidationMessage For="@(() => emailSubscription.Email)"
+                                    class="text-danger validation-error" />
+                            </div>
+
+                            <div id="email-help" class="privacy-notice">
+                                <small>By subscribing, you agree to receive marketing emails from Ítala Veloso. You can
+                                    unsubscribe at any time. For more details, check out our <a href="/privacy-policy"
+                                        aria-label="Read our privacy policy">Privacy Policy</a>.</small>
+                            </div>
+                        }
+                    </EditForm>
+
+                    @if (!string.IsNullOrEmpty(subscriptionMessage))
+                    {
+                        <div class="alert @(subscriptionSuccess ? "alert-success" : "alert-danger") mt-3" role="alert"
+                            aria-live="assertive" aria-atomic="true">
+                            @subscriptionMessage
+                        </div>
+                    }
+                </div>
+            </section>
+
+            <section class="footer-section links-contact-section" aria-labelledby="links-heading">
+                <div class="quick-links">
+                    <h3 id="links-heading" class="footer-heading">Quick Access</h3>
+                    <nav aria-label="Footer site navigation" class="footer-nav-wrapper">
+                        <ul class="footer-nav" role="list">
+                            <li><a href="/about/meet-itala" class="footer-link">About</a></li>
+                            <li><a href="/services/coaching/life-coaching" class="footer-link">Life Coaching</a></li>
+                            <li><a href="/services/coaching/career-coaching" class="footer-link">Career Coaching</a>
+                            </li>
+                            <li><a href="#contact" class="footer-link">Contact</a></li>
+                            <li><a href="/privacy-policy" class="footer-link">Privacy Policy</a></li>
+                        </ul>
+                    </nav>
+                </div>
+
+                <address class="contact-info" aria-labelledby="contact-heading">
+                    <h3 id="contact-heading" class="footer-heading">Get in Touch</h3>
+                    <p class="contact-item">
+                        <i class="fas fa-envelope" aria-hidden="true"></i>
+                        <a href="mailto:jostic@italaveloso.com" class="email-link"
+                            aria-label="Send email to jostic@italaveloso.com">
+                            jostic@italaveloso.com
+                        </a>
+                    </p>
+                </address>
+            </section>
+        </div>
+
+        <section class="footer-disclaimer" aria-labelledby="disclaimer-heading">
+            <details class="disclaimer-details">
+                <summary class="disclaimer-summary">
+                    <h4 id="disclaimer-heading" class="disclaimer-title">Important Disclaimer</h4>
+                    <i class="fas fa-chevron-down disclaimer-icon" aria-hidden="true"></i>
+                </summary>
+                <div class="disclaimer-content">
+                    <p>Results vary for each individual and are not guaranteed. Our coaching and resources are designed
+                        for educational and informational purposes only and are not a "quick fix" solution. Success
+                        depends on your effort, commitment, accountability, and ability to follow guidance. Testimonials
+                        shared on this site reflect individual experiences and may not be typical. While our tools and
+                        strategies aim to support growth and transformation, outcomes depend on personal determination
+                        and action.</p>
+                </div>
+            </details>
+        </section>
+    </div>
+
+    <div class="footer-bottom" role="contentinfo">
+        <div class="footer-bottom-content">
+            <p class="copyright">
+                <small>&copy; @currentYear Ítala Veloso Coaching. All rights reserved.</small>
+            </p>
+            <div class="footer-links">
+                <a href="https://github.com/ivandiaswr/coaching-blazor-webapp" target="_blank" rel="noopener noreferrer"
+                    class="github-link" aria-label="View source code on GitHub">
+                    <i class="fab fa-github" aria-hidden="true"></i>
+                    <span>View on GitHub</span>
+                </a>
             </div>
-            <div class="contact-info">
-                <h4>Get in Touch</h4>
-                @* <p class="footer-tagline">Have a question?</p> *@
-                <p><i class="fas fa-envelope"></i> jostic@italaveloso.com</p>
-            </div> 
         </div>
     </div>
-    <div class="footer-bottom">
-        <p>&copy; @currentYear Ítala Veloso Coaching. All rights reserved.
-            <a href="https://github.com/ivandiaswr/coaching-blazor-webapp" target="_blank" class="github-link">
-                <i class="fab fa-github"></i> View on GitHub
-            </a>
-        </p>
-    </div>
-</section>
+</footer>
 
 @code {
     private string currentYear = DateTime.Now.Year.ToString();
     private EmailSubscription emailSubscription = new EmailSubscription();
-    private string subscriptionMessage;
+    private string subscriptionMessage = string.Empty;
     private bool subscriptionSuccess = false;
     private bool isSubscribing = false;
 
     private async Task SubscribeToNewsLetter()
     {
         Logger.LogInformation("SubscribeToNewsLetter method called");
-        if (!string.IsNullOrWhiteSpace(emailSubscription.Email))
+
+        if (string.IsNullOrWhiteSpace(emailSubscription.Email))
         {
+            subscriptionMessage = "Please enter a valid email address.";
+            subscriptionSuccess = false;
+            StateHasChanged();
+            return;
+        }
+
+        await InvokeAsync(() =>
+        {
+            isSubscribing = true;
+            subscriptionMessage = string.Empty;
+            StateHasChanged();
+        });
+
+        try
+        {
+            Logger.LogInformation($"Attempting to subscribe with email: {emailSubscription.Email}");
+
+            var result = await EmailSubscriptionService.SubscriptionAsync(emailSubscription);
+
             await InvokeAsync(() =>
             {
-                isSubscribing = true;
+                subscriptionSuccess = result;
+                subscriptionMessage = result
+    ? "Thank you! Your subscription has been confirmed. Welcome to our newsletter!"
+    : "Subscription failed. Please try again or contact support.";
+
+                if (result)
+                {
+                    emailSubscription = new EmailSubscription(); // Reset the form
+                }
+
                 StateHasChanged();
             });
 
-            try
+            Logger.LogInformation($"Subscription result: {result}");
+        }
+        catch (Exception ex)
+        {
+            await InvokeAsync(() =>
             {
-                Logger.LogInformation($"Attempting to subscribe with email: {emailSubscription.Email}");
+                subscriptionMessage = "An error occurred while processing your subscription. Please try again later.";
+                subscriptionSuccess = false;
+                StateHasChanged();
+            });
 
-                var result = await EmailSubscriptionService.SubscriptionAsync(emailSubscription);
-
-                await InvokeAsync(() =>
-                {
-                    subscriptionSuccess = result;
-                    subscriptionMessage = result ? "Thank you! Your submission has been received!" : "Subscription failed. Please try again or contact support.";
-
-                    if (result) 
-                    {
-                        emailSubscription = new EmailSubscription();  // Reset the form
-                    }
-
-                    StateHasChanged();
-                });
-
-                Logger.LogInformation($"Subscription result: {result}");
-            }
-            catch (Exception ex)
+            Logger.LogError(ex, "Error during subscription process");
+        }
+        finally
+        {
+            await InvokeAsync(() =>
             {
-                await InvokeAsync(() =>
-                {
-                    subscriptionMessage = "An error occurred. Please try again later.";
-                    StateHasChanged();
-                });
-
-                Logger.LogError(ex, "Error during subscription");
-            }
-            finally
-            {
-                await InvokeAsync(() =>
-                {
-                    isSubscribing = false;
-                    StateHasChanged();
-                });
-            }
+                isSubscribing = false;
+                StateHasChanged();
+            });
         }
 
         Logger.LogInformation("SubscribeToNewsLetter method completed");
@@ -172,12 +270,7 @@
 
     protected override void OnInitialized()
     {
-        //Console.WriteLine("Index page initialized");
+        // Initialize component
+        Logger.LogInformation("Footer component initialized");
     }
-
-    protected override void OnParametersSet()
-    {
-        //Console.WriteLine("Index page parameters set");
-    }
-
 }

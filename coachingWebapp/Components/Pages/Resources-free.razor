@@ -13,11 +13,24 @@
 
 <PageTitle>@pageTitle</PageTitle>
 
-<div class="resources-page">
-    <div class="resources-container">
-        <h1><span class="highlight">Free</span>  Resources</h1>
+<link href="~/css/resources.css" rel="stylesheet" />
 
-                <div class="resources-grid">
+<div class="resources-progress" id="resources-progress"></div>
+
+<div class="resources-page">
+    <!-- Hero Section -->
+    <section class="resources-hero">
+        <div class="resources-hero-content">
+            <h1 class="resources-title">Transform Your Life with <span class="highlight">Free</span> Resources</h1>
+            <p class="resources-subtitle">
+                Discover powerful tools, guides, and insights designed to accelerate your personal growth journey. Start your transformation today with our carefully curated collection of life-changing resources.
+            </p>
+        </div>
+    </section>
+
+    <main class="resources-container">
+        <!-- Resources Grid -->
+        <div class="resources-grid">
             <div class="resource-card">
                 <img src="https://italaveloso.com/Images/services/free-resources/resource1.png" 
                      alt="Shape Your Power: A 30-Day Inner Peace Challenge" 
@@ -28,7 +41,8 @@
                     <p>Unlock clarity, purpose, and resilience through daily mindfulness and transformational practices. Let's make 2025 your year of peace and empowerment.</p>
                     <div class="card-buttons">
                         <button class="primary-button" @onclick="() => ShowGiftOffer(GiftCategory.Gift1)">
-                            <i class="fa-solid fa-download"></i> Get Resource
+                            <i class="fa-solid fa-download"></i> 
+                            <span>Get Resource</span>
                         </button>
                     </div>
                 </div>
@@ -44,13 +58,15 @@
                     <p>Unlock your guide to a purposeful, stress-free, successful year — Be Unstoppable.</p>
                     <div class="card-buttons">
                         <button class="primary-button" @onclick="() => ShowGiftOffer(GiftCategory.Gift2)">
-                            <i class="fa-solid fa-download"></i> Get Resource
+                            <i class="fa-solid fa-download"></i>
+                            <span>Get Resource</span>
                         </button>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Video Section -->
         <div class="video-section-wrapper">
             <div id="video-section" class="resource-video-container">
                 <div class="video-wrapper">
@@ -67,7 +83,7 @@
                     }
                     else
                     {
-                        <div class="video-placeholder" @onclick="LoadVideo">
+                        <div class="video-placeholder" @onclick="LoadVideo" role="button" tabindex="0" @onkeypress="HandleVideoKeyPress">
                             <div class="play-button">
                                 <i class="fa-solid fa-play"></i>
                             </div>
@@ -79,27 +95,28 @@
             
             <div class="video-description">
                 <h2>Preview Our <span class="highlight">Challenge</span> Playlist</h2>
-                <p>Embark on a transformative journey with our carefully curated video series designed to guide you through personal growth and self-discovery. Each video offers practical insights and actionable steps to help you cultivate mindfulness, build resilience, and create lasting positive change in your life.</p>
+                <p>Embark on a transformative journey with our carefully curated video series designed to guide you through personal growth and self-discovery.</p>
+                <p>Each video offers practical insights and actionable steps to help you cultivate mindfulness, build resilience, and create lasting positive change in your life.</p>
                 <p>Whether you're new to personal development or looking to deepen your practice, our challenge playlist provides the perfect blend of inspiration and practical guidance.</p>
             </div>
         </div>
-
-    </div>
-
+    </main>
 </div>
+
 @if (showGiftOffer)
 {
-    <div class="gift-modal" @onclick="CloseGiftOfferIfClickedOutside">
+    <div class="gift-modal" @onclick="CloseGiftOfferIfClickedOutside" role="dialog" aria-labelledby="modal-title" aria-modal="true">
         <div class="gift-modal-content" @onclick:stopPropagation>
-            <h3>Unlock Your Free Guide!</h3>
+            <h3 id="modal-title">Unlock Your Free Guide!</h3>
             <p>Get instant access to expert tips and strategies to jumpstart your journey. <b>Your success story begins here.</b></p>
+            
             <EditForm Model="@emailSubscription" OnValidSubmit="GetGiftBySubscribeNewsLetter">
                 <DataAnnotationsValidator />
 
                 @if (isSubscribing)
                 {
                     <div class="text-center">
-                        <div class="spinner-border" role="status">
+                        <div class="spinner-border" role="status" aria-label="Loading">
                             <span class="visually-hidden">Loading...</span>
                         </div>
                         <p>Subscribing...</p>
@@ -107,10 +124,19 @@
                 }
                 else
                 {
-                    <InputText id="email" class="form-control" @bind-Value="emailSubscription.Email" placeholder="Enter your email" />
-                    <button type="submit" class="btn btn-primary">Get Free Guide</button>
+                    <InputText id="email" 
+                               class="form-control" 
+                               @bind-Value="emailSubscription.Email" 
+                               placeholder="Enter your email address"
+                               aria-label="Email address" />
                     <ValidationMessage For="@(() => emailSubscription.Email)" class="text-danger" />
-                    <p class="privacy-notice">By signing up, you're agreeing to receive marketing emails from Jostic. You can unsubscribe at any time. For more details, check out our <a href="/privacy-policy">Privacy Policy</a>.</p>
+                    <button type="submit" class="btn btn-primary" aria-describedby="privacy-notice">
+                        Get Free Guide
+                    </button>
+                    <p class="privacy-notice" id="privacy-notice">
+                        By signing up, you're agreeing to receive marketing emails from Ítala Veloso. You can unsubscribe at any time. 
+                        For more details, check out our <a href="/privacy-policy">Privacy Policy</a>.
+                    </p>
                 }
             </EditForm>
 
@@ -121,10 +147,17 @@
                 </div>
             }
 
-            <button class="close-button" @onclick="CloseGiftOffer"><i class="fa-solid fa-circle-xmark"></i></button>
+            <button class="close-button" 
+                    @onclick="CloseGiftOffer" 
+                    aria-label="Close modal"
+                    title="Close">
+                <i class="fa-solid fa-circle-xmark"></i>
+            </button>
         </div>
     </div>
 }
+
+<script src="~/js/resources-enhancements.js"></script>
 
 @code {
     private string pageTitle = "Free Resources | Ítala Veloso";
@@ -147,6 +180,14 @@
     {
         isVideoVisible = true;
         StateHasChanged();
+    }
+
+    private void HandleVideoKeyPress(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" || e.Key == " ")
+        {
+            LoadVideo();
+        }
     }
 
     private async Task GetGiftBySubscribeNewsLetter()

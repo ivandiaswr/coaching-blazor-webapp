@@ -10,123 +10,101 @@
 
 <PageTitle>@pageTitle</PageTitle>
 
+<link href="~/css/faqs.css" rel="stylesheet" />
+
+<div class="faq-progress" id="faq-progress"></div>
 
 <div class="faq-page">
-    <h1 class="faq-title">Frequently Asked <span class="highlight">Questions</span></h1>
-
-    <div class="faq-section">
-        <div class="faq-item">
-            <h2>1. Will life coaching work for me?</h2>
-            <p>
-                Yes, life coaching can work for you—but the results depend on your commitment and intention.
-                Success is 97% dependent on how ready you are to show up, do the hard work, follow guidances and trust the process entirely.
-                Self-sabotage and hesitation can hold you back, but with guidance and effort, transformation is achievable.
+    <!-- Hero Section -->
+    <section class="faq-hero">
+        <div class="faq-hero-content">
+            <h1 class="faq-title">Frequently Asked <span class="highlight">Questions</span></h1>
+            <p class="faq-subtitle">
+                Find answers to common questions about life coaching, sessions, and how we can help transform your life.
             </p>
         </div>
+    </section>
 
-        <div class="faq-item">
-            <h2>2. Who is life coaching for?</h2>
-            <p>
-                Coaching is for both women and men, 18 years of age or above. Services are available in English and Portuguese, making them accessible to a diverse audience. 
-                It's for individuals ready to move forward in life, whether you're:
-            </p>
-            <ul>
-                <li>Ready for a change in your life. Or,</li>
-                <li>Feeling stuck, overwhelmed, stressed, or lost.</li>
-                <li>Seeking clarity and direction in your life, career, relationships, or purpose.</li>
-                <li>Struggling with emotional wounds or limiting beliefs</li>
-                <li>Seeking freedom from what's been holding back.</li>
-                <li>Exploring new paths and healthier habits in life.</li>
-                <li>Searching for ways to unlock the new stage in life.</li>
-                <li>Planning and need help with developing a step-to-step plan and propel you to the next level.</li>
-                <li>Wanting to balance work-life pressures or improve overall wellness</li>
-                <li>Preparing for interviews, reassessing your CV, or mapping a new career path</li>
-            </ul>
+    <main class="faq-content">
+        <!-- Search Box -->
+        <div class="faq-search-container">
+            <input type="text" 
+                   class="search-input" 
+                   placeholder="Search questions... (e.g., 'coaching sessions', 'pricing', 'online')"
+                   @oninput="FilterFAQs"
+                   @bind="searchQuery" />
         </div>
 
-        <div class="faq-item">
-            <h2>3. What is the structure of the coaching sessions?</h2>
-            <p>
-                Coaching sessions are tailored to your needs with 5 different packages available. Each session lasts on average 60 minutes and follows a structured yet flexible approach:
-            </p>
-            <ul>
-                <li><strong>Awareness:</strong> Uncovering challenges and defining goals</li>
-                <li><strong>Exploration:</strong> Delving deeper into thoughts, emotions, strengths, and patterns of behaviour</li>
-                <li><strong>Action:</strong> Creating actionable plans, steps, and accountability</li>
-            </ul>
-            <p>Sessions can be held online or in person, depending on availability and preference.</p>
+        <!-- Category Filter -->
+        <div class="faq-categories">
+            <button class="category-tag @(selectedCategory == "all" ? "active" : "")" 
+                    @onclick="@(() => FilterByCategory("all"))">
+                All Questions
+            </button>
+            <button class="category-tag @(selectedCategory == "coaching" ? "active" : "")" 
+                    @onclick="@(() => FilterByCategory("coaching"))">
+                Coaching Process
+            </button>
+            <button class="category-tag @(selectedCategory == "sessions" ? "active" : "")" 
+                    @onclick="@(() => FilterByCategory("sessions"))">
+                Sessions & Pricing
+            </button>
+            <button class="category-tag @(selectedCategory == "personal" ? "active" : "")" 
+                    @onclick="@(() => FilterByCategory("personal"))">
+                Personal Growth
+            </button>
         </div>
 
-        <div class="faq-item">
-            <h2>4. How many sessions will I need?</h2>
-            <p>
-                Most clients see results within 6-10 sessions. We can discuss a personalised plan during your free discovery call.
-            </p>
+        <!-- FAQ Section -->
+        <div class="faq-section">
+            @foreach (var (faq, index) in filteredFAQs.Select((f, i) => (f, i)))
+            {
+                <div class="faq-item @(faq.IsVisible ? "" : "d-none")" style="--delay: @(index * 0.1)s">
+                    <div class="faq-header @(faq.IsOpen ? "active" : "")" 
+                         @onclick="() => ToggleFAQ(faq.Id)"
+                         role="button"
+                         tabindex="0"
+                         @onkeypress="@((e) => HandleKeyPress(e, faq.Id))"
+                         aria-expanded="@faq.IsOpen.ToString().ToLower()"
+                         aria-controls="faq-content-@faq.Id">
+                        
+                        <div class="faq-number">@faq.Number</div>
+                        <h2 class="faq-question" id="faq-question-@faq.Id">@faq.Question</h2>
+                        <div class="faq-toggle">
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="faq-content-wrapper @(faq.IsOpen ? "active" : "")" 
+                         id="faq-content-@faq.Id"
+                         role="region"
+                         aria-labelledby="faq-question-@faq.Id">
+                        <div class="faq-answer">
+                            @((MarkupString)faq.Answer)
+                        </div>
+                    </div>
+                </div>
+            }
         </div>
 
-        <div class="faq-item">
-            <h2>5. Is life coaching the same as therapy?</h2>
-            <p>
-                No. Life Coaching is not therapy. While therapy often focuses on healing past wounds and managing mental health conditions, life coaching is future-focused.
-                It’s about setting goals, breaking barriers, and creating actionable strategies to achieve the life you want. Life Coaching complements therapy but does not replace it.
-            </p>
-        </div>
+        @if (!filteredFAQs.Any(f => f.IsVisible))
+        {
+            <div class="no-results" style="text-align: center; padding: 3rem; color: var(--text-light);">
+                <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                <h3>No questions found</h3>
+                <p>Try adjusting your search terms or browse all categories.</p>
+                <button class="category-tag" @onclick="ClearSearch">Clear Search</button>
+            </div>
+        }
+    </main>
 
-        <div class="faq-item">
-            <h2>6. What areas of life does coaching cover?</h2>
-            <p>
-                Coaching addresses various areas of life, including, but not limited to:
-            </p>
-            <ul>
-                <li><strong>Personal and Spiritual Growth:</strong> Self-discovery, breaking limiting patterns, and building confidence</li>
-                <li><strong>Social Life and Relationships:</strong> Improving communication, building stronger connections, and setting boundaries</li>
-                <li><strong>Career:</strong> SWOT, career path mapping, interview preparation, and CV re-assessment</li>
-                <li><strong>Wellness:</strong> Reclaiming inner peace, reducing stress, and enhancing overall well-being</li>
-                <li><strong>Work-Life Balance:</strong> Strategies to manage stress, prioritize, and thrive in personal and professional life</li>
-            </ul>
-        </div>
-
-        <div class="faq-item">
-            <h2>7. How can I schedule a session/call?</h2>
-            <p>
-                It’s easy! Click the “Book Your Free Discovery Call” button on the website, choose a time that works for you, and start your transformation journey.
-            </p>
-        </div>
-
-        <div class="faq-item">
-            <h2>8. What if I’m not ready to commit yet?</h2>
-            <p>
-                That’s okay! Starting your journey is a big decision. Explore the free resources on the website and feel free to reach out with any questions. 
-                Remember, the first step is simply showing up.
-            </p>
-        </div>
-
-        <div class="faq-item">
-            <h2>9. What if I fail or can’t make lasting changes?</h2>
-            <p>
-                It’s natural to fear failure—it’s part of being human. But here’s the truth: You either win, or you learn. 
-                Transformation is a journey, not a one-time quick fix. Every step, even the small ones, moves you closer to the life you want. 
-                Life Coaching provides you with tools, strategies, and support to navigate challenges and stay on track.
-            </p>
-        </div>
-
-        <div class="faq-item">
-            <h2>10. Why should I choose Ítala Veloso as my Life Coach?</h2>
-            <p>
-                Ítala Veloso's Life Coaching isn’t just another program — it’s a lived and proven methodology born from real-life experiences. 
-                With a faith-filled heart, great listening and action skills; a compassionate and liberating purpose-driven approach; and a focus on tangible results. 
-                Ítala empowers you to not just survive but thrive, and also creates with you a safe and confidential space tailored to meet you where you are and lead you to where you want to be. You deserve to live and experience life fully and freely. 
-                Remember: You are More Than A Conqueror™.
-            </p>
-        </div>
-    </div>
-</div>
-
-<div>
-    <div class="cta-section">
+    <!-- Enhanced CTA Section -->
+    <section class="cta-section">
         <div class="cta-content">
-            <h2>Ready to Transform Your Future?</h2>
-            <p>Schedule a free consultation call to discuss your goals</p>
+            <h2>Still Have Questions?</h2>
+            <p>
+                Can't find what you're looking for? Schedule a free discovery call to discuss your specific situation and goals.
+            </p>
         </div>
         <a href="#contact" class="services-cta-button">
             <span class="cta-icon"><i class="fas fa-calendar-check"></i></span>
@@ -136,52 +114,234 @@
             </span>
             <i class="fas fa-arrow-right"></i>
         </a>
-    </div>
+    </section>
 </div>
+
+<script>
+    // Enhanced FAQ Page Interactions
+    document.addEventListener('DOMContentLoaded', function() {
+        // Scroll progress indicator
+        const progressBar = document.getElementById('faq-progress');
+        if (progressBar) {
+            window.addEventListener('scroll', () => {
+                const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+                const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+                const scrolled = (winScroll / height) * 100;
+                progressBar.style.width = scrolled + '%';
+            });
+        }
+
+        // Smooth scroll for internal links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Auto-expand FAQ from URL hash
+        const hash = window.location.hash;
+        if (hash && hash.startsWith('#faq-')) {
+            const faqElement = document.querySelector(hash);
+            if (faqElement) {
+                setTimeout(() => {
+                    faqElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 500);
+            }
+        }
+    });
+</script>
 
 @code {
     private string pageTitle = "FAQs | Ítala Veloso";
+    private string searchQuery = "";
+    private string selectedCategory = "all";
+    private List<FAQItem> allFAQs = new();
+    private List<FAQItem> filteredFAQs = new();
+
+    public class FAQItem
+    {
+        public int Id { get; set; }
+        public int Number { get; set; }
+        public string Question { get; set; } = "";
+        public string Answer { get; set; } = "";
+        public string Category { get; set; } = "";
+        public bool IsOpen { get; set; } = false;
+        public bool IsVisible { get; set; } = true;
+    }
+
+    protected override void OnInitialized()
+    {
+        InitializeFAQs();
+        FilterFAQs();
+    }
+
+    private void InitializeFAQs()
+    {
+        allFAQs = new List<FAQItem>
+        {
+            new FAQItem
+            {
+                Id = 1, Number = 1, Category = "coaching",
+                Question = "Will life coaching work for me?",
+                Answer = @"<p>Yes, life coaching can work for you—but the results depend on your commitment and intention. Success is 97% dependent on how ready you are to show up, do the hard work, follow guidances and trust the process entirely. Self-sabotage and hesitation can hold you back, but with guidance and effort, transformation is achievable.</p>"
+            },
+            new FAQItem
+            {
+                Id = 2, Number = 2, Category = "coaching",
+                Question = "Who is life coaching for?",
+                Answer = @"<p>Coaching is for both women and men, 18 years of age or above. Services are available in English and Portuguese, making them accessible to a diverse audience. It's for individuals ready to move forward in life, whether you're:</p>
+                <ul>
+                    <li>Ready for a change in your life</li>
+                    <li>Feeling stuck, overwhelmed, stressed, or lost</li>
+                    <li>Seeking clarity and direction in your life, career, relationships, or purpose</li>
+                    <li>Struggling with emotional wounds or limiting beliefs</li>
+                    <li>Seeking freedom from what's been holding back</li>
+                    <li>Exploring new paths and healthier habits in life</li>
+                    <li>Searching for ways to unlock the new stage in life</li>
+                    <li>Planning and need help with developing a step-to-step plan</li>
+                    <li>Wanting to balance work-life pressures or improve overall wellness</li>
+                    <li>Preparing for interviews, reassessing your CV, or mapping a new career path</li>
+                </ul>"
+            },
+            new FAQItem
+            {
+                Id = 3, Number = 3, Category = "sessions",
+                Question = "What is the structure of the coaching sessions?",
+                Answer = @"<p>Coaching sessions are tailored to your needs with 5 different packages available. Each session lasts on average 60 minutes and follows a structured yet flexible approach:</p>
+                <ul>
+                    <li><strong>Awareness:</strong> Uncovering challenges and defining goals</li>
+                    <li><strong>Exploration:</strong> Delving deeper into thoughts, emotions, strengths, and patterns of behaviour</li>
+                    <li><strong>Action:</strong> Creating actionable plans, steps, and accountability</li>
+                </ul>
+                <p>Sessions can be held online or in person, depending on availability and preference.</p>"
+            },
+            new FAQItem
+            {
+                Id = 4, Number = 4, Category = "sessions",
+                Question = "How many sessions will I need?",
+                Answer = @"<p>Most clients see results within 6-10 sessions. We can discuss a personalised plan during your free discovery call.</p>"
+            },
+            new FAQItem
+            {
+                Id = 5, Number = 5, Category = "coaching",
+                Question = "Is life coaching the same as therapy?",
+                Answer = @"<p>No. Life Coaching is not therapy. While therapy often focuses on healing past wounds and managing mental health conditions, life coaching is future-focused. It's about setting goals, breaking barriers, and creating actionable strategies to achieve the life you want. Life Coaching complements therapy but does not replace it.</p>"
+            },
+            new FAQItem
+            {
+                Id = 6, Number = 6, Category = "personal",
+                Question = "What areas of life does coaching cover?",
+                Answer = @"<p>Coaching addresses various areas of life, including, but not limited to:</p>
+                <ul>
+                    <li><strong>Personal and Spiritual Growth:</strong> Self-discovery, breaking limiting patterns, and building confidence</li>
+                    <li><strong>Social Life and Relationships:</strong> Improving communication, building stronger connections, and setting boundaries</li>
+                    <li><strong>Career:</strong> SWOT, career path mapping, interview preparation, and CV re-assessment</li>
+                    <li><strong>Wellness:</strong> Reclaiming inner peace, reducing stress, and enhancing overall well-being</li>
+                    <li><strong>Work-Life Balance:</strong> Strategies to manage stress, prioritize, and thrive in personal and professional life</li>
+                </ul>"
+            },
+            new FAQItem
+            {
+                Id = 7, Number = 7, Category = "sessions",
+                Question = "How can I schedule a session/call?",
+                Answer = @"<p>It's easy! Click the ""Book Your Free Discovery Call"" button on the website, choose a time that works for you, and start your transformation journey.</p>"
+            },
+            new FAQItem
+            {
+                Id = 8, Number = 8, Category = "personal",
+                Question = "What if I'm not ready to commit yet?",
+                Answer = @"<p>That's okay! Starting your journey is a big decision. Explore the free resources on the website and feel free to reach out with any questions. Remember, the first step is simply showing up.</p>"
+            },
+            new FAQItem
+            {
+                Id = 9, Number = 9, Category = "personal",
+                Question = "What if I fail or can't make lasting changes?",
+                Answer = @"<p>It's natural to fear failure—it's part of being human. But here's the truth: You either win, or you learn. Transformation is a journey, not a one-time quick fix. Every step, even the small ones, moves you closer to the life you want. Life Coaching provides you with tools, strategies, and support to navigate challenges and stay on track.</p>"
+            },
+            new FAQItem
+            {
+                Id = 10, Number = 10, Category = "coaching",
+                Question = "Why should I choose Ítala Veloso as my Life Coach?",
+                Answer = @"<p>Ítala Veloso's Life Coaching isn't just another program — it's a lived and proven methodology born from real-life experiences. With a faith-filled heart, great listening and action skills; a compassionate and liberating purpose-driven approach; and a focus on tangible results. Ítala empowers you to not just survive but thrive, and also creates with you a safe and confidential space tailored to meet you where you are and lead you to where you want to be. You deserve to live and experience life fully and freely. Remember: <strong>You are More Than A Conqueror™</strong>.</p>"
+            }
+        };
+
+        filteredFAQs = new List<FAQItem>(allFAQs);
+    }
+
+    private void FilterFAQs()
+    {
+        var query = searchQuery?.ToLower() ?? "";
+        
+        filteredFAQs = allFAQs.Where(faq => 
+            (selectedCategory == "all" || faq.Category == selectedCategory) &&
+            (string.IsNullOrEmpty(query) || 
+             faq.Question.ToLower().Contains(query) || 
+             faq.Answer.ToLower().Contains(query))
+        ).ToList();
+
+        foreach (var faq in filteredFAQs)
+        {
+            faq.IsVisible = true;
+        }
+
+        StateHasChanged();
+    }
+
+    private void FilterByCategory(string category)
+    {
+        selectedCategory = category;
+        FilterFAQs();
+    }
+
+    private void ClearSearch()
+    {
+        searchQuery = "";
+        selectedCategory = "all";
+        FilterFAQs();
+    }
+
+    private void ToggleFAQ(int id)
+    {
+        var faq = filteredFAQs.FirstOrDefault(f => f.Id == id);
+        if (faq != null)
+        {
+            faq.IsOpen = !faq.IsOpen;
+            StateHasChanged();
+        }
+    }
+
+    private void HandleKeyPress(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e, int id)
+    {
+        if (e.Key == "Enter" || e.Key == " ")
+        {
+            ToggleFAQ(id);
+        }
+    }
 
     private string GetFAQStructuredData()
     {
-        return @"{
-            ""@context"": ""https://schema.org"",
-            ""@type"": ""FAQPage"",
-            ""mainEntity"": [
-                {
-                    ""@type"": ""Question"",
-                    ""name"": ""What coaching services do you offer?"",
-                    ""acceptedAnswer"": {
-                        ""@type"": ""Answer"",
-                        ""text"": ""I offer life coaching, career coaching, and food regulatory affairs consulting services to help you achieve personal and professional transformation.""
-                    }
-                },
-                {
-                    ""@type"": ""Question"",
-                    ""name"": ""How long are coaching sessions?"",
-                    ""acceptedAnswer"": {
-                        ""@type"": ""Answer"",
-                        ""text"": ""Coaching sessions are typically 60 minutes long, with some packages offering different session lengths based on your needs.""
-                    }
-                },
-                {
-                    ""@type"": ""Question"",
-                    ""name"": ""Do you offer online coaching sessions?"",
-                    ""acceptedAnswer"": {
-                        ""@type"": ""Answer"",
-                        ""text"": ""Yes, I offer both online and in-person coaching sessions to accommodate your preferences and location.""
-                    }
-                },
-                {
-                    ""@type"": ""Question"",
-                    ""name"": ""What is your coaching approach?"",
-                    ""acceptedAnswer"": {
-                        ""@type"": ""Answer"",
-                        ""text"": ""My coaching approach focuses on helping you overcome limiting beliefs, heal from trauma, and create lasting positive transformation through personalized guidance and support.""
-                    }
-                }
-            ],
-            ""url"": ""https://italaveloso.com/about/faqs""
-        }";
+        var faqData = allFAQs.Select(faq => new {
+            type = "Question",
+            name = faq.Question,
+            acceptedAnswer = new {
+                type = "Answer",
+                text = System.Text.RegularExpressions.Regex.Replace(faq.Answer, "<.*?>", "")
+            }
+        });
+
+        return System.Text.Json.JsonSerializer.Serialize(new {
+            context = "https://schema.org",
+            type = "FAQPage",
+            mainEntity = faqData,
+            url = "https://italaveloso.com/about/faqs"
+        });
     }
 }

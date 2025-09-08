@@ -2,71 +2,154 @@
 @rendermode InteractiveServer
 @attribute [Authorize(Roles = "Admin,User")]
 
+<PageTitle>Account Settings | Ítala Veloso</PageTitle>
+
 <MudSnackbarProvider />
 
 <section class="account-settings">
-    <MudText Typo="Typo.h4" Class="mb-4">Account Information</MudText>
+    <MudText Typo="Typo.h4" Class="mb-4">Account Settings</MudText>
 
-    <MudForm Model="@accountModel" @ref="form" PreventDefault="true" ValidationDelay="0">
-        <MudTextField Label="Email"
-                      @bind-Value="accountModel.Email"
-                      Disabled="true"
-                      Variant="Variant.Outlined"
-                      Class="mb-4" />
+    <MudForm Model="@accountModel" @ref="form" PreventDefault="true" ValidationDelay="0" @onkeydown="HandleKeyDown">
+        
+        <!-- Profile Information Section -->
+        <MudCard Class="mb-6" Elevation="2">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <div style="display: flex; align-items: center;">
+                        <MudIcon Icon="Icons.Material.Filled.Person" Class="mr-3" />
+                        <MudText Typo="Typo.h6">Profile Information</MudText>
+                    </div>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudTextField Label="Email"
+                              @bind-Value="accountModel.Email"
+                              Disabled="true"
+                              Variant="Variant.Outlined"
+                              Class="mb-4"
+                              HelperText="Email cannot be changed" />
 
-        <MudTextField Label="First Name"
-                      @bind-Value="accountModel.FirstName"
-                      For="@(() => accountModel.FirstName)"
-                      Required="true"
-                      RequiredError="First name is required"
-                      Variant="Variant.Outlined"
-                      Class="mb-4" />
+                <MudTextField Label="First Name"
+                              @bind-Value="accountModel.FirstName"
+                              For="@(() => accountModel.FirstName)"
+                              Required="true"
+                              RequiredError="First name is required"
+                              Variant="Variant.Outlined"
+                              Class="mb-4"
+                              TabIndex="1" />
 
-        <MudTextField Label="Last Name"
-                      @bind-Value="accountModel.LastName"
-                      For="@(() => accountModel.LastName)"
-                      Required="true"
-                      RequiredError="Last name is required"
-                      Variant="Variant.Outlined"
-                      Class="mb-4" />
+                <MudTextField Label="Last Name"
+                              @bind-Value="accountModel.LastName"
+                              For="@(() => accountModel.LastName)"
+                              Required="true"
+                              RequiredError="Last name is required"
+                              Variant="Variant.Outlined"
+                              Class="mb-4"
+                              TabIndex="2" />
+            </MudCardContent>
+        </MudCard>
 
-        <MudText Typo="Typo.h6" Class="mt-6 mb-2">Change Password</MudText>
+        <!-- Password Section -->
+        <MudCard Class="mb-6" Elevation="2">
+            <MudCardHeader>
+                <CardHeaderContent>
+                    <div style="display: flex; align-items: center;">
+                        <MudIcon Icon="Icons.Material.Filled.Lock" Class="mr-3" />
+                        <MudText Typo="Typo.h6">Change Password</MudText>
+                    </div>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent>
+                <MudAlert Severity="Severity.Info" Class="mb-4" Dense="true">
+                    Leave password fields empty if you don't want to change your password.
+                </MudAlert>
 
-        <MudTextField Label="Current Password"
-                      @bind-Value="accountModel.CurrentPassword"
-                      For="@(() => accountModel.CurrentPassword)"
-                      InputType="InputType.Password"
-                      Variant="Variant.Outlined"
-                      Class="mb-4" />
+                <MudTextField Label="Current Password"
+                              @bind-Value="accountModel.CurrentPassword"
+                              For="@(() => accountModel.CurrentPassword)"
+                              InputType="InputType.Password"
+                              Variant="Variant.Outlined"
+                              Class="mb-4"
+                              TabIndex="3" />
 
-        <MudTextField Label="New Password"
-                      @bind-Value="accountModel.NewPassword"
-                      For="@(() => accountModel.NewPassword)"
-                      InputType="InputType.Password"
-                      Variant="Variant.Outlined"
-                      Class="mb-4" />
+                <MudTextField Label="New Password"
+                              @bind-Value="accountModel.NewPassword"
+                              For="@(() => accountModel.NewPassword)"
+                              InputType="@(IsPasswordVisible ? InputType.Text : InputType.Password)"
+                              Variant="Variant.Outlined"
+                              Class="mb-4"
+                              HelperText="@GetPasswordHelperText()"
+                              HelperTextOnFocus="true"
+                              Adornment="Adornment.End"
+                              AdornmentIcon="@(IsPasswordVisible ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
+                              OnAdornmentClick="TogglePasswordVisibility"
+                              TabIndex="4" />
 
-        <MudTextField Label="Confirm New Password"
-                      @bind-Value="accountModel.ConfirmNewPassword"
-                      For="@(() => accountModel.ConfirmNewPassword)"
-                      InputType="InputType.Password"
-                      Variant="Variant.Outlined"
-                      Class="mb-4" />
+                <MudTextField Label="Confirm New Password"
+                              @bind-Value="accountModel.ConfirmNewPassword"
+                              For="@(() => accountModel.ConfirmNewPassword)"
+                              InputType="@(IsConfirmPasswordVisible ? InputType.Text : InputType.Password)"
+                              Variant="Variant.Outlined"
+                              Class="mb-4"
+                              Adornment="Adornment.End"
+                              AdornmentIcon="@(IsConfirmPasswordVisible ? Icons.Material.Filled.Visibility : Icons.Material.Filled.VisibilityOff)"
+                              OnAdornmentClick="ToggleConfirmPasswordVisibility"
+                              TabIndex="5" />
+            </MudCardContent>
+        </MudCard>
 
         <MudButton Variant="Variant.Filled"
                    Color="Color.Primary"
-                   StartIcon="@Icons.Material.Filled.AccountCircle"
+                   StartIcon="@(isSubmitting ? "" : Icons.Material.Filled.Save)"
                    Type="submit"
                    Class="mt-4"
+                   Size="Size.Large"
+                   Disabled="@isSubmitting"
                    OnClick="HandleSubmit">
-            Update Account
+            @if (isSubmitting)
+            {
+                <MudProgressCircular Class="mr-2" Size="Size.Small" Indeterminate="true" />
+                <span>Updating...</span>
+            }
+            else
+            {
+                <span>Update Account</span>
+            }
         </MudButton>
     </MudForm>
 </section>
 
 @code {
     private UpdateUser accountModel = new();
-    private MudForm? form;
+    private MudForm form;
+    private bool IsPasswordVisible = false;
+    private bool IsConfirmPasswordVisible = false;
+    private bool isSubmitting = false;
+
+    private string GetPasswordHelperText()
+    {
+        if (string.IsNullOrEmpty(accountModel.NewPassword))
+            return "Minimum 12 characters, must include uppercase letter";
+        
+        var requirements = new List<string>();
+        if (accountModel.NewPassword.Length < 12)
+            requirements.Add("At least 12 characters");
+        if (!accountModel.NewPassword.Any(char.IsUpper))
+            requirements.Add("Include uppercase letter");
+        
+        return requirements.Any() ? string.Join(", ", requirements) : "✓ Password meets requirements";
+    }
+
+    private void TogglePasswordVisibility() => IsPasswordVisible = !IsPasswordVisible;
+    private void ToggleConfirmPasswordVisibility() => IsConfirmPasswordVisible = !IsConfirmPasswordVisible;
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && (e.CtrlKey || e.MetaKey))
+        {
+            await HandleSubmit();
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -82,96 +165,115 @@
 
     private async Task HandleSubmit()
     {
-        if (form is null) return;
+        if (form is null || isSubmitting) return;
 
+        isSubmitting = true;
         await LogService.LogInfo("HandleSubmit", "Account update process started.");
-        await form.Validate();
-
-        if (!form.IsValid)
+        
+        try
         {
-            await LogService.LogInfo("HandleSubmit", "Form is not valid.");
-            return;
-        }
+            await form.Validate();
 
-        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-        var user = await UserManager.GetUserAsync(authState.User);
-
-        if (user is null)
-        {
-            await LogService.LogError("HandleSubmit", "Authenticated user is null.");
-            Snackbar.Add("Unexpected error during account update.", Severity.Error);
-            return;
-        }
-
-        bool wantsToChangeName = 
-            accountModel.FirstName != user.FirstName || 
-            accountModel.LastName != user.LastName;
-
-        bool wantsToChangePassword = 
-            !string.IsNullOrWhiteSpace(accountModel.NewPassword) ||
-            !string.IsNullOrWhiteSpace(accountModel.ConfirmNewPassword);
-
-        if (!wantsToChangeName && !wantsToChangePassword)
-        {
-            await LogService.LogInfo("HandleSubmit", $"No changes detected for user: {user.Email}");
-            Snackbar.Add("No changes were detected.", Severity.Warning);
-            return;
-        }
-
-        if (wantsToChangePassword)
-        {
-            if (string.IsNullOrWhiteSpace(accountModel.CurrentPassword))
+            if (!form.IsValid)
             {
-                await LogService.LogWarning("HandleSubmit", $"User {user.Email} attempted to change password without current password.");
-                Snackbar.Add("To change your password, you must enter your current password.", Severity.Error);
+                await LogService.LogInfo("HandleSubmit", "Form is not valid.");
                 return;
             }
 
-            if (accountModel.NewPassword != accountModel.ConfirmNewPassword)
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = await UserManager.GetUserAsync(authState.User);
+
+            if (user is null)
             {
-                await LogService.LogWarning("HandleSubmit", $"User {user.Email} provided mismatching new passwords.");
-                Snackbar.Add("New password and confirmation do not match.", Severity.Error);
+                await LogService.LogError("HandleSubmit", "Authenticated user is null.");
+                Snackbar.Add("Unexpected error during account update.", Severity.Error);
                 return;
             }
 
-            var changePasswordResult = await UserManager.ChangePasswordAsync(user, accountModel.CurrentPassword, accountModel.NewPassword);
-            if (!changePasswordResult.Succeeded)
+            bool wantsToChangeName = 
+                accountModel.FirstName != user.FirstName || 
+                accountModel.LastName != user.LastName;
+
+            bool wantsToChangePassword = 
+                !string.IsNullOrWhiteSpace(accountModel.NewPassword) ||
+                !string.IsNullOrWhiteSpace(accountModel.ConfirmNewPassword);
+
+            if (!wantsToChangeName && !wantsToChangePassword)
             {
-                var errors = string.Join(", ", changePasswordResult.Errors.Select(e => e.Description));
-                await LogService.LogError("HandleSubmit", $"Password change failed for {user.Email}: {errors}");
-                Snackbar.Add("Unexpected error during password update", Severity.Error);
+                await LogService.LogInfo("HandleSubmit", $"No changes detected for user: {user.Email}");
+                Snackbar.Add("No changes were detected.", Severity.Warning);
                 return;
             }
 
-            await LogService.LogInfo("HandleSubmit", $"Password changed successfully for {user.Email}");
+            if (wantsToChangePassword)
+            {
+                if (string.IsNullOrWhiteSpace(accountModel.CurrentPassword))
+                {
+                    await LogService.LogWarning("HandleSubmit", $"User {user.Email} attempted to change password without current password.");
+                    Snackbar.Add("To change your password, you must enter your current password.", Severity.Error);
+                    return;
+                }
+
+                if (accountModel.NewPassword != accountModel.ConfirmNewPassword)
+                {
+                    await LogService.LogWarning("HandleSubmit", $"User {user.Email} provided mismatching new passwords.");
+                    Snackbar.Add("New password and confirmation do not match.", Severity.Error);
+                    return;
+                }
+
+                var changePasswordResult = await UserManager.ChangePasswordAsync(user, accountModel.CurrentPassword, accountModel.NewPassword);
+                if (!changePasswordResult.Succeeded)
+                {
+                    var errors = string.Join(", ", changePasswordResult.Errors.Select(e => e.Description));
+                    await LogService.LogError("HandleSubmit", $"Password change failed for {user.Email}: {errors}");
+                    Snackbar.Add("Password update failed: " + errors, Severity.Error);
+                    return;
+                }
+
+                await LogService.LogInfo("HandleSubmit", $"Password changed successfully for {user.Email}");
+                // Clear password fields after successful change
+                accountModel.CurrentPassword = string.Empty;
+                accountModel.NewPassword = string.Empty;
+                accountModel.ConfirmNewPassword = string.Empty;
+            }
+
+            if (wantsToChangeName)
+            {
+                user.FirstName = accountModel.FirstName;
+                user.LastName = accountModel.LastName;
+
+                var updateResult = await UserManager.UpdateAsync(user);
+                if (!updateResult.Succeeded)
+                {
+                    var errors = string.Join(", ", updateResult.Errors.Select(e => e.Description));
+                    await LogService.LogError("HandleSubmit", $"User update failed for {user.Email}: {errors}");
+                    Snackbar.Add(errors, Severity.Error);
+                    return;
+                }
+
+                await LogService.LogInfo("HandleSubmit", $"Name updated for {user.Email}");
+            }
+
+            if (wantsToChangePassword)
+            {
+                var loginModel = new LoginModel
+                {
+                    Email = accountModel.Email,
+                    Password = accountModel.NewPassword,
+                    RememberMe = true 
+                };
+
+                var result = await JSRuntime.InvokeAsync<SessionResult>("login", loginModel);
+                Snackbar.Add("Account updated successfully! Password changed.", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Profile information updated successfully!", Severity.Success);
+            }
         }
-
-        if (wantsToChangeName)
+        finally
         {
-            user.FirstName = accountModel.FirstName;
-            user.LastName = accountModel.LastName;
-
-            var updateResult = await UserManager.UpdateAsync(user);
-            if (!updateResult.Succeeded)
-            {
-                var errors = string.Join(", ", updateResult.Errors.Select(e => e.Description));
-                await LogService.LogError("HandleSubmit", $"User update failed for {user.Email}: {errors}");
-                Snackbar.Add(errors, Severity.Error);
-                return;
-            }
-
-            await LogService.LogInfo("HandleSubmit", $"Name updated for {user.Email}");
+            isSubmitting = false;
         }
-
-        var loginModel = new LoginModel
-        {
-            Email = accountModel.Email,
-            Password = accountModel.NewPassword,
-            RememberMe = true 
-        };
-
-        var result = await JSRuntime.InvokeAsync<SessionResult>("login", loginModel);
-
-        Snackbar.Add("Password updated successfully!", Severity.Success);
     }
 }
