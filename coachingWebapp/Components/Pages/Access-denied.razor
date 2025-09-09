@@ -1,11 +1,178 @@
 @page "/access-denied"
 @rendermode InteractiveServer
 
+<SeoComponent Title="@pageTitle" Description="Access denied. You do not have permission to access this resource."
+    Keywords="access denied, unauthorized, forbidden" CanonicalUrl="https://italaveloso.com/access-denied"
+    RobotsContent="noindex, nofollow" />
+
 <PageTitle>@pageTitle</PageTitle>
 
-<h3>Não!</h3>
+
+
+<section class="access-denied-container">
+    <div class="security-background">
+        <div class="matrix-rain">
+            @for (int i = 0; i < 20; i++)
+            {
+                <div class="rain-column" style="left: @(i * 5)%; animation-delay: @(Random.Shared.Next(0, 3000))ms;"></div>
+            }
+        </div>
+
+        <div class="warning-overlay">
+            <div class="access-denied-content">
+
+                <div class="security-header">
+                    <div class="shield-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h1 class="denied-title">
+                        <span class="error-code">403</span>
+                        <span class="main-text">Access Restricted</span>
+                    </h1>
+                    <p class="subtitle">
+                        You don't have permission to view this page
+                    </p>
+                </div>
+
+                <div class="info-message">
+                    <div class="message-box">
+                        <h2>� Protected Content</h2>
+                        <p>This area is restricted to authorized users only. If you believe you should have access, please contact our support team.</p>
+                    </div>
+                </div>
+
+                <div class="help-section">
+                    <h3>📋 What can you do?</h3>
+                    <div class="help-options">
+                        <div class="help-item">
+                            <i class="fas fa-home"></i>
+                            <div>
+                                <strong>Go Back Home</strong>
+                                <p>Return to our main page and explore our services</p>
+                            </div>
+                        </div>
+                        <div class="help-item">
+                            <i class="fas fa-user-shield"></i>
+                            <div>
+                                <strong>Login Required?</strong>
+                                <p>You may need to log in to access this content</p>
+                            </div>
+                        </div>
+                        <div class="help-item">
+                            <i class="fas fa-envelope"></i>
+                            <div>
+                                <strong>Need Help?</strong>
+                                <p>Contact us if you think this is an error</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn-home" @onclick="GoHome">
+                        <i class="fas fa-home"></i>
+                        Back to Home
+                    </button>
+                    <button class="btn-contact" @onclick="ShowContactInfo">
+                        <i class="fas fa-life-ring"></i>
+                        Get Help
+                    </button>
+                </div>
+
+                @if (showReportInfo)
+                {
+                    <div class="contact-section">
+                        <div class="contact-box">
+                            <h4>🤝 Need Assistance?</h4>
+                            <p>If you believe this is an error or you need access to this content, we're here to help!</p>
+                            <div class="contact-info">
+                                <a href="mailto:support@italaveloso.com" class="support-email">
+                                    <i class="fas fa-envelope"></i>
+                                    support@italaveloso.com
+                                </a>
+                            </div>
+                            <p class="reference-note">Reference: <code>@incidentId</code></p>
+                        </div>
+                    </div>
+                }
+
+                <div class="redirect-section">
+                    <p class="redirect-text">
+                        Redirecting to home page in <span class="countdown-timer">@countdownSeconds</span> seconds
+                    </p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: @progressWidth%"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>
 
 
 @code {
     private string pageTitle = "Access Denied | Ítala Veloso";
+    private string incidentId = "";
+    private bool showReportInfo = false;
+    private int countdownSeconds = 10;
+    private double progressWidth = 100;
+    private Timer countdownTimer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Generate a simple reference ID for support purposes
+        incidentId = $"REF-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..6].ToUpper()}";
+        
+        // Start countdown timer
+        StartCountdown();
+        
+        await base.OnInitializedAsync();
+    }
+
+    private void StartCountdown()
+    {
+        countdownTimer = new Timer(async _ =>
+        {
+            countdownSeconds--;
+            progressWidth = (countdownSeconds / 10.0) * 100;
+            
+            if (countdownSeconds <= 0)
+            {
+                await InvokeAsync(async () =>
+                {
+                    await GoHome();
+                });
+                countdownTimer?.Dispose();
+            }
+            else
+            {
+                await InvokeAsync(StateHasChanged);
+            }
+        }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+    }
+
+    private async Task GoHome()
+    {
+        await JSRuntime.InvokeVoidAsync("window.location.replace", "/");
+    }
+
+    private void ShowReportInfo()
+    {
+        showReportInfo = !showReportInfo;
+        StateHasChanged();
+    }
+
+    private void ShowContactInfo()
+    {
+        showReportInfo = !showReportInfo;
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        countdownTimer?.Dispose();
+    }
 }
+
+@implements IDisposable

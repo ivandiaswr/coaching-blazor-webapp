@@ -1,38 +1,141 @@
 ﻿@page "/Error"
 @using System.Diagnostics
 
+<SeoComponent Title="@pageTitle"
+    Description="Something went wrong. We're working to fix it. Please try again or contact our support team."
+    Keywords="error, technical issue, support"
+    CanonicalUrl="https://italaveloso.com/error"
+    RobotsContent="noindex, nofollow" />
+
 <PageTitle>@pageTitle</PageTitle>
 
-<h1 class="text-danger">Error.</h1>
-<h2 class="text-danger">An error occurred while processing your request.</h2>
+<link href="~/css/error.css" rel="stylesheet" />
 
-@if (ShowRequestId)
-{
-    <p>
-        <strong>Request ID:</strong> <code>@RequestId</code>
-    </p>
-}
+<section class="error-container">
+    <div class="error-background">
+        <div class="error-content">
+            
+            <div class="error-header">
+                <div class="error-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h1 class="error-title">
+                    <span class="main-text">Oops! Something went wrong</span>
+                </h1>
+                <p class="error-subtitle">
+                    We're experiencing a technical hiccup. Don't worry, we're on it!
+                </p>
+            </div>
 
-<h3>Development Mode</h3>
-<p>
-    Swapping to <strong>Development</strong> environment will display more detailed information about the error that occurred.
-</p>
-<p>
-    <strong>The Development environment shouldn't be enabled for deployed applications.</strong>
-    It can result in displaying sensitive information from exceptions to end users.
-    For local debugging, enable the <strong>Development</strong> environment by setting the <strong>ASPNETCORE_ENVIRONMENT</strong> environment variable to <strong>Development</strong>
-    and restarting the app.
-</p>
+            <div class="error-explanation">
+                <div class="explanation-box">
+                    <h2>🔧 What happened?</h2>
+                    <p>Our system encountered an unexpected issue while processing your request. This is temporary and our technical team has been automatically notified.</p>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <h3>💡 What can you do right now?</h3>
+                <div class="help-options">
+                    <div class="help-item">
+                        <i class="fas fa-redo-alt"></i>
+                        <div>
+                            <strong>Try Again</strong>
+                            <p>Sometimes a simple refresh can resolve the issue</p>
+                        </div>
+                    </div>
+                    <div class="help-item">
+                        <i class="fas fa-clock"></i>
+                        <div>
+                            <strong>Wait a Few Minutes</strong>
+                            <p>The issue might resolve itself shortly</p>
+                        </div>
+                    </div>
+                    <div class="help-item">
+                        <i class="fas fa-home"></i>
+                        <div>
+                            <strong>Go Back Home</strong>
+                            <p>Start fresh from our main page</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn-refresh" @onclick="RefreshPage">
+                    <i class="fas fa-redo-alt"></i>
+                    Try Again
+                </button>
+                <button class="btn-home" @onclick="GoHome">
+                    <i class="fas fa-home"></i>
+                    Back to Home
+                </button>
+                <button class="btn-contact" @onclick="ShowContactInfo">
+                    <i class="fas fa-life-ring"></i>
+                    Get Help
+                </button>
+            </div>
+
+            @if (showContactInfo)
+            {
+                <div class="contact-section">
+                    <div class="contact-box">
+                        <h4>🆘 Still having issues?</h4>
+                        <p>Our support team is here to help! Please include the reference number below when contacting us.</p>
+                        <div class="contact-methods">
+                            <a href="mailto:support@italaveloso.com?subject=Technical Issue - @RequestId" class="support-email">
+                                <i class="fas fa-envelope"></i>
+                                support@italaveloso.com
+                            </a>
+                        </div>
+                        <div class="reference-info">
+                            <p class="reference-note">Error Reference: <code>@RequestId</code></p>
+                            <p class="timestamp">Time: @DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm UTC")</p>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <div class="reassurance-section">
+                <div class="reassurance-box">
+                    <h4>🛡️ Your data is safe</h4>
+                    <p>This technical issue doesn't affect your account security or personal information. Everything remains protected.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
 
 @code{
-    private string pageTitle = "Error | Ítala Veloso";
+    private string pageTitle = "Something went wrong | Ítala Veloso";
+    private bool showContactInfo = false;
+    
     [CascadingParameter]
     private HttpContext? HttpContext { get; set; }
 
-    private string? RequestId { get; set; }
-    private bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
+    private string RequestId { get; set; } = "";
 
-    protected override void OnInitialized() =>
-        RequestId = Activity.Current?.Id ?? HttpContext?.TraceIdentifier;
+    protected override void OnInitialized()
+    {
+        // Generate a user-friendly reference ID (no internal trace IDs exposed)
+        var traceId = Activity.Current?.Id ?? HttpContext?.TraceIdentifier ?? Guid.NewGuid().ToString();
+        RequestId = $"ERR-{DateTime.UtcNow:yyyyMMdd}-{traceId.GetHashCode().ToString("X")[..6]}";
+    }
 
+    private async Task RefreshPage()
+    {
+        await JSRuntime.InvokeVoidAsync("window.location.reload");
+    }
+
+    private async Task GoHome()
+    {
+        await JSRuntime.InvokeVoidAsync("window.location.replace", "/");
+    }
+
+    private void ShowContactInfo()
+    {
+        showContactInfo = !showContactInfo;
+        StateHasChanged();
+    }
 }

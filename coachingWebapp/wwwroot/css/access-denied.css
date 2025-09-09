@@ -1,0 +1,367 @@
+/* Access Denied - Professional & Friendly */
+:root {
+    --primary-orange: #ff6b35;
+    --primary-orange-hover: #f54e12;
+    --soft-blue: #4a90e2;
+    --light-gray: #f8f9fa;
+    --text-gray: #333333;
+    --border-color: #e9ecef;
+    --success-green: #28a745;
+}
+
+.access-denied-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    color: var(--text-gray);
+    position: relative;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.security-background {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.matrix-rain {
+    display: none;
+    /* Remove the intimidating matrix effect */
+}
+
+.warning-overlay {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    max-width: 700px;
+    width: 100%;
+}
+
+.access-denied-content {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    padding: 3rem 2rem;
+    border: 1px solid var(--border-color);
+}
+
+.security-header {
+    margin-bottom: 2rem;
+}
+
+.shield-icon {
+    display: inline-block;
+    margin-bottom: 1rem;
+}
+
+.shield-icon i {
+    font-size: 3rem;
+    color: var(--primary-orange);
+    background: linear-gradient(135deg, var(--primary-orange), var(--primary-orange-hover));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.denied-title {
+    margin: 0 0 0.5rem 0;
+}
+
+.error-code {
+    display: block;
+    font-size: clamp(3rem, 8vw, 5rem);
+    font-weight: 700;
+    color: var(--primary-orange);
+    margin-bottom: 0.5rem;
+}
+
+.main-text {
+    display: block;
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    color: var(--text-gray);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.subtitle {
+    color: #666;
+    font-size: 1.1rem;
+    margin: 0;
+    font-weight: 400;
+}
+
+.info-message {
+    background: linear-gradient(135deg, rgba(74, 144, 226, 0.1), rgba(74, 144, 226, 0.05));
+    border: 2px solid rgba(74, 144, 226, 0.2);
+    border-radius: 15px;
+    padding: 2rem;
+    margin: 2rem 0;
+}
+
+.message-box h2 {
+    color: var(--soft-blue);
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.message-box p {
+    font-size: 1rem;
+    margin: 0;
+    line-height: 1.6;
+}
+
+.help-section {
+    margin: 2rem 0;
+    text-align: left;
+}
+
+.help-section h3 {
+    text-align: center;
+    color: var(--text-gray);
+    font-size: 1.3rem;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+}
+
+.help-options {
+    display: grid;
+    gap: 1rem;
+}
+
+.help-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: var(--light-gray);
+    border-radius: 12px;
+    border-left: 4px solid var(--primary-orange);
+    transition: all 0.3s ease;
+}
+
+.help-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.help-item i {
+    font-size: 1.3rem;
+    color: var(--primary-orange);
+    min-width: 20px;
+    margin-top: 0.2rem;
+}
+
+.help-item div {
+    flex: 1;
+}
+
+.help-item strong {
+    display: block;
+    color: var(--text-gray);
+    font-size: 1rem;
+    margin-bottom: 0.3rem;
+    font-weight: 600;
+}
+
+.help-item p {
+    color: #666;
+    font-size: 0.9rem;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin: 2rem 0;
+    flex-wrap: wrap;
+}
+
+.btn-home,
+.btn-contact {
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    min-width: 160px;
+    justify-content: center;
+}
+
+.btn-home {
+    background: linear-gradient(135deg, var(--primary-orange), var(--primary-orange-hover));
+    color: white;
+    box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+}
+
+.btn-home:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+}
+
+.btn-contact {
+    background: linear-gradient(135deg, var(--soft-blue), #357abd);
+    color: white;
+    box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+}
+
+.btn-contact:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
+}
+
+.contact-section {
+    margin-top: 2rem;
+    animation: fadeInUp 0.5s ease-out;
+}
+
+.contact-box {
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(40, 167, 69, 0.05));
+    border: 1px solid rgba(40, 167, 69, 0.2);
+    border-radius: 15px;
+    padding: 2rem;
+    text-align: center;
+}
+
+.contact-box h4 {
+    color: var(--success-green);
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.support-email {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--success-green);
+    text-decoration: none;
+    font-weight: 600;
+    margin: 1rem 0;
+    padding: 0.8rem 1.5rem;
+    border: 2px solid var(--success-green);
+    border-radius: 50px;
+    transition: all 0.3s ease;
+}
+
+.support-email:hover {
+    background: var(--success-green);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.reference-note {
+    font-size: 0.85rem;
+    color: #666;
+    margin-top: 1rem;
+}
+
+.reference-note code {
+    background: rgba(0, 0, 0, 0.05);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    color: var(--primary-orange);
+    font-weight: 600;
+}
+
+.redirect-section {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.redirect-text {
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+    color: #666;
+}
+
+.countdown-timer {
+    color: var(--primary-orange);
+    font-weight: 600;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--border-color);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-orange), var(--primary-orange-hover));
+    border-radius: 3px;
+    transition: width 1s ease;
+}
+
+/* Remove all the scary animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .security-background {
+        padding: 1rem;
+    }
+
+    .access-denied-content {
+        padding: 2rem 1.5rem;
+    }
+
+    .help-options {
+        gap: 0.8rem;
+    }
+
+    .help-item {
+        padding: 1rem;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .btn-home,
+    .btn-contact {
+        width: 100%;
+        max-width: 280px;
+    }
+}
+
+@media (max-width: 480px) {
+    .help-section {
+        margin: 1.5rem 0;
+    }
+
+    .info-message,
+    .contact-box {
+        padding: 1.5rem;
+    }
+
+    .redirect-section {
+        padding: 1rem;
+    }
+}
