@@ -1,28 +1,181 @@
 @page "/logout"
 @rendermode InteractiveServer
 
-@inject NavigationManager NavigationManager
+<PageTitle>Logging out...</PageTitle>
 
-@code {
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            var result = await JSRuntime.InvokeAsync<SessionResult>("logout");
+<MudSnackbarProvider />
 
-            if (result.Success)
+<div class="logout-container">
+    <MudCard Class="logout-card pa-8" Elevation="0">
+        <MudCardContent Class="text-center">
+            @if (isLoggingOut && !isNavigating)
             {
-                NavigationManager.NavigateTo("/");
+                <MudStack AlignItems="AlignItems.Center" Spacing="4">
+                    <MudIcon Icon="@Icons.Material.Filled.Logout" 
+                            Size="Size.Large" 
+                            Color="Color.Primary" 
+                            Style="font-size: 3.5rem;" 
+                            Class="logout-loading-icon" />
+                    <MudProgressCircular Color="Color.Primary" 
+                                       Size="Size.Medium" 
+                                       Indeterminate="true" />
+                    <MudText Typo="Typo.h5" Class="mt-2" Style="font-weight: 600;">
+                        Logging you out...
+                    </MudText>
+                    <MudText Typo="Typo.body1" Color="Color.Secondary" Style="font-weight: 400;">
+                        Please wait while we securely sign you out.
+                    </MudText>
+                </MudStack>
+            }
+            else if (!string.IsNullOrEmpty(logoutError) && !isNavigating)
+            {
+                <MudStack AlignItems="AlignItems.Center" Spacing="4">
+                    <MudIcon Icon="@Icons.Material.Filled.Error" 
+                            Size="Size.Large" 
+                            Color="Color.Error" 
+                            Style="font-size: 3.5rem;" 
+                            Class="logout-error-icon" />
+                    <MudText Typo="Typo.h5" Color="Color.Error" Style="font-weight: 600;">
+                        Logout Failed
+                    </MudText>
+                    <MudText Typo="Typo.body1" Color="Color.Secondary" Class="px-4" Style="font-weight: 400;">
+                        @logoutError
+                    </MudText>
+                    <MudButton Variant="Variant.Filled" 
+                              Color="Color.Primary" 
+                              StartIcon="@Icons.Material.Filled.Refresh"
+                              OnClick="RetryLogout"
+                              Class="logout-retry-btn mt-3"
+                              Size="Size.Large">
+                        Try Again
+                    </MudButton>
+                    <MudButton Variant="Variant.Text" 
+                              Color="Color.Primary"
+                              OnClick="GoToHome"
+                              Class="logout-home-btn mt-1">
+                        Go to Home
+                    </MudButton>
+                </MudStack>
             }
             else
             {
-                //loginError = result.Error;
+                <MudStack AlignItems="AlignItems.Center" Spacing="4">
+                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" 
+                            Size="Size.Large" 
+                            Color="Color.Success" 
+                            Style="font-size: 3.5rem;" 
+                            Class="logout-success-icon" />
+                    <MudText Typo="Typo.h5" Color="Color.Success" Style="font-weight: 600;">
+                        Logout Successful
+                    </MudText>
+                    <MudText Typo="Typo.body1" Color="Color.Secondary" Style="font-weight: 400;">
+                        You have been successfully logged out. Redirecting...
+                    </MudText>
+                    <MudProgressLinear Color="Color.Primary" 
+                                     Indeterminate="true" 
+                                     Class="logout-progress-bar mt-3" 
+                                     Style="height: 6px;" />
+                </MudStack>
             }
+        </MudCardContent>
+    </MudCard>
+</div>
+@code {
+    private bool isLoggingOut = true;
+    private string logoutError = string.Empty;
+    private bool isNavigating = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await PerformLogout();
+    }
+
+    private async Task PerformLogout()
+    {
+        if (isNavigating) return; // Prevent multiple logout attempts
+        
+        isLoggingOut = true;
+        logoutError = string.Empty;
+        StateHasChanged();
+
+        try
+        {
+            Console.WriteLine("Starting logout process...");
+            
+            // Add a small delay for better UX - users can see the logout process
+            await Task.Delay(800);
+            
+            var result = await JSRuntime.InvokeAsync<SessionResult>("logout");
+            Console.WriteLine($"Logout result: Success={result?.Success}, Error={result?.Error}");
+
+            if (result != null && result.Success)
+            {
+                Console.WriteLine("Logout successful, showing success state...");
+                isLoggingOut = false;
+                isNavigating = true; // Set navigation flag
+                StateHasChanged();
+                
+                // Show success state briefly before redirecting
+                await Task.Delay(1200);
+                
+                Console.WriteLine("Navigating to home...");
+                
+                // Show success snackbar
+                Snackbar.Add("Successfully logged out!", Severity.Success);
+                
+                // Use a slight delay to ensure the snackbar shows before navigation
+                await Task.Delay(300);
+                
+                NavigationManager.NavigateTo("/", forceLoad: true);
+            }
+            else
+            {
+                Console.WriteLine($"Logout failed: {result?.Error}");
+                isLoggingOut = false;
+                logoutError = result?.Error ?? "An error occurred during logout. Please try again.";
+                StateHasChanged();
+                
+                Snackbar.Add("Logout failed. Please try again.", Severity.Error);
+            }
+        }
+        catch (JSException jsEx)
+        {
+            Console.WriteLine($"JavaScript error during logout: {jsEx.Message}");
+            isLoggingOut = false;
+            logoutError = "There was a problem communicating with the server. Please check your connection and try again.";
+            StateHasChanged();
+            
+            Snackbar.Add("Connection error. Please try again.", Severity.Error);
+        }
+        catch (TaskCanceledException)
+        {
+            Console.WriteLine("Logout operation timed out");
+            isLoggingOut = false;
+            logoutError = "The logout operation timed out. Please try again.";
+            StateHasChanged();
+            
+            Snackbar.Add("Operation timed out. Please try again.", Severity.Warning);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error during logout: {ex.Message}");
-            //loginError = "An unexpected error occurred. Please try again.";
+            Console.WriteLine($"Unexpected error during logout: {ex.Message}");
+            isLoggingOut = false;
+            logoutError = "An unexpected error occurred. If the problem persists, please contact support.";
+            StateHasChanged();
+            
+            Snackbar.Add("Logout failed. Please try again.", Severity.Error);
         }
+    }
+
+    private async Task RetryLogout()
+    {
+        isNavigating = false; // Reset navigation flag
+        await PerformLogout();
+    }
+
+    private void GoToHome()
+    {
+        isNavigating = true; // Set navigation flag
+        NavigationManager.NavigateTo("/", forceLoad: true);
     }
 }

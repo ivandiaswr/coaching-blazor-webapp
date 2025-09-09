@@ -1,8 +1,8 @@
 @using MudBlazor
 @using System.Globalization
 
-<div class="calendar-modal @(IsVisible ? "show" : "")" @onclick="Close" role="dialog" aria-labelledby="calendar-title" aria-modal="true">
-    <div class="calendar-modal-content" @onclick:stopPropagation="true">
+<div class="calendar-modal @(IsVisible ? "show" : "")" @onclick="CloseModal" @onmousedown:stopPropagation="true" role="dialog" aria-labelledby="calendar-title" aria-modal="true">
+    <div class="calendar-modal-content" @onclick:stopPropagation="true" @onmousedown:stopPropagation="true">
         <div class="calendar-header">
             <button type="button" class="calendar-close-btn" @onclick="Close" @onclick:preventDefault="true" aria-label="Close calendar">
                 <i class="fas fa-times"></i>
@@ -23,97 +23,213 @@
         }
         else
         {
-            <!-- Time Zone Display -->
-            <div class="calendar-controls">
-                <div class="timezone-display">
-                    <i class="fas fa-globe-americas"></i>
-                    <span>Times shown in your timezone: <strong>@CurrentTimeZoneDisplay</strong></span>
-                </div>
-            </div>
-
             <div class="date-selection-section">
-                <h4><i class="fas fa-calendar-day"></i> Step 1: Choose Your Date</h4>
-                <div class="date-picker-container">
-                    <MudDatePicker 
-                        Date="selectedDate"
-                        DateChanged="OnDateSelected"
-                        Label="Select a date"
-                        MinDate="@DateTime.Today.AddDays(2)"
-                        MaxDate="@DateTime.Today.AddDays(35)"
-                        IsDateDisabledFunc="@IsDateDisabled"
-                        Class="booking-date-picker"
-                        Variant="Variant.Outlined"
-                        Color="Color.Primary"
-                        HelperText="Dates without available slots are disabled" />
-                </div>
-            </div>
-
-            @if (selectedDate.HasValue)
-            {
-                <div class="time-slots-section">
-                    <h4><i class="fas fa-clock"></i> Step 2: Pick Your Time</h4>
-                    <div class="date-header">
-                        <strong>@selectedDate.Value.ToString("dddd, MMMM dd, yyyy")</strong>
-                        <small style="color: #666; display: block; margin-top: 4px;">
-                            All sessions are 45 minutes long
-                        </small>
-                    </div>
-                    
-                    @if (IsLoadingSlots)
-                    {
-                        <div class="slots-loading">
-                            <MudProgressCircular Size="Size.Small" Indeterminate="true" />
-                            <span>Loading available times...</span>
-                        </div>
-                    }
-                    else if (timeSlotsForDate.Any())
-                    {
-                        <div class="time-slots-grid">
-                            @foreach (var slot in timeSlotsForDate)
-                            {
-                                var isSelected = SelectedSlot.HasValue && SelectedSlot.Value == slot.DateTime;
-                                <button type="button" 
-                                        class="time-slot-btn @(slot.Status.ToLower()) @(isSelected ? "selected" : "")"
-                                        @onclick="@(() => SelectTimeSlot(slot))"
-                                        @onclick:preventDefault="true"
-                                        disabled="@(!slot.IsClickable)"
-                                        title="@($"{slot.DisplayTime} - {slot.Status}")">
-                                    <div class="slot-time">@slot.DisplayTime</div>
-                                    <div class="slot-status">
-                                        <i class="@GetStatusIcon(slot.Status)"></i>
-                                        <span>@GetStatusText(slot.Status)</span>
-                                    </div>
-                                </button>
-                            }
+                <div class="calendar-main-content">
+                    <div class="date-picker-column">
+                        <div class="timezone-display">
+                            <i class="fas fa-globe-americas"></i>
+                            <span>Times shown in your timezone: <strong>@CurrentTimeZoneDisplay</strong></span>
                         </div>
                         
-                        @if (!timeSlotsForDate.Any(s => s.IsClickable))
+                        <div class="date-picker-container">
+                            <MudDatePicker 
+                                Date="selectedDate"
+                                DateChanged="OnDateSelected"
+                                Label="Select a date"
+                                MinDate="@DateTime.Today.AddDays(2)"
+                                MaxDate="@DateTime.Today.AddDays(35)"
+                                IsDateDisabledFunc="@IsDateDisabled"
+                                Class="booking-date-picker"
+                                Variant="Variant.Outlined"
+                                Color="Color.Primary"
+                                HelperText="Dates without available slots are disabled"
+                                ReadOnly="@(WindowWidth <= 480)"
+                                Editable="@(WindowWidth > 480)" />
+                            @if (WindowWidth <= 480)
+                            {
+                                <small style="color: #666; margin-top: 8px; display: block;">
+                                    <i class="fas fa-info-circle"></i> Tap the calendar icon to select a date
+                                </small>
+                            }
+                        </div>
+                    </div>
+                    
+                    <div class="time-slots-column">
+                        @if (selectedDate.HasValue)
                         {
-                            <div class="info-message mt-3">
-                                <i class="fas fa-info-circle text-warning"></i>
-                                <span>All slots on <strong>@selectedDate.Value.ToString("dddd, MMMM dd")</strong> are currently unavailable.</span>
-                                @if (selectedDate.Value.DayOfWeek == DayOfWeek.Saturday || selectedDate.Value.DayOfWeek == DayOfWeek.Sunday)
+                            <div class="time-slots-section">
+                                <div class="time-slots-header">
+                                    <h4><i class="fas fa-clock"></i> Available Times</h4>
+                                    <div class="date-display">
+                                        <strong>@selectedDate.Value.ToString("dddd, MMMM dd, yyyy")</strong>
+                                        <small style="color: #666; display: block; margin-top: 4px;">
+                                            All sessions are 45 minutes long
+                                        </small>
+                                    </div>
+                                </div>
+                    
+                                @if (IsLoadingSlots)
                                 {
-                                    <small class="d-block mt-1 text-muted">Weekend availability may be limited due to admin settings.</small>
+                                    <div class="slots-loading">
+                                        <div class="loading-content">
+                                            <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                                            <span>Finding available times...</span>
+                                            <small>This may take a moment</small>
+                                        </div>
+                                    </div>
+                                }
+                                else if (timeSlotsForDate.Any())
+                                {
+                                    <div class="slots-summary-enhanced">
+                                        <div class="summary-info">
+                                            <div class="availability-indicator">
+                                                @{
+                                                    var availableCount = timeSlotsForDate.Count(s => s.Status == "Available");
+                                                    var totalCount = timeSlotsForDate.Count;
+                                                    var availabilityPercent = totalCount > 0 ? (availableCount * 100) / totalCount : 0;
+                                                    
+                                                    var morningSlots = timeSlotsForDate.Where(s => s.DateTime.Hour < 12).OrderBy(s => s.DateTime).ToList();
+                                                    var afternoonSlots = timeSlotsForDate.Where(s => s.DateTime.Hour >= 12 && s.DateTime.Hour < 17).OrderBy(s => s.DateTime).ToList();
+                                                    var eveningSlots = timeSlotsForDate.Where(s => s.DateTime.Hour >= 17).OrderBy(s => s.DateTime).ToList();
+                                                }
+                                                <div class="availability-bar">
+                                                    <div class="availability-fill" style="width: @(availabilityPercent)%"></div>
+                                                </div>
+                                                <span class="availability-text">
+                                                    <strong>@availableCount</strong> of <strong>@totalCount</strong> slots available
+                                                </span>
+                                            </div>
+                                            @if (availableCount > 0)
+                                            {
+                                                <button type="button" class="smart-suggest-btn" @onclick="SelectBestSlot">
+                                                    <i class="fas fa-magic"></i> Suggest Best Time
+                                                </button>
+                                            }
+                                        </div>
+                                    </div>
+
+                                    <div class="time-slots-container">
+                                        @if (morningSlots.Any())
+                                        {
+                                            <div class="time-period">
+                                                <div class="period-header">
+                                                    <i class="fas fa-sun"></i>
+                                                    <span>Morning</span>
+                                                    <small>(@morningSlots.Count(s => s.IsClickable) available)</small>
+                                                </div>
+                                                <div class="time-slots-grid">
+                                                    @foreach (var slot in morningSlots)
+                                                    {
+                                                        @RenderTimeSlot(slot)
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+
+                                        @if (afternoonSlots.Any())
+                                        {
+                                            <div class="time-period">
+                                                <div class="period-header">
+                                                    <i class="fas fa-sun"></i>
+                                                    <span>Afternoon</span>
+                                                    <small>(@afternoonSlots.Count(s => s.IsClickable) available)</small>
+                                                </div>
+                                                <div class="time-slots-grid">
+                                                    @foreach (var slot in afternoonSlots)
+                                                    {
+                                                        @RenderTimeSlot(slot)
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+
+                                        @if (eveningSlots.Any())
+                                        {
+                                            <div class="time-period">
+                                                <div class="period-header">
+                                                    <i class="fas fa-moon"></i>
+                                                    <span>Evening</span>
+                                                    <small>(@eveningSlots.Count(s => s.IsClickable) available)</small>
+                                                </div>
+                                                <div class="time-slots-grid">
+                                                    @foreach (var slot in eveningSlots)
+                                                    {
+                                                        @RenderTimeSlot(slot)
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+
+                                    @if (!timeSlotsForDate.Any(s => s.IsClickable))
+                                    {
+                                        <div class="info-message mt-3">
+                                            <i class="fas fa-info-circle text-warning"></i>
+                                            <span>All slots on <strong>@selectedDate.Value.ToString("dddd, MMMM dd")</strong> are currently unavailable.</span>
+                                            @if (selectedDate.Value.DayOfWeek == DayOfWeek.Saturday || selectedDate.Value.DayOfWeek == DayOfWeek.Sunday)
+                                            {
+                                                <small class="d-block mt-1 text-muted">Weekend availability may be limited due to admin settings.</small>
+                                            }
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="no-slots-message-enhanced">
+                                        <div class="no-slots-icon">
+                                            <i class="fas fa-calendar-times"></i>
+                                        </div>
+                                        <h5>No Available Times</h5>
+                                        <p>All time slots are unavailable for <strong>@selectedDate.Value.ToString("dddd, MMMM dd")</strong>.</p>
+                                        @if (selectedDate.Value.DayOfWeek == DayOfWeek.Saturday || selectedDate.Value.DayOfWeek == DayOfWeek.Sunday)
+                                        {
+                                            <div class="weekend-notice">
+                                                <i class="fas fa-info-circle"></i>
+                                                <span>Weekend appointments may have limited availability.</span>
+                                            </div>
+                                        }
+                                        <div class="no-slots-actions">
+                                            <p>Try selecting another date:</p>
+                                            <div class="alternative-dates">
+                                                @foreach (var altDate in GetAlternativeDates())
+                                                {
+                                                    <button type="button" class="alt-date-btn" @onclick="@(() => OnQuickDateSelect(altDate.Date))">
+                                                        <span class="alt-date-day">@altDate.Date.ToString("ddd")</span>
+                                                        <span class="alt-date-num">@altDate.Date.Day</span>
+                                                        <span class="alt-slots">@altDate.AvailableCount slots</span>
+                                                    </button>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+
+                                @if (SelectedSlot.HasValue && showSelectionToast)
+                                {
+                                    <div class="selection-toast @(showSelectionToast ? "show" : "")">
+                                        <div class="toast-content">
+                                            <div class="toast-icon">
+                                                <i class="fas fa-check-circle"></i>
+                                            </div>
+                                            <div class="toast-message">
+                                                <strong>Perfect!</strong>
+                                                <span>Your session is booked for @TimeZoneInfo.ConvertTimeFromUtc(SelectedSlot.Value, TimeZoneInfo.FindSystemTimeZoneById(CurrentTimeZoneDisplay)).ToString("dddd, MMM dd 'at' h:mm tt")</span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 }
                             </div>
                         }
-                    }
-                    else
-                    {
-                        <div class="no-slots-message">
-                            <i class="fas fa-calendar-times"></i>
-                            <h5>No Available Times</h5>
-                            <p>All time slots are unavailable for <strong>@selectedDate.Value.ToString("dddd, MMMM dd")</strong>.</p>
-                            @if (selectedDate.Value.DayOfWeek == DayOfWeek.Saturday || selectedDate.Value.DayOfWeek == DayOfWeek.Sunday)
-                            {
-                                <p><i class="fas fa-info-circle text-info"></i> Weekend appointments may have limited availability.</p>
-                            }
-                            <p>Please try selecting another date.</p>
-                        </div>
-                    }
+                        else
+                        {
+                            <div class="no-date-selected">
+                                <i class="fas fa-arrow-left"></i>
+                                <span>Select a date to see available times</span>
+                            </div>
+                        }
+                    </div>
                 </div>
-            }
+            </div>
         }
     </div>
 </div>
@@ -132,8 +248,7 @@
     private bool IsTimeZoneValid { get; set; } = false;
     private bool IsLoading { get; set; } = true;
     private DateTime? SelectedSlot { get; set; }
-    private CalendarView currentView = CalendarView.Week;
-    private int calendarKey = 0; // force calendar refresh
+    private bool showSelectionToast = false;
     
     private DateTime? selectedDate;
     private bool IsLoadingSlots = false;
@@ -148,28 +263,11 @@
         public bool IsClickable => Status == "Available";
     }
 
-    private MudCalendar calendar;
-    private List<CalendarItem> calendarItems = new();
     private DateTime InitialDateTime => DateTime.UtcNow.AddDays(2).Date; // Always start 2 days from now
-    private CalendarView CurrentView 
-    { 
-        get => WindowWidth <= 768 ? CalendarView.Day : CalendarView.Week; // Show Week view on desktop
-        set => currentView = value;
-    }
     private int WindowWidth { get; set; } = 1920;
-
-    public class QuickDateOption
-    {
-        public DateTime Date { get; set; }
-        public string Label { get; set; } = "";
-        public string DateText { get; set; } = "";
-        public int AvailableCount { get; set; }
-        public bool HasAvailableSlots => AvailableCount > 0;
-    }
 
     protected override async Task OnInitializedAsync()
     {
-        // Initialize with first available date (2 days from now) instead of today
         selectedDate = DateTime.Today.AddDays(2); // Set default selected date
         
         // Don't call LoadSlotsForDate here since parameters aren't set yet
@@ -182,6 +280,14 @@
     protected override async Task OnParametersSetAsync()
     {
         await base.OnParametersSetAsync();
+        
+        // Reset modal state when becoming visible
+        if (IsVisible)
+        {
+            _isClosing = false;
+            _lastCloseTime = DateTime.MinValue;
+            showSelectionToast = false; // Reset toast state
+        }
         
         // Only load slots if the calendar is visible and we have parameters
         if (IsVisible && selectedDate.HasValue && !timeSlotsForDate.Any() && AvailableSlots.Any())
@@ -339,19 +445,125 @@
             
             await LogService.LogInfo("Calendar.SelectTimeSlot", $"User selected time slot: {slotInfo.DisplayTime} ({slotInfo.DateTime:yyyy-MM-dd HH:mm:ss} UTC)");
             
+            // Show selection toast
+            showSelectionToast = true;
+            await InvokeAsync(StateHasChanged);
+            
             // Convert to user's timezone for display and callback
             var userTimeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(CurrentTimeZoneDisplay);
             var slotInUserTimeZone = TimeZoneInfo.ConvertTimeFromUtc(slotInfo.DateTime, userTimeZoneInfo);
             
             await OnSlotSelected.InvokeAsync(slotInUserTimeZone.ToString("o"));
             
-            // Automatically close the calendar after selection
-            await Close();
+            // Let the parent component handle closing - don't automatically close here. The parent will close when it's ready, avoiding timing conflicts
+            await Task.Delay(2000);
+            showSelectionToast = false;
+            await InvokeAsync(StateHasChanged);
         }
         catch (Exception ex)
         {
             await LogService.LogError("Calendar.SelectTimeSlot", $"Error selecting time slot {slotInfo.DisplayTime}: {ex.Message}");
         }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e, TimeSlotInfo slotInfo)
+    {
+        try
+        {
+            if (e.Key == "Enter" || e.Key == " ")
+            {
+                await SelectTimeSlot(slotInfo);
+            }
+            else if (e.Key == "Escape")
+            {
+                await Close();
+            }
+        }
+        catch (Exception ex)
+        {
+            await LogService.LogError("Calendar.HandleKeyDown", $"Error handling key down: {ex.Message}");
+        }
+    }
+
+    private RenderFragment RenderTimeSlot(TimeSlotInfo slot) => builder =>
+    {
+        var isSelected = SelectedSlot.HasValue && SelectedSlot.Value == slot.DateTime;
+        
+        builder.OpenElement(0, "button");
+        builder.AddAttribute(1, "type", "button");
+        builder.AddAttribute(2, "class", $"time-slot-btn {slot.Status.ToLower()} {(isSelected ? "selected" : "")}");
+        builder.AddAttribute(3, "onclick", EventCallback.Factory.Create(this, () => SelectTimeSlot(slot)));
+        builder.AddAttribute(4, "onkeydown", EventCallback.Factory.Create<KeyboardEventArgs>(this, (e) => HandleKeyDown(e, slot)));
+        builder.AddAttribute(5, "disabled", !slot.IsClickable);
+        builder.AddAttribute(6, "title", $"{slot.DisplayTime} - {slot.Status}");
+        builder.AddAttribute(7, "aria-label", $"Time slot {slot.DisplayTime} - {slot.Status}");
+        builder.AddAttribute(8, "aria-pressed", isSelected ? "true" : "false");
+        builder.AddAttribute(9, "tabindex", slot.IsClickable ? "0" : "-1");
+        
+        builder.OpenElement(10, "div");
+        builder.AddAttribute(11, "class", "slot-time");
+        builder.AddContent(12, slot.DisplayTime);
+        builder.CloseElement();
+        
+        builder.OpenElement(13, "div");
+        builder.AddAttribute(14, "class", "slot-status");
+        builder.OpenElement(15, "i");
+        builder.AddAttribute(16, "class", GetStatusIcon(slot.Status));
+        builder.CloseElement();
+        builder.OpenElement(17, "span");
+        builder.AddContent(18, GetStatusText(slot.Status));
+        builder.CloseElement();
+        builder.CloseElement();
+        
+        builder.CloseElement();
+    };
+
+    private async Task OnQuickDateSelect(DateTime date)
+    {
+        try
+        {
+            await LogService.LogInfo("Calendar.OnQuickDateSelect", $"Quick date selected: {date:yyyy-MM-dd}");
+            selectedDate = date;
+            await LoadSlotsForDate(date);
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            await LogService.LogError("Calendar.OnQuickDateSelect", $"Error selecting quick date: {ex.Message}");
+        }
+    }
+
+    private async Task SelectBestSlot()
+    {
+        try
+        {
+            // Find the earliest available slot that's not too early or too late
+            var availableSlots = timeSlotsForDate.Where(s => s.IsClickable).ToList();
+            if (!availableSlots.Any()) return;
+
+            // Prefer times between 4 PM and 20 PM
+            var preferredSlots = availableSlots.Where(s => 
+            {
+                var hour = s.DateTime.Hour;
+                return hour >= 16 && hour <= 20;
+            }).ToList();
+
+            var bestSlot = preferredSlots.Any() ? preferredSlots.First() : availableSlots.First();
+            
+            await LogService.LogInfo("Calendar.SelectBestSlot", $"Auto-selected best slot: {bestSlot.DisplayTime}");
+            await SelectTimeSlot(bestSlot);
+        }
+        catch (Exception ex)
+        {
+            await LogService.LogError("Calendar.SelectBestSlot", $"Error selecting best slot: {ex.Message}");
+        }
+    }
+
+    public class QuickDateOption
+    {
+        public DateTime Date { get; set; }
+        public int AvailableCount { get; set; }
+        public bool HasAvailableSlots => AvailableCount > 0;
     }
 
     private string GetStatusIcon(string status)
@@ -376,31 +588,13 @@
         };
     }
 
-    private async Task ChangeView(CalendarView view)
-    {
-        try
-        {
-            currentView = view;
-            await LogService.LogInfo("Calendar.ChangeView", $"Changed calendar view to: {view}");
-            await InvokeAsync(StateHasChanged);
-        }
-        catch (Exception ex)
-        {
-            await LogService.LogError("Calendar.ChangeView", $"Error changing view to {view}: {ex.Message}");
-        }
-    }
-
     private async Task NavigateToDate(DateTime date)
     {
         try
         {
             await LogService.LogInfo("Calendar.NavigateToDate", $"Navigating to date: {date:yyyy-MM-dd}");
             
-            // Update the selected date
             selectedDate = date;
-            
-            // Force calendar to refresh by incrementing the key
-            calendarKey++;
             
             // Force immediate UI update
             await InvokeAsync(StateHasChanged);
@@ -437,151 +631,6 @@
         }
     }
 
-    private List<QuickDateOption> GetQuickDates()
-    {
-        var quickDates = new List<QuickDateOption>();
-        
-        try
-        {
-            // Use the same base date as the calendar initialization
-            var startDate = (FirstAvailableDate?.Date ?? DateTime.UtcNow.AddDays(2).Date);
-            var userTimeZone = TimeZoneInfo.FindSystemTimeZoneById(CurrentTimeZoneDisplay);
-            
-            // Add "This Week" options
-            for (int i = 0; i < 7; i++)
-            {
-                var date = startDate.AddDays(i);
-                
-                // Convert the date to UTC for comparison with AvailableSlots
-                var dateWithKind = DateTime.SpecifyKind(date.Date, DateTimeKind.Unspecified);
-                var dateUtc = TimeZoneInfo.ConvertTimeToUtc(dateWithKind, userTimeZone);
-                var daySlots = AvailableSlots.Where(s => s.Date == dateUtc.Date).ToList();
-                
-                string label = i switch
-                {
-                    0 => "Today + 2",
-                    1 => "Tomorrow + 2", 
-                    _ => date.DayOfWeek.ToString()
-                };
-
-                quickDates.Add(new QuickDateOption
-                {
-                    Date = date,
-                    Label = label,
-                    DateText = date.ToString("MMM dd"),
-                    AvailableCount = daySlots.Count
-                });
-            }
-        }
-        catch (Exception ex)
-        {
-            LogService.LogError("Calendar.GetQuickDates", $"Error generating quick dates: {ex.Message}").GetAwaiter().GetResult();
-        }
-
-        return quickDates;
-    }
-
-    protected override void OnParametersSet()
-    {
-        // Don't do anything if the calendar is not visible
-        if (!IsVisible)
-        {
-            IsLoading = false;
-            return;
-        }
-
-        calendarItems.Clear();
-        TimeZoneInfo userTimeZoneInfo;
-
-        try
-        {
-            userTimeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(CurrentTimeZoneDisplay);
-            IsTimeZoneValid = true;
-        }
-        catch (TimeZoneNotFoundException)
-        {
-            userTimeZoneInfo = TimeZoneInfo.Utc;
-            IsTimeZoneValid = false;
-            CurrentTimeZoneDisplay = "UTC";
-        }
-
-        try
-        {
-            foreach (var busy in BusyTimes)
-            {
-                calendarItems.Add(new CalendarItem
-                {
-                    Start = TimeZoneInfo.ConvertTimeFromUtc(busy.Start.UtcDateTime, userTimeZoneInfo),
-                    End = TimeZoneInfo.ConvertTimeFromUtc(busy.End.UtcDateTime, userTimeZoneInfo),
-                    Text = "⛔ Busy"
-                });
-            }
-
-            foreach (var slot in AvailableSlots)
-            {
-                calendarItems.Add(new CalendarItem
-                {
-                    Start = TimeZoneInfo.ConvertTimeFromUtc(slot, userTimeZoneInfo),
-                    End = TimeZoneInfo.ConvertTimeFromUtc(slot.AddMinutes(45), userTimeZoneInfo),
-                    Text = "🟢 Available"
-                });
-            }
-
-            var adminTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Europe/London");
-            foreach (var unavailable in AdminUnavailabilities)
-            {
-                if (unavailable.StartTime == null || unavailable.EndTime == null)
-                {
-                    continue;
-                }
-
-                if (unavailable.IsRecurring)
-                {
-                    var startDate = (FirstAvailableDate ?? DateTime.UtcNow).Date;
-                    var endDate = startDate.AddDays(35);
-                    for (var date = startDate; date <= endDate; date = date.AddDays(1))
-                    {
-                        if (date.DayOfWeek == unavailable.DayOfWeek)
-                        {
-                            var bstStart = new DateTime(date.Year, date.Month, date.Day, unavailable.StartTime.Value.Hours, unavailable.StartTime.Value.Minutes, 0, DateTimeKind.Unspecified);
-                            var bstEnd = new DateTime(date.Year, date.Month, date.Day, unavailable.EndTime.Value.Hours, unavailable.EndTime.Value.Minutes, 0, DateTimeKind.Unspecified);
-                            var utcStart = TimeZoneInfo.ConvertTimeToUtc(bstStart, adminTimeZone);
-                            var utcEnd = TimeZoneInfo.ConvertTimeToUtc(bstEnd, adminTimeZone);
-                            calendarItems.Add(new CalendarItem
-                            {
-                                Start = TimeZoneInfo.ConvertTimeFromUtc(utcStart, userTimeZoneInfo),
-                                End = TimeZoneInfo.ConvertTimeFromUtc(utcEnd, userTimeZoneInfo),
-                                Text = "🔴 " + (unavailable.Reason ?? "Unavailable")
-                            });
-                        }
-                    }
-                }
-                else if (unavailable.Date.HasValue)
-                {
-                    var bstStart = new DateTime(unavailable.Date.Value.Year, unavailable.Date.Value.Month, unavailable.Date.Value.Day, unavailable.StartTime.Value.Hours, unavailable.StartTime.Value.Minutes, 0, DateTimeKind.Unspecified);
-                    var bstEnd = new DateTime(unavailable.Date.Value.Year, unavailable.Date.Value.Month, unavailable.Date.Value.Day, unavailable.EndTime.Value.Hours, unavailable.EndTime.Value.Minutes, 0, DateTimeKind.Unspecified);
-                    var utcStart = TimeZoneInfo.ConvertTimeToUtc(bstStart, adminTimeZone);
-                    var utcEnd = TimeZoneInfo.ConvertTimeToUtc(bstEnd, adminTimeZone);
-                    calendarItems.Add(new CalendarItem
-                    {
-                        Start = TimeZoneInfo.ConvertTimeFromUtc(utcStart, userTimeZoneInfo),
-                        End = TimeZoneInfo.ConvertTimeFromUtc(utcEnd, userTimeZoneInfo),
-                        Text = "🔴 " + (unavailable.Reason ?? "Unavailable")
-                    });
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            LogService.LogError("Calendar.OnParametersSet", $"Error in OnParametersSet: {ex.Message}").GetAwaiter().GetResult();
-            calendarItems.Clear();
-        }
-        finally
-        {
-            IsLoading = false;
-        }
-    }
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         // Only run if the calendar is visible
@@ -606,6 +655,13 @@
         {
             await JSRuntime.InvokeVoidAsync("window.colorCalendarSlots");
             await JSRuntime.InvokeVoidAsync("scrollCalendarToHour", "calendarEventTarget", 10);
+            
+            // Initialize mobile enhancements if on mobile device
+            var viewportInfo = await JSRuntime.InvokeAsync<object>("window.getViewportInfo");
+            if (viewportInfo != null)
+            {
+                await JSRuntime.InvokeVoidAsync("window.initMobileCalendarEnhancements");
+            }
         }
         catch (Exception ex)
         {
@@ -613,22 +669,111 @@
         }
     }
 
-    private async Task OnSlotClicked(CalendarItem item)
+    private List<QuickDateOption> GetAlternativeDates()
     {
-        if (item.Text.Contains("Available"))
+        try
         {
-            SelectedSlot = item.Start;
-            await OnSlotSelected.InvokeAsync(item.Start.ToString("o"));
+            var userTimeZone = TimeZoneInfo.FindSystemTimeZoneById(CurrentTimeZoneDisplay);
+            var alternatives = new List<QuickDateOption>();
+            
+            // Get next 5 days with available slots
+            var currentCheck = selectedDate?.AddDays(1) ?? DateTime.Today.AddDays(2);
+            var maxCheck = DateTime.Today.AddDays(30);
+            var found = 0;
+            
+            while (currentCheck <= maxCheck && found < 3)
+            {
+                var availableCount = AvailableSlots.Count(slotUtc =>
+                {
+                    var slotInUserTime = TimeZoneInfo.ConvertTimeFromUtc(slotUtc, userTimeZone);
+                    return slotInUserTime.Date == currentCheck.Date;
+                });
+                
+                if (availableCount > 0)
+                {
+                    alternatives.Add(new QuickDateOption
+                    {
+                        Date = currentCheck,
+                        AvailableCount = availableCount
+                    });
+                    found++;
+                }
+                
+                currentCheck = currentCheck.AddDays(1);
+            }
+            
+            return alternatives;
         }
-
-        await OnEventClick.InvokeAsync(item);
+        catch (Exception ex)
+        {
+            LogService.LogError("Calendar.GetAlternativeDates", $"Error getting alternative dates: {ex.Message}").GetAwaiter().GetResult();
+            return new List<QuickDateOption>();
+        }
     }
+
+    private DateTime _lastCloseTime = DateTime.MinValue;
+    private bool _isClosing = false;
 
     private async Task Close()
     {
-        IsVisible = false;
-        SelectedSlot = null;
-        await IsVisibleChanged.InvokeAsync(IsVisible);
+        try
+        {
+            // Prevent multiple rapid close calls - but be more lenient for reopening
+            if (_isClosing || (DateTime.Now - _lastCloseTime).TotalMilliseconds < 300)
+            {
+                return;
+            }
+            
+            _isClosing = true;
+            _lastCloseTime = DateTime.Now;
+            
+            // Add a small delay to ensure any pending events complete
+            await Task.Delay(100);
+            
+            IsVisible = false;
+            SelectedSlot = null;
+            showSelectionToast = false;
+            
+            // Ensure state change is propagated
+            await IsVisibleChanged.InvokeAsync(IsVisible);
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            // Log error but don't fail - this prevents modal from getting stuck
+            await LogService.LogError("Calendar.Close", $"Error closing calendar: {ex.Message}");
+        }
+        finally
+        {
+            // Reset the closing flag more quickly to allow reopening
+            await Task.Delay(50);
+            _isClosing = false;
+        }
+    }
+
+    private async Task CloseModal(MouseEventArgs e)
+    {
+        // Prevent accidental closes during modal opening or if already closing
+        if (_isClosing || !IsVisible)
+        {
+            return;
+        }
+        
+        // Don't close if a slot selection is showing (user might want to see the confirmation)
+        if (showSelectionToast)
+        {
+            return;
+        }
+        
+        // Add a small delay to ensure the modal was actually intended to be closed
+        // This prevents accidental closes when the user is still interacting with the calendar
+        await Task.Delay(200);
+        
+        // Double-check that we should still close (user might have moved mouse back to content)
+        if (IsVisible && !_isClosing && !showSelectionToast)
+        {
+            await Close();
+        }
     }
 
     private bool IsDateDisabled(DateTime date)

@@ -1,0 +1,212 @@
+/* Logout Page Styles */
+
+.logout-container {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.logout-card {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    box-shadow: 
+        0 20px 25px -5px rgba(0, 0, 0, 0.1),
+        0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    max-width: 420px;
+    width: 100%;
+    animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 0.3s ease;
+}
+
+.logout-card:hover {
+    box-shadow: 
+        0 25px 30px -5px rgba(0, 0, 0, 0.15),
+        0 15px 15px -5px rgba(0, 0, 0, 0.06);
+    transform: translateY(-2px);
+}
+
+/* Animation for the card entrance */
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Success state animation */
+.logout-success-icon {
+    animation: checkmarkGlow 1s ease-out;
+}
+
+@keyframes checkmarkGlow {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Loading animation enhancement */
+.logout-loading-icon {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.05);
+    }
+}
+
+/* Error state styling */
+.logout-error-icon {
+    animation: shake 0.5s ease-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+/* Button styling enhancements */
+.logout-retry-btn {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    border: none;
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-weight: 600;
+    letter-spacing: 0.025em;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.logout-retry-btn:hover {
+    background: linear-gradient(45deg, #5a67d8, #6b46c1);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.logout-home-btn {
+    color: #6b46c1;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.logout-home-btn:hover {
+    color: #553c9a;
+    background: rgba(107, 70, 193, 0.1);
+}
+
+/* Progress bar styling */
+.logout-progress-bar {
+    border-radius: 8px;
+    overflow: hidden;
+    background: rgba(102, 126, 234, 0.1);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .logout-container {
+        padding: 1rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .logout-card {
+        margin: 0;
+        border-radius: 16px;
+        max-width: 100%;
+        animation: slideUpMobile 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    @keyframes slideUpMobile {
+        from {
+            opacity: 0;
+            transform: translateY(30px) scale(0.92);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+}
+
+@media (max-width: 480px) {
+    .logout-container {
+        padding: 0.5rem;
+    }
+    
+    .logout-card {
+        padding: 1.5rem;
+    }
+    
+    .mud-typography-h5 {
+        font-size: 1.25rem !important;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .logout-container {
+        background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+    }
+    
+    .logout-card {
+        background: rgba(26, 32, 44, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .logout-card {
+        background: white;
+        border: 2px solid black;
+        box-shadow: none;
+    }
+    
+    .logout-container {
+        background: #f0f0f0;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .logout-card,
+    .logout-success-icon,
+    .logout-loading-icon,
+    .logout-error-icon {
+        animation: none !important;
+        transition: none !important;
+    }
+    
+    .logout-card:hover {
+        transform: none;
+    }
+    
+    .logout-retry-btn:hover {
+        transform: none;
+    }
+}

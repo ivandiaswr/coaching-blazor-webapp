@@ -221,12 +221,14 @@ window.logout = function () {
         }
     }).then(response => {
         if (response.ok) {
-            window.location.href = '/';
+            return { success: true };
         } else {
             return response.text().then(text => {
                 return { success: false, error: text };
             });
         }
+    }).catch(error => {
+        return { success: false, error: error.message || 'Network error occurred' };
     });
 };
 
