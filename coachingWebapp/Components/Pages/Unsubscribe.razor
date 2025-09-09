@@ -2,43 +2,279 @@
 @rendermode InteractiveServer
 
 @inject ISecurityService SecurityService
+@inject IEmailSubscriptionService EmailSubscriptionService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
 
-<div>
-    <span>@Message</span>
+<SeoComponent Title="@pageTitle"
+              Description="Unsubscribe from Ítala Veloso's coaching newsletter and email updates. Manage your email preferences easily and securely."
+              Keywords="unsubscribe, email preferences, newsletter, coaching updates, Itala Veloso"
+              CanonicalUrl="https://italaveloso.com/unsubscribe"
+              JsonLdStructuredData="@GetPageStructuredData()" />
+
+<PageTitle>@pageTitle</PageTitle>
+
+<div class="unsubscribe-page">
+    <MudContainer MaxWidth="MaxWidth.Medium" Class="unsubscribe-container">
+        <div class="unsubscribe-card" data-aos="fade-up">
+            <MudCard Class="main-card" Elevation="8">
+                <MudCardContent>
+                    <MudStack Justify="Justify.Center" AlignItems="AlignItems.Center" Spacing="4">
+                        @if (isProcessing)
+                        {
+                            <div class="processing-section">
+                                <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
+                                <MudText Typo="Typo.h6" Align="Align.Center" Class="processing-text">
+                                    Processing your request...
+                                </MudText>
+                            </div>
+                        }
+                        else if (isSuccess)
+                        {
+                            <div class="success-section">
+                                <div class="success-icon">
+                                    <MudIcon Icon="Icons.Material.Filled.CheckCircle" Size="Size.Large" Color="Color.Success" Style="color: #10b981 !important; font-size: 2.5rem !important;" />
+                                </div>
+                                <MudText Typo="Typo.h4" Align="Align.Center" Class="success-title">
+                                    Successfully Unsubscribed!
+                                </MudText>
+                                <MudText Typo="Typo.body1" Align="Align.Center" Class="success-message">
+                                    You have been successfully removed from our mailing list. 
+                                    We're sorry to see you go, but we respect your choice.
+                                </MudText>
+                                
+                                <div class="feedback-section">
+                                    <MudText Typo="Typo.subtitle1" Align="Align.Center" Class="feedback-title">
+                                        Help us improve (optional)
+                                    </MudText>
+                                    <MudStack Spacing="2" AlignItems="AlignItems.Center">
+                                        <MudSelect T="string" 
+                                                 @bind-Value="feedbackReason" 
+                                                 Label="Why are you unsubscribing?"
+                                                 Variant="Variant.Outlined"
+                                                 Class="feedback-select">
+                                            <MudSelectItem Value="@("Too many emails")">Too many emails</MudSelectItem>
+                                            <MudSelectItem Value="@("Not relevant")">Content not relevant</MudSelectItem>
+                                            <MudSelectItem Value="@("Privacy concerns")">Privacy concerns</MudSelectItem>
+                                            <MudSelectItem Value="@("No longer interested")">No longer interested</MudSelectItem>
+                                            <MudSelectItem Value="@("Other")">Other</MudSelectItem>
+                                        </MudSelect>
+                                        
+                                        <MudTextField @bind-Value="feedbackComment"
+                                                    Label="Additional feedback (optional)"
+                                                    Lines="3"
+                                                    Variant="Variant.Outlined"
+                                                    Class="feedback-input" />
+                                        
+                                        <MudButton Variant="Variant.Outlined"
+                                                 Color="Color.Primary"
+                                                 StartIcon="Icons.Material.Filled.Send"
+                                                 OnClick="SubmitFeedback"
+                                                 Disabled="@string.IsNullOrEmpty(feedbackReason)"
+                                                 Class="feedback-btn">
+                                            Submit Feedback
+                                        </MudButton>
+                                    </MudStack>
+                                </div>
+                            </div>
+                        }
+                        else if (isError)
+                        {
+                            <div class="error-section">
+                                <div class="error-icon">
+                                    <MudIcon Icon="Icons.Material.Filled.Error" Size="Size.Large" Color="Color.Error" Style="color: #ef4444 !important; font-size: 2.5rem !important;" />
+                                </div>
+                                <MudText Typo="Typo.h4" Align="Align.Center" Class="error-title">
+                                    Oops! Something went wrong
+                                </MudText>
+                                <MudText Typo="Typo.body1" Align="Align.Center" Class="error-message">
+                                    @Message
+                                </MudText>
+                                
+                                <div class="error-actions">
+                                    <MudStack Row="true" Justify="Justify.Center" Spacing="2" Wrap="Wrap.Wrap">
+                                        <MudButton Variant="Variant.Filled"
+                                                 Color="Color.Primary"
+                                                 StartIcon="Icons.Material.Filled.Refresh"
+                                                 OnClick="RetryProcess"
+                                                 Class="retry-btn">
+                                            Try Again
+                                        </MudButton>
+                                        
+                                        <MudButton Variant="Variant.Outlined"
+                                                 Color="Color.Primary"
+                                                 StartIcon="Icons.Material.Filled.Email"
+                                                 Href="mailto:hello@italaveloso.com"
+                                                 Class="contact-btn">
+                                            Contact Support
+                                        </MudButton>
+                                    </MudStack>
+                                </div>
+                            </div>
+                        }
+                        
+                        <div class="navigation-section">
+                            <MudDivider />
+                            <MudStack Row="true" Justify="Justify.Center" Spacing="3" Wrap="Wrap.Wrap">
+                                <MudButton Variant="Variant.Text"
+                                         Color="Color.Primary"
+                                         StartIcon="Icons.Material.Filled.Home"
+                                         Href="/"
+                                         Class="nav-btn">
+                                    Back to Home
+                                </MudButton>
+                                
+                                <MudButton Variant="Variant.Text"
+                                         Color="Color.Primary"
+                                         StartIcon="Icons.Material.Filled.Info"
+                                         Href="/about/meet-itala"
+                                         Class="nav-btn">
+                                    About Us
+                                </MudButton>
+                            </MudStack>
+                        </div>
+                    </MudStack>
+                </MudCardContent>
+            </MudCard>
+            
+            <div class="additional-info">
+                <MudStack Justify="Justify.Center" AlignItems="AlignItems.Center" Spacing="2">
+                    <MudStack Row="true" Justify="Justify.Center" AlignItems="AlignItems.Center" Spacing="1">
+                        <MudIcon Icon="Icons.Material.Filled.Security" Size="Size.Small" Color="Color.Success" />
+                        <MudText Typo="Typo.caption" Class="security-text">
+                            Your privacy is important to us
+                        </MudText>
+                    </MudStack>
+                    
+                    <MudText Typo="Typo.caption" Align="Align.Center" Class="policy-text">
+                        Read our <MudLink Href="/privacy-policy" Color="Color.Primary">Privacy Policy</MudLink> 
+                        and <MudLink Href="/terms-and-conditions" Color="Color.Primary">Terms of Service</MudLink>
+                    </MudText>
+                </MudStack>
+            </div>
+        </div>
+    </MudContainer>
 </div>
 
 @code {
-    public string Email { get; set; }
-    public string Token { get; set; }
-    private string Message { get; set; }
+    private string pageTitle = "Unsubscribe | Ítala Veloso";
+    
+    public string Email { get; set; } = string.Empty;
+    public string Token { get; set; } = string.Empty;
+    private string Message { get; set; } = string.Empty;
+    
+    private bool isProcessing = true;
+    private bool isSuccess = false;
+    private bool isError = false;
+    
+    private string feedbackReason = string.Empty;
+    private string feedbackComment = string.Empty;
+    private bool feedbackSubmitted = false;
 
     protected override async Task OnInitializedAsync()
     {
+        await Task.Delay(1000);
+        
         var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
-
         var queryParams = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
 
-        Email = queryParams.ContainsKey("email") ? queryParams["email"].ToString() : null;
-        Token = queryParams.ContainsKey("token") ? queryParams["token"].ToString() : null;
+        Email = queryParams.ContainsKey("email") ? queryParams["email"].ToString() : string.Empty;
+        Token = queryParams.ContainsKey("token") ? queryParams["token"].ToString() : string.Empty;
 
-        if(!string.IsNullOrEmpty(Email) && !string.IsNullOrEmpty(Token))
+        await ProcessUnsubscription();
+        StateHasChanged();
+    }
+
+    private async Task ProcessUnsubscription()
+    {
+        isProcessing = true;
+        isSuccess = false;
+        isError = false;
+        
+        try
         {
+            if (string.IsNullOrEmpty(Email) || string.IsNullOrEmpty(Token))
+            {
+                Message = "Invalid unsubscribe link. The email address or token is missing. Please contact support if you continue to receive emails.";
+                isError = true;
+                return;
+            }
 
-            if(SecurityService.ValidateUnsubscribeToken(Email, Token))
+            if (SecurityService.ValidateUnsubscribeToken(Email, Token))
             {
                 await EmailSubscriptionService.UnsubscribeAsync(Email);
-                Message = "Unsubscribed Successfully!!";
+                Message = "You have been successfully unsubscribed from our mailing list.";
+                isSuccess = true;
+                
+                // Track unsubscribe event (optional analytics)
+                await JSRuntime.InvokeVoidAsync("gtag", "event", "unsubscribe", new
+                {
+                    event_category = "email",
+                    event_label = "newsletter_unsubscribe"
+                });
             }
-            else 
+            else
             {
-                Message = "Invalid token or email.";
+                Message = "Invalid or expired unsubscribe token. This link may be too old or corrupted. Please contact support for assistance.";
+                isError = true;
             }
         }
-        else
+        catch (Exception ex)
         {
-            Message = "Values can't be empty.";
+            Message = "An unexpected error occurred while processing your request. Please try again or contact support.";
+            isError = true;
+            // Log the exception (implement your logging mechanism)
         }
+        finally
+        {
+            isProcessing = false;
+        }
+    }
 
+    private async Task RetryProcess()
+    {
+        await ProcessUnsubscription();
         StateHasChanged();
+    }
+
+    private async Task SubmitFeedback()
+    {
+        try
+        {
+            if (!string.IsNullOrEmpty(feedbackReason))
+            {
+                // Submit feedback to your backend service
+                // await FeedbackService.SubmitUnsubscribeFeedback(Email, feedbackReason, feedbackComment);
+                
+                feedbackSubmitted = true;
+                StateHasChanged();
+                
+                await Task.Delay(2000);
+                feedbackSubmitted = false;
+                feedbackReason = string.Empty;
+                feedbackComment = string.Empty;
+                StateHasChanged();
+            }
+        }
+        catch (Exception)
+        {
+            // Handle feedback submission error silently
+        }
+    }
+
+    private string GetPageStructuredData()
+    {
+        return @"{
+            ""@context"": ""https://schema.org"",
+            ""@type"": ""WebPage"",
+            ""name"": ""Unsubscribe from Newsletter"",
+            ""description"": ""Unsubscribe from Ítala Veloso's coaching newsletter and email updates"",
+            ""url"": ""https://italaveloso.com/unsubscribe"",
+            ""provider"": {
+                ""@type"": ""Organization"",
+                ""name"": ""Ítala Veloso Coaching"",
+                ""url"": ""https://italaveloso.com""
+            }
+        }";
     }
 }

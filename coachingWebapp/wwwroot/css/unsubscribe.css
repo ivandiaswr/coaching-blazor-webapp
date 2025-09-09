@@ -1,0 +1,595 @@
+.unsubscribe-page {
+    --primary-orange: #ff6b35;
+    --primary-orange-hover: #e55a00;
+    --primary-orange-light: #fff4f0;
+    --secondary-blue: #1e3a8a;
+    --neutral-gray: #64748b;
+    --light-gray: #f8fafc;
+    --border-gray: #e2e8f0;
+    --text-dark: #1e293b;
+    --text-light: #475569;
+    --success-green: #10b981;
+    --success-light: #d1fae5;
+    --error-red: #ef4444;
+    --error-light: #fee2e2;
+    --gradient-primary: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    
+    /* Page layout styles */
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    padding: 2rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.unsubscribe-page .unsubscribe-container {
+    width: 100%;
+    max-width: 600px;
+}
+
+.unsubscribe-page .unsubscribe-card {
+    position: relative;
+    animation: unsubscribe-fadeInUp 0.8s ease-out;
+}
+
+.unsubscribe-page .main-card {
+    background: white !important;
+    border-radius: 24px !important;
+    border: 1px solid var(--border-gray) !important;
+    box-shadow: var(--shadow-xl) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.unsubscribe-page .main-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: var(--gradient-primary);
+}
+
+/* Processing Section */
+.unsubscribe-page .processing-section {
+    text-align: center;
+    padding: 2rem 0;
+}
+
+.unsubscribe-page .processing-text {
+    color: var(--text-light) !important;
+    margin-top: 1rem !important;
+}
+
+/* Success Section */
+.unsubscribe-page .success-section {
+    text-align: center;
+    padding: 1rem 0;
+}
+
+.unsubscribe-page .success-icon {
+    width: 80px;
+    height: 80px;
+    background: var(--success-light);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    animation: unsubscribe-successPulse 0.6s ease-out;
+    border: 2px solid var(--success-green);
+    position: relative;
+}
+
+/* Multiple selectors to ensure success icon visibility */
+.unsubscribe-page .success-icon * {
+    color: var(--success-green) !important;
+}
+
+.unsubscribe-page .success-icon .mud-icon,
+.unsubscribe-page .success-icon .mud-icon-root,
+.unsubscribe-page .success-icon .MuiSvgIcon-root {
+    color: var(--success-green) !important;
+    font-size: 2.5rem !important;
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+}
+
+.unsubscribe-page .success-icon .mud-icon-root {
+    color: var(--success-green) !important;
+    font-size: 2.5rem !important;
+}
+
+/* Ensure the MudBlazor success icon is visible */
+.unsubscribe-page .success-icon .mud-icon-root svg {
+    fill: var(--success-green) !important;
+    color: var(--success-green) !important;
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+}
+
+.unsubscribe-page .success-icon .MuiSvgIcon-root {
+    color: var(--success-green) !important;
+    font-size: 2.5rem !important;
+}
+
+/* Fallback: If icon is not showing, show text */
+.unsubscribe-page .success-icon::after {
+    content: "✅";
+    position: absolute;
+    font-size: 2rem;
+    color: var(--success-green);
+    z-index: -1;
+}
+
+.unsubscribe-page .success-title {
+    color: var(--text-dark) !important;
+    font-weight: 700 !important;
+    margin-bottom: 1rem !important;
+}
+
+.unsubscribe-page .success-message {
+    color: var(--text-light) !important;
+    line-height: 1.6 !important;
+    margin-bottom: 2rem !important;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Error Section */
+.unsubscribe-page .error-section {
+    text-align: center;
+    padding: 1rem 0;
+}
+
+.unsubscribe-page .error-icon {
+    width: 80px;
+    height: 80px;
+    background: var(--error-light);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    animation: unsubscribe-errorShake 0.6s ease-out;
+    border: 2px solid var(--error-red);
+    position: relative;
+}
+
+/* Multiple selectors to ensure icon visibility */
+.unsubscribe-page .error-icon * {
+    color: var(--error-red) !important;
+}
+
+.unsubscribe-page .error-icon .mud-icon,
+.unsubscribe-page .error-icon .mud-icon-root,
+.unsubscribe-page .error-icon .MuiSvgIcon-root {
+    color: var(--error-red) !important;
+    font-size: 2.5rem !important;
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+}
+
+.unsubscribe-page .error-icon .mud-icon-root {
+    color: var(--error-red) !important;
+    font-size: 2.5rem !important;
+}
+
+/* Ensure the MudBlazor icon is visible */
+.unsubscribe-page .error-icon .mud-icon-root svg {
+    fill: var(--error-red) !important;
+    color: var(--error-red) !important;
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+}
+
+.unsubscribe-page .error-icon .MuiSvgIcon-root {
+    color: var(--error-red) !important;
+    font-size: 2.5rem !important;
+}
+
+/* Fallback: If icon is not showing, show text */
+.unsubscribe-page .error-icon::after {
+    content: "⚠️";
+    position: absolute;
+    font-size: 2rem;
+    color: var(--error-red);
+    z-index: -1;
+}
+
+.unsubscribe-page .error-title {
+    color: var(--text-dark) !important;
+    font-weight: 700 !important;
+    margin-bottom: 1rem !important;
+}
+
+.unsubscribe-page .error-message {
+    color: var(--text-light) !important;
+    line-height: 1.6 !important;
+    margin-bottom: 2rem !important;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.unsubscribe-page .error-actions {
+    margin-top: 1.5rem;
+}
+
+.unsubscribe-page .retry-btn {
+    background: var(--gradient-primary) !important;
+    color: white !important;
+    font-weight: 600 !important;
+    padding: 0.75rem 2rem !important;
+    border-radius: 50px !important;
+    transition: all 0.3s ease !important;
+}
+
+.unsubscribe-page .retry-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 107, 53, 0.3) !important;
+}
+
+.unsubscribe-page .contact-btn {
+    border-color: var(--primary-orange) !important;
+    color: var(--primary-orange) !important;
+    background: white !important;
+    font-weight: 600 !important;
+    padding: 0.75rem 2rem !important;
+    border-radius: 50px !important;
+    border-width: 2px !important;
+    transition: all 0.3s ease !important;
+    text-decoration: none !important;
+}
+
+.unsubscribe-page .contact-btn:hover {
+    transform: translateY(-2px);
+    background: var(--primary-orange) !important;
+    color: white !important;
+    box-shadow: 0 4px 15px rgba(255, 107, 53, 0.2) !important;
+}
+
+.unsubscribe-page .contact-btn .mud-button-label {
+    color: inherit !important;
+}
+
+/* Feedback Section */
+.unsubscribe-page .feedback-section {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: var(--light-gray);
+    border-radius: 16px;
+    border: 1px solid var(--border-gray);
+}
+
+.unsubscribe-page .feedback-title {
+    color: var(--text-dark) !important;
+    font-weight: 600 !important;
+    margin-bottom: 1rem !important;
+}
+
+.unsubscribe-page .feedback-select,
+.unsubscribe-page .feedback-input {
+    width: 100% !important;
+    max-width: 400px !important;
+    margin: 0 auto !important;
+}
+
+.unsubscribe-page .feedback-btn {
+    background: transparent !important;
+    border-color: var(--primary-orange) !important;
+    color: var(--primary-orange) !important;
+    font-weight: 500 !important;
+    padding: 0.5rem 1.5rem !important;
+    border-radius: 50px !important;
+    transition: all 0.3s ease !important;
+}
+
+.unsubscribe-page .feedback-btn:hover {
+    background: var(--primary-orange) !important;
+    color: white !important;
+    transform: translateY(-1px);
+}
+
+/* Navigation Section */
+.unsubscribe-page .navigation-section {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+}
+
+.unsubscribe-page .navigation-section .mud-divider {
+    background-color: var(--border-gray) !important;
+    margin-bottom: 1.5rem !important;
+}
+
+.unsubscribe-page .nav-btn {
+    color: var(--text-dark) !important;
+    font-weight: 500 !important;
+    transition: all 0.3s ease !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid var(--border-gray) !important;
+    border-radius: 8px !important;
+    padding: 0.5rem 1rem !important;
+    text-decoration: none !important;
+}
+
+.unsubscribe-page .nav-btn:hover {
+    color: var(--primary-orange) !important;
+    transform: translateY(-1px);
+    background: rgba(255, 107, 53, 0.1) !important;
+    border-color: var(--primary-orange) !important;
+}
+
+.unsubscribe-page .nav-btn .mud-button-label {
+    color: inherit !important;
+}
+
+/* Additional Info */
+.unsubscribe-page .additional-info {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.95) !important;
+    border-radius: 16px;
+    border: 1px solid var(--border-gray) !important;
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow-sm);
+}
+
+.unsubscribe-page .security-text {
+    color: var(--success-green) !important;
+    font-weight: 500 !important;
+}
+
+.unsubscribe-page .policy-text {
+    color: var(--text-dark) !important;
+    line-height: 1.5 !important;
+    font-weight: 500 !important;
+}
+
+.unsubscribe-page .policy-text .mud-link {
+    color: var(--primary-orange) !important;
+    text-decoration: underline !important;
+    font-weight: 600 !important;
+}
+
+.unsubscribe-page .policy-text .mud-link:hover {
+    color: var(--primary-orange-hover) !important;
+}
+
+/* Animations */
+@keyframes unsubscribe-fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes unsubscribe-successPulse {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes unsubscribe-errorShake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-5px);
+    }
+    75% {
+        transform: translateX(5px);
+    }
+}
+
+@keyframes unsubscribe-slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Loading Animation */
+.unsubscribe-page .loading-dots {
+    display: inline-block;
+    position: relative;
+    width: 80px;
+    height: 80px;
+}
+
+.unsubscribe-page .loading-dots div {
+    position: absolute;
+    top: 33px;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: var(--primary-orange);
+    animation-timing-function: cubic-bezier(0, 1, 1, 0);
+}
+
+.unsubscribe-page .loading-dots div:nth-child(1) {
+    left: 8px;
+    animation: unsubscribe-loadingDots1 0.6s infinite;
+}
+
+.unsubscribe-page .loading-dots div:nth-child(2) {
+    left: 8px;
+    animation: unsubscribe-loadingDots2 0.6s infinite;
+}
+
+.unsubscribe-page .loading-dots div:nth-child(3) {
+    left: 32px;
+    animation: unsubscribe-loadingDots2 0.6s infinite;
+}
+
+.unsubscribe-page .loading-dots div:nth-child(4) {
+    left: 56px;
+    animation: unsubscribe-loadingDots3 0.6s infinite;
+}
+
+@keyframes unsubscribe-loadingDots1 {
+    0% {
+        transform: scale(0);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+@keyframes unsubscribe-loadingDots3 {
+    0% {
+        transform: scale(1);
+    }
+    100% {
+        transform: scale(0);
+    }
+}
+
+@keyframes unsubscribe-loadingDots2 {
+    0% {
+        transform: translate(0, 0);
+    }
+    100% {
+        transform: translate(24px, 0);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .unsubscribe-page {
+        padding: 1rem 0;
+    }
+    
+    .unsubscribe-page .main-card {
+        border-radius: 16px !important;
+        margin: 1rem;
+    }
+    
+    .unsubscribe-page .success-title,
+    .unsubscribe-page .error-title {
+        font-size: 1.75rem !important;
+    }
+    
+    .unsubscribe-page .success-message,
+    .unsubscribe-page .error-message {
+        font-size: 1rem !important;
+    }
+    
+    .unsubscribe-page .feedback-section {
+        padding: 1rem;
+        margin-top: 1.5rem;
+    }
+    
+    .unsubscribe-page .error-actions .mud-stack-row {
+        flex-direction: column !important;
+        gap: 1rem !important;
+    }
+    
+    .unsubscribe-page .retry-btn,
+    .unsubscribe-page .contact-btn {
+        width: 100% !important;
+    }
+    
+    .unsubscribe-page .navigation-section .mud-stack-row {
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .unsubscribe-page .success-icon,
+    .unsubscribe-page .error-icon {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .unsubscribe-page .success-title,
+    .unsubscribe-page .error-title {
+        font-size: 1.5rem !important;
+    }
+    
+    .unsubscribe-page .additional-info {
+        margin: 1rem;
+        padding: 1rem;
+    }
+}
+
+/* Accessibility */
+.unsubscribe-page .retry-btn:focus,
+.unsubscribe-page .contact-btn:focus,
+.unsubscribe-page .feedback-btn:focus,
+.unsubscribe-page .nav-btn:focus {
+    outline: 2px solid var(--primary-orange);
+    outline-offset: 2px;
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+    .unsubscribe-page .main-card {
+        border-width: 2px !important;
+        border-color: var(--text-dark) !important;
+    }
+    
+    .unsubscribe-page .success-icon {
+        border: 2px solid var(--success-green);
+    }
+    
+    .unsubscribe-page .error-icon {
+        border: 2px solid var(--error-red);
+    }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    .unsubscribe-page * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .unsubscribe-page {
+        background: white !important;
+        color: black !important;
+    }
+    
+    .unsubscribe-page .main-card {
+        background: white !important;
+        box-shadow: none !important;
+        border: 2px solid black !important;
+    }
+    
+    .unsubscribe-page .retry-btn,
+    .unsubscribe-page .contact-btn,
+    .unsubscribe-page .feedback-btn,
+    .unsubscribe-page .nav-btn {
+        background: white !important;
+        color: black !important;
+        border: 1px solid black !important;
+    }
+}

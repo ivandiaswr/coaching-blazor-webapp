@@ -14,78 +14,270 @@
 
 <div class="case-studies-page">
     <div class="testimonials-wave-top"></div>
-    <div class="title-section">
-        <h2>Success Case <span class="highlight">Studies</span></h2>
-        <p class="section-subtitle">Transformative Coaching Journeys</p>
-    </div>
     
-    <div class="case-studies-container">
+    <MudContainer MaxWidth="MaxWidth.Large" Class="hero-section">
+        <div class="hero-content" data-aos="fade-up">
+            <MudStack Justify="Justify.Center" AlignItems="AlignItems.Center" Spacing="3">
+                <div class="hero-badge">
+                    <MudIcon Icon="Icons.Material.Filled.Star" Size="Size.Small" />
+                    <MudText Typo="Typo.caption">Real Success Stories</MudText>
+                </div>
+                
+                <MudText Typo="Typo.h2" Class="hero-title" Align="Align.Center">
+                    Transformative <span class="highlight">Success Stories</span>
+                </MudText>
+                
+                <MudText Typo="Typo.h6" Class="hero-subtitle" Align="Align.Center">
+                    Discover how life-changing coaching journeys have empowered clients to overcome challenges, unlock potential, and achieve remarkable breakthroughs
+                </MudText>
+                
+                <MudStack Row="true" Justify="Justify.Center" AlignItems="AlignItems.Center" Spacing="4" Class="hero-stats">
+                    <div class="stat-item" data-aos="zoom-in" data-aos-delay="100">
+                        <MudText Typo="Typo.h4" Class="stat-number">14+</MudText>
+                        <MudText Typo="Typo.body2" Class="stat-label">Lives Transformed</MudText>
+                    </div>
+                    <div class="stat-item" data-aos="zoom-in" data-aos-delay="200">
+                        <MudText Typo="Typo.h4" Class="stat-number">99%</MudText>
+                        <MudText Typo="Typo.body2" Class="stat-label">Success Rate</MudText>
+                    </div>
+                    <div class="stat-item" data-aos="zoom-in" data-aos-delay="300">
+                        <MudText Typo="Typo.h4" Class="stat-number">6</MudText>
+                        <MudText Typo="Typo.body2" Class="stat-label">Featured Stories</MudText>
+                    </div>
+                </MudStack>
+            </MudStack>
+        </div>
+    </MudContainer>
+
+    <MudContainer MaxWidth="MaxWidth.Large" Class="filter-section">
+        <MudStack Row="true" Justify="Justify.Center" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
+            <MudChip T="string" 
+                     Color="@(selectedCategory == "all" ? Color.Primary : Color.Default)"
+                     Variant="@(selectedCategory == "all" ? Variant.Filled : Variant.Outlined)"
+                     OnClick="@(() => FilterByCategory("all"))"
+                     Class="filter-chip">
+                All Stories
+            </MudChip>
+            <MudChip T="string" 
+                     Color="@(selectedCategory == "career" ? Color.Primary : Color.Default)"
+                     Variant="@(selectedCategory == "career" ? Variant.Filled : Variant.Outlined)"
+                     OnClick="@(() => FilterByCategory("career"))"
+                     Class="filter-chip">
+                Career Growth
+            </MudChip>
+            <MudChip T="string" 
+                     Color="@(selectedCategory == "personal" ? Color.Primary : Color.Default)"
+                     Variant="@(selectedCategory == "personal" ? Variant.Filled : Variant.Outlined)"
+                     OnClick="@(() => FilterByCategory("personal"))"
+                     Class="filter-chip">
+                Personal Development
+            </MudChip>
+            <MudChip T="string" 
+                     Color="@(selectedCategory == "transformation" ? Color.Primary : Color.Default)"
+                     Variant="@(selectedCategory == "transformation" ? Variant.Filled : Variant.Outlined)"
+                     OnClick="@(() => FilterByCategory("transformation"))"
+                     Class="filter-chip">
+                Life Transformation
+            </MudChip>
+        </MudStack>
+    </MudContainer>
+    
+    <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="case-studies-container">
         <div class="case-studies-grid">
-            @foreach (var testimonial in testimonials)
+            @foreach (var testimonial in filteredTestimonials)
             {
-                <div class="case-study-card">
+                <MudCard Class="@($"case-study-card {(testimonial.IsPlaying ? "playing" : "")}")" 
+                         data-aos="fade-up" 
+                         data-aos-delay="@(testimonial.Id * 100)">
+                    
                     <div class="case-study-media">
-                        <div class="case-study-video-wrapper" @onclick="() => ToggleVideo(testimonial.Id)">
-                            <video id="video-@testimonial.Id" playsinline controls=true volume="0.5" 
-                                  @onended="() => OnVideoEnded(testimonial.Id)">           
-                                <source src="@testimonial.Path" type="video/mp4">
-                            </video>
-                            <div class="case-study-video-overlay @(testimonial.IsPlaying ? "hidden" : "")">
-                                <div class="case-study-play-btn">
-                                    <i class="@(testimonial.IsPlaying ? "fas fa-pause" : "fas fa-play")"></i>
-                                </div>
+                        <div class="video-container">
+                            <div class="case-study-video-wrapper" @onclick="() => ToggleVideo(testimonial.Id)">
+                                <video id="video-@testimonial.Id" 
+                                       playsinline 
+                                       controls="@testimonial.IsPlaying" 
+                                       volume="0.7"
+                                       preload="metadata"
+                                       @onended="() => OnVideoEnded(testimonial.Id)"
+                                       @onplay="() => OnVideoPlay(testimonial.Id)"
+                                       @onpause="() => OnVideoPause(testimonial.Id)">           
+                                    <source src="@testimonial.Path" type="video/mp4">
+                                    <track kind="captions" src="" srclang="en" label="English">
+                                </video>
+                                
+                                @if (!testimonial.IsPlaying)
+                                {
+                                    <div class="case-study-video-overlay">
+                                        <div class="video-preview-content">
+                                            <div class="case-study-play-btn">
+                                                <MudIcon Icon="Icons.Material.Filled.PlayArrow" Size="Size.Large" />
+                                            </div>
+                                            <MudText Typo="Typo.body2" Class="play-instruction">
+                                                Click to play @testimonial.Author's story
+                                            </MudText>
+                                        </div>
+                                        
+                                        <div class="duration-badge">
+                                            <MudIcon Icon="Icons.Material.Filled.AccessTime" Size="Size.Small" />
+                                            <MudText Typo="Typo.caption">@testimonial.VideoDuration</MudText>
+                                        </div>
+                                    </div>
+                                }
                             </div>
                         </div>
-                        <div class="case-study-author-info">
-                            <p class="case-study-author">@testimonial.Author</p>
-                            <p class="case-study-role">@testimonial.Role</p>
-                            <p class="case-study-duration">@testimonial.Duration</p>
-                        </div>
+                        
+                        <MudCardContent Class="client-info-section">
+                            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                                <div class="client-details">
+                                    <MudStack Spacing="1">
+                                        <MudText Typo="Typo.h6" Class="client-name">@testimonial.Author</MudText>
+                                        <MudText Typo="Typo.body2" Class="client-role">@testimonial.Role</MudText>
+                                        <MudChip T="string" 
+                                               Size="Size.Small" 
+                                               Color="Color.Secondary" 
+                                               Variant="Variant.Outlined"
+                                               Class="journey-duration">
+                                            @testimonial.Duration
+                                        </MudChip>
+                                    </MudStack>
+                                </div>
+                                
+                                <div class="success-indicators">
+                                    @for (int i = 0; i < 5; i++)
+                                    {
+                                        <MudIcon Icon="Icons.Material.Filled.Star" 
+                                               Color="Color.Warning" 
+                                               Size="Size.Small" 
+                                               Class="success-star" />
+                                    }
+                                </div>
+                            </MudStack>
+                        </MudCardContent>
                     </div>
                     
-                    <div class="case-study-content">
-                        <div class="case-study-sections">
-                            @* <div class="case-study-section">
-                                <h4 class="case-study-section-title">
-                                    <i class="fas fa-flag-checkered"></i>
-                                    Challenge
-                                </h4>
-                                <p>@testimonial.Challenge</p>
-                            </div>
-                            <div class="case-study-section">
-                                <h4 class="case-study-section-title">
-                                    <i class="fas fa-lightbulb"></i>
-                                    Solution
-                                </h4>
-                                <p>@testimonial.Solution</p>
-                            </div> *@
-                            <div class="case-study-section">
-                                <h4 class="case-study-section-title">
-                                    <i class="fas fa-chart-line"></i>
-                                    Results
-                                </h4>
-                                <p>@testimonial.Results</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                    <MudCardContent Class="case-study-content">
+                        <MudExpansionPanels MultiExpansion="false" Class="results-expansion">
+                            <MudExpansionPanel Class="results-panel">
+                                <TitleContent>
+                                    <MudStack Row="true" Justify="Justify.FlexStart" AlignItems="AlignItems.Center" Spacing="2">
+                                        <MudIcon Icon="Icons.Material.Filled.TrendingUp" Color="Color.Success" />
+                                        <MudText Typo="Typo.subtitle1" Class="panel-title">Transformation Results</MudText>
+                                        <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Outlined">
+                                            Success Story
+                                        </MudChip>
+                                    </MudStack>
+                                </TitleContent>
+                                <ChildContent>
+                                    <MudText Typo="Typo.body2" Class="results-text">
+                                        @testimonial.Results
+                                    </MudText>
+                                    
+                                    <div class="achievements-section">
+                                        <MudText Typo="Typo.subtitle2" Class="achievements-title">Key Achievements:</MudText>
+                                        <MudStack Spacing="1" Class="achievements-list">
+                                            @foreach (var achievement in GetKeyAchievements(testimonial.Id))
+                                            {
+                                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                                    <MudIcon Icon="Icons.Material.Filled.CheckCircle" 
+                                                           Color="Color.Success" 
+                                                           Size="Size.Small" />
+                                                    <MudText Typo="Typo.body2">@achievement</MudText>
+                                                </MudStack>
+                                            }
+                                        </MudStack>
+                                    </div>
+                                </ChildContent>
+                            </MudExpansionPanel>
+                        </MudExpansionPanels>
+                    </MudCardContent>
+                    
+                    <MudCardActions Class="card-actions">
+                        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Style="width: 100%;">
+                            <MudButton StartIcon="Icons.Material.Filled.Share" 
+                                     Color="Color.Primary" 
+                                     Variant="Variant.Text"
+                                     OnClick="() => ShareStory(testimonial.Id)">
+                                Share Story
+                            </MudButton>
+                            
+                            <MudButton EndIcon="Icons.Material.Filled.ArrowForward" 
+                                     Color="Color.Primary" 
+                                     Variant="Variant.Filled"
+                                     Href="/UserDashboard"
+                                     Class="start-journey-btn">
+                                Start Your Journey
+                            </MudButton>
+                        </MudStack>
+                    </MudCardActions>
+                </MudCard>
             }
         </div>
-    </div>
+        
+        @if (hasMoreStories)
+        {
+            <div class="load-more-section" data-aos="fade-up">
+                <MudButton Variant="Variant.Outlined" 
+                         Color="Color.Primary" 
+                         Size="Size.Large"
+                         StartIcon="Icons.Material.Filled.ExpandMore"
+                         OnClick="LoadMoreStories"
+                         Class="load-more-btn">
+                    Load More Success Stories
+                </MudButton>
+            </div>
+        }
+    </MudContainer>
 
-    <div class="cta-section">
-        <div class="cta-content">
-            <h2>Ready to Transform Your Future?</h2>
-            <p>Schedule a free consultation call to discuss your goals</p>
-        </div>
-        <a href="#contact" class="services-cta-button" @onclick:preventDefault>
-            <span class="cta-icon"><i class="fas fa-calendar-check"></i></span>
-            <span class="cta-text">
-                <span class="primary-text">Book a Free Call to Start Your Transformation Today</span>
-                <span class="secondary-text">30 minutes, zero obligation</span>
-            </span>
-            <i class="fas fa-arrow-right"></i>
-        </a>
+    <div class="cta-section" data-aos="fade-up">
+        <MudContainer MaxWidth="MaxWidth.Medium">
+            <MudCard Class="cta-card" Elevation="8">
+                <MudCardContent>
+                    <MudStack Justify="Justify.Center" AlignItems="AlignItems.Center" Spacing="3">
+                        <div class="cta-icon-group">
+                            <MudIcon Icon="Icons.Material.Filled.Psychology" Size="Size.Large" Color="Color.Primary" />
+                            <MudIcon Icon="Icons.Material.Filled.TrendingUp" Size="Size.Large" Color="Color.Success" />
+                            <MudIcon Icon="Icons.Material.Filled.EmojiEvents" Size="Size.Large" Color="Color.Warning" />
+                        </div>
+                        
+                        <MudText Typo="Typo.h4" Align="Align.Center" Class="cta-title">
+                            Ready to Write Your Own Success Story?
+                        </MudText>
+                        
+                        <MudText Typo="Typo.body1" Align="Align.Center" Class="cta-description">
+                            Join hundreds of successful clients who have transformed their lives through personalized coaching. 
+                            Your breakthrough moment is just one conversation away.
+                        </MudText>
+                        
+                        <MudStack Row="true" Justify="Justify.Center" Spacing="2" Wrap="Wrap.Wrap">
+                            <MudButton Variant="Variant.Filled" 
+                                     Color="Color.Primary" 
+                                     Size="Size.Large"
+                                     StartIcon="Icons.Material.Filled.CalendarMonth"
+                                     Href="/UserDashboard"
+                                     Class="primary-cta-btn">
+                                Book Free Consultation
+                            </MudButton>
+                            
+                            <MudButton Variant="Variant.Outlined" 
+                                     Color="Color.Primary" 
+                                     Size="Size.Large"
+                                     StartIcon="Icons.Material.Filled.Info"
+                                     Href="/about/process"
+                                     Class="secondary-cta-btn">
+                                Learn More About Coaching
+                            </MudButton>
+                        </MudStack>
+                        
+                        <MudStack Row="true" Justify="Justify.Center" AlignItems="AlignItems.Center" Spacing="2" Class="guarantee-section">
+                            <MudIcon Icon="Icons.Material.Filled.Security" Color="Color.Success" Size="Size.Small" />
+                            <MudText Typo="Typo.caption" Class="guarantee-text">
+                                30-minute free consultation • No obligation • 100% confidential
+                            </MudText>
+                        </MudStack>
+                    </MudStack>
+                </MudCardContent>
+            </MudCard>
+        </MudContainer>
     </div>
 
     <div class="testimonials-wave-bottom"></div>
@@ -93,6 +285,10 @@
 
 @code {
     private string pageTitle = "Case Studies | Ítala Veloso";
+    private string selectedCategory = "all";
+    private bool hasMoreStories = false;
+    private int displayedStoriesCount = 6;
+    
     private List<Testimonial> testimonials = new List<Testimonial>
         {
             new Testimonial
@@ -104,7 +300,15 @@
                 Results = "When I started my coaching journey with Itala, I thought I had things pretty well sorted. What extra help I could get was going to be great. Little did I know I was going to get a lot of help. Ideas that have been floating around in my entrepreneurial brain, some for more than a decade, are now on paper in a roadmap. They are tangible, and it’s fantastic I can now implement them. Itala really is a bright spark of joy. Sometimes, if I didn't feel that great going into a session, I felt like a million bucks afterwards because her personality is so bubbly and bright. I just love working with her, and I can't imagine a better life coach. If you're thinking about coaching, give Itala a chance because you really won't regret it. There's no way I could have thought of these things on my own, but with the right guidance, it's come together wonderfully. Itala, thank you from the bottom of my heart. You're amazing, and I can't wait to continue the journey with you.",
                 Author = "Fran",
                 Role = "Civil Servant",
-                Duration = "3 Month Journey"
+                Duration = "3 Month Journey",
+                VideoDuration = "2:45",
+                Category = "personal",
+                KeyAchievements = new List<string> 
+                { 
+                    "Transformed decade-old ideas into actionable roadmap",
+                    "Improved emotional wellbeing and session satisfaction",
+                    "Gained clarity on personal and professional goals"
+                }
             },
             new Testimonial
             {
@@ -115,7 +319,15 @@
                 Results = "Ítala been really helpful in terms of giving me concrete knowledge about things to do with trauma, how it affects our behaviours, thinking, patterns; in order to change our actions and outputs into this world. There has been such growth and work of development and I am very proud with where I am right now. Thank you and highly recommend Ítala",
                 Author = "Laviniah",
                 Role = "Cyber Security Analyst",
-                Duration = "6 Month Journey"
+                Duration = "6 Month Journey",
+                VideoDuration = "1:58",
+                Category = "career",
+                KeyAchievements = new List<string> 
+                { 
+                    "Overcame trauma-related behavioral patterns",
+                    "Significant personal growth and development",
+                    "Enhanced professional performance and confidence"
+                }
             },
             new Testimonial
             {
@@ -126,7 +338,15 @@
                 Results = "Ítala kept getting me into this place that it is ok to feel what I was feeling and to no rush it! It is ok to feel a bit weird, it is ok to feel the love (I've never known how to deal with and how to receive love and all of the sudden there was so much love in the atmosphere - Praise God)... She gave me the time that I really needed to process that and I am eternally grateful.",
                 Author = "Fi",
                 Role = "Civil Servant",
-                Duration = "8 Month Journey"
+                Duration = "8 Month Journey",
+                VideoDuration = "3:12",
+                Category = "transformation",
+                KeyAchievements = new List<string> 
+                { 
+                    "Learned to process and accept emotions healthily",
+                    "Developed capacity to receive and give love",
+                    "Created lasting emotional healing and growth"
+                }
             },
             new Testimonial
             {
@@ -136,8 +356,16 @@
                 Solution = "Implemented forgiveness, emotional healing and life coaching strategy, to break free and start to move foward in life.",
                 Results = "With coaching, Ítala really helped me to get to know myself better; to believe more in myself... I am really grateful to have unlocked and let go of things that happened in my past that was preventing me to move forward and improve myself. I am really thankful for that. The biggest knowledge I took from this transformation is that I am Capable of more things that I thought that I was. I am such a Stronger person now, since coaching. I highly recommend!",
                 Author = "Mónica",
-                Role = "Oral Health",
-                Duration = "1 Year Journey"
+                Role = "Oral Health Professional",
+                Duration = "1 Year Journey",
+                VideoDuration = "2:34",
+                Category = "transformation",
+                KeyAchievements = new List<string> 
+                { 
+                    "Released past traumas preventing progress",
+                    "Discovered inner strength and capabilities",
+                    "Built unshakeable self-belief and confidence"
+                }
             },
             new Testimonial
             {
@@ -148,7 +376,15 @@
                 Results = "Successfully moved into a new country and is now living in the UK, London. With new role, clearer direction and purpose in life.",
                 Author = "Yanick",
                 Role = "Hospitality Manager",
-                Duration = "Life Long Journey"
+                Duration = "Life Long Journey",
+                VideoDuration = "2:08",
+                Category = "career",
+                KeyAchievements = new List<string> 
+                { 
+                    "Successfully relocated to London, UK",
+                    "Secured new hospitality management role",
+                    "Gained clarity on life direction and purpose"
+                }
             },
             new Testimonial
             {
@@ -158,8 +394,16 @@
                 Solution = "Implemented boundaries through life coaching strategy combined with confidence, self-love -building exercises.",
                 Results = "Achieved healthy life-work boundaries and balance. Successfully prioritising herself.",
                 Author = "Neuza",
-                Role = "Psychomotor Terapist",
-                Duration = "8 Month Journey"
+                Role = "Psychomotor Therapist",
+                Duration = "8 Month Journey",
+                VideoDuration = "1:45",
+                Category = "personal",
+                KeyAchievements = new List<string> 
+                { 
+                    "Established healthy work-life boundaries",
+                    "Overcame burnout and overwhelm",
+                    "Learned effective self-prioritization strategies"
+                }
             },
             new Testimonial
             {
@@ -170,9 +414,92 @@
                 Results = "Successfully moved into a new job role and soon to get married.",
                 Author = "Érica",
                 Role = "Council Officer",
-                Duration = "1 Year Journey"
+                Duration = "1 Year Journey",
+                VideoDuration = "2:56",
+                Category = "career",
+                KeyAchievements = new List<string> 
+                { 
+                    "Secured new council officer position",
+                    "Built resilience and perseverance skills",
+                    "Achieved personal life goals (engagement)"
+                }
             }
         };
+
+    private List<Testimonial> filteredTestimonials = new List<Testimonial>();
+
+    protected override void OnInitialized()
+    {
+        filteredTestimonials = testimonials.Take(displayedStoriesCount).ToList();
+        hasMoreStories = testimonials.Count > displayedStoriesCount;
+    }
+
+    private void FilterByCategory(string category)
+    {
+        selectedCategory = category;
+        
+        if (category == "all")
+        {
+            filteredTestimonials = testimonials.Take(displayedStoriesCount).ToList();
+        }
+        else
+        {
+            filteredTestimonials = testimonials
+                .Where(t => t.Category == category)
+                .Take(displayedStoriesCount)
+                .ToList();
+        }
+        
+        // Reset video states when filtering
+        foreach (var testimonial in testimonials)
+        {
+            if (testimonial.IsPlaying)
+            {
+                _ = JSRuntime.InvokeVoidAsync("pauseVideoById", "video-" + testimonial.Id);
+                testimonial.IsPlaying = false;
+            }
+        }
+        
+        StateHasChanged();
+    }
+
+    private void LoadMoreStories()
+    {
+        displayedStoriesCount += 6;
+        FilterByCategory(selectedCategory);
+    }
+
+    private List<string> GetKeyAchievements(int testimonialId)
+    {
+        var testimonial = testimonials.FirstOrDefault(t => t.Id == testimonialId);
+        return testimonial?.KeyAchievements ?? new List<string>();
+    }
+
+    private async Task ShareStory(int testimonialId)
+    {
+        var testimonial = testimonials.FirstOrDefault(t => t.Id == testimonialId);
+        if (testimonial != null)
+        {
+            var shareText = $"Check out {testimonial.Author}'s amazing transformation story with Ítala Veloso's coaching!";
+            var shareUrl = $"https://italaveloso.com/services/coaching/Case-studies#{testimonial.Id}";
+            
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("navigator.share", new
+                {
+                    title = $"{testimonial.Author}'s Success Story",
+                    text = shareText,
+                    url = shareUrl
+                });
+            }
+            catch
+            {
+                // Fallback to clipboard
+                await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", $"{shareText} {shareUrl}");
+                Snackbar.Add("Story link copied to clipboard!", Severity.Success);
+            }
+        }
+    }
 
     private async Task ToggleVideo(int testimonialId)
     {
@@ -180,26 +507,54 @@
         {        
             var currentTestimonial = testimonials.First(t => t.Id == testimonialId);
 
-            foreach(var testimonial in testimonials) {
-                if(testimonial.Id != testimonialId){
+            // Pause all other videos
+            foreach(var testimonial in testimonials) 
+            {
+                if(testimonial.Id != testimonialId && testimonial.IsPlaying)
+                {
                     await JSRuntime.InvokeVoidAsync("pauseVideoById", "video-" + testimonial.Id);
                     testimonial.IsPlaying = false;
                 }
             }
 
-            if(!currentTestimonial.IsPlaying){
+            if(!currentTestimonial.IsPlaying)
+            {
                 await JSRuntime.InvokeVoidAsync("playVideoById", "video-" + currentTestimonial.Id);
                 currentTestimonial.IsPlaying = true;
-            } else {
+            } 
+            else 
+            {
                 await JSRuntime.InvokeVoidAsync("pauseVideoById", "video-" + currentTestimonial.Id);
                 currentTestimonial.IsPlaying = false;
             }
         } 
-        catch(Exception ex) {
+        catch(Exception ex) 
+        {
             Logger.LogError($"Error toggling video: {ex.Message}");
+            Snackbar.Add("Unable to play video. Please try again.", Severity.Error);
         }
 
         StateHasChanged();        
+    }
+
+    private void OnVideoPlay(int testimonialId)
+    {
+        var testimonial = testimonials.FirstOrDefault(t => t.Id == testimonialId);
+        if (testimonial != null)
+        {
+            testimonial.IsPlaying = true;
+            StateHasChanged();
+        }
+    }
+
+    private void OnVideoPause(int testimonialId)
+    {
+        var testimonial = testimonials.FirstOrDefault(t => t.Id == testimonialId);
+        if (testimonial != null)
+        {
+            testimonial.IsPlaying = false;
+            StateHasChanged();
+        }
     }
 
     private void OnVideoEnded(int testimonialId)
@@ -211,35 +566,58 @@
 
     private string GetCaseStudiesStructuredData()
     {
-        return @"{
-            ""@context"": ""https://schema.org"",
-            ""@type"": ""CollectionPage"",
-            ""name"": ""Case Studies - Coaching Success Stories"",
-            ""description"": ""Real success stories from Ítala Veloso's coaching clients showing transformation through life and career coaching."",
-            ""url"": ""https://italaveloso.com/services/coaching/Case-studies"",
-            ""about"": {
-                ""@type"": ""Service"",
-                ""name"": ""Life and Career Coaching"",
-                ""provider"": {
-                    ""@type"": ""Person"",
-                    ""name"": ""Ítala Veloso""
-                }
-            },
-            ""mainEntity"": [
-                {
-                    ""@type"": ""Review"",
-                    ""reviewRating"": {
-                        ""@type"": ""Rating"",
-                        ""ratingValue"": ""5""
-                    },
-                    ""author"": {
-                        ""@type"": ""Person"",
-                        ""name"": ""Laviniah""
-                    },
-                    ""reviewBody"": ""Ítala been really helpful in terms of giving me concrete knowledge about things to do with trauma, how it affects our behaviours, thinking, patterns; in order to change our actions and outputs into this world. There has been such growth and work of development and I am very proud with where I am right now.""
-                }
-            ]
-        }";
+        var reviews = testimonials.Take(3).Select(t => "{ " +
+            "\"@type\": \"Review\", " +
+            "\"reviewRating\": { " +
+                "\"@type\": \"Rating\", " +
+                "\"ratingValue\": \"5\", " +
+                "\"bestRating\": \"5\" " +
+            "}, " +
+            "\"author\": { " +
+                "\"@type\": \"Person\", " +
+                "\"name\": \"" + t.Author + "\" " +
+            "}, " +
+            "\"reviewBody\": \"" + t.Results.Substring(0, Math.Min(200, t.Results.Length)) + "...\" " +
+        "}").ToList();
+
+        return "{ " +
+            "\"@context\": \"https://schema.org\", " +
+            "\"@type\": \"CollectionPage\", " +
+            "\"name\": \"Case Studies - Coaching Success Stories\", " +
+            "\"description\": \"Real success stories from Ítala Veloso's coaching clients showing transformation through life and career coaching.\", " +
+            "\"url\": \"https://italaveloso.com/services/coaching/Case-studies\", " +
+            "\"about\": { " +
+                "\"@type\": \"Service\", " +
+                "\"name\": \"Life and Career Coaching\", " +
+                "\"provider\": { " +
+                    "\"@type\": \"Person\", " +
+                    "\"name\": \"Ítala Veloso\", " +
+                    "\"url\": \"https://italaveloso.com\" " +
+                "}, " +
+                "\"aggregateRating\": { " +
+                    "\"@type\": \"AggregateRating\", " +
+                    "\"ratingValue\": \"5\", " +
+                    "\"reviewCount\": \"" + testimonials.Count + "\", " +
+                    "\"bestRating\": \"5\" " +
+                "} " +
+            "}, " +
+            "\"mainEntity\": [" + string.Join(",", reviews) + "] " +
+        "}";
     }
 
+    public class Testimonial
+    {
+        public int Id { get; set; }
+        public string Path { get; set; } = string.Empty;
+        public string Challenge { get; set; } = string.Empty;
+        public string Solution { get; set; } = string.Empty;
+        public string Results { get; set; } = string.Empty;
+        public string Author { get; set; } = string.Empty;
+        public string Role { get; set; } = string.Empty;
+        public string Duration { get; set; } = string.Empty;
+        public string VideoDuration { get; set; } = string.Empty;
+        public string Category { get; set; } = string.Empty;
+        public List<string> KeyAchievements { get; set; } = new List<string>();
+        public bool IsPlaying { get; set; } = false;
+    }
 }

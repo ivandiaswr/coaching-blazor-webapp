@@ -1,123 +1,609 @@
 @page "/payment-cancelled"
 @rendermode InteractiveServer
-@using BusinessLayer.Services.Interfaces
-@using Microsoft.AspNetCore.Identity
-@inject ISessionService SessionService
+
 @inject UserManager<IdentityUser> UserManager
-@inject AuthenticationStateProvider AuthenticationStateProvider
-@inject ILogService LogService
-@inject NavigationManager NavigationManager
-@inject ISnackbar Snackbar
-
-<MudSnackbarProvider />
-
+    
 <PageTitle>Payment Cancelled | Ítala Veloso</PageTitle>
 
-<section id="payment-cancelled">
-    <div class="cancelled-card">
-        @if (isLoading)
+<MudContainer MaxWidth="MaxWidth.Medium" Class="page-container">
+    <div class="cancellation-wrapper">
+        <MudCard Class="cancellation-card" Elevation="3">
+            <MudCardContent Class="cancellation-content">
+                @if (isLoading)
+                {
+                    <div class="loading-section">
+                        <MudStack Justify="Justify.Center" AlignItems="AlignItems.Center" Spacing="3">
+                            <div class="loading-steps">
+                                @for (int i = 0; i < loadingSteps.Length; i++)
+                                {
+                                    <div class="loading-step @(currentStep >= i ? "active" : "")">
+                                        <MudIcon Icon="@(currentStep > i ? Icons.Material.Filled.CheckCircle : 
+                                                       currentStep == i ? Icons.Material.Filled.HourglassEmpty : 
+                                                       Icons.Material.Outlined.RadioButtonUnchecked)" 
+                                               Size="Size.Medium"
+                                               Color="@(currentStep > i ? Color.Success : 
+                                                       currentStep == i ? Color.Primary : 
+                                                       Color.Default)" />
+                                        <MudText Typo="Typo.body2" Class="step-text">@loadingSteps[i]</MudText>
+                                    </div>
+                                }
+                            </div>
+                            
+                            @if (currentStep < loadingSteps.Length)
+                            {
+                                <MudProgressLinear Color="Color.Primary" Size="Size.Medium" 
+                                                 Indeterminate="true" Class="progress-bar" />
+                            }
+                        </MudStack>
+                    </div>
+                }
+                else if (hasError)
+                {
+                    <div class="error-section">
+                        <MudStack Justify="Justify.Center" AlignItems="AlignItems.Center" Spacing="3">
+                            <MudIcon Icon="Icons.Material.Filled.ErrorOutline" 
+                                   Size="Size.Large" 
+                                   Color="Color.Error" 
+                                   Class="error-icon" />
+                            
+                            <MudText Typo="Typo.h5" Align="Align.Center" Class="error-title">
+                                Cleanup Error
+                            </MudText>
+                            
+                            <MudText Typo="Typo.body1" Align="Align.Center" Class="error-message">
+                                There was an issue cleaning up your session data. Please contact support if you experience any issues.
+                            </MudText>
+                            
+                            <div class="error-actions">
+                                <MudButton Variant="Variant.Filled" 
+                                         Color="Color.Primary" 
+                                         StartIcon="Icons.Material.Filled.Dashboard"
+                                         OnClick="ReturnToDashboard"
+                                         Class="primary-action-btn">
+                                    Return to Dashboard
+                                </MudButton>
+                                
+                                <MudButton Variant="Variant.Outlined" 
+                                         Color="Color.Error" 
+                                         StartIcon="Icons.Material.Filled.Refresh"
+                                         OnClick="RetryCleanup"
+                                         Class="retry-btn"
+                                         Disabled="retryAttempts >= maxRetryAttempts">
+                                    @(retryAttempts >= maxRetryAttempts ? "Max Retries Reached" : $"Retry Cleanup ({retryAttempts}/{maxRetryAttempts})")
+                                </MudButton>
+                            </div>
+                        </MudStack>
+                    </div>
+                }
+                else
+                {
+                    <div class="success-section">
+                        <MudStack Justify="Justify.Center" AlignItems="AlignItems.Center" Spacing="3">
+                            <MudIcon Icon="Icons.Material.Filled.Cancel" 
+                                   Size="Size.Large" 
+                                   Color="Color.Warning" 
+                                   Class="cancelled-icon" />
+                            
+                            <MudText Typo="Typo.h4" Align="Align.Center" Class="cancelled-title">
+                                Payment Cancelled
+                            </MudText>
+                            
+                            <MudText Typo="Typo.body1" Align="Align.Center" Class="cancelled-message">
+                                No worries! Your payment was cancelled and no charges were made. 
+                                Your session data has been cleaned up successfully.
+                            </MudText>
+                            
+                            <MudAlert Severity="Severity.Info" Class="info-alert">
+                                <MudText Typo="Typo.body2">
+                                    You can return to your dashboard and book a new session whenever you're ready.
+                                </MudText>
+                            </MudAlert>
+                            
+                            <div class="success-actions">
+                                <MudButton Variant="Variant.Filled" 
+                                         Color="Color.Primary" 
+                                         StartIcon="Icons.Material.Filled.Dashboard"
+                                         OnClick="ReturnToDashboard"
+                                         Size="Size.Large"
+                                         Class="primary-action-btn">
+                                    Return to Dashboard
+                                </MudButton>
+                                
+                                <MudButton Variant="Variant.Outlined" 
+                                         Color="Color.Primary" 
+                                         StartIcon="Icons.Material.Filled.CalendarToday"
+                                         Href="/UserDashboard#booking"
+                                         Size="Size.Large"
+                                         Class="secondary-action-btn">
+                                    Book New Session
+                                </MudButton>
+                            </div>
+                        </MudStack>
+                    </div>
+                }
+            </MudCardContent>
+        </MudCard>
+        
+        @if (!isLoading && !hasError)
         {
-            <MudProgressCircular Color="Color.Primary" Size="Size.Medium" Indeterminate="true" />
-            <MudText Class="mt-3">Cleaning up session data...</MudText>
-        }
-        else
-        {
-            <MudText Typo="Typo.h5" Class="cancelled-title">Payment Cancelled</MudText>
-            <MudText Class="cancelled-message">Your payment was cancelled. You can try booking again.</MudText>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ReturnToDashboard">
-                Return to Dashboard
-            </MudButton>
+            <div class="helpful-tips">
+                <MudCard Class="tips-card" Elevation="1">
+                    <MudCardHeader>
+                        <CardHeaderContent>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                <MudIcon Icon="Icons.Material.Filled.Lightbulb" Color="Color.Secondary" />
+                                <MudText Typo="Typo.h6">Helpful Tips</MudText>
+                            </MudStack>
+                        </CardHeaderContent>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudList T="string" Class="tips-list">
+                            <MudListItem T="string" Icon="Icons.Material.Filled.CheckCircle">
+                                <MudText Typo="Typo.body2">Your session slot is still available for booking</MudText>
+                            </MudListItem>
+                            <MudListItem T="string" Icon="Icons.Material.Filled.CheckCircle">
+                                <MudText Typo="Typo.body2">No payment information was stored or charged</MudText>
+                            </MudListItem>
+                            <MudListItem T="string" Icon="Icons.Material.Filled.CheckCircle">
+                                <MudText Typo="Typo.body2">You can try booking again with different payment details</MudText>
+                            </MudListItem>
+                        </MudList>
+                    </MudCardContent>
+                </MudCard>
+            </div>
         }
     </div>
-</section>
+</MudContainer>
+
+<style>
+    .page-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1rem;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    }
+
+    .cancellation-wrapper {
+        width: 100%;
+        max-width: 600px;
+    }
+
+    .cancellation-card {
+        margin-bottom: 2rem;
+        border-radius: 16px !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+        background: rgba(255, 255, 255, 0.95) !important;
+        backdrop-filter: blur(10px);
+    }
+
+    .cancellation-content {
+        padding: 3rem 2rem !important;
+    }
+
+    /* Loading States */
+    .loading-steps {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        width: 100%;
+        max-width: 400px;
+    }
+
+    .loading-step {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        background: transparent;
+    }
+
+    .loading-step.active {
+        background: rgba(25, 118, 210, 0.1);
+        transform: translateX(8px);
+    }
+
+    .step-text {
+        font-weight: 500;
+        color: var(--mud-palette-text-primary);
+    }
+
+    .loading-step.active .step-text {
+        color: var(--mud-palette-primary);
+    }
+
+    .progress-bar {
+        width: 100%;
+        max-width: 400px;
+        border-radius: 4px !important;
+    }
+
+    /* Success States */
+    .cancelled-icon {
+        font-size: 4rem !important;
+        animation: cancelledPulse 2s ease-in-out infinite;
+    }
+
+    @@keyframes cancelledPulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.05); opacity: 0.8; }
+    }
+
+    .cancelled-title {
+        color: var(--mud-palette-warning);
+        font-weight: 600 !important;
+        margin-bottom: 0.5rem;
+    }
+
+    .cancelled-message {
+        color: var(--mud-palette-text-secondary);
+        max-width: 500px;
+        line-height: 1.6;
+        margin-bottom: 1rem;
+    }
+
+    .info-alert {
+        max-width: 500px;
+        border-radius: 8px !important;
+    }
+
+    /* Error States */
+    .error-icon {
+        font-size: 4rem !important;
+        animation: errorShake 0.5s ease-in-out;
+    }
+
+    @@keyframes errorShake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
+    }
+
+    .error-title {
+        color: var(--mud-palette-error);
+        font-weight: 600 !important;
+        margin-bottom: 0.5rem;
+    }
+
+    .error-message {
+        color: var(--mud-palette-text-secondary);
+        max-width: 500px;
+        line-height: 1.6;
+        margin-bottom: 1rem;
+    }
+
+    /* Action Buttons */
+    .success-actions,
+    .error-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 2rem;
+    }
+
+    .primary-action-btn {
+        min-width: 200px;
+        padding: 0.75rem 2rem !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        text-transform: none !important;
+        box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3) !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .primary-action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(25, 118, 210, 0.4) !important;
+    }
+
+    .secondary-action-btn {
+        min-width: 200px;
+        padding: 0.75rem 2rem !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        text-transform: none !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .secondary-action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(25, 118, 210, 0.2) !important;
+    }
+
+    .retry-btn {
+        min-width: 200px;
+        padding: 0.75rem 2rem !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        text-transform: none !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .retry-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3) !important;
+    }
+
+    .retry-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    /* Helpful Tips */
+    .helpful-tips {
+        width: 100%;
+    }
+
+    .tips-card {
+        border-radius: 12px !important;
+        background: rgba(255, 255, 255, 0.9) !important;
+        backdrop-filter: blur(5px);
+    }
+
+    .tips-list {
+        padding: 0 !important;
+    }
+
+    .tips-list .mud-list-item {
+        padding: 0.5rem 0 !important;
+    }
+
+    .tips-list .mud-list-item .mud-icon {
+        color: var(--mud-palette-success) !important;
+        font-size: 1.2rem !important;
+    }
+
+    /* Responsive Design */
+    @@media (max-width: 600px) {
+        .page-container {
+            padding: 1rem 0.5rem;
+        }
+        
+        .cancellation-content {
+            padding: 2rem 1.5rem !important;
+        }
+        
+        .cancelled-icon,
+        .error-icon {
+            font-size: 3rem !important;
+        }
+        
+        .cancelled-title,
+        .error-title {
+            font-size: 1.5rem !important;
+        }
+        
+        .success-actions,
+        .error-actions {
+            flex-direction: column;
+            width: 100%;
+        }
+        
+        .primary-action-btn,
+        .secondary-action-btn,
+        .retry-btn {
+            width: 100%;
+            min-width: auto;
+        }
+        
+        .loading-steps {
+            max-width: 100%;
+        }
+        
+        .loading-step {
+            padding: 0.5rem 0.75rem;
+        }
+    }
+
+    /* Animations */
+    .cancellation-card {
+        animation: slideUp 0.6s ease-out;
+    }
+
+    @@keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
 
 @code {
     [SupplyParameterFromQuery(Name = "sessionId")]
     public string SessionId { get; set; } = string.Empty;
     
     private bool isLoading = true;
+    private bool hasError = false;
+    private int currentStep = 0;
+    private int retryAttempts = 0;
+    private readonly int maxRetryAttempts = 3;
+    
+    private readonly string[] loadingSteps = new[]
+    {
+        "Checking session status...",
+        "Cleaning up payment data...",
+        "Updating session records...",
+        "Finalizing cleanup..."
+    };
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            // Clean up any pending sessions for the current user
-            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            var userEmail = authState.User?.Identity?.Name;
-            
-            if (!string.IsNullOrEmpty(userEmail))
-            {
-                await LogService.LogInfo("PaymentCancelled", $"Cleaning up pending sessions for user: {userEmail}, SessionId: {(string.IsNullOrEmpty(SessionId) ? "null" : SessionId)}");
-                
-                // Add delay to avoid race conditions with Stripe webhook processing
-                await Task.Delay(1000);
-                
-                // If we have a specific session ID, clean up that session first
-                if (!string.IsNullOrEmpty(SessionId) && int.TryParse(SessionId, out var sessionIdInt))
-                {
-                    try
-                    {
-                        // Use retry logic for database operations
-                        var retryCount = 0;
-                        var maxRetries = 3;
-                        
-                        while (retryCount < maxRetries)
-                        {
-                            try
-                            {
-                                var session = await SessionService.GetSessionByIdAsync(sessionIdInt);
-                                if (session != null && session.Email == userEmail && session.IsPending)
-                                {
-                                    session.IsPending = false;
-                                    SessionService.UpdateSession(session);
-                                    await LogService.LogInfo("PaymentCancelled", $"Cleaned up specific cancelled session Id: {sessionIdInt}");
-                                }
-                                break; // Success, exit retry loop
-                            }
-                            catch (Exception retryEx) when (retryCount < maxRetries - 1)
-                            {
-                                retryCount++;
-                                await LogService.LogWarning("PaymentCancelled", $"Retry {retryCount} for session {sessionIdInt}: {retryEx.Message}");
-                                await Task.Delay(500 * retryCount); // Exponential backoff
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        await LogService.LogError("PaymentCancelled", $"Error cleaning up specific session {sessionIdInt} after retries: {ex.Message}");
-                        // Don't throw - continue with general cleanup
-                    }
-                }
-                
-                // Clean up any other stale pending sessions for this user
-                try
-                {
-                    await SessionService.CleanupPendingSessionsForUserAsync(userEmail);
-                    await LogService.LogInfo("PaymentCancelled", $"Completed cleanup for user: {userEmail}");
-                }
-                catch (Exception cleanupEx)
-                {
-                    await LogService.LogError("PaymentCancelled", $"Error during general cleanup for user {userEmail}: {cleanupEx.Message}");
-                }
-            }
-            else
-            {
-                await LogService.LogWarning("PaymentCancelled", "User email not found during cleanup");
-            }
+            await PerformCleanup();
         }
         catch (Exception ex)
         {
-            await LogService.LogError("PaymentCancelled", $"Error during cleanup: {ex.Message}");
-            // Don't show error to user - just log it
+            await LogService.LogError("PaymentCancelled", $"Critical error during initialization: {ex.Message}");
+            hasError = true;
         }
         finally
         {
             isLoading = false;
             StateHasChanged();
+        }
+    }
+
+    private async Task PerformCleanup()
+    {
+        try
+        {
+            // Step 1: Check session status
+            currentStep = 0;
+            StateHasChanged();
+            await Task.Delay(800);
+
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var userEmail = authState.User?.Identity?.Name;
             
-            // Show user-friendly message after a short delay
-            await Task.Delay(100);
-            Snackbar.Add("Payment was cancelled. You can try booking again.", Severity.Info);
+            if (string.IsNullOrEmpty(userEmail))
+            {
+                await LogService.LogWarning("PaymentCancelled", "User email not found during cleanup");
+                Snackbar.Add("Payment cancelled successfully", Severity.Info);
+                return;
+            }
+
+            await LogService.LogInfo("PaymentCancelled", $"Starting cleanup for user: {userEmail}, SessionId: {(string.IsNullOrEmpty(SessionId) ? "null" : SessionId)}");
+            
+            // Step 2: Clean up payment data
+            currentStep = 1;
+            StateHasChanged();
+            await Task.Delay(500);
+            
+            // Add delay to avoid race conditions with Stripe webhook processing
+            await Task.Delay(1000);
+            
+            // Step 3: Update session records
+            currentStep = 2;
+            StateHasChanged();
+            await Task.Delay(500);
+            
+            // If we have a specific session ID, clean up that session first
+            if (!string.IsNullOrEmpty(SessionId) && int.TryParse(SessionId, out var sessionIdInt))
+            {
+                var cleanupSuccess = await CleanupSpecificSession(sessionIdInt, userEmail);
+                if (!cleanupSuccess)
+                {
+                    hasError = true;
+                    return;
+                }
+            }
+            
+            // Step 4: Finalize cleanup
+            currentStep = 3;
+            StateHasChanged();
+            await Task.Delay(500);
+            
+            // Clean up any other stale pending sessions for this user
+            await CleanupGeneralSessions(userEmail);
+            
+            await LogService.LogInfo("PaymentCancelled", $"Completed cleanup for user: {userEmail}");
+            
+            // Show success message
+            await Task.Delay(500);
+            Snackbar.Add("Payment cancelled and session data cleaned up successfully", Severity.Info);
+        }
+        catch (Exception ex)
+        {
+            await LogService.LogError("PaymentCancelled", $"Error during cleanup: {ex.Message}");
+            hasError = true;
+            throw;
+        }
+    }
+
+    private async Task<bool> CleanupSpecificSession(int sessionIdInt, string userEmail)
+    {
+        try
+        {
+            // Use retry logic for database operations
+            var retryCount = 0;
+            var maxRetries = 3;
+            
+            while (retryCount < maxRetries)
+            {
+                try
+                {
+                    var session = await SessionService.GetSessionByIdAsync(sessionIdInt);
+                    if (session != null && session.Email == userEmail && session.IsPending)
+                    {
+                        session.IsPending = false;
+                        SessionService.UpdateSession(session);
+                        await LogService.LogInfo("PaymentCancelled", $"Cleaned up specific cancelled session Id: {sessionIdInt}");
+                    }
+                    return true; // Success
+                }
+                catch (Exception retryEx) when (retryCount < maxRetries - 1)
+                {
+                    retryCount++;
+                    await LogService.LogWarning("PaymentCancelled", $"Retry {retryCount} for session {sessionIdInt}: {retryEx.Message}");
+                    await Task.Delay(500 * retryCount); // Exponential backoff
+                }
+            }
+            
+            // If we get here, all retries failed
+            await LogService.LogError("PaymentCancelled", $"Failed to clean up session {sessionIdInt} after {maxRetries} retries");
+            return false;
+        }
+        catch (Exception ex)
+        {
+            await LogService.LogError("PaymentCancelled", $"Error cleaning up specific session {sessionIdInt}: {ex.Message}");
+            return false;
+        }
+    }
+
+    private async Task CleanupGeneralSessions(string userEmail)
+    {
+        try
+        {
+            await SessionService.CleanupPendingSessionsForUserAsync(userEmail);
+            await LogService.LogInfo("PaymentCancelled", $"Completed general cleanup for user: {userEmail}");
+        }
+        catch (Exception cleanupEx)
+        {
+            await LogService.LogError("PaymentCancelled", $"Error during general cleanup for user {userEmail}: {cleanupEx.Message}");
+            // Don't throw - this is not critical
+        }
+    }
+
+    private async Task RetryCleanup()
+    {
+        if (retryAttempts >= maxRetryAttempts)
+            return;
+
+        retryAttempts++;
+        hasError = false;
+        isLoading = true;
+        currentStep = 0;
+        StateHasChanged();
+
+        await LogService.LogInfo("PaymentCancelled", $"Retrying cleanup (attempt {retryAttempts}/{maxRetryAttempts})");
+
+        try
+        {
+            await PerformCleanup();
+        }
+        catch (Exception ex)
+        {
+            await LogService.LogError("PaymentCancelled", $"Retry attempt {retryAttempts} failed: {ex.Message}");
+            hasError = true;
+            
+            if (retryAttempts >= maxRetryAttempts)
+            {
+                Snackbar.Add("Maximum retry attempts reached. Please contact support if you experience issues.", Severity.Error);
+            }
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
         }
     }
 

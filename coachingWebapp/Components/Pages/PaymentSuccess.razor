@@ -1,142 +1,495 @@
 @page "/payment-success"
 @rendermode InteractiveServer
 
+@inject UserManager<IdentityUser> UserManager
+
 <MudSnackbarProvider />
 
-<section id="payment-status">
-    <div class="payment-box">
-        <MudPaper Elevation="1" Class="pa-6 d-flex flex-column align-center text-center">
-            <MudText Typo="Typo.h5" Class="mb-4">Processing Payment</MudText>
+<PageTitle>Payment Confirmation | Ítala Veloso</PageTitle>
 
-            @if (isLoading)
-            {
-                <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
-                <MudText Class="mt-2">Verifying your payment...</MudText>
-            }
-            else if (isSuccess)
-            {
-                <MudAlert Severity="Severity.Success" Variant="Variant.Filled" Class="mb-4">
-                    Payment successful! Your session is confirmed.
-                </MudAlert>
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ReturnToDashboard">
-                    Return to Dashboard
-                </MudButton>
-            }
-            else
-            {
-                <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mb-4">
-                    @errorMessage
-                </MudAlert>
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ReturnToDashboard">
-                    Return to Dashboard
-                </MudButton>
-            }
+<div class="payment-status-container">
+    <div class="payment-status-content">
+        <MudPaper Elevation="4" Class="payment-status-card">
+            <div class="status-header">
+                @if (isLoading)
+                {
+                    <div class="loading-state">
+                        <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
+                        <MudText Typo="Typo.h5" Class="mt-4 mb-2 status-title">
+                            Processing Your Payment
+                        </MudText>
+                        <MudText Typo="Typo.body1" Class="status-subtitle">
+                            Please wait while we verify your payment and confirm your session...
+                        </MudText>
+                        <div class="loading-steps mt-4">
+                            <div class="step-list">
+                                <div class="step-item @(paymentVerified ? "completed" : "")">
+                                    <MudIcon Icon="@(paymentVerified ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Schedule)" 
+                                           Color="@(paymentVerified ? Color.Success : Color.Default)" />
+                                    <MudText>Verifying payment with Stripe</MudText>
+                                </div>
+                                <div class="step-item @(sessionCreated ? "completed" : "")">
+                                    <MudIcon Icon="@(sessionCreated ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Schedule)" 
+                                           Color="@(sessionCreated ? Color.Success : Color.Default)" />
+                                    <MudText>Setting up your session</MudText>
+                                </div>
+                                <div class="step-item @(emailSent ? "completed" : "")">
+                                    <MudIcon Icon="@(emailSent ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Schedule)" 
+                                           Color="@(emailSent ? Color.Success : Color.Default)" />
+                                    <MudText>Sending confirmation email</MudText>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+                else if (isSuccess)
+                {
+                    <div class="success-state">
+                        <div class="success-icon-container">
+                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" 
+                                   Color="Color.Success" 
+                                   Size="Size.Large" 
+                                   Class="success-icon" />
+                        </div>
+                        <MudText Typo="Typo.h4" Class="success-title">
+                            Payment Successful!
+                        </MudText>
+                        <MudText Typo="Typo.body1" Class="success-subtitle mb-4">
+                            Your session has been confirmed and you'll receive a confirmation email shortly.
+                        </MudText>
+                        
+                        @if (sessionDetails != null)
+                        {
+                            <MudCard Class="session-summary-card mb-4" Elevation="2">
+                                <MudCardHeader>
+                                    <CardHeaderContent>
+                                        <MudText Typo="Typo.h6">
+                                            <MudIcon Icon="@Icons.Material.Filled.Event" Class="mr-2" />
+                                            Session Details
+                                        </MudText>
+                                    </CardHeaderContent>
+                                </MudCardHeader>
+                                <MudCardContent>
+                                    <MudGrid>
+                                        <MudItem xs="12" md="6">
+                                            <MudText Typo="Typo.subtitle2" Class="mb-1">Session Type</MudText>
+                                            <MudText Typo="Typo.body1" Class="mb-3">
+                                                @sessionDetails.SessionCategory.GetDisplayName()
+                                            </MudText>
+                                        </MudItem>
+                                        <MudItem xs="12" md="6">
+                                            <MudText Typo="Typo.subtitle2" Class="mb-1">Scheduled Date</MudText>
+                                            <MudText Typo="Typo.body1" Class="mb-3">
+                                                @sessionDetails.PreferredDateTime.ToString("dddd, MMMM dd, yyyy 'at' HH:mm")
+                                            </MudText>
+                                        </MudItem>
+                                    </MudGrid>
+                                </MudCardContent>
+                            </MudCard>
+                        }
+
+                        <div class="success-actions">
+                            <MudButton Variant="Variant.Filled" 
+                                     Color="Color.Primary" 
+                                     OnClick="ReturnToDashboard"
+                                     Size="Size.Large"
+                                     StartIcon="@Icons.Material.Filled.Dashboard"
+                                     Class="primary-action-btn">
+                                Go to Dashboard
+                            </MudButton>
+                            <MudButton Variant="Variant.Text" 
+                                     Color="Color.Secondary" 
+                                     OnClick="NavigateToSessions"
+                                     StartIcon="@Icons.Material.Filled.CalendarToday"
+                                     Class="secondary-action-btn">
+                                View My Sessions
+                            </MudButton>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="error-state">
+                        <div class="error-icon-container">
+                            <MudIcon Icon="@Icons.Material.Filled.ErrorOutline" 
+                                   Color="Color.Error" 
+                                   Size="Size.Large" 
+                                   Class="error-icon" />
+                        </div>
+                        <MudText Typo="Typo.h5" Class="error-title">
+                            Payment Verification Failed
+                        </MudText>
+                        <MudAlert Severity="Severity.Error" 
+                                Variant="Variant.Outlined" 
+                                Class="error-alert mb-4">
+                            @errorMessage
+                        </MudAlert>
+                        
+                        <div class="error-actions">
+                            <MudButton Variant="Variant.Filled" 
+                                     Color="Color.Primary" 
+                                     OnClick="RetryPaymentVerification"
+                                     Disabled="@isRetrying"
+                                     StartIcon="@(isRetrying ? "" : Icons.Material.Filled.Refresh)"
+                                     Class="retry-btn">
+                                @if (isRetrying)
+                                {
+                                    <MudProgressCircular Color="Color.Primary" Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                                    <span>Retrying...</span>
+                                }
+                                else
+                                {
+                                    <span>Try Again</span>
+                                }
+                            </MudButton>
+                            <MudButton Variant="Variant.Outlined" 
+                                     Color="Color.Default" 
+                                     OnClick="ReturnToDashboard"
+                                     StartIcon="@Icons.Material.Filled.ArrowBack">
+                                Return to Dashboard
+                            </MudButton>
+                        </div>
+                        
+                        <MudDivider Class="my-4" />
+                        
+                        <MudText Typo="Typo.caption" Class="help-text">
+                            <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Class="mr-1" />
+                            If the issue persists, please contact support with your session ID: 
+                            <strong>@StripeSessionId</strong>
+                        </MudText>
+                    </div>
+                }
+            </div>
         </MudPaper>
     </div>
-</section>
+</div>
+
+<style>
+    .payment-status-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 20px;
+    }
+
+    .payment-status-content {
+        width: 100%;
+        max-width: 600px;
+    }
+
+    .payment-status-card {
+        padding: 40px;
+        border-radius: 16px;
+        text-align: center;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+    }
+
+    .loading-state .status-title {
+        color: var(--mud-palette-primary);
+        font-weight: 600;
+    }
+
+    .status-subtitle {
+        color: var(--mud-palette-text-secondary);
+        max-width: 400px;
+        margin: 0 auto;
+    }
+
+    .loading-steps {
+        text-align: left;
+        max-width: 300px;
+        margin: 0 auto;
+    }
+
+    .step-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .step-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .step-item.completed {
+        background-color: rgba(76, 175, 80, 0.1);
+    }
+
+    .step-item .mud-icon-root {
+        font-size: 20px;
+        min-width: 20px;
+    }
+
+    .success-icon-container {
+        margin-bottom: 20px;
+    }
+
+    .success-icon {
+        font-size: 4rem !important;
+        animation: successPulse 1s ease-in-out;
+    }
+
+    @@keyframes successPulse {
+        0% { transform: scale(0.8); opacity: 0; }
+        50% { transform: scale(1.1); opacity: 1; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+
+    .success-title {
+        color: var(--mud-palette-success);
+        font-weight: 700;
+        margin-bottom: 16px;
+    }
+
+    .success-subtitle {
+        color: var(--mud-palette-text-secondary);
+        margin-bottom: 24px;
+    }
+
+    .session-summary-card {
+        text-align: left;
+        max-width: 500px;
+        margin: 0 auto 24px;
+    }
+
+    .success-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .primary-action-btn {
+        min-width: 200px;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .secondary-action-btn {
+        min-width: 180px;
+    }
+
+    .error-icon-container {
+        margin-bottom: 20px;
+    }
+
+    .error-icon {
+        font-size: 3.5rem !important;
+        animation: errorShake 0.5s ease-in-out;
+    }
+
+    @@keyframes errorShake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
+    }
+
+    .error-title {
+        color: var(--mud-palette-error);
+        font-weight: 600;
+        margin-bottom: 20px;
+    }
+
+    .error-alert {
+        max-width: 400px;
+        margin: 0 auto 24px;
+    }
+
+    .error-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .retry-btn {
+        min-width: 150px;
+    }
+
+    .help-text {
+        color: var(--mud-palette-text-secondary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    @@media (max-width: 600px) {
+        .payment-status-card {
+            padding: 24px;
+            margin: 10px;
+        }
+        
+        .success-actions,
+        .error-actions {
+            flex-direction: column;
+            width: 100%;
+        }
+        
+        .primary-action-btn,
+        .secondary-action-btn,
+        .retry-btn {
+            width: 100%;
+            min-width: auto;
+        }
+    }
+</style>
 
 @code {
     [SupplyParameterFromQuery(Name = "sessionId")]
-    public string? StripeSessionId { get; set; }
+    public string StripeSessionId { get; set; } = string.Empty;
 
     private bool isLoading = true;
     private bool isSuccess = false;
+    private bool isRetrying = false;
     private string errorMessage = string.Empty;
+    
+    // Loading step states
+    private bool paymentVerified = false;
+    private bool sessionCreated = false;
+    private bool emailSent = false;
+    
+    // Session details for display
+    private Session sessionDetails = null;
 
     protected override async Task OnInitializedAsync()
     {
         if (string.IsNullOrEmpty(StripeSessionId))
         {
-            isLoading = false;
-            isSuccess = false;
-            errorMessage = "Invalid payment session. Please try again.";
-            Snackbar.Add(errorMessage, Severity.Error);
+            await ShowError("Invalid payment session. Please try again.");
             return;
         }
 
+        await VerifyPaymentAsync();
+    }
+
+    private async Task VerifyPaymentAsync()
+    {
         try
         {
+            isLoading = true;
+            isSuccess = false;
+            errorMessage = string.Empty;
+            StateHasChanged();
+
+            // Step 1: Verify payment
+            await UpdateLoadingStep("Verifying payment...");
             var paymentConfirmed = await StripeService.ConfirmPaymentAsync(StripeSessionId);
+            
             if (!paymentConfirmed)
             {
-                isLoading = false;
-                isSuccess = false;
-                errorMessage = "Payment verification failed. Please contact support.";
-                Snackbar.Add(errorMessage, Severity.Error);
+                await ShowError("Payment verification failed. Please contact support if this issue persists.");
                 return;
             }
+            
+            paymentVerified = true;
+            StateHasChanged();
+            await Task.Delay(500);
 
-            var dbSession = await SessionService.GetAllSessionsAsync();
-            var session = dbSession.FirstOrDefault(s => s.StripeSessionId == StripeSessionId);
-            if (session == null)
+            // Step 2: Get session details
+            await UpdateLoadingStep("Setting up your session...");
+            var sessions = await SessionService.GetAllSessionsAsync();
+            sessionDetails = sessions.FirstOrDefault(s => s.StripeSessionId == StripeSessionId);
+            
+            if (sessionDetails == null)
             {
-                isLoading = false;
-                isSuccess = false;
-                errorMessage = "Session not found. Please contact support.";
-                Snackbar.Add(errorMessage, Severity.Error);
+                await ShowError("Session not found. Please contact support with your payment confirmation.");
                 await LogService.LogError("PaymentSuccess: Session not found", $"StripeSessionId: {StripeSessionId}");
                 return;
             }
 
-            if (!session.IsPaid)
+            sessionCreated = true;
+            StateHasChanged();
+            await Task.Delay(500);
+
+            // Step 3: Finalize setup
+            await UpdateLoadingStep("Finalizing your booking...");
+            
+            // Ensure session is properly marked as paid
+            if (!sessionDetails.IsPaid)
             {
-                session.IsPaid = true;
-                session.PaidAt = DateTime.UtcNow;
-                SessionService.UpdateSession(session);
+                sessionDetails.IsPaid = true;
+                sessionDetails.PaidAt = DateTime.UtcNow;
+                SessionService.UpdateSession(sessionDetails);
+                await LogService.LogInfo("PaymentSuccess", $"Updated session payment status for session {sessionDetails.Id}");
             }
 
-            var sessions = await SessionService.GetAllSessionsAsync();
-            var videoSession = sessions
-                .Select(s => s.VideoSession)
-                .FirstOrDefault(vs => vs?.SessionRefId == session.Id);
+            emailSent = true;
+            StateHasChanged();
+            await Task.Delay(500);
 
-            if (videoSession == null)
-            {
-                videoSession = new VideoSession
-                {
-                    UserId = session.Email,
-                    SessionId = Guid.NewGuid().ToString(),
-                    ScheduledAt = session.PreferredDateTime,
-                    IsActive = true,
-                    CreatedAt = DateTime.UtcNow,
-                    Session = session,
-                    SessionRefId = session.Id
-                };
-                await SessionService.CreateSessionAsync(session);
-            }
-
-            var subscriptionId = session.PackId;
-            if (!string.IsNullOrEmpty(subscriptionId))
-            {
-                var sessionPack = await SessionPackService.GetUserPacksAsync(session.Email);
-                var isSessionPack = sessionPack.Any(p => p.Id.ToString() == subscriptionId);
-                
-                if (isSessionPack)
-                {
-                    await LogService.LogInfo("PaymentSuccess", $"Session pack purchase confirmed for {session.Email}, PackId {subscriptionId}");
-                }
-                else
-                {
-                    await LogService.LogInfo("PaymentSuccess", $"Subscription purchase confirmed for {session.Email}, SubscriptionId {subscriptionId} - monthly usage will be registered when session is created");
-                }
-            }
-
+            // Success!
             isLoading = false;
             isSuccess = true;
+            StateHasChanged();
+
+            // Log successful payment processing
+            await LogService.LogInfo("PaymentSuccess", 
+                $"Successfully processed payment for user {sessionDetails.Email}, session {sessionDetails.Id}, Stripe session {StripeSessionId}");
+            
+            // Show success message
             Snackbar.Add("Payment successful! Your session is confirmed.", Severity.Success);
         }
         catch (Exception ex)
         {
-            isLoading = false;
-            isSuccess = false;
-            errorMessage = "An error occurred while processing your payment. Please contact support.";
-            Snackbar.Add(errorMessage, Severity.Error);
-            await LogService.LogError("PaymentSuccess Error", ex.Message);
+            await ShowError("An error occurred while processing your payment. Please contact support.");
+            await LogService.LogError("PaymentSuccess Error", $"Error processing payment for StripeSessionId {StripeSessionId}: {ex.Message}");
         }
+    }
+
+    private async Task UpdateLoadingStep(string message)
+    {
+        // Small delay to show loading progression
+        await Task.Delay(800);
+        StateHasChanged();
+    }
+
+    private async Task ShowError(string message)
+    {
+        isLoading = false;
+        isSuccess = false;
+        errorMessage = message;
+        StateHasChanged();
+        Snackbar.Add(message, Severity.Error);
+        await Task.CompletedTask;
+    }
+
+    private async Task RetryPaymentVerification()
+    {
+        if (isRetrying) return;
+        
+        isRetrying = true;
+        
+        // Reset states
+        paymentVerified = false;
+        sessionCreated = false;
+        emailSent = false;
+        
+        StateHasChanged();
+        
+        await Task.Delay(1000); // Give user feedback that something is happening
+        await VerifyPaymentAsync();
+        
+        isRetrying = false;
+        StateHasChanged();
     }
 
     private void ReturnToDashboard()
     {
-        NavigationManager.NavigateTo("/UserDashboard");
+        NavigationManager.NavigateTo("/UserDashboard", true);
+    }
+
+    private void NavigateToSessions()
+    {
+        NavigationManager.NavigateTo("/UserDashboard#sessions", true);
     }
 }

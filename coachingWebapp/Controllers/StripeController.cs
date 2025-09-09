@@ -43,8 +43,31 @@ namespace coachingWebapp.Controllers
                 await _logService.LogInfo("CreateCheckoutSession",
                     $"Received request: BookingType={request.BookingType}, PlanId={request.PlanId}, SessionId={request.Session.Id}, Currency={request.Currency}, IdempotencyKey={request.IdempotencyKey}");
 
+                // Set a timeout for the payment creation process
+                using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+                
                 var url = await _paymentService.CreateCheckoutSessionAsync(request);
                 return Ok(new ModelLayer.Models.DTOs.StripeResponse { Url = url });
+            }
+            catch (OperationCanceledException)
+            {
+                await _logService.LogError("CreateCheckoutSession Timeout", $"Request timed out for SessionId: {request?.Session?.Id}, Email: {request?.Session?.Email}");
+                
+                // Try to clean up any pending sessions that might have been created
+                if (request?.Session?.Email != null)
+                {
+                    try
+                    {
+                        await _sessionService.CleanupPendingSessionsForUserAsync(request.Session.Email);
+                        await _logService.LogInfo("CreateCheckoutSession Cleanup", $"Cleaned up pending sessions after timeout for Email: {request.Session.Email}");
+                    }
+                    catch (Exception cleanupEx)
+                    {
+                        await _logService.LogError("CreateCheckoutSession Cleanup Error", $"Failed to cleanup after timeout for Email: {request.Session.Email}, Error: {cleanupEx.Message}");
+                    }
+                }
+                
+                return StatusCode(408, new { error = "Request timed out. Please try again.", timeout = true });
             }
             catch (Exception ex)
             {

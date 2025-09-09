@@ -1,38 +1,146 @@
 <MudDialog>
 <TitleContent>
-    <MudText Typo="Typo.h6" Class="mb-1">Confirm Your Booking</MudText>
+    <div class="d-flex align-items-center">
+        <MudIcon Icon="@Icons.Material.Filled.EventAvailable" Class="mr-3" Color="Color.Primary" Size="Size.Large"/>
+        <div>
+            <MudText Typo="Typo.h5" Class="mb-0 font-weight-bold">Confirm Your Booking</MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">Please review your session details</MudText>
+        </div>
+    </div>
 </TitleContent>
 
 <DialogContent>
-    <MudStack Spacing="2">
-        <MudAlert Class="mb-2" Severity="Severity.Warning" Variant="Variant.Outlined" Dense="true">
-            @if (SelectedOption?.RequiresPurchase == true)
-            {
-                <span>You’ll be redirected to the payment screen next.</span>
-            }
-            else
-            {
-                <span>Your session will be booked using your available sessions.</span>
-            }
+    <MudStack Spacing="4" Class="pt-2">
+        <MudAlert Class="@($"rounded-lg booking-status-alert {(SelectedOption?.RequiresPurchase == true ? "payment-required" : "session-reserved")}")" 
+                  Severity="@(SelectedOption?.RequiresPurchase == true ? Severity.Info : Severity.Success)" 
+                  Variant="Variant.Filled" 
+                  Dense="false"
+                  Icon="@(SelectedOption?.RequiresPurchase == true ? Icons.Material.Filled.Payment : Icons.Material.Filled.CheckCircle)">>>
+            <div class="d-flex align-items-center">
+                <div>
+                    @if (SelectedOption?.RequiresPurchase == true)
+                    {
+                        <MudText Typo="Typo.body1" Class="font-weight-medium mb-1">Payment Required</MudText>
+                        <MudText Typo="Typo.body2">You'll be securely redirected to complete your payment via Stripe.</MudText>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body1" Class="font-weight-medium mb-1">Session Reserved</MudText>
+                        <MudText Typo="Typo.body2">This session will use one of your available sessions.</MudText>
+                    }
+                </div>
+            </div>
         </MudAlert>
-        <MudPaper Class="pa-3" Elevation="1" Style="border-left: 4px solid var(--mud-palette-primary);">
-            <MudText Typo="Typo.subtitle2"><b>Option:</b> @SelectedOption?.Title</MudText>
-            <MudText Typo="Typo.body2"><b>Description:</b> @SelectedOption?.Description</MudText>
-            <MudText Typo="Typo.body2"><b>Date & Time:</b> @SelectedDateTime</MudText>
-            <MudText Typo="Typo.body2"><b>Price:</b> @((SelectedOption?.RequiresPurchase == true ?
-                                FormatPrice(SelectedOption.PriceConverted ?? 0, SelectedOption.Currency) : "Included"))</MudText>
-            <MudText Typo="Typo.body2"><b>Payment Method:</b> @(SelectedOption?.RequiresPurchase == true ? "Stripe"
-                                : "None (Using available sessions)")</MudText>
+
+        <MudCard Elevation="3" Class="rounded-lg overflow-hidden session-details-card">
+            <div class="card-header" style="background: linear-gradient(135deg, var(--mud-palette-primary) 0%, var(--mud-palette-primary-darken) 100%); padding: 16px;">
+                <MudText Typo="Typo.h6" Class="text-white font-weight-bold mb-1">
+                    <MudIcon Icon="@GetSessionIcon()" Class="mr-2" Size="Size.Small"/>
+                    @SelectedOption?.Title
+                </MudText>
+                <MudText Typo="Typo.body2" Class="text-white" Style="opacity: 0.9;">
+                    @SelectedOption?.Description
+                </MudText>
+            </div>
+            
+            <MudCardContent Class="pa-4">
+                <MudGrid Spacing="3">
+                    <MudItem xs="12" sm="6">
+                        <div class="d-flex align-items-start session-detail-item">
+                            <div class="session-detail-icon">
+                                <MudIcon Icon="@Icons.Material.Filled.Schedule" 
+                                       Color="Color.Primary" 
+                                       Size="Size.Medium"/>
+                            </div>
+                            <div>
+                                <MudText Typo="Typo.subtitle2" Class="font-weight-bold mud-text-primary mb-1">
+                                    Date & Time
+                                </MudText>
+                                <MudText Typo="Typo.body1" Class="font-weight-medium">
+                                    @SelectedDateTime
+                                </MudText>
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                    45 minutes session
+                                </MudText>
+                            </div>
+                        </div>
+                    </MudItem>
+
+                    <MudItem xs="12" sm="6">
+                        <div class="d-flex align-items-start session-detail-item">
+                            <div class="session-detail-icon">
+                                <MudIcon Icon="@(SelectedOption?.RequiresPurchase == true ? Icons.Material.Filled.AttachMoney : Icons.Material.Filled.Stars)" 
+                                       Color="Color.Primary" 
+                                       Size="Size.Medium"/>
+                            </div>
+                            <div>
+                                <MudText Typo="Typo.subtitle2" Class="font-weight-bold mud-text-primary mb-1">
+                                    Investment
+                                </MudText>
+                                <MudText Typo="Typo.h6" Class="font-weight-bold" 
+                                       Color="@(SelectedOption?.RequiresPurchase == true ? Color.Default : Color.Success)">
+                                    @(SelectedOption?.RequiresPurchase == true ? 
+                                      FormatPrice(SelectedOption.PriceConverted ?? 0, SelectedOption.Currency) : 
+                                      "Included")
+                                </MudText>
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                    @(SelectedOption?.RequiresPurchase == true ? "Secure payment via Stripe" : "Using available sessions")
+                                </MudText>
+                            </div>
+                        </div>
+                    </MudItem>
+                </MudGrid>
+
+                @if (SelectedOption?.RequiresPurchase == true)
+                {
+                    <MudDivider Class="my-3"/>
+                    <div class="d-flex align-items-center pa-2 security-badge" style="background-color: var(--mud-palette-background-grey); border-radius: 8px;">
+                        <MudIcon Icon="@Icons.Material.Filled.Security" Color="Color.Success" Class="mr-2"/>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                            Your payment is secured by Stripe's industry-leading encryption
+                        </MudText>
+                    </div>
+                }
+            </MudCardContent>
+        </MudCard>
+
+        <!-- Additional Information -->
+        <MudPaper Class="pa-3 rounded-lg info-panel" Elevation="1" Style="background-color: var(--mud-palette-background-grey);">
+            <div class="d-flex align-items-start">
+                <MudIcon Icon="@Icons.Material.Filled.Info" Color="Color.Info" Class="mr-2 mt-1" Size="Size.Small"/>
+                <div>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                        <strong>What's Next:</strong> 
+                        @if (SelectedOption?.RequiresPurchase == true)
+                        {
+                            <text>Complete your secure payment, and you'll receive a confirmation email with session details and video call link.</text>
+                        }
+                        else
+                        {
+                            <text>Your session will be confirmed immediately, and you'll receive an email with the video call link.</text>
+                        }
+                    </MudText>
+                </div>
+            </div>
         </MudPaper>
     </MudStack>
 </DialogContent>
 
 <DialogActions>
-    <MudButton OnClick="@Close" Color="Color.Default" Variant="Variant.Text">
+    <MudButton OnClick="@Close" 
+               Color="Color.Default" 
+               Variant="Variant.Text"
+               StartIcon="@Icons.Material.Filled.ArrowBack"
+               Class="mr-2 cancel-button">
         Cancel
     </MudButton>
-    <MudButton Class="mr-4" OnClick="@OnConfirmClicked" Color="Color.Primary" Variant="Variant.Filled">
-        @(SelectedOption?.RequiresPurchase == true ? "Continue to Payment" : "Continue without Payment")
+    <MudButton OnClick="@OnConfirmClicked" 
+               Color="Color.Primary" 
+               Variant="Variant.Filled"
+               StartIcon="@(SelectedOption?.RequiresPurchase == true ? Icons.Material.Filled.Payment : Icons.Material.Filled.CheckCircle)"
+               Size="Size.Large"
+               Class="px-6 primary-action-button">
+        @(SelectedOption?.RequiresPurchase == true ? "Continue to Payment" : "Confirm Booking")
     </MudButton>
 </DialogActions>
 </MudDialog>
@@ -45,16 +153,24 @@
     private void OnConfirmClicked() => MudDialog.Close(DialogResult.Ok(true));
     private void Close() => MudDialog.Close(DialogResult.Cancel());
 
+    private string GetSessionIcon()
+    {
+        // You can enhance this based on session types or option titles
+        return SelectedOption?.RequiresPurchase == true 
+            ? Icons.Material.Filled.Payment 
+            : Icons.Material.Filled.Event;
+    }
+
     private string FormatPrice(decimal price, string currency)
     {
         var cultureMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-{
-{ "GBP", "en-GB" }, { "EUR", "fr-FR" }, { "USD", "en-US" }, { "JPY", "ja-JP" },
-{ "CAD", "en-CA" }, { "AUD", "en-AU" }, { "BRL", "pt-BR" }, { "MXN", "es-MX" },
-{ "CNY", "zh-CN" }, { "HKD", "zh-HK" }, { "SGD", "en-SG" }, { "MYR", "ms-MY" },
-{ "THB", "th-TH" }, { "IDR", "id-ID" }, { "PHP", "fil-PH" }, { "AED", "ar-AE" },
-{ "SAR", "ar-SA" }, { "INR", "hi-IN" }, { "ZAR", "en-ZA" }, { "NGN", "en-NG" }
-};
+        {
+            { "GBP", "en-GB" }, { "EUR", "fr-FR" }, { "USD", "en-US" }, { "JPY", "ja-JP" },
+            { "CAD", "en-CA" }, { "AUD", "en-AU" }, { "BRL", "pt-BR" }, { "MXN", "es-MX" },
+            { "CNY", "zh-CN" }, { "HKD", "zh-HK" }, { "SGD", "en-SG" }, { "MYR", "ms-MY" },
+            { "THB", "th-TH" }, { "IDR", "id-ID" }, { "PHP", "fil-PH" }, { "AED", "ar-AE" },
+            { "SAR", "ar-SA" }, { "INR", "hi-IN" }, { "ZAR", "en-ZA" }, { "NGN", "en-NG" }
+        };
 
         var culture = cultureMap.TryGetValue(currency, out var cultureCode) ? CultureInfo.GetCultureInfo(cultureCode) :
         CultureInfo.InvariantCulture;

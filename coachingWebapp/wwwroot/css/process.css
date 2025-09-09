@@ -1,4 +1,3 @@
-/* Process Page - Complete Styles */
 :root {
     --primary-orange: #ff6200;
     --primary-orange-hover: #e55a00;
@@ -18,14 +17,13 @@
     --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
-/* Base Page Styles */
 .process-page {
     min-height: 100vh;
     background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-    animation: fadeInUp 0.8s ease-out;
+    animation: process-fadeInUp 0.8s ease-out;
 }
 
-@keyframes fadeInUp {
+@keyframes process-fadeInUp {
     from {
         opacity: 0;
         transform: translateY(20px);
@@ -37,7 +35,7 @@
     }
 }
 
-@keyframes slideInUp {
+@keyframes process-slideInUp {
     from {
         opacity: 0;
         transform: translateY(30px);
@@ -49,7 +47,7 @@
     }
 }
 
-@keyframes slideInLeft {
+@keyframes process-slideInLeft {
     from {
         opacity: 0;
         transform: translateX(-30px);
@@ -61,7 +59,7 @@
     }
 }
 
-@keyframes slideInDown {
+@keyframes process-slideInDown {
     from {
         opacity: 0;
         transform: translateY(-30px);
@@ -73,14 +71,14 @@
     }
 }
 
-@keyframes fadeInSection {
+@keyframes process-fadeInSection {
     to {
         opacity: 1;
         transform: translateY(0);
     }
 }
 
-@keyframes float {
+@keyframes process-float {
 
     0%,
     100% {
@@ -96,7 +94,7 @@
     }
 }
 
-@keyframes ripple {
+@keyframes process-ripple {
     to {
         transform: scale(2);
         opacity: 0;
@@ -104,7 +102,7 @@
 }
 
 /* Hero Section */
-.hero-section {
+.process-page .hero-section {
     background: var(--gradient-primary);
     padding: 4rem 0;
     margin-bottom: 4rem;
@@ -112,7 +110,7 @@
     overflow: hidden;
 }
 
-.hero-section::before {
+.process-page .hero-section::before {
     content: '';
     position: absolute;
     top: 0;
@@ -124,7 +122,7 @@
     background-position: bottom;
 }
 
-.hero-content {
+.process-page .hero-content {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 2rem;
@@ -133,16 +131,16 @@
     z-index: 1;
 }
 
-.process-title {
+.process-page .process-title {
     font-size: 3.5rem;
     font-weight: 800;
     color: white;
     margin: 0 0 1rem 0;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    animation: slideInDown 0.8s ease-out 0.2s both;
+    animation: process-slideInDown 0.8s ease-out 0.2s both;
 }
 
-.process-title .highlight {
+.process-page .process-title .highlight {
     background: linear-gradient(135deg, #ffffff 0%, #fef3c7 100%);
     background-clip: text;
     -webkit-background-clip: text;
@@ -150,31 +148,31 @@
     position: relative;
 }
 
-.hero-subtitle {
+.process-page .hero-subtitle {
     font-size: 1.25rem;
     color: rgba(255, 255, 255, 0.9);
     max-width: 600px;
     margin: 0 auto 2rem auto;
     line-height: 1.6;
-    animation: slideInUp 0.8s ease-out 0.4s both;
+    animation: process-slideInUp 0.8s ease-out 0.4s both;
 }
 
 /* Main Content */
-.process-content {
+.process-page .process-content {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 2rem 4rem;
 }
 
-.content-section {
+.process-page .content-section {
     margin-bottom: 4rem;
     opacity: 0;
     transform: translateY(30px);
-    animation: fadeInSection 0.8s ease-out forwards;
+    animation: process-fadeInSection 0.8s ease-out forwards;
     animation-delay: var(--delay, 0s);
 }
 
-.section-card {
+.process-page .section-card {
     background: white;
     border-radius: 16px;
     padding: 2.5rem;
@@ -185,7 +183,7 @@
     overflow: hidden;
 }
 
-.section-card::before {
+.process-page .section-card::before {
     content: '';
     position: absolute;
     top: 0;
@@ -195,12 +193,12 @@
     background: var(--gradient-primary);
 }
 
-.section-card:hover {
+.process-page .section-card:hover {
     transform: translateY(-4px);
     box-shadow: var(--shadow-xl);
 }
 
-.section-title {
+.process-page .section-title {
     font-size: 2rem;
     font-weight: 700;
     color: var(--text-dark);
@@ -209,7 +207,7 @@
     gap: 1rem;
 }
 
-.section-icon {
+.process-page .section-icon {
     width: 48px;
     height: 48px;
     background: var(--gradient-primary);
@@ -221,19 +219,19 @@
     font-size: 1.2rem;
 }
 
-.section-text {
+.process-page .section-text {
     font-size: 1.1rem;
     line-height: 1.8;
     color: var(--text-light);
     margin-bottom: 1.5rem;
 }
 
-.section-text:last-child {
+.process-page .section-text:last-child {
     margin-bottom: 0;
 }
 
 /* Question Styles */
-.question-text {
+.process-page .question-text {
     font-style: italic;
     color: var(--primary-orange);
     font-weight: 500;
@@ -247,7 +245,7 @@
 }
 
 /* Methodology Section */
-.methodology-highlight {
+.process-page .methodology-highlight {
     background: var(--gradient-secondary);
     color: white;
     padding: 0.25rem 0.75rem;
@@ -258,7 +256,7 @@
     letter-spacing: 0.5px;
 }
 
-.methodology-logo {
+.process-page .methodology-logo {
     font-size: 2.5rem;
     font-weight: 900;
     color: var(--primary-orange);
@@ -269,14 +267,14 @@
 }
 
 /* Outcomes Grid */
-.outcomes-grid {
+.process-page .outcomes-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 1.5rem;
     margin: 2rem 0;
 }
 
-.outcome-card {
+.process-page .outcome-card {
     background: white;
     padding: 1.5rem;
     border-radius: 12px;
@@ -286,7 +284,7 @@
     overflow: hidden;
 }
 
-.outcome-card::before {
+.process-page .outcome-card::before {
     content: '';
     position: absolute;
     top: 0;
@@ -296,13 +294,13 @@
     background: var(--gradient-primary);
 }
 
-.outcome-card:hover {
+.process-page .outcome-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
     border-color: var(--primary-orange);
 }
 
-.outcome-icon {
+.process-page .outcome-icon {
     width: 40px;
     height: 40px;
     background: var(--primary-orange-light);
@@ -315,7 +313,7 @@
     font-size: 1.1rem;
 }
 
-.outcome-text {
+.process-page .outcome-text {
     font-size: 1rem;
     line-height: 1.6;
     color: var(--text-light);
@@ -323,21 +321,21 @@
 }
 
 /* Journey Steps */
-.journey-steps {
+.process-page .journey-steps {
     display: grid;
     gap: 2rem;
     margin: 3rem 0;
     position: relative;
 }
 
-.journey-step {
+.process-page .journey-step {
     display: flex;
     align-items: flex-start;
     gap: 1.5rem;
     position: relative;
 }
 
-.step-number {
+.process-page .step-number {
     width: 48px;
     height: 48px;
     background: var(--gradient-primary);
@@ -353,25 +351,25 @@
     z-index: 1;
 }
 
-.step-content {
+.process-page .step-content {
     flex: 1;
     padding-top: 0.5rem;
 }
 
-.step-title {
+.process-page .step-title {
     font-size: 1.3rem;
     font-weight: 600;
     color: var(--text-dark);
     margin: 0 0 0.5rem 0;
 }
 
-.step-description {
+.process-page .step-description {
     color: var(--text-light);
     line-height: 1.6;
     margin: 0;
 }
 
-.journey-step:not(:last-child)::after {
+.process-page .journey-step:not(:last-child)::after {
     content: '';
     position: absolute;
     left: 23px;
@@ -382,7 +380,7 @@
 }
 
 /* CTA Section */
-.cta-section {
+.process-page .cta-section {
     background: var(--gradient-primary);
     border-radius: 24px;
     padding: 3rem;
@@ -393,7 +391,7 @@
     margin-top: 4rem;
 }
 
-.cta-section::before {
+.process-page .cta-section::before {
     content: '';
     position: absolute;
     top: -50%;
@@ -402,22 +400,22 @@
     height: 200%;
     background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
     background-size: 20px 20px;
-    animation: float 20s ease-in-out infinite;
+    animation: process-float 20s ease-in-out infinite;
 }
 
-.cta-content {
+.process-page .cta-content {
     position: relative;
     z-index: 1;
 }
 
-.cta-title {
+.process-page .cta-title {
     font-size: 2.5rem;
     font-weight: 800;
     margin: 0 0 1rem 0;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.cta-text {
+.process-page .cta-text {
     font-size: 1.2rem;
     line-height: 1.6;
     margin: 0 0 2rem 0;
@@ -427,7 +425,7 @@
     margin-right: auto;
 }
 
-.cta-button {
+.process-page .cta-button {
     display: inline-flex;
     align-items: center;
     gap: 1rem;
@@ -444,7 +442,7 @@
     overflow: hidden;
 }
 
-.cta-button::before {
+.process-page .cta-button::before {
     content: '';
     position: absolute;
     top: 0;
@@ -455,27 +453,27 @@
     transition: left 0.5s;
 }
 
-.cta-button:hover::before {
+.process-page .cta-button:hover::before {
     left: 100%;
 }
 
-.cta-button:hover {
+.process-page .cta-button:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
     color: var(--primary-orange);
     text-decoration: none;
 }
 
-.cta-button i {
+.process-page .cta-button i {
     transition: transform 0.3s ease;
 }
 
-.cta-button:hover i {
+.process-page .cta-button:hover i {
     transform: translateX(4px);
 }
 
 /* Quote/Highlight Styles */
-.highlight-quote {
+.process-page .highlight-quote {
     background: var(--primary-orange-light);
     border-left: 4px solid var(--primary-orange);
     padding: 2rem;
@@ -488,7 +486,7 @@
     position: relative;
 }
 
-.highlight-quote::before {
+.process-page .highlight-quote::before {
     content: '"';
     font-size: 4rem;
     color: var(--primary-orange);
@@ -500,22 +498,22 @@
 }
 
 /* JavaScript-added styles */
-.ripple-effect {
+.process-page .ripple-effect {
     position: absolute;
     background: rgba(255, 255, 255, 0.3);
     border-radius: 50%;
     pointer-events: none;
     transform: scale(0);
-    animation: ripple 0.6s ease-out;
+    animation: process-ripple 0.6s ease-out;
     z-index: 1;
 }
 
-.animate-in {
-    animation: fadeInUp 0.8s ease-out forwards;
+.process-page .animate-in {
+    animation: process-fadeInUp 0.8s ease-out forwards;
 }
 
 /* Scroll Progress Indicator */
-#scroll-progress {
+.process-page #scroll-progress {
     position: fixed;
     top: 0;
     left: 0;
@@ -527,194 +525,155 @@
 }
 
 /* Accessibility */
-.cta-button:focus-visible {
+.process-page .cta-button:focus-visible {
     outline: 3px solid rgba(255, 98, 0, 0.5);
     outline-offset: 2px;
 }
 
-.outcome-card:focus-within {
+.process-page .outcome-card:focus-within {
     transform: translateY(-4px);
     box-shadow: var(--shadow-lg);
 }
 
 /* Responsive Design */
 @media (max-width: 1024px) {
-    .process-content {
+    .process-page .process-content {
         padding: 0 1.5rem 3rem;
     }
 
-    .section-card {
+    .process-page .section-card {
         padding: 2rem;
     }
 
-    .outcomes-grid {
+    .process-page .outcomes-grid {
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     }
 }
 
 @media (max-width: 768px) {
-    .hero-section {
+    .process-page .hero-section {
         padding: 3rem 0;
         margin-bottom: 3rem;
     }
 
-    .hero-content {
+    .process-page .hero-content {
         padding: 0 1rem;
     }
 
-    .process-title {
+    .process-page .process-title {
         font-size: 2.5rem;
     }
 
-    .hero-subtitle {
+    .process-page .hero-subtitle {
         font-size: 1.1rem;
     }
 
-    .process-content {
+    .process-page .process-content {
         padding: 0 1rem 2rem;
     }
 
-    .content-section {
+    .process-page .content-section {
         margin-bottom: 3rem;
     }
 
-    .section-card {
+    .process-page .section-card {
         padding: 1.5rem;
     }
 
-    .section-title {
+    .process-page .section-title {
         font-size: 1.5rem;
         flex-direction: column;
         text-align: center;
         gap: 0.5rem;
     }
 
-    .outcomes-grid {
+    .process-page .outcomes-grid {
         grid-template-columns: 1fr;
     }
 
-    .journey-step {
+    .process-page .journey-step {
         flex-direction: column;
         text-align: center;
         gap: 1rem;
     }
 
-    .journey-step::after {
+    .process-page .journey-step::after {
         display: none;
     }
 
-    .cta-section {
+    .process-page .cta-section {
         padding: 2rem 1rem;
         border-radius: 16px;
     }
 
-    .cta-title {
+    .process-page .cta-title {
         font-size: 2rem;
     }
 
-    .cta-text {
+    .process-page .cta-text {
         font-size: 1.1rem;
     }
 
-    .cta-button {
+    .process-page .cta-button {
         padding: 0.875rem 1.5rem;
         font-size: 1rem;
     }
 }
 
 @media (max-width: 480px) {
-    .process-title {
+    .process-page .process-title {
         font-size: 2rem;
     }
 
-    .section-card {
+    .process-page .section-card {
         padding: 1.25rem;
     }
 
-    .cta-title {
+    .process-page .cta-title {
         font-size: 1.75rem;
     }
 }
 
 /* Reduced Motion Support */
 @media (prefers-reduced-motion: reduce) {
-    * {
+    .process-page * {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
     }
 
-    .animate-in,
-    .outcome-card,
-    .journey-step,
-    .cta-button {
+    .process-page .animate-in,
+    .process-page .outcome-card,
+    .process-page .journey-step,
+    .process-page .cta-button {
         animation: none !important;
         transition: none !important;
     }
 }
 
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-    .section-card {
-        background: #1a1a1a;
-        border-color: #333;
-        color: #e9ecef;
-    }
-
-    .section-title {
-        color: #f8f9fa;
-    }
-
-    .section-text {
-        color: #adb5bd;
-    }
-
-    .outcome-card {
-        background: #1a1a1a;
-        border-color: #333;
-    }
-
-    .outcome-text {
-        color: #adb5bd;
-    }
-
-    .step-title {
-        color: #f8f9fa;
-    }
-
-    .step-description {
-        color: #adb5bd;
-    }
-
-    .highlight-quote {
-        background: #2a2a2a;
-        color: #e9ecef;
-    }
-}
-
 /* Print Styles */
 @media print {
-    .cta-section {
+    .process-page .cta-section {
         background: #f5f5f5 !important;
         color: black !important;
     }
 
-    .cta-button {
+    .process-page .cta-button {
         background: white !important;
         border: 2px solid #333 !important;
         color: black !important;
     }
 
-    .hero-section {
+    .process-page .hero-section {
         background: #f5f5f5 !important;
         color: black !important;
     }
 
-    .process-title {
+    .process-page .process-title {
         color: black !important;
     }
 
-    .hero-subtitle {
+    .process-page .hero-subtitle {
         color: #333 !important;
     }
 }

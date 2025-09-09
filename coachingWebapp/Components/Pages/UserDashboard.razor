@@ -1587,9 +1587,11 @@
                 return;
             }
 
-            selectedSlotString = TimeZoneInfo.ConvertTimeFromUtc(utcDate, userTimeZoneInfo).ToString("dd MMM yyyy - HH:mm");
+            selectedSlotString = TimeZoneInfo.ConvertTimeFromUtc(utcDate, userTimeZoneInfo).ToString("dd MMM yyyy - HH:mm", CultureInfo.InvariantCulture);
             requestModel.PreferredDateTime = utcDate;
             requestModel.PreferredDateTimeString = isoString;
+
+            await LogService.LogInfo("HandleSlotSelected", $"Generated selectedSlotString: '{selectedSlotString}' from UTC date: {utcDate:yyyy-MM-dd HH:mm:ss.fff}");
 
             var sessionPrice = await SessionPriceService.GetPriceForSessionTypeAsync(requestModel.SessionCategory);
             var singleSessionOption = BookingOptions.FirstOrDefault(o => o.Type == BookingType.SingleSession);
@@ -1665,8 +1667,10 @@
         { 
             CloseButton = true,
             CloseOnEscapeKey = true, 
-            MaxWidth = MaxWidth.Small, 
-            FullWidth = true
+            MaxWidth = MaxWidth.Medium, 
+            FullWidth = true,
+            Position = DialogPosition.Center,
+            BackdropClick = false
         };
 
         var dialog = await DialogService.ShowAsync<BookingConfirmationDialog>("Confirm Booking", parameters, options);
@@ -1692,16 +1696,54 @@
 
         try
         {
-            var baseUrl = Configuration["AppSettings:BaseUrl"];
-            string format = "dd MMM yyyy - HH:mm";
-            if (!DateTime.TryParseExact(selectedSlotString, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out var scheduledAtLocal))
+            await LogService.LogInfo("SubmitSessionRequest", "Starting session request submission");
+            
+            // Validate required services and dependencies
+            if (HttpClient == null)
             {
-                await LogService.LogError("SubmitSessionRequest", $"Failed to parse date: {selectedSlotString}");
-                Snackbar.Add("Invalid date format. Please select a valid time slot.", Severity.Error);
+                await LogService.LogError("SubmitSessionRequest", "HttpClient is null");
+                Snackbar.Add("Service configuration error. Please refresh the page and try again.", Severity.Error);
                 return;
             }
 
-            var scheduledAtUtc = TimeZoneInfo.ConvertTimeToUtc(scheduledAtLocal, TimeZoneInfo.FindSystemTimeZoneById(userTimeZone));
+            if (SelectedOption == null)
+            {
+                await LogService.LogError("SubmitSessionRequest", "SelectedOption is null");
+                Snackbar.Add("Please select a booking option before proceeding.", Severity.Error);
+                return;
+            }
+
+            var baseUrl = Configuration["AppSettings:BaseUrl"];
+            await LogService.LogInfo("SubmitSessionRequest", $"BaseUrl from configuration: '{baseUrl ?? "null"}'");
+            
+            // Use relative URL if baseUrl is not configured
+            var apiEndpoint = string.IsNullOrEmpty(baseUrl) ? "/api/payments/create-checkout-session" : $"{baseUrl}/api/payments/create-checkout-session";
+            await LogService.LogInfo("SubmitSessionRequest", $"API endpoint: '{apiEndpoint}'");
+            
+            // Use the already-parsed DateTime from HandleSlotSelected instead of parsing the formatted string
+            if (requestModel.PreferredDateTime == default)
+            {
+                await LogService.LogError("SubmitSessionRequest", "No preferred date time was set in requestModel");
+                Snackbar.Add("Please select a time slot before proceeding.", Severity.Error);
+                return;
+            }
+
+            var scheduledAtUtc = requestModel.PreferredDateTime;
+            await LogService.LogInfo("SubmitSessionRequest", $"Using requestModel.PreferredDateTime: {scheduledAtUtc:yyyy-MM-dd HH:mm:ss} UTC");
+            
+            // Convert to local time for display purposes only
+            var userTimeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById(userTimeZone);
+            var scheduledAtLocal = TimeZoneInfo.ConvertTimeFromUtc(scheduledAtUtc, userTimeZoneInfo);
+
+            await LogService.LogInfo("SubmitSessionRequest", $"Successfully using scheduled date: {scheduledAtLocal:yyyy-MM-dd HH:mm:ss} local time");
+
+            // Validate user authentication
+            if (string.IsNullOrEmpty(userId))
+            {
+                await LogService.LogError("SubmitSessionRequest", "UserId is null or empty");
+                Snackbar.Add("User authentication error. Please login and try again.", Severity.Error);
+                return;
+            }
 
             var user = await UserManager.FindByEmailAsync(userId);
             if (user == null)
@@ -1781,25 +1823,75 @@
                     
                     try
                     {
-                        var response = await HttpClient.PostAsJsonAsync($"{baseUrl}/api/payments/create-checkout-session", checkoutRequest);
+                        // Set a timeout for the HTTP request to prevent long waits
+                        using var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+                        
+                        var response = await HttpClient.PostAsJsonAsync(apiEndpoint, checkoutRequest, cancellationTokenSource.Token);
+                        await LogService.LogInfo("SubmitSessionRequest", $"HTTP Response Status: {response.StatusCode}");
+                        
                         if (response.IsSuccessStatusCode)
                         {
-                            var data = await response.Content.ReadFromJsonAsync<ModelLayer.Models.DTOs.StripeResponse>();
-                            pendingNavigationUrl = data.Url;
-                            NavigationManager.NavigateTo(data.Url, forceLoad: true);
+                            var data = await response.Content.ReadFromJsonAsync<ModelLayer.Models.DTOs.StripeResponse>(cancellationToken: cancellationTokenSource.Token);
+                            if (data != null && !string.IsNullOrEmpty(data.Url))
+                            {
+                                await LogService.LogInfo("SubmitSessionRequest", $"Stripe checkout URL received: {data.Url}");
+                                pendingNavigationUrl = data.Url;
+                                NavigationManager.NavigateTo(data.Url, forceLoad: true);
+                            }
+                            else
+                            {
+                                await LogService.LogError("SubmitSessionRequest", "Stripe response was null or missing URL");
+                                Snackbar.Add("Failed to initiate payment. Please try again.", Severity.Error);
+                                if (createdSession.Id != 0)
+                                {
+                                    SessionService.DeleteSession(createdSession.Id);
+                                }
+                            }
                         }
                         else
                         {
                             var errorContent = await response.Content.ReadAsStringAsync();
                             await LogService.LogError("SubmitSessionRequest", 
                                 $"Checkout failed. Status: {response.StatusCode}, Error: {errorContent}, SessionId: {createdSession.Id}");
-                            Snackbar.Add("Failed to initiate payment. Please try again.", Severity.Error);
+                                
+                            // Check if this was a timeout error
+                            if (response.StatusCode == System.Net.HttpStatusCode.RequestTimeout)
+                            {
+                                Snackbar.Add("Request timed out. Please check your connection and try again.", Severity.Error);
+                            }
+                            else
+                            {
+                                Snackbar.Add("Failed to initiate payment. Please try again.", Severity.Error);
+                            }
+                            
                             if (createdSession.Id != 0)
                             {
                                 SessionService.DeleteSession(createdSession.Id);
                                 await LogService.LogInfo("SubmitSessionRequest", 
                                     $"Deleted session with Id: {createdSession.Id} due to checkout failure");
                             }
+                        }
+                    }
+                    catch (HttpRequestException httpEx)
+                    {
+                        await LogService.LogError("SubmitSessionRequest HttpRequestException", 
+                            $"HTTP request failed for SessionId: {createdSession.Id}. Error: {httpEx.Message}, StackTrace: {httpEx.StackTrace}");
+                        Snackbar.Add("An error occurred while contacting the payment service.", Severity.Error);
+                        if (createdSession.Id != 0)
+                        {
+                            SessionService.DeleteSession(createdSession.Id);
+                            await LogService.LogInfo("SubmitSessionRequest", 
+                                $"Deleted session with Id: {createdSession.Id} due to HTTP error");
+                        }
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        await LogService.LogError("SubmitSessionRequest Timeout", 
+                            $"Request timed out for SessionId: {createdSession.Id}");
+                        Snackbar.Add("Request timed out. Please check your connection and try again.", Severity.Error);
+                        if (createdSession.Id != 0)
+                        {
+                            SessionService.DeleteSession(createdSession.Id);
                         }
                     }
                     catch (Exception ex)
