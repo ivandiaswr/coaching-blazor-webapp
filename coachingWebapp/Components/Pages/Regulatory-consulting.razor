@@ -10,23 +10,68 @@
 
 <PageTitle>@pageTitle</PageTitle>
 
-<div class="life-coaching-container">
-    <h1><span class="highlight">Food Regulatory Affairs</span> Consulting</h1>
-    <p>Get food regulatory advice & guidance to food businesses throughout the whole supply chain. Assisting you to
-        place legally compliant and commercially viable products (both online and in stores) onto the UK and the
-        European markets. A range from small to multinational food businesses and include manufacturers, wholesalers,
-        retailers and distributors, as clients. Explore the areas below:</p>
+<link href="~/css/services.css" rel="stylesheet" />
 
-    <div class="slider-container">
-        <div class="topics-grid" @ref="topicsGrid">
+<div class="enhanced-service-container">
+    <!-- Hero Section -->
+    <div class="enhanced-hero-section">
+        <div class="enhanced-hero-badge">
+            <i class="fas fa-shield-alt"></i>
+            <span>Expert Compliance</span>
+        </div>
+        <h1><span class="highlight">Food Regulatory Affairs</span> Consulting</h1>
+        <p class="enhanced-service-description">
+            Navigate complex food regulations with confidence. Get expert regulatory guidance to ensure your products 
+            meet UK and EU compliance standards while maximizing market opportunities across the supply chain.
+        </p>
+    </div>
+
+    <!-- Service Highlights -->
+    <div class="enhanced-service-highlights">
+        <div class="enhanced-highlight-item">
+            <div class="enhanced-highlight-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h4>Full Compliance</h4>
+            <p>Ensure complete adherence to UK and EU food safety regulations</p>
+        </div>
+        <div class="enhanced-highlight-item">
+            <div class="enhanced-highlight-icon">
+                <i class="fas fa-globe"></i>
+            </div>
+            <h4>Market Access</h4>
+            <p>Unlock opportunities across UK and European markets with confidence</p>
+        </div>
+        <div class="enhanced-highlight-item">
+            <div class="enhanced-highlight-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <h4>Expert Guidance</h4>
+            <p>Benefit from specialized knowledge across the entire food supply chain</p>
+        </div>
+    </div>
+
+    <!-- Enhanced Topics Grid -->
+    <div class="enhanced-topics-container">
+        <div class="enhanced-topics-grid" @ref="topicsGrid">
             @foreach (var topic in Topics)
             {
-                <div class="topic-card">
-                    <div class="image-wrapper">
+                <div class="enhanced-topic-card" tabindex="0">
+                    <div class="enhanced-image-wrapper">
                         <img src="@topic.ImageUrl" alt="@topic.AltText" loading="lazy" decoding="async"
-                            onload="this.style.opacity=1" style="opacity:0;transition:opacity 0.3s;">
-                        <div class="image-title">
+                            onload="this.style.opacity=1" style="opacity:0;transition:opacity 0.3s;" />
+                        <div class="enhanced-image-title">
                             <h3>@topic.Title</h3>
+                        </div>
+                    </div>
+                    <div class="enhanced-content-overlay">
+                        <div class="enhanced-overlay-content">
+                            <h4>@topic.Title</h4>
+                            <p>@GetTopicDescription(topic.Id)</p>
+                            <a href="#contact" class="enhanced-learn-more-btn">
+                                <span>Learn More</span>
+                                <i class="fas fa-arrow-right"></i>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -34,16 +79,17 @@
         </div>
     </div>
 
-    <div class="cta-section">
-        <div class="cta-content">
-            <h2>Ready to Transform Your Future?</h2>
-            <p>Schedule a free consultation call to discuss your goals</p>
+    <!-- Enhanced CTA Section -->
+    <div class="enhanced-cta-section">
+        <div class="enhanced-cta-content">
+            <h2>Ready to Ensure Compliance?</h2>
+            <p>Get expert regulatory guidance to bring your products to market safely and successfully</p>
         </div>
-        <a href="#contact" class="services-cta-button" @onclick:preventDefault>
-            <span class="cta-icon"><i class="fas fa-calendar-check"></i></span>
-            <span class="cta-text">
-                <span class="primary-text">Book Your Free Discovery Call</span>
-                <span class="secondary-text">30 minutes, zero obligation</span>
+        <a href="#contact" class="enhanced-services-cta-button" @onclick:preventDefault>
+            <span class="enhanced-cta-icon"><i class="fas fa-calendar-check"></i></span>
+            <span class="enhanced-cta-text">
+                <span class="enhanced-primary-text">Book Your Compliance Consultation</span>
+                <span class="enhanced-secondary-text">30 minutes • Zero obligation • Expert regulatory insights</span>
             </span>
             <i class="fas fa-arrow-right"></i>
         </a>
@@ -115,6 +161,22 @@ Title = "Food Regulatory Label Translation Services (EN-PT, PT-EN, BR-EN)",
 AltText = "Translating labels from English to Portuguese"
 }
 };
+    }
+
+    private string GetTopicDescription(int topicId)
+    {
+        return topicId switch
+        {
+            1 => "Thorough analysis of product formulations to ensure complete compliance with UK and EU food safety regulations.",
+            2 => "Expert pack copy creation and review services covering all regional requirements for accurate food labeling.",
+            3 => "Professional artwork and label reviews to guarantee regulatory compliance before market launch.",
+            4 => "Clear interpretation of complex food regulations with practical implementation guidance for your business.",
+            5 => "Navigate HFSS (High in Fat, Salt, Sugar) regulations with expert compliance strategies and solutions.",
+            6 => "Comprehensive support for international food trade ensuring smooth import/export regulatory compliance.",
+            7 => "Audit marketing materials for regulatory compliance across print and digital channels to avoid costly mistakes.",
+            8 => "Professional translation services for food regulatory labels between English, Portuguese, and Brazilian Portuguese.",
+            _ => "Expert regulatory guidance tailored to your specific food business compliance needs."
+        };
     }
 
     public ValueTask DisposeAsync()

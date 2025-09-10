@@ -1,31 +1,183 @@
-<MudDialog>
+<MudDialog Class="subscription-cancellation-dialog" MaxWidth="MaxWidth.Small">
     <TitleContent>
-        <MudText Typo="Typo.h6">
-            Confirm Subscription Cancellation
-        </MudText>
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="dialog-title-content">
+            <MudIcon Icon="Icons.Material.Filled.Warning" Color="Color.Warning" Size="Size.Medium" />
+            <MudText Typo="Typo.h5" Class="dialog-title">
+                Cancel Your Subscription?
+            </MudText>
+        </MudStack>
     </TitleContent>
     <DialogContent>
-        <MudText>
-            Are you sure you want to cancel your subscription? You will retain access to your remaining sessions (@RemainingSessions session(s)) until the end of the current billing period.
-        </MudText>
-        <MudText Class="mt-2" Color="Color.Warning">
-            After cancellation, you will no longer be charged, and your subscription will not renew.
-        </MudText>
+        <MudStack Spacing="3" Class="dialog-content">
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="retention-info">
+                <MudText Typo="Typo.body1">
+                    <strong>You'll keep your current benefits:</strong>
+                </MudText>
+                <MudList T="string" Dense="true" Class="mt-2">
+                    <MudListItem T="string" Icon="Icons.Material.Filled.CheckCircle" IconColor="Color.Success">
+                        <MudText>Access to @RemainingSessions remaining session@(RemainingSessions != 1 ? "s" : "")</MudText>
+                    </MudListItem>
+                    <MudListItem T="string" Icon="Icons.Material.Filled.CheckCircle" IconColor="Color.Success">
+                        <MudText>Full access until your current billing period ends</MudText>
+                    </MudListItem>
+                    <MudListItem T="string" Icon="Icons.Material.Filled.CheckCircle" IconColor="Color.Success">
+                        <MudText>All coaching materials and resources</MudText>
+                    </MudListItem>
+                </MudList>
+            </MudAlert>
+
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="cancellation-warning">
+                <MudText Typo="Typo.body1">
+                    <strong>After cancellation:</strong>
+                </MudText>
+                <MudList T="string" Dense="true" Class="mt-2">
+                    <MudListItem T="string" Icon="Icons.Material.Filled.Cancel" IconColor="Color.Error">
+                        <MudText>No future charges will be made</MudText>
+                    </MudListItem>
+                    <MudListItem T="string" Icon="Icons.Material.Filled.Cancel" IconColor="Color.Error">
+                        <MudText>Your subscription will not auto-renew</MudText>
+                    </MudListItem>
+                    <MudListItem T="string" Icon="Icons.Material.Filled.Cancel" IconColor="Color.Error">
+                        <MudText>You'll lose access when your current period expires</MudText>
+                    </MudListItem>
+                </MudList>
+            </MudAlert>
+
+            <MudDivider />
+
+            <div class="alternative-options">
+                <MudText Typo="Typo.subtitle1" Class="mb-2" Style="font-weight: 600;">
+                    Before you go, consider these alternatives:
+                </MudText>
+                <MudStack Spacing="2">
+                    <MudButton Variant="Variant.Outlined" 
+                             Color="Color.Primary" 
+                             StartIcon="Icons.Material.Filled.Pause"
+                             FullWidth="true"
+                             Class="alternative-btn"
+                             OnClick="PauseSubscription">
+                        Pause my subscription instead
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" 
+                             Color="Color.Primary" 
+                             StartIcon="Icons.Material.Filled.Schedule"
+                             FullWidth="true"
+                             Class="alternative-btn"
+                             OnClick="ChangeSchedule">
+                        Change my session schedule
+                    </MudButton>
+                    <MudButton Variant="Variant.Outlined" 
+                             Color="Color.Primary" 
+                             StartIcon="Icons.Material.Filled.Email"
+                             FullWidth="true"
+                             Class="alternative-btn"
+                             OnClick="ContactSupport">
+                        Talk to our support team
+                    </MudButton>
+                </MudStack>
+            </div>
+        </MudStack>
     </DialogContent>
     <DialogActions>
-        <MudButton OnClick="Close" Variant="Variant.Text" Color="Color.Success">
-            Keep Subscription
-        </MudButton>
-        <MudButton OnClick="Submit" Variant="Variant.Filled" Color="Color.Error">
-            Cancel Subscription
-        </MudButton>
+        <div class="dialog-actions">
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Style="width: 100%;">
+                <MudButton OnClick="Close" 
+                         Variant="Variant.Filled" 
+                         Color="Color.Success"
+                         StartIcon="Icons.Material.Filled.Favorite"
+                         Size="Size.Large"
+                         Class="keep-subscription-btn">
+                    Keep My Subscription
+                </MudButton>
+                <MudButton OnClick="ShowFinalConfirmation" 
+                         Variant="Variant.Outlined" 
+                         Color="Color.Error"
+                         StartIcon="Icons.Material.Filled.Cancel"
+                         Size="Size.Large"
+                         Class="cancel-subscription-btn">
+                    I Still Want to Cancel
+                </MudButton>
+            </MudStack>
+        </div>
     </DialogActions>
 </MudDialog>
+
+<!-- Final Confirmation Dialog -->
+@if (showFinalConfirmation)
+{
+    <MudDialog @bind-IsVisible="showFinalConfirmation" MaxWidth="MaxWidth.ExtraSmall">
+        <TitleContent>
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudIcon Icon="Icons.Material.Filled.ErrorOutline" Color="Color.Error" Size="Size.Medium" />
+                <MudText Typo="Typo.h6" Style="color: #d32f2f;">
+                    Final Confirmation
+                </MudText>
+            </MudStack>
+        </TitleContent>
+        <DialogContent>
+            <MudText Typo="Typo.body1" Align="Align.Center" Class="mb-3">
+                Are you absolutely sure you want to cancel?
+            </MudText>
+            <MudText Typo="Typo.body2" Align="Align.Center" Color="Color.Error">
+                This action cannot be undone.
+            </MudText>
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="CancelFinalConfirmation" Variant="Variant.Text" Color="Color.Primary">
+                Go Back
+            </MudButton>
+            <MudButton OnClick="ConfirmCancellation" Variant="Variant.Filled" Color="Color.Error">
+                Yes, Cancel My Subscription
+            </MudButton>
+        </DialogActions>
+    </MudDialog>
+}
 
 @code {
     [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
     [Parameter] public int RemainingSessions { get; set; }
+    [Parameter] public EventCallback OnPauseRequested { get; set; }
+    [Parameter] public EventCallback OnScheduleChangeRequested { get; set; }
+    [Parameter] public EventCallback OnSupportContactRequested { get; set; }
+
+    private bool showFinalConfirmation = false;
 
     private void Submit() => MudDialog.Close(DialogResult.Ok(true));
     private void Close() => MudDialog.Close(DialogResult.Cancel());
+
+    private void ShowFinalConfirmation()
+    {
+        showFinalConfirmation = true;
+        StateHasChanged();
+    }
+
+    private void CancelFinalConfirmation()
+    {
+        showFinalConfirmation = false;
+        StateHasChanged();
+    }
+
+    private void ConfirmCancellation()
+    {
+        showFinalConfirmation = false;
+        Submit();
+    }
+
+    private async Task PauseSubscription()
+    {
+        await OnPauseRequested.InvokeAsync();
+        MudDialog.Close(DialogResult.Cancel());
+    }
+
+    private async Task ChangeSchedule()
+    {
+        await OnScheduleChangeRequested.InvokeAsync();
+        MudDialog.Close(DialogResult.Cancel());
+    }
+
+    private async Task ContactSupport()
+    {
+        await OnSupportContactRequested.InvokeAsync();
+        MudDialog.Close(DialogResult.Cancel());
+    }
 }

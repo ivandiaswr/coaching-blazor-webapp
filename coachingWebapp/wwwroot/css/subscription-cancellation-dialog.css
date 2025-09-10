@@ -1,0 +1,203 @@
+/* Subscription Cancellation Dialog Styles */
+.subscription-cancellation-dialog {
+    --primary-orange: #ff6b35;
+    --primary-orange-hover: #e55a00;
+    --success-green: #10b981;
+    --success-light: #d1fae5;
+    --error-red: #ef4444;
+    --error-light: #fee2e2;
+    --warning-yellow: #f59e0b;
+    --warning-light: #fef3c7;
+    --info-blue: #3b82f6;
+    --info-light: #dbeafe;
+    --text-dark: #1e293b;
+    --text-light: #64748b;
+    --border-gray: #e2e8f0;
+}
+
+.subscription-cancellation-dialog .dialog-title-content {
+    padding: 0.5rem 0;
+}
+
+.subscription-cancellation-dialog .dialog-title {
+    color: var(--text-dark) !important;
+    font-weight: 600 !important;
+    margin: 0 !important;
+}
+
+.subscription-cancellation-dialog .dialog-content {
+    padding: 1rem 0;
+    min-width: 400px;
+}
+
+.subscription-cancellation-dialog .retention-info {
+    background: var(--info-light) !important;
+    border-color: var(--info-blue) !important;
+}
+
+.subscription-cancellation-dialog .retention-info .mud-alert-message {
+    color: var(--text-dark) !important;
+}
+
+.subscription-cancellation-dialog .cancellation-warning {
+    background: var(--warning-light) !important;
+    border-color: var(--warning-yellow) !important;
+}
+
+.subscription-cancellation-dialog .cancellation-warning .mud-alert-message {
+    color: var(--text-dark) !important;
+}
+
+.subscription-cancellation-dialog .alternative-options {
+    background: rgba(255, 255, 255, 0.8);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-gray);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.subscription-cancellation-dialog .alternative-btn {
+    background: white !important;
+    border-color: var(--primary-orange) !important;
+    color: var(--primary-orange) !important;
+    font-weight: 500 !important;
+    padding: 0.75rem 1rem !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+    text-align: left !important;
+    justify-content: flex-start !important;
+}
+
+.subscription-cancellation-dialog .alternative-btn:hover {
+    background: var(--primary-orange) !important;
+    color: white !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.2) !important;
+}
+
+.subscription-cancellation-dialog .dialog-actions {
+    padding: 1.5rem 0 0 0 !important;
+    border-top: 1px solid var(--border-gray);
+}
+
+.subscription-cancellation-dialog .keep-subscription-btn {
+    background: linear-gradient(135deg, var(--success-green) 0%, #059669 100%) !important;
+    color: white !important;
+    font-weight: 600 !important;
+    padding: 0.875rem 2rem !important;
+    border-radius: 50px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+}
+
+.subscription-cancellation-dialog .keep-subscription-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4) !important;
+}
+
+.subscription-cancellation-dialog .cancel-subscription-btn {
+    background: transparent !important;
+    border-color: var(--error-red) !important;
+    color: var(--error-red) !important;
+    font-weight: 500 !important;
+    padding: 0.875rem 2rem !important;
+    border-radius: 50px !important;
+    border-width: 2px !important;
+    transition: all 0.3s ease !important;
+}
+
+.subscription-cancellation-dialog .cancel-subscription-btn:hover {
+    background: var(--error-red) !important;
+    color: white !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+}
+
+/* List styling improvements */
+.subscription-cancellation-dialog .mud-list-item {
+    padding: 0.25rem 0 !important;
+}
+
+.subscription-cancellation-dialog .mud-list-item .mud-list-item-text {
+    color: var(--text-dark) !important;
+    font-size: 0.875rem !important;
+    line-height: 1.4 !important;
+}
+
+.subscription-cancellation-dialog .mud-list-item .mud-list-item-icon {
+    min-width: 32px !important;
+    margin-right: 0.5rem !important;
+}
+
+/* Final confirmation dialog styles */
+.subscription-cancellation-dialog .mud-dialog-content {
+    text-align: center;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .subscription-cancellation-dialog .dialog-content {
+        min-width: unset;
+        width: 100%;
+    }
+    
+    .subscription-cancellation-dialog .dialog-actions .mud-stack-row {
+        flex-direction: column !important;
+        gap: 1rem !important;
+    }
+    
+    .subscription-cancellation-dialog .keep-subscription-btn,
+    .subscription-cancellation-dialog .cancel-subscription-btn {
+        width: 100% !important;
+        padding: 1rem 2rem !important;
+    }
+    
+    .subscription-cancellation-dialog .alternative-options {
+        padding: 1rem;
+    }
+}
+
+/* Animation for smooth transitions */
+.subscription-cancellation-dialog .mud-dialog {
+    animation: dialogSlideIn 0.3s ease-out;
+}
+
+@keyframes dialogSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Accessibility improvements */
+.subscription-cancellation-dialog .keep-subscription-btn:focus,
+.subscription-cancellation-dialog .cancel-subscription-btn:focus,
+.subscription-cancellation-dialog .alternative-btn:focus {
+    outline: 2px solid var(--primary-orange);
+    outline-offset: 2px;
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .subscription-cancellation-dialog .retention-info,
+    .subscription-cancellation-dialog .cancellation-warning {
+        border-width: 2px !important;
+    }
+    
+    .subscription-cancellation-dialog .alternative-options {
+        border-width: 2px !important;
+        border-color: var(--text-dark) !important;
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .subscription-cancellation-dialog * {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}

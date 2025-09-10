@@ -10,21 +10,68 @@
 
 <PageTitle>@pageTitle</PageTitle>
 
-<div class="life-coaching-container">
-    <h1><span class="highlight">Food Regulatory Affairs</span> Training</h1>
-    <p>Start living a purpose-driven life and unlock your potential with guidance tailored to you. Explore the areas
-        below:</p>
+<link href="~/css/services.css" rel="stylesheet" />
 
-    <div class="slider-container noslider">
-        <div class="topics-grid">
+<div class="enhanced-service-container">
+    <!-- Hero Section -->
+    <div class="enhanced-hero-section">
+        <div class="enhanced-hero-badge">
+            <i class="fas fa-graduation-cap"></i>
+            <span>Professional Training</span>
+        </div>
+        <h1><span class="highlight">Food Regulatory Affairs</span> Training</h1>
+        <p class="enhanced-service-description">
+            Empower your team with comprehensive food regulatory training. Build in-house expertise in labelling compliance, 
+            nutrition claims, and regulatory best practices to ensure consistent compliance and reduce risks.
+        </p>
+    </div>
+
+    <!-- Service Highlights -->
+    <div class="enhanced-service-highlights">
+        <div class="enhanced-highlight-item">
+            <div class="enhanced-highlight-icon">
+                <i class="fas fa-book"></i>
+            </div>
+            <h4>Expert Knowledge</h4>
+            <p>Learn from industry specialists with real-world regulatory experience</p>
+        </div>
+        <div class="enhanced-highlight-item">
+            <div class="enhanced-highlight-icon">
+                <i class="fas fa-users-cog"></i>
+            </div>
+            <h4>Team Development</h4>
+            <p>Build internal capabilities to manage regulatory compliance effectively</p>
+        </div>
+        <div class="enhanced-highlight-item">
+            <div class="enhanced-highlight-icon">
+                <i class="fas fa-certificate"></i>
+            </div>
+            <h4>Practical Skills</h4>
+            <p>Gain hands-on experience with current regulations and best practices</p>
+        </div>
+    </div>
+
+    <!-- Enhanced Topics Grid -->
+    <div class="enhanced-topics-container">
+        <div class="enhanced-topics-grid noslider">
             @foreach (var topic in Topics)
             {
-                <div class="topic-card">
-                    <div class="image-wrapper">
+                <div class="enhanced-topic-card" tabindex="0">
+                    <div class="enhanced-image-wrapper">
                         <img src="@topic.ImageUrl" alt="@topic.AltText" loading="lazy" decoding="async"
-                            onload="this.style.opacity=1" style="opacity:0;transition:opacity 0.3s;">
-                        <div class="image-title">
+                            onload="this.style.opacity=1" style="opacity:0;transition:opacity 0.3s;" />
+                        <div class="enhanced-image-title">
                             <h3>@topic.Title</h3>
+                        </div>
+                    </div>
+                    <div class="enhanced-content-overlay">
+                        <div class="enhanced-overlay-content">
+                            <h4>@topic.Title</h4>
+                            <p>@GetTopicDescription(topic.Id)</p>
+                            <a href="#contact" class="enhanced-learn-more-btn">
+                                <span>Learn More</span>
+                                <i class="fas fa-arrow-right"></i>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -32,16 +79,17 @@
         </div>
     </div>
 
-    <div class="cta-section">
-        <div class="cta-content">
-            <h2>Ready to Transform Your Future?</h2>
-            <p>Schedule a free consultation call to discuss your goals</p>
+    <!-- Enhanced CTA Section -->
+    <div class="enhanced-cta-section">
+        <div class="enhanced-cta-content">
+            <h2>Ready to Build Expertise?</h2>
+            <p>Invest in your team's regulatory knowledge and ensure consistent compliance standards</p>
         </div>
-        <a href="#contact" class="services-cta-button" @onclick:preventDefault>
-            <span class="cta-icon"><i class="fas fa-calendar-check"></i></span>
-            <span class="cta-text">
-                <span class="primary-text">Book Your Free Discovery Call</span>
-                <span class="secondary-text">30 minutes, zero obligation</span>
+        <a href="#contact" class="enhanced-services-cta-button" @onclick:preventDefault>
+            <span class="enhanced-cta-icon"><i class="fas fa-calendar-check"></i></span>
+            <span class="enhanced-cta-text">
+                <span class="enhanced-primary-text">Book Your Training Consultation</span>
+                <span class="enhanced-secondary-text">30 minutes • Zero obligation • Customized training solutions</span>
             </span>
             <i class="fas fa-arrow-right"></i>
         </a>
@@ -75,6 +123,16 @@ Title = "Nutrition and Health Claims",
 AltText = "Nutrition and Health Claims "
 }
 };
+    }
+
+    private string GetTopicDescription(int topicId)
+    {
+        return topicId switch
+        {
+            1 => "Comprehensive training on food labelling regulations, mandatory information requirements, and best practices for UK and EU markets to ensure accurate and compliant product labels.",
+            2 => "Expert guidance on nutrition and health claims legislation, substantiation requirements, and practical application to help you make legally compliant and scientifically supported claims.",
+            _ => "Specialized regulatory training designed to build your team's expertise in food compliance and safety standards."
+        };
     }
 
     public ValueTask DisposeAsync()
