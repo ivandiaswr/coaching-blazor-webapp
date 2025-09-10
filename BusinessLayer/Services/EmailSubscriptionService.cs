@@ -358,8 +358,15 @@ public class EmailSubscriptionService : IEmailSubscriptionService
                 {
                     foreach (var attachment in attachments)
                     {
-                        var mimeType = attachment.ContentType.Split('/')[0];
-                        var mimeSubtype = attachment.ContentType.Split('/')[1];
+                        if (string.IsNullOrEmpty(attachment.ContentType))
+                            continue;
+
+                        var contentTypeParts = attachment.ContentType.Split('/');
+                        if (contentTypeParts.Length != 2)
+                            continue;
+
+                        var mimeType = contentTypeParts[0];
+                        var mimeSubtype = contentTypeParts[1];
 
                         var mimePart = new MimePart(mimeType, mimeSubtype)
                         {
@@ -391,7 +398,15 @@ public class EmailSubscriptionService : IEmailSubscriptionService
             {
                 foreach (var attachment in attachments)
                 {
-                    attachment.Content?.Dispose();
+                    try
+                    {
+                        attachment.Content?.Dispose();
+                    }
+                    catch (Exception disposeEx)
+                    {
+                        // Log disposal error but don't throw - email was already sent
+                        await _logService.LogWarning("SendCustomEmailAsync", $"Error disposing attachment {attachment.Name}: {disposeEx.Message}");
+                    }
                 }
             }
         }

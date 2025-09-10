@@ -1,0 +1,506 @@
+/* Email Dialog Container Styling */
+.mud-dialog-container.email-dialog {
+    max-height: 95vh !important;
+    max-width: 1400px !important;
+    width: 95vw !important;
+}
+
+.mud-dialog-content.email-dialog-content {
+    padding: 0 !important;
+    height: 75vh !important;
+    overflow: hidden !important;
+}
+
+/* Main Layout - Side by Side */
+.email-editor-container {
+    display: flex !important;
+    height: 100% !important;
+    gap: 0 !important;
+}
+
+.email-compose-panel {
+    flex: 1 !important;
+    padding: 20px !important;
+    border-right: 1px solid #e0e0e0 !important;
+    overflow-y: auto !important;
+    background: #fafafa !important;
+}
+
+.email-preview-panel {
+    flex: 1 !important;
+    padding: 20px !important;
+    overflow-y: auto !important;
+    background: #ffffff !important;
+    max-height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.compose-section {
+    margin-bottom: 16px !important;
+}
+
+.compose-section:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* File upload improvements - more compact */
+.file-upload-section {
+    background: #fff !important;
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 8px !important;
+    padding: 16px !important;
+    margin-bottom: 16px !important;
+}
+
+.file-drop-zone {
+    border: 2px dashed #ff6b35 !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+    background-color: #fff8f6 !important;
+    cursor: pointer !important;
+    padding: 16px !important;
+    text-align: center !important;
+    min-height: 60px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.file-drop-zone:hover, 
+.file-drop-zone.drag-over {
+    border-color: #e55a2b !important;
+    background-color: #fff5f2 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.15) !important;
+}
+
+/* Compact file list */
+.file-list-item {
+    background: #f8f9fa !important;
+    border: 1px solid #e9ecef !important;
+    border-radius: 6px !important;
+    padding: 8px 12px !important;
+    margin-bottom: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    font-size: 13px !important;
+}
+
+.file-list-item:hover {
+    background-color: #e9ecef !important;
+    border-color: #bdbdbd !important;
+}
+
+/* Live Preview Styles */
+.live-preview-container {
+    background: #ffffff !important;
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 8px !important;
+    height: 100% !important;
+    overflow: hidden !important;
+}
+
+.preview-header {
+    padding: 12px 16px !important;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+    border-bottom: 1px solid #dee2e6 !important;
+    border-radius: 8px 8px 0 0 !important;
+    font-weight: 600 !important;
+    color: #495057 !important;
+    font-size: 14px !important;
+}
+
+.preview-body {
+    padding: 20px !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+    line-height: 1.6 !important;
+    color: #333 !important;
+    min-height: 300px !important;
+    max-height: 500px !important;
+    overflow-y: auto !important;
+    background: #fff !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+}
+
+/* Email preview content styling */
+.email-preview {
+    max-height: 500px !important;
+    overflow-y: auto !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    white-space: pre-wrap !important;
+}
+
+.email-preview * {
+    max-width: 100% !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+}
+
+.preview-empty-state {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 300px !important;
+    color: #6c757d !important;
+    font-style: italic !important;
+}
+
+.preview-empty-icon {
+    font-size: 48px !important;
+    margin-bottom: 16px !important;
+    opacity: 0.5 !important;
+}
+
+/* Template buttons - more compact */
+.template-buttons-section {
+    margin-bottom: 16px !important;
+}
+
+.template-buttons-container {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+}
+
+.template-button {
+    background-color: #ff6b35 !important;
+    color: white !important;
+    font-weight: 500 !important;
+    border-radius: 6px !important;
+    font-size: 12px !important;
+    padding: 6px 12px !important;
+    min-width: auto !important;
+    height: 32px !important;
+}
+
+.template-button:hover {
+    background-color: #e55a2b !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3) !important;
+}
+
+.clear-button {
+    background-color: transparent !important;
+    color: #dc3545 !important;
+    border: 1px solid #dc3545 !important;
+    font-size: 12px !important;
+    padding: 6px 12px !important;
+    height: 32px !important;
+}
+
+.clear-button:hover {
+    background-color: #dc3545 !important;
+    color: white !important;
+}
+
+/* Recipient chips */
+.recipient-chips {
+    max-height: 200px !important;
+    overflow-y: auto !important;
+}
+
+.mud-chip.recipient-chip {
+    margin: 2px !important;
+    font-size: 0.8rem !important;
+    background-color: #fff3e0 !important;
+    color: #ff6b35 !important;
+    border: 1px solid #ffcc80 !important;
+}
+
+.mud-chip.attachment-chip {
+    margin: 2px !important;
+    background-color: #e3f2fd !important;
+    color: #1976d2 !important;
+    border: 1px solid #90caf9 !important;
+}
+
+/* File upload improvements */
+.file-upload-zone {
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.file-upload-zone input[type="file"] {
+    position: absolute !important;
+    left: -9999px !important;
+}
+
+/* File list enhancements */
+.file-list-item {
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 8px !important;
+    padding: 12px !important;
+    margin-bottom: 8px !important;
+    background-color: #fafafa !important;
+    transition: all 0.2s ease !important;
+}
+
+.file-list-item:hover {
+    background-color: #f0f0f0 !important;
+    border-color: #bdbdbd !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Primary button styling */
+.mud-button-filled.mud-button-filled-primary {
+    background-color: #ff6b35 !important;
+    color: white !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    padding: 12px 24px !important;
+    text-transform: none !important;
+}
+
+.mud-button-filled.mud-button-filled-primary:hover {
+    background-color: #e55a2b !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4) !important;
+}
+
+/* Animation for successful actions */
+@keyframes success-pulse {
+    0% { 
+        box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(76, 175, 80, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
+    }
+}
+
+.success-animation {
+    animation: success-pulse 0.8s;
+}
+
+/* Character counter styling */
+.character-counter {
+    font-size: 0.75rem;
+    color: #757575;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .email-dialog .mud-dialog-container {
+        margin: 16px;
+        max-height: calc(100vh - 32px);
+    }
+    
+    .template-buttons .mud-button {
+        width: 100%;
+        margin-bottom: 8px;
+    }
+}
+
+/* Validation improvements */
+.validation-summary {
+    background-color: #fff3cd !important;
+    border: 1px solid #ffeaa7 !important;
+    border-radius: 6px !important;
+    padding: 12px !important;
+    margin-bottom: 16px !important;
+}
+
+.ready-to-send {
+    background-color: #d4edda !important;
+    border: 1px solid #c3e6cb !important;
+    border-radius: 6px !important;
+    padding: 12px !important;
+    margin-bottom: 16px !important;
+}
+
+/* Enhanced button states */
+.mud-button-filled:hover {
+    transform: translateY(-1px) !important;
+    transition: all 0.2s ease !important;
+}
+
+.mud-button-filled:active {
+    transform: translateY(0) !important;
+}
+
+/* Loading state improvements */
+.sending-state {
+    pointer-events: none !important;
+    opacity: 0.7 !important;
+}
+
+.sending-state .mud-progress-circular {
+    margin-right: 8px !important;
+}
+
+/* Confirmation dialog */
+.confirmation-summary {
+    background-color: #f8f9fa !important;
+    border-radius: 8px !important;
+    padding: 16px !important;
+    margin-top: 16px !important;
+    border: 1px solid #dee2e6 !important;
+}
+
+/* Confirmation dialog sizing */
+.confirmation-dialog .mud-dialog-container {
+    max-width: 90vw !important;
+    width: 90vw !important;
+}
+
+.confirmation-dialog .mud-paper {
+    max-width: none !important;
+    width: 100% !important;
+}
+
+/* Icon improvements */
+.mud-icon {
+    vertical-align: middle !important;
+}
+
+/* Character counter styling */
+.character-counter {
+    font-size: 0.75rem !important;
+    color: #757575 !important;
+}
+
+/* Alert styling overrides */
+.mud-alert.mud-alert-filled-success {
+    background-color: #d4edda !important;
+    color: #155724 !important;
+    border: 1px solid #c3e6cb !important;
+}
+
+.mud-alert.mud-alert-filled-info {
+    background-color: #cce7ff !important;
+    color: #004085 !important;
+    border: 1px solid #99d3ff !important;
+}
+
+.mud-alert.mud-alert-filled-warning {
+    background-color: #fff3cd !important;
+    color: #856404 !important;
+    border: 1px solid #ffeaa7 !important;
+}
+
+/* Card styling improvements */
+.mud-card.elevation-1 {
+    border-radius: 12px !important;
+    border: 1px solid #e9ecef !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+}
+
+.mud-card-header {
+    padding: 16px 20px !important;
+    background-color: #f8f9fa !important;
+    border-bottom: 1px solid #dee2e6 !important;
+}
+
+.mud-card-content {
+    padding: 20px !important;
+}
+
+/* Dialog title styling */
+.mud-dialog-title .mud-typography-h5 {
+    font-weight: 600 !important;
+    color: #2c3e50 !important;
+}
+
+/* Additional enhancements for better UX */
+.mud-input-outlined .mud-input-slot {
+    border-radius: 8px !important;
+}
+
+.mud-input-outlined:hover .mud-input-slot {
+    border-color: #ff6b35 !important;
+}
+
+.mud-input-outlined.mud-input-focused .mud-input-slot {
+    border-color: #ff6b35 !important;
+    box-shadow: 0 0 0 1px rgba(255, 107, 53, 0.2) !important;
+}
+
+/* Dialog actions styling */
+.mud-dialog-actions {
+    padding: 16px 24px !important;
+    border-top: 1px solid #e9ecef !important;
+    background-color: #f8f9fa !important;
+}
+
+/* Text button styling */
+.mud-button-text {
+    color: #6c757d !important;
+    font-weight: 500 !important;
+}
+
+.mud-button-text:hover {
+    background-color: #e9ecef !important;
+    color: #495057 !important;
+}
+
+/* Email dialog content improvements */
+.email-dialog .mud-dialog-content {
+    max-height: 70vh !important;
+    overflow-y: auto !important;
+}
+
+/* Template preview HTML styling */
+.template-preview-html {
+    background: #fff !important;
+    padding: 20px !important;
+    border-radius: 8px !important;
+    border: 1px solid #dee2e6 !important;
+    font-family: Arial, sans-serif !important;
+    line-height: 1.6 !important;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .email-editor-container {
+        flex-direction: column !important;
+    }
+    
+    .email-compose-panel {
+        border-right: none !important;
+        border-bottom: 1px solid #e0e0e0 !important;
+        flex: none !important;
+        max-height: 50vh !important;
+    }
+    
+    .email-preview-panel {
+        flex: none !important;
+        max-height: 40vh !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .mud-dialog-container.email-dialog {
+        margin: 8px !important;
+        max-height: calc(100vh - 16px) !important;
+        width: calc(100vw - 16px) !important;
+    }
+    
+    .email-compose-panel, .email-preview-panel {
+        padding: 12px !important;
+    }
+    
+    .template-buttons-container {
+        flex-direction: column !important;
+    }
+    
+    .template-button, .clear-button {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+}
+
+/* Compact styling improvements */
+.validation-alert {
+    font-size: 13px !important;
+    padding: 8px 12px !important;
+    margin-bottom: 12px !important;
+    border-radius: 6px !important;
+}

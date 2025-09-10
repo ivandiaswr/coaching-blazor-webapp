@@ -1,136 +1,472 @@
-<MudDialog Class="email-dialog">
+@using BusinessLayer.Services.Interfaces
+@using Microsoft.AspNetCore.Components.Forms
+@using MudBlazor
+
+<MudDialog Class="email-dialog" 
+           Options="new DialogOptions { BackdropClick = false, MaxWidth = MaxWidth.ExtraExtraLarge }">
     <TitleContent>
-        <MudText Typo="Typo.h6">Compose Email</MudText>
+        <div class="d-flex align-center">
+            <MudIcon Icon="@Icons.Material.Filled.Email" Class="mr-3" />
+            <MudText Typo="Typo.h6">Send Email to Subscribers</MudText>
+        </div>
     </TitleContent>
+
     <DialogContent>
-        <MudForm @ref="_form">
-            <MudTextField Label="Subject" 
-                         @bind-Value="EmailSubject" 
-                         Required="true" 
-                         RequiredError="Subject is required" 
-                         Variant="Variant.Outlined" 
-                         Margin="Margin.Dense" />
-
-            <MudTextField Label="Body" 
-                         @bind-Value="EmailBody" 
-                         Required="true" 
-                         RequiredError="Body is required" 
-                         Lines="10" 
-                         Variant="Variant.Outlined" 
-                         Margin="Margin.Dense" 
-                         TextArea="true" 
-                         HelperText="Use line breaks or formatting as needed. Full control over the text structure." />
-
-            <MudCard Class="mt-3">
-                <MudCardHeader>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Attachments</MudText>
-                    </CardHeaderContent>
-                </MudCardHeader>
-                <MudCardContent>
-                    <MudFileUpload T="IBrowserFile" 
-                                  FilesChanged="@HandleFilesChanged"
-                                  Accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                                  MaximumFileCount="3"
-                                  MaximumFileSize="5242880">
-                        <ActivatorContent>
-                            <MudButton HtmlTag="label"
-                                      Variant="Variant.Filled"
-                                      Color="Color.Primary"
-                                      StartIcon="@Icons.Material.Filled.UploadFile"
-                                      Size="Size.Small"
-                                      Style="display: block !important; visibility: visible !important;">
-                                Select Files
-                            </MudButton>
-                        </ActivatorContent>
-                    </MudFileUpload>
-
-                    @if (SelectedFiles.Any())
-                    {
-                        <MudList T="string" Dense="true" Class="mt-2">
-                            @foreach (var file in SelectedFiles)
-                            {
-                                <MudListItem>
-                                    <div class="d-flex align-center justify-space-between">
-                                        <MudText Typo="Typo.body2">@file.Name (@((file.Size / 1024).ToString("N0")) KB)</MudText>
-                                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
-                                                      Color="Color.Error"
-                                                      Size="Size.Small"
-                                                      OnClick="@(() => RemoveFile(file))" />
-                                    </div>
-                                </MudListItem>
-                            }
-                        </MudList>
-                    }
-                    else
-                    {
-                        <MudText Color="Color.Info" Typo="Typo.caption" Class="mt-1">
-                            No files selected. Max: 3 files, 5MB each. Allowed: PDF, DOC, DOCX, JPG, PNG.
+        <style>
+            .email-dialog .email-editor-container {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 24px;
+                min-height: 600px;
+            }
+            
+            .email-dialog .template-content {
+                display: flex;
+                align-items: center;
+                text-align: left;
+                width: 100%;
+            }
+            
+            .email-dialog .template-btn {
+                width: 100%;
+                justify-content: flex-start;
+                padding: 12px 16px;
+                height: auto;
+                border: 2px solid #e0e0e0;
+                transition: all 0.3s ease;
+            }
+            
+            .email-dialog .template-btn:hover {
+                border-color: #1976d2;
+                background-color: rgba(25, 118, 210, 0.04);
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+            }
+            
+            .email-dialog .subject-field {
+                margin-bottom: 16px;
+            }
+            
+            .email-dialog .content-field {
+                margin-bottom: 20px;
+            }
+            
+            .email-dialog .attachment-section {
+                margin: 20px 0;
+                padding: 16px;
+                background-color: #f8f9fa;
+                border-radius: 8px;
+                border: 2px dashed #dee2e6;
+            }
+            
+            .email-dialog .attachment-info {
+                margin-top: 12px;
+            }
+            
+            .email-dialog .stats-section {
+                margin-top: 20px;
+                padding: 12px;
+                background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+                border-radius: 8px;
+            }
+            
+            .email-dialog .email-preview-panel {
+                position: sticky;
+                top: 0;
+            }
+            
+            .email-dialog .template-buttons {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+            }
+        </style>
+        <div class="email-editor-container">
+            <!-- Left side - Compose Panel -->
+            <div class="email-compose-panel">
+                <MudForm @ref="EmailForm" Model="@this">
+                    <!-- Template Buttons (Optional) -->
+                    <div class="template-section">
+                        <MudText Typo="Typo.subtitle1" Class="mb-2">
+                            <MudIcon Icon="@Icons.Material.Filled.TouchApp" Class="mr-2" />
+                            Quick Email Templates (Optional)
                         </MudText>
-                    }
-                </MudCardContent>
-            </MudCard>
-        </MudForm>
+                        <MudAlert Severity="Severity.Info" Dense="true" Class="mb-3">
+                            Click any template below to automatically fill your email with professional content. You can also write your own message from scratch!
+                        </MudAlert>
+                        <MudExpansionPanels>
+                            <MudExpansionPanel Text="📧 Choose Email Template (Optional)">
+                                <ChildContent>
+                                    <div class="template-buttons">
+                                        <MudButton OnClick="@(() => ApplyTemplate("welcome"))"
+                                                 Variant="Variant.Outlined" Size="Size.Small"
+                                                 Class="template-btn mb-2 mr-2">
+                                            <div class="template-content">
+                                                <MudIcon Icon="@Icons.Material.Filled.EmojiEmotions" Class="mr-2" />
+                                                <div>
+                                                    <div><strong>Welcome Email</strong></div>
+                                                    <small>New subscriber greeting</small>
+                                                </div>
+                                            </div>
+                                        </MudButton>
+                                        <MudButton OnClick="@(() => ApplyTemplate("newsletter"))"
+                                                 Variant="Variant.Outlined" Size="Size.Small"
+                                                 Class="template-btn mb-2 mr-2">
+                                            <div class="template-content">
+                                                <MudIcon Icon="@Icons.Material.Filled.Newspaper" Class="mr-2" />
+                                                <div>
+                                                    <div><strong>Newsletter</strong></div>
+                                                    <small>Monthly updates & news</small>
+                                                </div>
+                                            </div>
+                                        </MudButton>
+                                        <MudButton OnClick="@(() => ApplyTemplate("announcement"))"
+                                                 Variant="Variant.Outlined" Size="Size.Small"
+                                                 Class="template-btn mb-2 mr-2">
+                                            <div class="template-content">
+                                                <MudIcon Icon="@Icons.Material.Filled.Campaign" Class="mr-2" />
+                                                <div>
+                                                    <div><strong>Announcement</strong></div>
+                                                    <small>Important updates</small>
+                                                </div>
+                                            </div>
+                                        </MudButton>
+                                        <MudButton OnClick="@(() => ApplyTemplate("coaching"))"
+                                                 Variant="Variant.Outlined" Size="Size.Small"
+                                                 Class="template-btn mb-2 mr-2">
+                                            <div class="template-content">
+                                                <MudIcon Icon="@Icons.Material.Filled.Psychology" Class="mr-2" />
+                                                <div>
+                                                    <div><strong>Coaching Tips</strong></div>
+                                                    <small>Personal growth insights</small>
+                                                </div>
+                                            </div>
+                                        </MudButton>
+                                        <MudButton OnClick="@(() => ApplyTemplate("event"))"
+                                                 Variant="Variant.Outlined" Size="Size.Small"
+                                                 Class="template-btn mb-2 mr-2">
+                                            <div class="template-content">
+                                                <MudIcon Icon="@Icons.Material.Filled.Event" Class="mr-2" />
+                                                <div>
+                                                    <div><strong>Event Invitation</strong></div>
+                                                    <small>Workshops & sessions</small>
+                                                </div>
+                                            </div>
+                                        </MudButton>
+                                        <MudButton OnClick="@(() => ApplyTemplate("gratitude"))"
+                                                 Variant="Variant.Outlined" Size="Size.Small"
+                                                 Class="template-btn mb-2">
+                                            <div class="template-content">
+                                                <MudIcon Icon="@Icons.Material.Filled.Favorite" Class="mr-2" />
+                                                <div>
+                                                    <div><strong>Thank You</strong></div>
+                                                    <small>Appreciation message</small>
+                                                </div>
+                                            </div>
+                                        </MudButton>
+                                    </div>
+                                </ChildContent>
+                            </MudExpansionPanel>
+                        </MudExpansionPanels>
+                    </div>
+
+                    <!-- Email Content Form -->
+                    <div class="compose-form">
+                        <MudTextField @bind-Value="Subject"
+                                      Label="Email Subject"
+                                      Variant="Variant.Outlined"
+                                      Required="true"
+                                      @onkeyup="ValidateForm"
+                                      @onchange="ValidateForm"
+                                      @oninput="ValidateForm"
+                                      Class="subject-field"
+                                      HelperText="A compelling subject line increases open rates"
+                                      Adornment="Adornment.End"
+                                      AdornmentIcon="@(string.IsNullOrWhiteSpace(Subject) ? Icons.Material.Filled.Warning : Icons.Material.Filled.CheckCircle)"
+                                      AdornmentColor="@(string.IsNullOrWhiteSpace(Subject) ? Color.Warning : Color.Success)" />
+
+                        <MudTextField @bind-Value="EmailContent"
+                                      Label="Email Message"
+                                      Variant="Variant.Outlined"
+                                      Lines="12"
+                                      Required="true"
+                                      @onkeyup="ValidateForm"
+                                      @onchange="ValidateForm"
+                                      @oninput="ValidateForm"
+                                      Class="content-field"
+                                      HelperText="@($"Characters: {EmailContent.Length} | Keep it personal and engaging")"
+                                      Placeholder="Write your message here. Remember to be warm and authentic - your subscribers want to hear from you personally!" />
+
+                        <!-- File Upload -->
+                        <div class="attachment-section">
+                            <MudText Typo="Typo.subtitle2" Class="mb-2">
+                                <MudIcon Icon="@Icons.Material.Filled.AttachFile" Class="mr-2" />
+                                Attachment (Optional)
+                            </MudText>
+                            <MudAlert Severity="Severity.Info" Dense="true" Class="mb-3">
+                                <strong>Supported files:</strong> PDF, Word documents, images (JPG, PNG)<br/>
+                                <strong>Maximum size:</strong> 10MB per file | <strong>Maximum files:</strong> 3
+                            </MudAlert>
+                            <MudFileUpload T="IReadOnlyList<IBrowserFile>" Accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
+                                           MaximumFileCount="3" 
+                                           FilesChanged="OnFilesChanged" 
+                                           MaximumFileSize="10485760">
+                                <ActivatorContent>
+                                    <MudButton Variant="Variant.Filled" 
+                                               Color="Color.Primary"
+                                               StartIcon="@Icons.Material.Filled.CloudUpload"
+                                               Style="width: 100%; padding: 16px;">
+                                        <MudText>Click to Upload Attachments (Max 3 files)</MudText>
+                                    </MudButton>
+                                </ActivatorContent>
+                            </MudFileUpload>
+                            @if (SelectedFiles.Any())
+                            {
+                                <div class="attachment-info mt-3">
+                                    <MudText Typo="Typo.subtitle2" Class="mb-2">
+                                        <MudIcon Icon="@Icons.Material.Filled.AttachFile" Class="mr-2" />
+                                        Attached Files (@SelectedFiles.Count/3)
+                                    </MudText>
+                                    @foreach (var file in SelectedFiles)
+                                    {
+                                        <MudPaper Class="pa-3 mb-2" Elevation="2">
+                                            <div class="d-flex align-center justify-space-between">
+                                                <div class="d-flex align-center">
+                                                    <MudIcon Icon="@GetFileIcon(file.Name)" Class="mr-2" Color="Color.Primary" />
+                                                    <div>
+                                                        <MudText Typo="Typo.body2" Style="font-weight: 500;">@file.Name</MudText>
+                                                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                                            Size: @(file.Size / 1024)KB
+                                                        </MudText>
+                                                    </div>
+                                                </div>
+                                                <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                                             Color="Color.Error" 
+                                                             Size="Size.Small"
+                                                             OnClick="@(() => RemoveFile(file))" />
+                                            </div>
+                                        </MudPaper>
+                                    }
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Statistics -->
+                        <div class="stats-section">
+                            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                                Recipients: @TotalSubscribers subscribers
+                            </MudText>
+                        </div>
+                    </div>
+                </MudForm>
+            </div>
+
+            <!-- Right side - Preview Panel -->
+            <div class="email-preview-panel">
+                <MudText Typo="Typo.subtitle1" Class="mb-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Preview" Class="mr-2" />
+                    Live Email Preview
+                </MudText>
+                
+                <div class="email-preview" style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; background: white; font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #333; max-height: 500px; overflow-y: auto; word-wrap: break-word; overflow-wrap: break-word;">
+                    <!-- Preview Header -->
+                    <div class="preview-header" style="margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #f0f0f0;">
+                        <MudText Typo="Typo.subtitle2" Class="preview-subject" Style="font-weight: bold; color: #1976d2;">
+                            Subject: @(!string.IsNullOrWhiteSpace(Subject) ? Subject : "[No Subject]")
+                        </MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Style="margin-top: 4px;">
+                            From: Ítala Veloso &lt;noreply@italavelosomentor.com&gt;<br/>
+                            To: [Subscriber Name] &lt;subscriber@example.com&gt;
+                        </MudText>
+                    </div>
+
+                    <!-- Preview Content with actual email structure -->
+                    <div class="preview-content">
+                        <div style="margin-bottom: 16px;">
+                            <strong>Dear [Subscriber Name],</strong>
+                        </div>
+                        
+                        <div style="margin-bottom: 20px; word-wrap: break-word; overflow-wrap: break-word; max-width: 100%;">
+                            @if (!string.IsNullOrWhiteSpace(EmailContent))
+                            {
+                                @((MarkupString)EmailContent.Replace("\n", "<br/>"))
+                            }
+                            else
+                            {
+                                <em style="color: #666;">Email content will appear here as you type...</em>
+                            }
+                        </div>
+
+                        @if (SelectedFiles.Any())
+                        {
+                            <div class="preview-attachment" style="margin: 20px 0; padding: 12px; background: #f5f5f5; border-radius: 6px;">
+                                <MudIcon Icon="@Icons.Material.Filled.AttachFile" Style="color: #666; margin-right: 8px;" />
+                                <span style="color: #333; font-weight: 500;">📎 Attachments (@SelectedFiles.Count):</span>
+                                @foreach (var file in SelectedFiles)
+                                {
+                                    <div style="font-size: 12px; color: #666; margin-top: 4px; margin-left: 20px;">
+                                        • @file.Name (Size: @(file.Size / 1024)KB)
+                                    </div>
+                                }
+                            </div>
+                        }
+
+                        <!-- Email signature and footer as it will appear -->
+                        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ccc;">
+                            <div style="margin-bottom: 20px;">
+                                <strong>Best regards,</strong><br/>
+                                <span style="color: #1976d2; font-weight: 500;">Ítala Veloso</span>
+                            </div>
+                            
+                            <hr style="border: none; border-top: 1px solid #ccc; margin: 20px 0;" />
+                            <div style="font-size: 8px; color: #666;">
+                                You are receiving this email because you subscribed to updates. 
+                                If you wish to unsubscribe, click <a href="#" style="color: #0066cc; text-decoration: none;">unsubscribe</a>.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Preview Stats -->
+                <div class="preview-stats mt-3" style="padding: 12px; background: #f8f9fa; border-radius: 6px;">
+                    <MudText Typo="Typo.body2" Style="font-weight: 500; margin-bottom: 8px;">
+                        <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Class="mr-2" />
+                        Email Details:
+                    </MudText>
+                    <MudText Typo="Typo.caption" Style="margin-bottom: 4px;">
+                        • Recipients: @TotalSubscribers subscriber@(TotalSubscribers != 1 ? "s" : "")
+                    </MudText>
+                    <MudText Typo="Typo.caption" Style="margin-bottom: 4px;">
+                        • Content length: @EmailContent.Length characters
+                    </MudText>
+                    <MudText Typo="Typo.caption">
+                        • Attachment: @(SelectedFiles.Any() ? $"Yes ({SelectedFiles.Count} file{(SelectedFiles.Count != 1 ? "s" : "")})" : "None")
+                    </MudText>
+                </div>
+            </div>
+        </div>
     </DialogContent>
+
     <DialogActions>
-        <MudButton OnClick="Close" 
-                  Variant="Variant.Text" 
-                  Disabled="@IsSending">
-            Cancel
-        </MudButton>
-        <MudButton OnClick="SendEmails" 
-                  Color="Color.Primary" 
-                  Variant="Variant.Filled" 
-                  Disabled="@(IsSending || !IsValid)">
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Error" 
+                   OnClick="SendEmail" 
+                   Disabled="@(!IsFormValid || IsSending || TotalSubscribers == 0)"
+                   Variant="Variant.Filled">
             @if (IsSending)
             {
-                <MudProgressCircular Size="Size.Small" Color="Color.Inherit" Indeterminate="true" />
-                <MudText Class="ml-1">Sending...</MudText>
+                <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+                <MudText Class="ms-3">Sending...</MudText>
             }
             else
             {
-                <MudText>Send</MudText>
+                <MudText>Send Email (@(IsFormValid ? "Ready" : "Complete form"))</MudText>
             }
         </MudButton>
     </DialogActions>
 </MudDialog>
 
+@if (ShowConfirmation)
+{
+    <MudDialog @bind-IsVisible="ShowConfirmation"
+               Options="new DialogOptions { BackdropClick = false, MaxWidth = MaxWidth.Large }"
+               Class="confirmation-dialog">
+        <DialogContent>
+            <div class="d-flex align-center mb-4">
+                <MudIcon Icon="@Icons.Material.Filled.Send" Color="Color.Primary" Size="Size.Large" Class="mr-3"/>
+                <MudText Typo="Typo.h5">Ready to Send Email?</MudText>
+            </div>
+            
+            <MudAlert Severity="Severity.Warning" Class="mb-4">
+                <strong>Important:</strong> This email will be sent immediately to all selected subscribers. This action cannot be undone.
+            </MudAlert>
+            
+            <MudPaper Class="pa-4 mb-4" Elevation="2">
+                <MudText Typo="Typo.h6" Class="mb-2" Color="Color.Primary">📧 Email Summary:</MudText>
+                <div class="mb-2">
+                    <strong>Subject:</strong> @Subject
+                </div>
+                <div class="mb-2">
+                    <strong>Recipients:</strong> @TotalSubscribers subscriber@(TotalSubscribers != 1 ? "s" : "")
+                </div>
+                <div class="mb-2">
+                    <strong>Content Length:</strong> @EmailContent.Length characters
+                </div>
+                <div class="mb-2">
+                    <strong>Attachment:</strong> @(SelectedFiles.Any() ? $"Yes - {SelectedFiles.Count} file{(SelectedFiles.Count != 1 ? "s" : "")} ({string.Join(", ", SelectedFiles.Select(f => f.Name))})" : "None")
+                </div>
+                <div class="mt-3">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                        Each email will be personalized with the subscriber's name and include an unsubscribe link.
+                    </MudText>
+                </div>
+            </MudPaper>
+            
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                💡 <strong>Tip:</strong> After sending, you'll see a success message confirming delivery to all subscribers.
+            </MudText>
+        </DialogContent>
+        <DialogActions>
+            <MudButton OnClick="@(() => ShowConfirmation = false)" 
+                      StartIcon="@Icons.Material.Filled.Cancel">
+                Cancel
+            </MudButton>
+            <MudButton Color="Color.Primary" 
+                       Variant="Variant.Filled"
+                       OnClick="ConfirmSendEmail" 
+                       Disabled="@IsSending"
+                       StartIcon="@Icons.Material.Filled.Send">
+                @if (IsSending)
+                {
+                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+                    <MudText Class="ms-3">Sending to @TotalSubscribers subscribers...</MudText>
+                }
+                else
+                {
+                    <MudText>Yes, Send Email Now!</MudText>
+                }
+            </MudButton>
+        </DialogActions>
+    </MudDialog>
+}
+
 @code {
-    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
-    [Parameter] public List<string> RecipientEmails { get; set; }
-    private string EmailSubject { get; set; }
-    private string EmailBody { get; set; }
-    private bool IsSending { get; set; }
-    private List<IBrowserFile> SelectedFiles { get; set; } = new();
-    private MudForm _form;
-    private bool IsValid => !string.IsNullOrWhiteSpace(EmailSubject) && 
-                           !string.IsNullOrWhiteSpace(EmailBody) && 
-                           SelectedFiles.All(f => f.Size <= 5242880);
+#nullable enable
+    [CascadingParameter] IDialogReference MudDialog { get; set; } = default!;
+    [Parameter] public List<string> RecipientEmails { get; set; } = new();
+    [Parameter] public EventCallback<bool> IsVisibleChanged { get; set; }
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public int TotalSubscribers { get; set; }
 
-    private async Task HandleFilesChanged(IBrowserFile file)
+    private MudForm? EmailForm;
+    private string Subject = "";
+    private string EmailContent = "";
+    private List<IBrowserFile> SelectedFiles = new();
+    private bool IsFormValid = false;
+    private bool IsSending = false;
+    private bool ShowConfirmation = false;
+    private List<string> ValidationErrors = new();
+
+    protected override void OnParametersSet()
     {
-        if (SelectedFiles.Count >= 3)
-        {
-            Snackbar.Add("Maximum of 3 files allowed.", Severity.Error);
-            return;
-        }
+        ValidateForm();
+        TotalSubscribers = RecipientEmails?.Count ?? 0;
+    }
 
-        if (file.Size > 5242880)
+    private void OnFilesChanged(IReadOnlyList<IBrowserFile> files)
+    {
+        // Add new files to existing list, but respect the 3 file limit
+        foreach (var file in files)
         {
-            Snackbar.Add($"File '{file.Name}' exceeds 5MB limit.", Severity.Error);
-            return;
+            if (SelectedFiles.Count >= 3)
+                break;
+                
+            // Check if file is already in the list (by name and size to avoid duplicates)
+            if (!SelectedFiles.Any(f => f.Name == file.Name && f.Size == file.Size))
+            {
+                SelectedFiles.Add(file);
+            }
         }
-
-        var allowedExtensions = new[] { ".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png" };
-        var extension = Path.GetExtension(file.Name).ToLowerInvariant();
-        if (!allowedExtensions.Contains(extension))
-        {
-            Snackbar.Add($"File '{file.Name}' has an invalid type. Allowed: PDF, DOC, DOCX, JPG, PNG.", Severity.Error);
-            return;
-        }
-
-        SelectedFiles.Add(file);
-        await _form.Validate();
         StateHasChanged();
     }
 
@@ -140,65 +476,151 @@
         StateHasChanged();
     }
 
-    private async Task SendEmails()
+    private string GetContentTypeFromExtension(string fileName)
     {
-        await _form.Validate();
-        if (!_form.IsValid)
+        var extension = Path.GetExtension(fileName).ToLower();
+        return extension switch
         {
-            Snackbar.Add("Please correct the form errors.", Severity.Error);
-            return;
-        }
+            ".pdf" => "application/pdf",
+            ".doc" => "application/msword",
+            ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ".txt" => "text/plain",
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            _ => "application/octet-stream"
+        };
+    }
 
-        IsSending = true;
+    private string GetFileIcon(string fileName)
+    {
+        var extension = Path.GetExtension(fileName).ToLower();
+        return extension switch
+        {
+            ".pdf" => Icons.Material.Filled.PictureAsPdf,
+            ".doc" or ".docx" => Icons.Material.Filled.Description,
+            ".txt" => Icons.Material.Filled.TextSnippet,
+            ".jpg" or ".jpeg" or ".png" => Icons.Material.Filled.Image,
+            _ => Icons.Material.Filled.AttachFile
+        };
+    }
+
+    private void ValidateForm()
+    {
+        var subjectValid = !string.IsNullOrWhiteSpace(Subject?.Trim());
+        var contentValid = !string.IsNullOrWhiteSpace(EmailContent?.Trim());
+        IsFormValid = subjectValid && contentValid && TotalSubscribers > 0;
+        
+        // Debug output to console to help troubleshoot
+        Console.WriteLine($"Validation: Subject='{Subject}' ({subjectValid}), Content='{EmailContent?.Substring(0, Math.Min(20, EmailContent?.Length ?? 0))}...' ({contentValid}), Recipients={TotalSubscribers}, IsFormValid={IsFormValid}");
+        
         StateHasChanged();
+    }
+
+    private void ApplyTemplate(string template)
+    {
+        switch (template.ToLower())
+        {
+            case "welcome":
+                Subject = "Welcome to Your Personal Growth Journey! 🌟";
+                EmailContent = "I'm so excited to have you join our community of growth-minded individuals!\n\nAs your coach, I'm here to support you every step of the way. You'll receive:\n\n✨ Weekly insights and motivation\n✨ Practical tools for personal development\n✨ Exclusive content just for subscribers\n✨ Updates on upcoming workshops and sessions\n\nYour transformation starts now, and I'm honored to be part of your journey.\n\nRemember: You have everything within you to create the life you desire.\n\nWith love and light,";
+                break;
+            case "newsletter":
+                Subject = "Your Monthly Dose of Inspiration 💫";
+                EmailContent = "Hello beautiful soul!\n\nHere's what's happening in our community this month:\n\n🌱 NEW: [Workshop/Session Title]\n📚 FEATURED: [Article or Resource]\n💡 TIP OF THE MONTH: [Quick actionable tip]\n🎯 UPCOMING: [Event or announcement]\n\n\"The only way to make sense out of change is to plunge into it, move with it, and join the dance.\" - Alan Watts\n\nWhat small step will you take today toward your dreams?\n\nSending you positive energy,";
+                break;
+            case "announcement":
+                Subject = "Important Update for Our Community 📢";
+                EmailContent = "Dear friend,\n\nI wanted to personally share some exciting news with you:\n\n[YOUR ANNOUNCEMENT HERE]\n\nThis is just another step in our journey together, and I'm grateful to have you as part of this amazing community.\n\nIf you have any questions, please don't hesitate to reach out. I'm always here to support you.\n\nWith gratitude,";
+                break;
+            case "coaching":
+                Subject = "Your Weekly Coaching Insight 🧠✨";
+                EmailContent = "Hello there, wonderful human!\n\nThis week, I want to share something powerful with you:\n\n💭 MINDSET SHIFT: [Key insight or reframe]\n\n🎯 ACTION STEP: Try this simple exercise:\n[Specific action or practice]\n\n📝 REFLECTION QUESTION:\n\"[Thought-provoking question to consider]\"\n\nRemember: Progress isn't always linear. Every small step counts, and you're doing better than you think.\n\nBelieve in yourself as much as I believe in you!\n\nWith encouragement,";
+                break;
+            case "event":
+                Subject = "You're Invited! Special Event Just for You 🎉";
+                EmailContent = "I have something special to invite you to!\n\n🗓️ EVENT: [Workshop/Session Name]\n📅 DATE: [Date and Time]\n📍 LOCATION: [Location or \"Online\"]\n💰 INVESTMENT: [Price or \"Free\"]\n\nTHIS EVENT IS PERFECT FOR YOU IF:\n• [Benefit 1]\n• [Benefit 2]\n• [Benefit 3]\n\nYOU'LL WALK AWAY WITH:\n✓ [Outcome 1]\n✓ [Outcome 2]\n✓ [Outcome 3]\n\nSpaces are limited, so secure your spot today!\n\n[REGISTER HERE: Link]\n\nI can't wait to see you there and support your growth!\n\nWith excitement,";
+                break;
+            case "gratitude":
+                Subject = "A heartfelt thank you from me to you 💕";
+                EmailContent = "My dear friend,\n\nI had to pause today and express my deep gratitude for YOU.\n\nThank you for:\n🙏 Being part of this beautiful community\n🙏 Trusting me with your growth journey\n🙏 Showing up for yourself, even when it's hard\n🙏 Inspiring me with your courage and commitment\n\nYour presence makes this community more vibrant, and your growth ripples out to touch so many lives.\n\nNever forget how powerful you are and how much you matter.\n\nThe world is better because you're in it.\n\nWith infinite love and appreciation,";
+                break;
+        }
+        ValidateForm();
+        StateHasChanged();
+    }
+
+    private void SendEmail()
+    {
+        if (!IsFormValid || IsSending || TotalSubscribers == 0)
+            return;
+
+        ShowConfirmation = true;
+    }
+
+    private async Task ConfirmSendEmail()
+    {
+        if (IsSending) return;
+        
+        IsSending = true;
+        ShowConfirmation = false;
 
         try
         {
-            var attachments = new List<(string Name, Stream Content, string ContentType)>();
-            foreach (var file in SelectedFiles)
+            var hasFiles = SelectedFiles.Any();
+            var attachments = hasFiles ? new List<(string, Stream, string)>() : null;
+
+            if (hasFiles)
             {
-                var originalStream = file.OpenReadStream(maxAllowedSize: 5242880);
-                var memoryStream = new MemoryStream();
-                await originalStream.CopyToAsync(memoryStream);
-                memoryStream.Position = 0;
-                originalStream.Dispose();
-                attachments.Add((file.Name, memoryStream, file.ContentType));
+                foreach (var file in SelectedFiles)
+                {
+                    var stream = new MemoryStream();
+                    await file.OpenReadStream(maxAllowedSize: 10485760).CopyToAsync(stream);
+                    stream.Position = 0;
+                    
+                    // Determine proper content type based on file extension
+                    var contentType = file.ContentType ?? GetContentTypeFromExtension(file.Name);
+                    attachments!.Add((file.Name, (Stream)stream, contentType));
+                }
             }
 
-            bool success = await EmailSubscriptionService.SendCustomEmailAsync(
-                RecipientEmails, 
-                EmailSubject, 
-                EmailBody, 
-                attachments
-            );
-
-            foreach (var attachment in attachments)
-            {
-                attachment.Content.Dispose();
-            }
+            var success = await EmailSubscriptionService.SendCustomEmailAsync(RecipientEmails, Subject, EmailContent, attachments);
 
             if (success)
             {
-                Snackbar.Add("Emails sent successfully!", Severity.Success);
-                MudDialog.Close(DialogResult.Ok(true));
+                Snackbar.Add($"Email sent successfully to {TotalSubscribers} subscriber{(TotalSubscribers != 1 ? "s" : "")}!", 
+                            Severity.Success);
+                Close();
             }
             else
             {
-                Snackbar.Add("Failed to send emails. Please check your settings.", Severity.Error);
-                MudDialog.Close(DialogResult.Ok(false));
+                Snackbar.Add("Failed to send email. Please check the logs for details.", Severity.Error);
             }
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Error sending emails: {ex.Message}", Severity.Error);
-            MudDialog.Close(DialogResult.Ok(false));
+            Snackbar.Add($"Failed to send email: {ex.Message}", Severity.Error);
         }
         finally
         {
             IsSending = false;
-            StateHasChanged();
         }
     }
 
-    private void Close() => MudDialog.Close(DialogResult.Cancel());
+    private void Cancel()
+    {
+        MudDialog.Close(DialogResult.Cancel());
+    }
+
+    private void Close()
+    {
+        Subject = "";
+        EmailContent = "";
+        SelectedFiles.Clear();
+        IsFormValid = false;
+        IsSending = false;
+        ShowConfirmation = false;
+        ValidationErrors.Clear();
+
+        MudDialog.Close(DialogResult.Ok(true));
+    }
 }

@@ -1623,9 +1623,12 @@
     {
         try
         {
+            var selectedEmails = emailSubscriptionGrid.SelectedItems.Select(e => e.Email).ToList();
+            
             var parameters = new DialogParameters
             {
-                { "RecipientEmails", emailSubscriptionGrid.SelectedItems.Select(e => e.Email).ToList() }
+                { "RecipientEmails", selectedEmails },
+                { "TotalSubscribers", selectedEmails.Count }
             };
 
             var options = new DialogOptions 
