@@ -27,6 +27,21 @@ window.pauseVideoById = function (videoId) {
     }
 }
 
+// Force video to reload its source - useful when filtering changes content
+window.reloadVideo = function (videoId) {
+    try {
+        const video = document.getElementById(videoId);
+        if (video) {
+            video.pause();
+            video.currentTime = 0;
+            video.load(); // This forces the video to reload its source
+            return Promise.resolve();
+        }
+    } catch (error) {
+        console.error('Error reloading video:', error);
+    }
+}
+
 // Cleanup function for videos when component is destroyed
 window.cleanupVideos = function (videoIds) {
     try {
