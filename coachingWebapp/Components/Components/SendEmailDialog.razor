@@ -12,80 +12,9 @@
     </TitleContent>
 
     <DialogContent>
-        <style>
-            .email-dialog .email-editor-container {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 24px;
-                min-height: 600px;
-            }
-            
-            .email-dialog .template-content {
-                display: flex;
-                align-items: center;
-                text-align: left;
-                width: 100%;
-            }
-            
-            .email-dialog .template-btn {
-                width: 100%;
-                justify-content: flex-start;
-                padding: 12px 16px;
-                height: auto;
-                border: 2px solid #e0e0e0;
-                transition: all 0.3s ease;
-            }
-            
-            .email-dialog .template-btn:hover {
-                border-color: #1976d2;
-                background-color: rgba(25, 118, 210, 0.04);
-                transform: translateY(-2px);
-                box-shadow: 0 4px 8px rgba(0,0,0,0.12);
-            }
-            
-            .email-dialog .subject-field {
-                margin-bottom: 16px;
-            }
-            
-            .email-dialog .content-field {
-                margin-bottom: 20px;
-            }
-            
-            .email-dialog .attachment-section {
-                margin: 20px 0;
-                padding: 16px;
-                background-color: #f8f9fa;
-                border-radius: 8px;
-                border: 2px dashed #dee2e6;
-            }
-            
-            .email-dialog .attachment-info {
-                margin-top: 12px;
-            }
-            
-            .email-dialog .stats-section {
-                margin-top: 20px;
-                padding: 12px;
-                background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
-                border-radius: 8px;
-            }
-            
-            .email-dialog .email-preview-panel {
-                position: sticky;
-                top: 0;
-            }
-            
-            .email-dialog .template-buttons {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 12px;
-            }
-        </style>
         <div class="email-editor-container">
-            <!-- Left side - Compose Panel -->
             <div class="email-compose-panel">
                 <MudForm @ref="EmailForm" Model="@this">
-                    <!-- Template Buttons (Optional) -->
                     <div class="template-section">
                         <MudText Typo="Typo.subtitle1" Class="mb-2">
                             <MudIcon Icon="@Icons.Material.Filled.TouchApp" Class="mr-2" />
@@ -170,7 +99,6 @@
                         </MudExpansionPanels>
                     </div>
 
-                    <!-- Email Content Form -->
                     <div class="compose-form">
                         <MudTextField @bind-Value="Subject"
                                       Label="Email Subject"
@@ -197,7 +125,6 @@
                                       HelperText="@($"Characters: {EmailContent.Length} | Keep it personal and engaging")"
                                       Placeholder="Write your message here. Remember to be warm and authentic - your subscribers want to hear from you personally!" />
 
-                        <!-- File Upload -->
                         <div class="attachment-section">
                             <MudText Typo="Typo.subtitle2" Class="mb-2">
                                 <MudIcon Icon="@Icons.Material.Filled.AttachFile" Class="mr-2" />
@@ -215,7 +142,7 @@
                                     <MudButton Variant="Variant.Filled" 
                                                Color="Color.Primary"
                                                StartIcon="@Icons.Material.Filled.CloudUpload"
-                                               Style="width: 100%; padding: 16px;">
+                                               Class="upload-button">
                                         <MudText>Click to Upload Attachments (Max 3 files)</MudText>
                                     </MudButton>
                                 </ActivatorContent>
@@ -234,7 +161,7 @@
                                                 <div class="d-flex align-center">
                                                     <MudIcon Icon="@GetFileIcon(file.Name)" Class="mr-2" Color="Color.Primary" />
                                                     <div>
-                                                        <MudText Typo="Typo.body2" Style="font-weight: 500;">@file.Name</MudText>
+                                                        <MudText Typo="Typo.body2" Class="file-name">@file.Name</MudText>
                                                         <MudText Typo="Typo.caption" Color="Color.Secondary">
                                                             Size: @(file.Size / 1024)KB
                                                         </MudText>
@@ -251,7 +178,6 @@
                             }
                         </div>
 
-                        <!-- Statistics -->
                         <div class="stats-section">
                             <MudText Typo="Typo.body2" Color="Color.Secondary">
                                 Recipients: @TotalSubscribers subscribers
@@ -261,85 +187,92 @@
                 </MudForm>
             </div>
 
-            <!-- Right side - Preview Panel -->
             <div class="email-preview-panel">
                 <MudText Typo="Typo.subtitle1" Class="mb-3">
                     <MudIcon Icon="@Icons.Material.Filled.Preview" Class="mr-2" />
                     Live Email Preview
                 </MudText>
                 
-                <div class="email-preview" style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; background: white; font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #333; max-height: 500px; overflow-y: auto; word-wrap: break-word; overflow-wrap: break-word;">
-                    <!-- Preview Header -->
-                    <div class="preview-header" style="margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #f0f0f0;">
-                        <MudText Typo="Typo.subtitle2" Class="preview-subject" Style="font-weight: bold; color: #1976d2;">
+                <div class="email-preview">
+                    <div class="preview-header">
+                        <MudText Typo="Typo.subtitle2" Class="preview-subject">
                             Subject: @(!string.IsNullOrWhiteSpace(Subject) ? Subject : "[No Subject]")
                         </MudText>
-                        <MudText Typo="Typo.caption" Color="Color.Secondary" Style="margin-top: 4px;">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" Class="preview-from-to">
                             From: Ítala Veloso &lt;noreply@italavelosomentor.com&gt;<br/>
                             To: [Subscriber Name] &lt;subscriber@example.com&gt;
                         </MudText>
                     </div>
 
-                    <!-- Preview Content with actual email structure -->
                     <div class="preview-content">
-                        <div style="margin-bottom: 16px;">
+                        <div class="preview-greeting">
                             <strong>Dear [Subscriber Name],</strong>
                         </div>
                         
-                        <div style="margin-bottom: 20px; word-wrap: break-word; overflow-wrap: break-word; max-width: 100%;">
+                        <div class="preview-content-area">
                             @if (!string.IsNullOrWhiteSpace(EmailContent))
                             {
                                 @((MarkupString)EmailContent.Replace("\n", "<br/>"))
                             }
                             else
                             {
-                                <em style="color: #666;">Email content will appear here as you type...</em>
+                                <em class="preview-empty-content">Email content will appear here as you type...</em>
                             }
                         </div>
 
                         @if (SelectedFiles.Any())
                         {
-                            <div class="preview-attachment" style="margin: 20px 0; padding: 12px; background: #f5f5f5; border-radius: 6px;">
-                                <MudIcon Icon="@Icons.Material.Filled.AttachFile" Style="color: #666; margin-right: 8px;" />
-                                <span style="color: #333; font-weight: 500;">📎 Attachments (@SelectedFiles.Count):</span>
+                            <div class="preview-attachment">
+                                <MudIcon Icon="@Icons.Material.Filled.AttachFile" Class="attachment-icon" />
+                                <span class="attachment-label">📎 Attachments (@SelectedFiles.Count):</span>
                                 @foreach (var file in SelectedFiles)
                                 {
-                                    <div style="font-size: 12px; color: #666; margin-top: 4px; margin-left: 20px;">
+                                    <div class="attachment-file-item">
                                         • @file.Name (Size: @(file.Size / 1024)KB)
                                     </div>
                                 }
                             </div>
                         }
 
-                        <!-- Email signature and footer as it will appear -->
-                        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ccc;">
-                            <div style="margin-bottom: 20px;">
-                                <strong>Best regards,</strong><br/>
-                                <span style="color: #1976d2; font-weight: 500;">Ítala Veloso</span>
+                        <div class="email-signature">
+                            <div class="signature-content">
+                                <div>Speak Soon.</div>
+                                <div class="signature-contact">
+                                    <strong>Blessings Ítala Veloso</strong><br/>
+                                    CEO & Founder, JOSTIC<br/>
+                                    + 44 (0)7732296421
+                                </div>
+                                
+                                <div class="signature-links">
+                                    <a href="https://italaveloso.com/" class="signature-link">Website</a>
+                                    <a href="https://www.linkedin.com/in/italaveloso/" class="signature-link">LinkedIn</a>
+                                    <a href="https://www.instagram.com/italaveloso.coaching/" class="signature-link">Instagram</a>
+                                    <a href="https://www.tiktok.com/@@italaveloso.coaching" class="signature-link">TikTok</a>
+                                </div>
                             </div>
                             
-                            <hr style="border: none; border-top: 1px solid #ccc; margin: 20px 0;" />
-                            <div style="font-size: 8px; color: #666;">
+                            <hr class="signature-separator" />
+                            <div class="unsubscribe-text">
                                 You are receiving this email because you subscribed to updates. 
-                                If you wish to unsubscribe, click <a href="#" style="color: #0066cc; text-decoration: none;">unsubscribe</a>.
+                                If you wish to unsubscribe, click <a href="#" class="unsubscribe-link">unsubscribe</a>.
                             </div>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Preview Stats -->
-                <div class="preview-stats mt-3" style="padding: 12px; background: #f8f9fa; border-radius: 6px;">
-                    <MudText Typo="Typo.body2" Style="font-weight: 500; margin-bottom: 8px;">
+                <div class="preview-stats mt-3">
+                    <MudText Typo="Typo.body2" Class="stats-title">
                         <MudIcon Icon="@Icons.Material.Filled.Info" Size="Size.Small" Class="mr-2" />
                         Email Details:
                     </MudText>
-                    <MudText Typo="Typo.caption" Style="margin-bottom: 4px;">
+                    <MudText Typo="Typo.caption" Class="stats-item">
                         • Recipients: @TotalSubscribers subscriber@(TotalSubscribers != 1 ? "s" : "")
                     </MudText>
-                    <MudText Typo="Typo.caption" Style="margin-bottom: 4px;">
+                    <MudText Typo="Typo.caption" Class="stats-item">
                         • Content length: @EmailContent.Length characters
                     </MudText>
-                    <MudText Typo="Typo.caption">
+                    <MudText Typo="Typo.caption" Class="stats-item">
                         • Attachment: @(SelectedFiles.Any() ? $"Yes ({SelectedFiles.Count} file{(SelectedFiles.Count != 1 ? "s" : "")})" : "None")
                     </MudText>
                 </div>

@@ -346,6 +346,21 @@ public class EmailSubscriptionService : IEmailSubscriptionService
                         <div style='font-family: Arial, sans-serif; font-size: 14px; line-height: 1.6;'>
                             <p>Dear {recipientName}</p>
                             <p>{body.Replace("\n", "<br />")}</p>
+                            
+                            <div style='margin-top: 30px; margin-bottom: 20px;'>
+                                <p>Speak Soon.</p>
+                                <p><strong>Blessings Ítala Veloso</strong><br/>
+                                CEO & Founder, JOSTIC<br/>
+                                + 44 (0)7732296421</p>
+                                
+                                <div style='margin-top: 15px;'>
+                                    <a href='https://www.italavelosomentor.com' style='color: #0066cc; text-decoration: none; margin-right: 15px;'>Website</a>
+                                    <a href='https://www.linkedin.com/in/itala-veloso' style='color: #0066cc; text-decoration: none; margin-right: 15px;'>LinkedIn</a>
+                                    <a href='https://www.instagram.com/italavelosomentor' style='color: #0066cc; text-decoration: none; margin-right: 15px;'>Instagram</a>
+                                    <a href='https://www.tiktok.com/@italavelosomentor' style='color: #0066cc; text-decoration: none;'>TikTok</a>
+                                </div>
+                            </div>
+                            
                             <hr style='border: none; border-top: 1px solid #ccc; margin: 20px 0;' />
                             <p style='font-size: 8px; color: #666;'>
                                 You are receiving this email because you subscribed to updates. 
