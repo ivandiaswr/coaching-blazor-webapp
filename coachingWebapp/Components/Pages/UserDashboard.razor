@@ -764,7 +764,7 @@
 </div>
 
 @code {
-    private string pageTitle = "User Dashboard | Ítala Veloso";
+    private string pageTitle = "Dashboard | Ítala Veloso";
     private int selectedTab = 0;
     private List<VideoSession> allSessions = new();
     private IEnumerable<VideoSession> UpcomingSessions => allSessions.Where(s => s.ScheduledAt >= DateTime.UtcNow).OrderBy(s => s.ScheduledAt);
