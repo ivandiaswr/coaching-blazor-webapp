@@ -1,0 +1,307 @@
+@using Microsoft.AspNetCore.Components
+@inherits ComponentBase
+@inject IJSRuntime JSRuntime
+
+<div class="optimized-video-container @(IsTestimonial ? "testimonial-video" : "adventure-video")"
+    id="video-container-@VideoId">
+    @if (!IsLoaded && IsTestimonial)
+    {
+        <div class="video-placeholder" @onclick="LoadVideoAsync">
+            <img src="@PosterImage" alt="@Alt" class="poster-image" />
+            <div class="play-button">
+                <svg width="80" height="80" viewBox="0 0 80 80">
+                    <circle cx="40" cy="40" r="40" fill="rgba(0,0,0,0.8)" />
+                    <polygon points="32,26 32,54 56,40" fill="white" />
+                </svg>
+            </div>
+            <div class="video-info">
+                <p>Click to load video</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <video @ref="videoElement" id="video-@VideoId" controls="@IsTestimonial" autoplay="@(!IsTestimonial)"
+            muted="@(!IsTestimonial)" loop="@(!IsTestimonial)" playsinline preload="metadata" 
+            @onplay="OnVideoPlay" @onended="OnVideoEnded" @onpause="OnVideoPaused">
+            <source src="@LowQualityVideo" type="video/mp4">
+            <source src="@MediumQualityVideo" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+    }
+</div>
+
+@code {
+    [Parameter] public string LowQualityVideo { get; set; } = "";
+    [Parameter] public string MediumQualityVideo { get; set; } = "";
+    [Parameter] public string PosterImage { get; set; } = "";
+    [Parameter] public string Alt { get; set; } = "";
+    [Parameter] public bool IsTestimonial { get; set; } = false;
+    [Parameter] public EventCallback<string> OnVideoStarted { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private bool IsLoaded { get; set; } = false;
+    private ElementReference videoElement;
+    private string VideoId = Guid.NewGuid().ToString("N")[..8];
+
+    protected override void OnInitialized()
+    {
+        // Auto-load adventure videos (non-testimonials)
+        if (!IsTestimonial)
+        {
+            IsLoaded = true;
+        }
+    }
+
+    private async Task LoadVideoAsync()
+    {
+        if (IsTestimonial)
+        {
+            // Notify parent to pause other videos
+            await OnVideoStarted.InvokeAsync(VideoId);
+
+            IsLoaded = true;
+            StateHasChanged();
+
+            // Wait for the video element to render
+            await Task.Delay(100);
+            try
+            {
+                // Use JavaScript function to play the video immediately
+                await JSRuntime.InvokeVoidAsync("playVideo", $"video-{VideoId}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error playing video: {ex.Message}");
+            }
+        }
+    }
+    private async Task OnVideoPlay()
+    {
+        if (IsTestimonial)
+        {
+            await OnVideoStarted.InvokeAsync(VideoId);
+        }
+    }
+
+    private void OnVideoEnded()
+    {
+        if (IsTestimonial)
+        {
+            // Reset to poster view when video ends
+            IsLoaded = false;
+            StateHasChanged();
+        }
+    }
+
+    private void OnVideoPaused()
+    {
+        if (IsTestimonial)
+        {
+            // Reset to poster view when video is paused
+            IsLoaded = false;
+            StateHasChanged();
+        }
+    }
+
+    public async Task PauseVideo()
+    {
+        try
+        {
+            if (IsLoaded)
+            {
+                await JSRuntime.InvokeVoidAsync("pauseVideo", $"video-{VideoId}");
+                // Reset to poster view when programmatically paused
+                if (IsTestimonial)
+                {
+                    IsLoaded = false;
+                    StateHasChanged();
+                }
+            }
+        }
+        catch
+        {
+            // Ignore errors
+        }
+    }
+}
+
+<style>
+    .optimized-video-container {
+        position: relative;
+        width: 100%;
+        max-width: 100%;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        transition: all 0.4s ease;
+    }
+
+    .optimized-video-container:hover {
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+        transform: translateY(-8px);
+    }
+
+    /* TESTIMONIAL VIDEO STYLING - 9:16 aspect ratio, click-to-play */
+    .testimonial-video .video-placeholder {
+        position: relative;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+        border-radius: 24px;
+        overflow: hidden;
+        min-height: 600px;
+        aspect-ratio: 9/16;
+    }
+
+    .testimonial-video .poster-image {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        object-position: center;
+        display: block;
+        transition: filter 0.4s ease;
+        background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+    }
+
+    .testimonial-video .video-placeholder:hover .poster-image {
+        filter: brightness(1.1) contrast(1.05);
+    }
+
+    .testimonial-video video {
+        width: 100%;
+        height: auto;
+        min-height: 600px;
+        border-radius: 24px;
+        background: #000;
+        aspect-ratio: 9/16;
+        object-fit: cover;
+    }
+
+    /* ADVENTURE VIDEO STYLING - original aspect ratio, auto-play */
+    .adventure-video video {
+        width: 100%;
+        height: auto;
+        border-radius: 24px;
+        background: #000;
+        /* No forced aspect ratio - keep original */
+    }
+
+    .adventure-video {
+        border-radius: 24px;
+    }
+
+    /* SHARED STYLING */
+    .play-button {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        transition: all 0.3s ease;
+        z-index: 10;
+    }
+
+    .play-button svg {
+        width: 80px;
+        height: 80px;
+        filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
+    }
+
+    .video-placeholder:hover .play-button {
+        transform: translate(-50%, -50%) scale(1.15);
+    }
+
+    .video-placeholder:hover .play-button svg circle {
+        fill: rgba(255, 107, 53, 0.9);
+    }
+
+    .video-info {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        color: white;
+        text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
+        z-index: 10;
+        background: rgba(0, 0, 0, 0.3);
+        padding: 12px 16px;
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+    }
+
+    .video-info p {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .video-info small {
+        font-size: 14px;
+        opacity: 0.9;
+        color: #ff6b35;
+        font-weight: 500;
+    }
+
+    /* Mobile responsiveness */
+    @@media (max-width: 768px) {
+        .testimonial-video .video-placeholder {
+            min-height: 500px;
+            border-radius: 20px;
+        }
+
+        .testimonial-video .poster-image {
+            border-radius: 20px;
+        }
+
+        .play-button svg {
+            width: 70px;
+            height: 70px;
+        }
+
+        .video-info {
+            bottom: 16px;
+            left: 16px;
+            padding: 10px 14px;
+            border-radius: 10px;
+        }
+
+        .video-info p {
+            font-size: 15px;
+        }
+
+        .video-info small {
+            font-size: 13px;
+        }
+
+        .testimonial-video video {
+            min-height: 500px;
+            border-radius: 20px;
+        }
+
+        .adventure-video video {
+            border-radius: 20px;
+        }
+
+        .optimized-video-container {
+            border-radius: 20px;
+        }
+    }
+
+    /* Ensure video controls are always visible and accessible */
+    video::-webkit-media-controls {
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+
+    video::-webkit-media-controls-panel {
+        background-color: rgba(0, 0, 0, 0.8) !important;
+        color: white !important;
+    }
+
+    video::-webkit-media-controls-play-button,
+    video::-webkit-media-controls-mute-button,
+    video::-webkit-media-controls-fullscreen-button {
+        filter: invert(1) !important;
+    }
+</style>

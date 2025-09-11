@@ -144,28 +144,20 @@
     </div>
     
    <div class="testimonials-container">
-        <div class="testimonials-grid">
+    <div class="testimonials-grid">
             @foreach (var testimonial in testimonials)
             {
                 <div class="testimonial-card">
                     <div class="video-wrapper">
-                        <div class="video-container">
-                            <video id="video-@testimonial.Id" 
-                                   playsinline 
-                                   controls="@testimonial.IsPlaying" 
-                                   volume="0.5" 
-                                   preload="metadata"
-                                   @onended="() => OnVideoEnded(testimonial.Id)">           
-                                <source src="@testimonial.Path" type="video/mp4">
-                                Your browser does not support the video tag.
-                            </video>
-                            <div class="play-overlay @(testimonial.IsPlaying ? "hidden" : "")" 
-                                 @onclick="() => ToggleVideo(testimonial.Id)">
-                                <div class="play-button">
-                                    <i class="@(testimonial.IsPlaying ? "fas fa-pause" : "fas fa-play")"></i>
-                                </div>
-                            </div>
-                        </div>
+                        <OptimizedVideo @ref="testimonialVideos[testimonial.Id]"
+                                       LowQualityVideo="@GetOptimizedVideoPath(testimonial.Path, "low")"
+                                       MediumQualityVideo="@GetOptimizedVideoPath(testimonial.Path, "medium")"
+                                       HighQualityVideo="@GetOptimizedVideoPath(testimonial.Path, "high")"
+                                       DefaultQuality=""medium""
+                                       PosterImage="@GetPosterImagePath(testimonial.Path)"
+                                       Alt="@($"Testimonial from {testimonial.Author}")"
+                                       IsTestimonial="true"
+                                       OnVideoStarted="OnTestimonialVideoStarted" />
                     </div>
                     <div class="testimonial-content">
                         <div class="testimonial-quote">
@@ -448,6 +440,7 @@
                                 <MudPaper Class="hoverable-input mb-4 enhanced-date-picker" 
                                           @onclick="ToggleCalendarAsync" 
                                           Style="cursor: pointer;"
+                                          onmouseover="this.style.cursor='pointer'" onmouseout="this.style.cursor='pointer'"
                                           @onfocusin="() => UpdateProgress(3)">
                                     <MudTextField Label="Choose Your Preferred Date & Time"
                                                   Value="@session.PreferredDateTimeString"
@@ -543,9 +536,10 @@
 
                     <div class="right-content">
                         <div class="video-header-container">
-                            <video autoplay muted loop playsinline preload="metadata" class="video-header">
-                                <source src="https://italaveloso.com/Videos/adventure.mp4" type="video/mp4">
-                                Your browser does not support the video tag mp4.
+                            <video autoplay muted loop playsinline preload="auto" class="adventure-video">
+                                <source src="/Videos/adventure_low.mp4" type="video/mp4">
+                                <source src="/Videos/adventure_medium.mp4" type="video/mp4">
+                                Your browser does not support the video tag.
                             </video>
                             <div class="contact-video-overlay">
                                 <div class="contact-header">
@@ -623,7 +617,7 @@
         new Testimonial
         {
             Id = 1,
-            Path = "https://italaveloso.com/Testimonials/testimonial_Laviniah.mp4",
+            Path = "/Videos/testimonial_Laviniah.mp4",
             Results = "Ítala been really helpful in terms of giving me concrete knowledge about things to do with trauma, how it affects our behaviours, thinking, patterns; in order to change our actions and outputs into this world. There has been such growth and work of development and I am very proud with where I am right now. Thank you and highly recommend Ítala",
             Author = "Laviniah",
             Role = "- Cyber Security Analyst"
@@ -631,7 +625,7 @@
         new Testimonial
         {
             Id = 2,
-            Path = "https://italaveloso.com/Testimonials/testimonial_Fran.mp4",
+            Path = "/Videos/testimonial_Fran.mp4",
             Results = "When I started my coaching journey with Itala, I thought I had things pretty well sorted. Itala really is a bright spark of joy, with the right guidance, it's come together wonderfully. Itala, thank you from the bottom of my heart. You're amazing, and I can't wait to continue the journey with you.",
             Author = "Fran",
             Role = "- Business Owner"
@@ -639,12 +633,46 @@
         new Testimonial
         {
             Id = 3,
-            Path = "https://italaveloso.com/Testimonials/testimonial_Monica.mp4",
+            Path = "/Videos/testimonial_Monica.mp4",
             Results = "With coaching, Ítala really helped me to get to know myself better; to believe more in myself... I am really grateful to have unlocked and let go of things that happened in my past that was preventing me to move forward and improve myself. I am really thankful for that. The biggest knowledge I took from this transformation is that I am Capable of more things that I thought that I was. I am such a Stronger person now, since coaching. I highly recommend!",
             Author = "Mónica",
             Role = "- Oral Health Backoffice Assistant"
         }
     };
+
+    // Video management for testimonials
+    private Dictionary<int, OptimizedVideo> testimonialVideos = new();
+
+    protected override void OnInitialized()
+    {
+        // Initialize video references dictionary
+        foreach (var testimonial in testimonials)
+        {
+            testimonialVideos[testimonial.Id] = new OptimizedVideo();
+        }
+        base.OnInitialized();
+    }
+
+    private async Task OnTestimonialVideoStarted(string videoId)
+    {
+        // Pause all other testimonial videos when one starts playing
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("eval", $@"
+                const startedVideoId = 'video-{videoId}';
+                const allVideos = document.querySelectorAll('video[id^=""video-""]');
+                allVideos.forEach(video => {{
+                    if (video.id !== startedVideoId && !video.paused) {{
+                        video.pause();
+                    }}
+                }});
+            ");
+        }
+        catch
+        {
+            // Ignore errors
+        }
+    }
     private string sessionStatus = string.Empty;
     private bool showTimeSlots = false;
     private List<DateTime> availableSlots = new();
@@ -661,6 +689,105 @@
     private double googleRating = 5.0;
     private int totalGoogleReviews = 5;
     private bool isLoadingReviews = true;
+
+    // Helper methods for optimized video paths
+    private string GetOptimizedVideoPath(string originalPath, string quality)
+    {
+        try
+        {
+            var fileName = Path.GetFileNameWithoutExtension(originalPath);
+            
+            // For testimonial videos, the optimized versions are in /Videos/ folder
+            if (fileName.StartsWith("testimonial_"))
+            {
+                return quality switch
+                {
+                    "low" => $"/Videos/{fileName}_low.mp4",
+                    "medium" => $"/Videos/{fileName}_medium.mp4", 
+                    _ => originalPath
+                };
+            }
+            
+            // For other videos, use the same directory
+            var directory = Path.GetDirectoryName(originalPath) ?? "";
+            
+            // Convert external URLs to local paths
+            if (originalPath.StartsWith("https://italaveloso.com/"))
+            {
+                var localPath = originalPath.Replace("https://italaveloso.com/", "/");
+                directory = Path.GetDirectoryName(localPath) ?? "";
+                fileName = Path.GetFileNameWithoutExtension(localPath);
+            }
+            
+            return quality switch
+            {
+                "low" => $"{directory}/{fileName}_low.mp4",
+                "medium" => $"{directory}/{fileName}_medium.mp4",
+                _ => originalPath
+            };
+        }
+        catch
+        {
+            return originalPath; // Fallback to original
+        }
+    }
+    
+    private string GetPosterImagePath(string videoPath)
+    {
+        try
+        {
+            var fileName = Path.GetFileNameWithoutExtension(videoPath);
+            
+            // For testimonial videos, distinguish between phone and PC recordings
+            if (fileName.StartsWith("testimonial_"))
+            {
+                // Fran is PC recording (landscape) - use letterboxed version
+                if (fileName.Contains("Fran"))
+                {
+                    return $"/Images/{fileName}_poster_portrait_v2.jpg?v=2024122704";
+                }
+                // All others are phone recordings (portrait) - use full height versions
+                else
+                {
+                    return $"/Images/{fileName}_poster_phone_final.jpg?v=2024122704";
+                }
+            }
+            
+            var directory = Path.GetDirectoryName(videoPath) ?? "";
+            
+            // Convert external URLs to local paths
+            if (videoPath.StartsWith("https://italaveloso.com/"))
+            {
+                var localPath = videoPath.Replace("https://italaveloso.com/", "/");
+                directory = Path.GetDirectoryName(localPath) ?? "";
+                fileName = Path.GetFileNameWithoutExtension(localPath);
+            }
+            
+            return $"/Images/{fileName}_poster.jpg";
+        }
+        catch
+        {
+            return "/Images/iconI.png"; // Fallback poster
+        }
+    }
+    
+    private string GetVideoSizeInfo(string videoPath)
+    {
+        var fileName = Path.GetFileNameWithoutExtension(videoPath);
+        return fileName switch
+        {
+            "testimonial_Fi" => "~79MB → ~12MB",
+            "testimonial_Monica" => "~68MB → ~11MB", 
+            "testimonial_Laviniah" => "~19MB → ~3.8MB",
+            "testimonial_Fran" => "~37MB → ~10MB (9:16)",
+            "testimonial_Erica" => "~11MB → ~1.9MB",
+            "testimonial_Neuza" => "~23MB → ~3.2MB",
+            "testimonial_Yannick" => "~11MB → ~1.7MB",
+            "adventure" => "~5MB → ~190KB",
+            "car-driving-mountain" => "~15MB → ~6.8MB (High Quality Hero Video)",
+            _ => "Optimized"
+        };
+    }
 
     protected override async Task OnInitializedAsync()
     {

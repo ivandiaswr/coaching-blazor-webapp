@@ -2,6 +2,8 @@
 
 @rendermode InteractiveServer
 
+<MudSnackbarProvider />
+
 @inject ILogger<Case_studies> Logger
 
 <SeoComponent Title="@pageTitle" 
@@ -93,39 +95,13 @@
                     
                     <div class="case-study-media">
                         <div class="video-container">
-                            <div class="case-study-video-wrapper" @onclick="() => ToggleVideo(testimonial.Id)">
-                                <video id="video-@testimonial.Id" 
-                                       playsinline 
-                                       controls="@testimonial.IsPlaying" 
-                                       volume="0.7"
-                                       preload="metadata"
-                                       @onended="() => OnVideoEnded(testimonial.Id)"
-                                       @onplay="() => OnVideoPlay(testimonial.Id)"
-                                       @onpause="() => OnVideoPause(testimonial.Id)"
-                                       @key="@($"video-{selectedCategory}-{testimonial.Id}")">           
-                                    <source src="@testimonial.Path" type="video/mp4">
-                                    <track kind="captions" src="" srclang="en" label="English">
-                                </video>
-                                
-                                @if (!testimonial.IsPlaying)
-                                {
-                                    <div class="case-study-video-overlay">
-                                        <div class="video-preview-content">
-                                            <div class="case-study-play-btn">
-                                                <MudIcon Icon="Icons.Material.Filled.PlayArrow" Size="Size.Large" />
-                                            </div>
-                                            <MudText Typo="Typo.body2" Class="play-instruction">
-                                                Click to play @testimonial.Author's story
-                                            </MudText>
-                                        </div>
-                                        
-                                        <div class="duration-badge">
-                                            <MudIcon Icon="Icons.Material.Filled.AccessTime" Size="Size.Small" />
-                                            <MudText Typo="Typo.caption">@testimonial.VideoDuration</MudText>
-                                        </div>
-                                    </div>
-                                }
-                            </div>
+                            <OptimizedVideo LowQualityVideo="@GetOptimizedVideoPath(testimonial.Path, "low")"
+                                           MediumQualityVideo="@GetOptimizedVideoPath(testimonial.Path, "medium")"
+                                           PosterImage="@GetPosterImagePath(testimonial.Path)"
+                                           Alt="@($"Case study testimonial from {testimonial.Author}, {testimonial.Role}")"
+                                           IsTestimonial="true"
+                                           OnVideoStarted="@OnTestimonialVideoStarted"
+                                           VideoSize="@GetVideoSizeInfo(testimonial.Path)" />
                         </div>
                         
                         <MudCardContent Class="client-info-section">
@@ -195,18 +171,24 @@
                     
                     <MudCardActions Class="card-actions">
                         <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Style="width: 100%;">
-                            <MudButton StartIcon="Icons.Material.Filled.Share" 
-                                     Color="Color.Primary" 
-                                     Variant="Variant.Text"
-                                     OnClick="() => ShareStory(testimonial.Id)">
-                                Share Story
+                            <MudButton Color="Color.Info" 
+                                     Variant="Variant.Outlined"
+                                     Size="Size.Medium"
+                                     OnClick="() => ShareStory(testimonial.Id)"
+                                     Class="share-story-btn">
+                                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                    <MudIcon Icon="@Icons.Material.Filled.Share" Size="Size.Small" />
+                                    <MudText>Share Story</MudText>
+                                </MudStack>
                             </MudButton>
                             
                             <MudButton EndIcon="Icons.Material.Filled.ArrowForward" 
                                      Color="Color.Primary" 
                                      Variant="Variant.Filled"
+                                     Size="Size.Medium"
                                      Href="/UserDashboard"
-                                     Class="start-journey-btn">
+                                     Class="start-journey-btn"
+                                     Style="text-transform: none; font-weight: 600; padding: 10px 20px; border-radius: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); transition: all 0.3s ease;">
                                 Start Your Journey
                             </MudButton>
                         </MudStack>
@@ -430,6 +412,102 @@
 
     private List<Testimonial> filteredTestimonials = new List<Testimonial>();
 
+    // Helper methods for optimized video paths
+    private string GetOptimizedVideoPath(string originalPath, string quality)
+    {
+        try
+        {
+            var fileName = Path.GetFileNameWithoutExtension(originalPath);
+            
+            // For testimonial videos, use the local Videos folder structure
+            if (fileName.StartsWith("testimonial_"))
+            {
+                return quality switch
+                {
+                    "low" => $"/Videos/{fileName}_low.mp4",
+                    "medium" => $"/Videos/{fileName}_medium.mp4",
+                    _ => $"/Videos/{fileName}.mp4"
+                };
+            }
+            
+            var directory = Path.GetDirectoryName(originalPath) ?? "";
+            
+            // Convert external URLs to local paths for non-testimonial videos
+            if (originalPath.StartsWith("https://italaveloso.com/"))
+            {
+                var localPath = originalPath.Replace("https://italaveloso.com/", "/");
+                directory = Path.GetDirectoryName(localPath) ?? "";
+                fileName = Path.GetFileNameWithoutExtension(localPath);
+            }
+            
+            return quality switch
+            {
+                "low" => $"{directory}/{fileName}_low.mp4",
+                "medium" => $"{directory}/{fileName}_medium.mp4",
+                _ => originalPath
+            };
+        }
+        catch
+        {
+            return originalPath; // Fallback to original
+        }
+    }
+    
+    private string GetPosterImagePath(string videoPath)
+    {
+        try
+        {
+            var fileName = Path.GetFileNameWithoutExtension(videoPath);
+            
+            // For testimonial videos, distinguish between phone and PC recordings
+            if (fileName.StartsWith("testimonial_"))
+            {
+                // Fran is PC recording (landscape) - use letterboxed version
+                if (fileName.Contains("Fran"))
+                {
+                    return $"/Images/{fileName}_poster_portrait_v2.jpg?v=2024122704";
+                }
+                // All others are phone recordings (portrait) - use full height versions
+                else
+                {
+                    return $"/Images/{fileName}_poster_phone_final.jpg?v=2024122704";
+                }
+            }
+            
+            var directory = Path.GetDirectoryName(videoPath) ?? "";
+            
+            // Convert external URLs to local paths
+            if (videoPath.StartsWith("https://italaveloso.com/"))
+            {
+                var localPath = videoPath.Replace("https://italaveloso.com/", "/");
+                directory = Path.GetDirectoryName(localPath) ?? "";
+                fileName = Path.GetFileNameWithoutExtension(localPath);
+            }
+            
+            return $"/Images/{fileName}_poster.jpg";
+        }
+        catch
+        {
+            return "/Images/iconI.png"; // Fallback poster
+        }
+    }
+    
+    private string GetVideoSizeInfo(string videoPath)
+    {
+        var fileName = Path.GetFileNameWithoutExtension(videoPath);
+        return fileName switch
+        {
+            "testimonial_Fi" => "~76MB → ~25MB",
+            "testimonial_Monica" => "~66MB → ~22MB", 
+            "testimonial_Fran" => "~36MB → ~12MB",
+            "testimonial_Laviniah" => "~19MB → ~6MB",
+            "testimonial_Yannick" => "~12MB → ~4MB",
+            "testimonial_Neuza" => "~23MB → ~8MB",
+            "testimonial_Erica" => "~12MB → ~4MB",
+            _ => "Optimized for faster loading"
+        };
+    }
+
     protected override void OnInitialized()
     {
         filteredTestimonials = testimonials.Take(displayedStoriesCount).ToList();
@@ -486,7 +564,42 @@
     private void LoadMoreStories()
     {
         displayedStoriesCount += 6;
-        FilterByCategory(selectedCategory);
+        
+        // Update filtered testimonials based on current category and new count
+        if (selectedCategory == "all")
+        {
+            filteredTestimonials = testimonials.Take(displayedStoriesCount).ToList();
+            hasMoreStories = testimonials.Count > displayedStoriesCount;
+        }
+        else
+        {
+            var categoryTestimonials = testimonials.Where(t => t.Category == selectedCategory).ToList();
+            filteredTestimonials = categoryTestimonials.Take(displayedStoriesCount).ToList();
+            hasMoreStories = categoryTestimonials.Count > displayedStoriesCount;
+        }
+        
+        StateHasChanged();
+    }
+
+    private async Task OnTestimonialVideoStarted(string videoId)
+    {
+        // Pause all other testimonial videos when one starts playing
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("eval", $@"
+                const startedVideoId = 'video-{videoId}';
+                const allVideos = document.querySelectorAll('video[id^=""video-""]');
+                allVideos.forEach(video => {{
+                    if (video.id !== startedVideoId && !video.paused) {{
+                        video.pause();
+                    }}
+                }});
+            ");
+        }
+        catch
+        {
+            // Ignore errors
+        }
     }
 
     private async Task ShareStory(int testimonialId)
@@ -494,24 +607,39 @@
         var testimonial = testimonials.FirstOrDefault(t => t.Id == testimonialId);
         if (testimonial != null)
         {
-            var shareText = $"Check out {testimonial.Author}'s amazing transformation story with Ítala Veloso's coaching!";
+            var shareText = $"🌟 Inspiring transformation story! Check out {testimonial.Author}'s amazing journey with Ítala Veloso's life coaching.";
             var shareUrl = $"https://italaveloso.com/services/coaching/Case-studies#{testimonial.Id}";
-            
             try
             {
                 await JSRuntime.InvokeVoidAsync("navigator.share", new
                 {
-                    title = $"{testimonial.Author}'s Success Story",
+                    title = $"✨ {testimonial.Author}'s Success Story",
                     text = shareText,
                     url = shareUrl
                 });
+                Snackbar.Add($"Shared {testimonial.Author}'s story successfully! 🎉", Severity.Success);
+                StateHasChanged();
             }
             catch
             {
-                // Fallback to clipboard
-                await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", $"{shareText} {shareUrl}");
-                Snackbar.Add("Story link copied to clipboard!", Severity.Success);
+                try
+                {
+                    var clipboardText = $"{shareText}\n\n👉 Read the full story: {shareUrl}\n\n#LifeCoaching #Transformation #SuccessStory";
+                    await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", clipboardText);
+                    Snackbar.Add($"📋 {testimonial.Author}'s story link copied to clipboard! Share it with friends!", Severity.Success);
+                    StateHasChanged();
+                }
+                catch
+                {
+                    Snackbar.Add($"Please copy this link to share: {shareUrl}", Severity.Info);
+                    StateHasChanged();
+                }
             }
+        }
+        else
+        {
+            Snackbar.Add("Story not found. Please try again.", Severity.Warning);
+            StateHasChanged();
         }
     }
 

@@ -61,3 +61,44 @@ window.cleanupVideos = function (videoIds) {
         console.error('Error cleaning up videos:', error);
     }
 }
+
+// Play video by element ID and ensure autoplay
+window.playVideo = function (videoId) {
+    try {
+        const video = document.getElementById(videoId);
+        if (video) {
+            // Load video source if not already loaded
+            if (video.readyState === 0) {
+                video.load();
+            }
+
+            // Add event listener to ensure controls are visible
+            video.addEventListener('loadedmetadata', function () {
+                video.controls = true;
+            });
+
+            return video.play().then(() => {
+                console.log(`Video ${videoId} started playing`);
+            }).catch(error => {
+                console.error(`Error playing video ${videoId}:`, error);
+            });
+        }
+    } catch (error) {
+        console.error('Error playing video:', error);
+    }
+}
+
+// Pause video by element ID
+window.pauseVideo = function (videoId) {
+    try {
+        const video = document.getElementById(videoId);
+        if (video) {
+            video.pause();
+            console.log(`Video ${videoId} paused`);
+            return Promise.resolve();
+        }
+    } catch (error) {
+        console.error('Error pausing video:', error);
+        return Promise.reject(error);
+    }
+}

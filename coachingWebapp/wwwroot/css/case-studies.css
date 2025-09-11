@@ -371,6 +371,23 @@
     box-shadow: 0 8px 25px rgba(255, 107, 53, 0.4) !important;
 }
 
+.case-studies-page .share-story-btn {
+    border-radius: 20px !important;
+    padding: 8px 16px !important;
+    transition: all 0.3s ease !important;
+    font-weight: 500 !important;
+    text-transform: none !important;
+    border-color: #0ea5e9 !important;
+    color: #0ea5e9 !important;
+}
+
+.case-studies-page .share-story-btn:hover {
+    transform: translateY(-2px);
+    background: #0ea5e9 !important;
+    color: white !important;
+    box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3) !important;
+}
+
 /* Load More Section */
 .case-studies-page .load-more-section {
     text-align: center;

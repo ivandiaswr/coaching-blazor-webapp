@@ -2,15 +2,36 @@
     Optimized Image Component for better memory management and performance
     Features:
     - Lazy loading with intersection observer
+    - Responsive WebP images for different screen sizes
     - Error handling with fallback placeholder
     - Memory cleanup on disposal
     - Smooth fade-in animation
 *@
 
-<div class="optimized-image-wrapper">
-    <img src="@ImageUrl" alt="@AltText" loading="lazy" decoding="async" onload="this.style.opacity=1"
-        onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlIG5vdCBhdmFpbGFibGU8L3RleHQ+PC9zdmc+';"
-        style="opacity:0;transition:opacity 0.3s ease-in-out;@ExtraStyles" @ref="imageElement" />
+<div class="optimized-image-wrapper @CssClass">
+    <picture>
+        @if (!string.IsNullOrEmpty(LargeWebP))
+        {
+            <source srcset="@LargeWebP" media="(min-width: 1200px)" type="image/webp">
+        }
+        @if (!string.IsNullOrEmpty(MediumWebP))
+        {
+            <source srcset="@MediumWebP" media="(min-width: 768px)" type="image/webp">
+        }
+        @if (!string.IsNullOrEmpty(ThumbWebP))
+        {
+            <source srcset="@ThumbWebP" media="(max-width: 767px)" type="image/webp">
+        }
+        
+        <img src="@(string.IsNullOrEmpty(ImageUrl) ? FallbackImage : ImageUrl)" 
+             alt="@AltText" 
+             loading="lazy" 
+             decoding="async" 
+             onload="this.style.opacity=1"
+             onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjBmMGYwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlIG5vdCBhdmFpbGFibGU8L3RleHQ+PC9zdmc+';"
+             style="opacity:0;transition:opacity 0.3s ease-in-out;@ExtraStyles" 
+             @ref="imageElement" />
+    </picture>
 </div>
 
 @code {
@@ -18,6 +39,10 @@
     [Parameter] public string AltText { get; set; } = string.Empty;
     [Parameter] public string ExtraStyles { get; set; } = string.Empty;
     [Parameter] public string CssClass { get; set; } = string.Empty;
+    [Parameter] public string LargeWebP { get; set; } = string.Empty;
+    [Parameter] public string MediumWebP { get; set; } = string.Empty;
+    [Parameter] public string ThumbWebP { get; set; } = string.Empty;
+    [Parameter] public string FallbackImage { get; set; } = string.Empty;
 
     private ElementReference imageElement;
 

@@ -16,6 +16,8 @@ using MudBlazor;
 using ModelLayer.Models;
 using Microsoft.AspNetCore.Diagnostics;
 using Newtonsoft.Json;
+using Microsoft.AspNetCore.ResponseCompression;
+using System.IO.Compression;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -125,6 +127,9 @@ builder.Services.AddScoped<IUserSubscriptionService, UserSubscriptionService>();
 builder.Services.AddScoped<ICurrencyConversionService, CurrencyConversionService>();
 builder.Services.AddScoped<ISitemapService, SitemapService>();
 
+// Add Media Optimization Service for RAM efficiency
+builder.Services.AddSingleton<MediaOptimizationService>();
+
 builder.Services.AddHttpClient<GoogleReviewsService>();
 
 builder.Services.AddScoped<ILogService>(provider =>
@@ -134,6 +139,30 @@ builder.Services.AddScoped<ILogService>(provider =>
 });
 
 builder.Services.AddSingleton<LogProcessor>();
+
+// Add Response Compression to reduce bandwidth and memory usage
+builder.Services.AddResponseCompression(options =>
+{
+    options.Providers.Add<GzipCompressionProvider>();
+    options.MimeTypes = new[]
+    {
+        "text/plain",
+        "text/css",
+        "application/javascript",
+        "text/html",
+        "application/xml",
+        "text/xml",
+        "application/json",
+        "text/json",
+        "image/svg+xml"
+    };
+    options.EnableForHttps = true;
+});
+
+builder.Services.Configure<GzipCompressionProviderOptions>(options =>
+{
+    options.Level = System.IO.Compression.CompressionLevel.Optimal;
+});
 
 builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
 
@@ -238,9 +267,40 @@ app.UseExceptionHandler(errorApp =>
     });
 });
 
+// Enable response compression early in the pipeline
+app.UseResponseCompression();
+
 app.UseWebSockets();
 
-app.UseStaticFiles();
+// Configure static files with memory optimization
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = context =>
+    {
+        // Set aggressive caching for media files to reduce server requests
+        var file = context.File;
+        var fileName = file.Name.ToLower();
+
+        if (fileName.EndsWith(".mp4") || fileName.EndsWith(".webm") || fileName.EndsWith(".mov"))
+        {
+            // Cache videos for 1 year, reduce repeated loading
+            context.Context.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
+            context.Context.Response.Headers.Expires = DateTime.UtcNow.AddYears(1).ToString("R");
+        }
+        else if (fileName.EndsWith(".jpg") || fileName.EndsWith(".jpeg") || fileName.EndsWith(".png") || fileName.EndsWith(".webp"))
+        {
+            // Cache images for 6 months
+            context.Context.Response.Headers.CacheControl = "public, max-age=15552000";
+            context.Context.Response.Headers.Expires = DateTime.UtcNow.AddMonths(6).ToString("R");
+        }
+        else if (fileName.EndsWith(".css") || fileName.EndsWith(".js"))
+        {
+            // Cache CSS/JS for 1 month
+            context.Context.Response.Headers.CacheControl = "public, max-age=2592000";
+        }
+    }
+});
+
 app.UseAntiforgery();
 
 // When the user logins it created a cookie that UseAuthentication uses to validate
