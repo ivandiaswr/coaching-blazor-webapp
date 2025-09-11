@@ -68,6 +68,13 @@
                 Career Growth
             </MudChip>
             <MudChip T="string" 
+                     Color="@(selectedCategory == "business" ? Color.Primary : Color.Default)"
+                     Variant="@(selectedCategory == "business" ? Variant.Filled : Variant.Outlined)"
+                     OnClick="@(() => FilterByCategory("business"))"
+                     Class="filter-chip">
+                Business Transformation
+            </MudChip>
+            <MudChip T="string" 
                      Color="@(selectedCategory == "personal" ? Color.Primary : Color.Default)"
                      Variant="@(selectedCategory == "personal" ? Variant.Filled : Variant.Outlined)"
                      OnClick="@(() => FilterByCategory("personal"))"
@@ -271,7 +278,7 @@
     private string pageTitle = "Case Studies | Ítala Veloso";
     private string selectedCategory = "all";
     private bool hasMoreStories = false;
-    private int displayedStoriesCount = 6;
+    private int displayedStoriesCount = 10;
     
     private List<Testimonial> testimonials = new List<Testimonial>
         {
@@ -286,7 +293,7 @@
                 Role = "Business Owner",
                 Duration = "3 Month Journey",
                 VideoDuration = "2:45",
-                Category = "personal",
+                Category = "business",
                 KeyAchievements = new List<string> 
                 { 
                     "Transformed decade-old ideas into actionable roadmap",
