@@ -43,12 +43,19 @@ public class StripeService : IPaymentService
     {
         try
         {
-            await _logService.LogInfo("CreateCheckoutSessionAsync", $"Starting checkout for Request: {request?.Session?.Id}, Email: {request?.Session?.Email}, BookingType: {request?.BookingType}, Currency: {request?.Currency}");
+            await _logService.LogInfo("CreateCheckoutSessionAsync", $"Starting checkout for Request: {request?.Session?.Id}, Email: {request?.Session?.Email}, BookingType: {request?.BookingType}, Currency: {request?.Currency}, Price: {request?.Price}");
 
             var session = request.Session;
             var bookingType = request.BookingType;
             var planId = request.PlanId;
             var userCurrency = request.Currency?.ToUpper() ?? "GBP";
+
+            // Validate that the price is set and positive
+            if (request.Price <= 0)
+            {
+                await _logService.LogError("CreateCheckoutSessionAsync", $"Invalid price in request: {request.Price}");
+                throw new ArgumentException("Price must be greater than zero.");
+            }
 
             if (!IsStripeSupportedCurrency(userCurrency))
             {
@@ -115,7 +122,7 @@ public class StripeService : IPaymentService
             SessionCreateOptions options;
             if (bookingType == BookingType.SessionPack && !string.IsNullOrEmpty(planId))
             {
-                await _logService.LogInfo("CreateCheckoutSessionAsync", $"Processing SessionPack with PlanId: {planId}");
+                await _logService.LogInfo("CreateCheckoutSessionAsync", $"Processing SessionPack with PlanId: {planId}, Price: {request.Price}");
                 if (!int.TryParse(planId, out var priceId))
                 {
                     await _logService.LogError("CreateCheckoutSessionAsync", $"Invalid PlanId format: {planId}");
@@ -129,28 +136,9 @@ public class StripeService : IPaymentService
                     throw new Exception("Session pack price not found.");
                 }
 
-                await _logService.LogInfo("CreateCheckoutSessionAsync", $"Converting price for PlanId: {planId}, PriceGBP: {packPrice.PriceGBP}");
-                var (priceValue, priceError) = await _currencyConversionService.ConvertPrice(packPrice.PriceGBP, userCurrency);
-                if (!string.IsNullOrEmpty(priceError))
-                {
-                    await _logService.LogError("CreateCheckoutSessionAsync", $"Currency conversion error: {priceError}");
-                    throw new Exception($"Currency conversion error: {priceError}");
-                }
-
-                string stripePriceId = packPrice.StripePriceId;
-                if (string.IsNullOrEmpty(stripePriceId))
-                {
-                    stripePriceId = await CreateOrUpdateSessionPackPriceAsync(
-                        packPrice.Name,
-                        priceValue,
-                        packPrice.SessionType.ToString(),
-                        packPrice.TotalSessions,
-                        userCurrency
-                    );
-                    packPrice.StripePriceId = stripePriceId;
-                    _context.SessionPackPrices.Update(packPrice);
-                    await _context.SaveChangesAsync();
-                }
+                // Use the price from the request (already converted and displayed to user) instead of recalculating
+                var priceValue = request.Price;
+                await _logService.LogInfo("CreateCheckoutSessionAsync", $"Using price from request: {priceValue} {userCurrency}");
 
                 options = new SessionCreateOptions
                 {
@@ -160,13 +148,22 @@ public class StripeService : IPaymentService
                     {
                         new SessionLineItemOptions
                         {
-                            Price = stripePriceId,
+                            PriceData = new SessionLineItemPriceDataOptions
+                            {
+                                Currency = userCurrency.ToLower(),
+                                ProductData = new SessionLineItemPriceDataProductDataOptions
+                                {
+                                    Name = packPrice.Name,
+                                    Description = packPrice.Description ?? $"Includes {packPrice.TotalSessions} sessions."
+                                },
+                                UnitAmountDecimal = (long)(priceValue * 100),
+                            },
                             Quantity = 1,
                         },
                     },
                     Mode = "payment",
                     SuccessUrl = $"{_configuration["AppSettings:BaseUrl"]}/payment-success?sessionId={{CHECKOUT_SESSION_ID}}",
-                    CancelUrl = $"{_configuration["AppSettings:BaseUrl"]}/payment-cancelled?sessionId={session.Id}",
+                    CancelUrl = $"{_configuration["AppSettings:BaseUrl"]}/UserDashboard",
                     Metadata = new Dictionary<string, string>
                     {
                         { "SessionId", session.Id.ToString() },
@@ -178,10 +175,10 @@ public class StripeService : IPaymentService
             }
             else if (bookingType == BookingType.Subscription && !string.IsNullOrEmpty(planId))
             {
-                await _logService.LogInfo("CreateCheckoutSessionAsync", $"Processing Subscription with PlanId: {planId}");
+                await _logService.LogInfo("CreateCheckoutSessionAsync", $"Processing Subscription with PlanId: {planId}, Price: {request.Price}");
 
                 // For subscriptions, planId is the Stripe Price ID, not the database ID
-                SubscriptionPrice subscriptionPrice;
+                SubscriptionPrice? subscriptionPrice;
 
                 if (planId.StartsWith("price_")) // It's a Stripe Price ID
                 {
@@ -205,27 +202,9 @@ public class StripeService : IPaymentService
                     throw new Exception("Subscription price not found.");
                 }
 
-                await _logService.LogInfo("CreateCheckoutSessionAsync", $"Converting price for PlanId: {planId}, PriceGBP: {subscriptionPrice.PriceGBP}");
-                var (priceInUserCurrency, priceError) = await _currencyConversionService.ConvertPrice(subscriptionPrice.PriceGBP, userCurrency);
-                if (!string.IsNullOrEmpty(priceError))
-                {
-                    await _logService.LogError("CreateCheckoutSessionAsync", $"Currency conversion error: {priceError}");
-                    throw new Exception($"Currency conversion error: {priceError}");
-                }
-
-                string stripePriceId = subscriptionPrice.StripePriceId;
-                if (string.IsNullOrEmpty(stripePriceId))
-                {
-                    stripePriceId = await CreateOrUpdateSubscriptionPriceAsync(
-                        subscriptionPrice.Name,
-                        priceInUserCurrency,
-                        subscriptionPrice.SessionType.ToString(),
-                        userCurrency
-                    );
-                    subscriptionPrice.StripePriceId = stripePriceId;
-                    _context.SubscriptionPrices.Update(subscriptionPrice);
-                    await _context.SaveChangesAsync();
-                }
+                // Use the price from the request (already converted and displayed to user) instead of recalculating
+                var priceInUserCurrency = request.Price;
+                await _logService.LogInfo("CreateCheckoutSessionAsync", $"Using price from request: {priceInUserCurrency} {userCurrency}");
 
                 options = new SessionCreateOptions
                 {
@@ -235,13 +214,26 @@ public class StripeService : IPaymentService
                     {
                         new SessionLineItemOptions
                         {
-                            Price = stripePriceId,
+                            PriceData = new SessionLineItemPriceDataOptions
+                            {
+                                Currency = userCurrency.ToLower(),
+                                ProductData = new SessionLineItemPriceDataProductDataOptions
+                                {
+                                    Name = subscriptionPrice.Name,
+                                    Description = subscriptionPrice.Description ?? $"Up to {subscriptionPrice.MonthlyLimit} sessions per month."
+                                },
+                                UnitAmountDecimal = (long)(priceInUserCurrency * 100),
+                                Recurring = new SessionLineItemPriceDataRecurringOptions
+                                {
+                                    Interval = "month"
+                                }
+                            },
                             Quantity = 1,
                         },
                     },
                     Mode = "subscription",
                     SuccessUrl = $"{_configuration["AppSettings:BaseUrl"]}/payment-success?sessionId={{CHECKOUT_SESSION_ID}}",
-                    CancelUrl = $"{_configuration["AppSettings:BaseUrl"]}/payment-cancelled?sessionId={session.Id}",
+                    CancelUrl = $"{_configuration["AppSettings:BaseUrl"]}/UserDashboard",
                     Metadata = new Dictionary<string, string>
                     {
                         { "SessionId", session.Id.ToString() },
@@ -254,34 +246,15 @@ public class StripeService : IPaymentService
             else if (bookingType == BookingType.SingleSession)
             {
                 await _logService.LogInfo("CreateCheckoutSessionAsync",
-                    $"Processing SingleSession for SessionCategory: {session.SessionCategory}, Currency: {userCurrency}");
+                    $"Processing SingleSession for SessionCategory: {session.SessionCategory}, Currency: {userCurrency}, Price: {request.Price}");
 
                 try
                 {
-                    await _logService.LogInfo("CreateCheckoutSessionAsync",
-                        $"Retrieving price for SessionCategory: {session.SessionCategory}");
-                    var servicePrice = await _context.SessionPrices
-                        .FirstOrDefaultAsync(sp => sp.SessionType == session.SessionCategory);
-                    if (servicePrice == null)
-                    {
-                        await _logService.LogError("CreateCheckoutSessionAsync",
-                            $"No price found for session category: {session.SessionCategory}");
-                        throw new InvalidOperationException($"No price found for session category: {session.SessionCategory}");
-                    }
-                    await _logService.LogInfo("CreateCheckoutSessionAsync",
-                        $"Found price for SessionCategory: {session.SessionCategory}, PriceGBP: {servicePrice.PriceGBP}");
+                    // Use the price from the request (already converted and displayed to user) instead of recalculating
+                    var priceInUserCurrency = request.Price;
 
                     await _logService.LogInfo("CreateCheckoutSessionAsync",
-                        $"Converting price {servicePrice.PriceGBP} GBP to {userCurrency}");
-                    (decimal priceInUserCurrency, string priceError) = await _currencyConversionService.ConvertPrice(servicePrice.PriceGBP, userCurrency);
-                    if (!string.IsNullOrEmpty(priceError))
-                    {
-                        await _logService.LogError("CreateCheckoutSessionAsync",
-                            $"Currency conversion error for {userCurrency}: {priceError}");
-                        throw new InvalidOperationException($"Currency conversion error: {priceError}");
-                    }
-                    await _logService.LogInfo("CreateCheckoutSessionAsync",
-                        $"Converted price: {priceInUserCurrency} {userCurrency}");
+                        $"Using price from request: {priceInUserCurrency} {userCurrency}");
 
                     options = new SessionCreateOptions
                     {
@@ -306,7 +279,7 @@ public class StripeService : IPaymentService
                         },
                         Mode = "payment",
                         SuccessUrl = $"{_configuration["AppSettings:BaseUrl"]}/payment-success?sessionId={{CHECKOUT_SESSION_ID}}",
-                        CancelUrl = $"{_configuration["AppSettings:BaseUrl"]}/payment-cancelled?sessionId={session.Id}",
+                        CancelUrl = $"{_configuration["AppSettings:BaseUrl"]}/UserDashboard",
                         Metadata = new Dictionary<string, string>
                         {
                             { "SessionId", session.Id.ToString() },
@@ -344,7 +317,7 @@ public class StripeService : IPaymentService
                 var stripeSession = await stripeService.CreateAsync(options, requestOptions);
 
                 await _logService.LogInfo("CreateCheckoutSessionAsync", $"Updating session Id: {session.Id} with StripeSessionId: {stripeSession.Id}");
-                
+
                 // Update the existing session with the Stripe session ID instead of creating a duplicate
                 var existingDbSession = await _context.Sessions.FindAsync(session.Id);
                 if (existingDbSession != null)
@@ -434,7 +407,7 @@ public class StripeService : IPaymentService
 
                 if (bookingType == BookingType.Subscription && !string.IsNullOrEmpty(planId))
                 {
-                    SubscriptionPrice subscriptionPrice;
+                    SubscriptionPrice? subscriptionPrice;
 
                     if (planId.StartsWith("price_"))
                     {
@@ -560,7 +533,7 @@ public class StripeService : IPaymentService
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
-                
+
                 await _logService.LogInfo("ConfirmPaymentAsync", $"Payment confirmation completed successfully for session: {sessionIdInt}");
                 return true;
             }
@@ -759,7 +732,7 @@ public class StripeService : IPaymentService
             SessionPackPrice? existingPrice = await _context.SessionPackPrices
                 .FirstOrDefaultAsync(sp => sp.SessionType.ToString() == sessionType && sp.PriceGBP == amount && sp.TotalSessions == totalSessions);
 
-            string stripePriceId = existingPrice?.StripePriceId;
+            string? stripePriceId = existingPrice?.StripePriceId;
             if (existingPrice != null && !string.IsNullOrEmpty(stripePriceId))
             {
                 var existsPriceService = new PriceService();

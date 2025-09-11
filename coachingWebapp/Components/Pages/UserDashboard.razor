@@ -1809,6 +1809,7 @@
                         Session = createdSession,
                         BookingType = SelectedOption.Type,
                         PlanId = SelectedOption.Type == BookingType.SingleSession ? null : SelectedOption.PlanId,
+                        Price = SelectedOption.PriceConverted ?? SelectedOption.PriceGBP ?? 0,
                         Currency = SelectedOption.Currency ?? "GBP",
                         IdempotencyKey = Guid.NewGuid().ToString()
                     };
@@ -1819,7 +1820,7 @@
                     }
 
                     await LogService.LogInfo("SubmitSessionRequest", 
-                        $"Sending checkout request for SessionId: {createdSession.Id}, BookingType: {checkoutRequest.BookingType}, Currency: {checkoutRequest.Currency}, IdempotencyKey: {checkoutRequest.IdempotencyKey}");
+                        $"Sending checkout request for SessionId: {createdSession.Id}, BookingType: {checkoutRequest.BookingType}, Price: {checkoutRequest.Price}, Currency: {checkoutRequest.Currency}, IdempotencyKey: {checkoutRequest.IdempotencyKey}");
                     
                     try
                     {

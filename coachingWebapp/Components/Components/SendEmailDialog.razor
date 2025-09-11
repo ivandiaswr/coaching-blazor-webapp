@@ -522,19 +522,18 @@
             {
                 Snackbar.Add($"Email sent successfully to {TotalSubscribers} subscriber{(TotalSubscribers != 1 ? "s" : "")}!", 
                             Severity.Success);
+                IsSending = false;
                 Close();
             }
             else
             {
                 Snackbar.Add("Failed to send email. Please check the logs for details.", Severity.Error);
+                IsSending = false;
             }
         }
         catch (Exception ex)
         {
             Snackbar.Add($"Failed to send email: {ex.Message}", Severity.Error);
-        }
-        finally
-        {
             IsSending = false;
         }
     }
