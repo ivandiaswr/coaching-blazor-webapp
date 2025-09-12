@@ -506,7 +506,7 @@
                                                 <MudIcon Icon="@Icons.Material.Filled.Person" Color="Color.Primary" />
                                                 <div>
                                                     <MudText Typo="Typo.h6" Color="Color.Primary">
-                                                        🎯 Individual Session
+                                                        Individual Session
                                                     </MudText>
                                                     <MudText Typo="Typo.body2" Color="Color.Secondary">
                                                         Price for a single @sessionType.GetDisplayName().ToLower() session
@@ -538,7 +538,7 @@
                                                             Size="Size.Large"
                                                             StartIcon="@Icons.Material.Filled.Save"
                                                             FullWidth="true">
-                                                        💾 Save Price
+                                                        Save Price
                                                     </MudButton>
                                                 </MudItem>
                                             </MudGrid>
@@ -565,7 +565,7 @@
                                                 <MudIcon Icon="@Icons.Material.Filled.Inventory" Color="Color.Warning" />
                                                 <div>
                                                     <MudText Typo="Typo.h6" Color="Color.Warning">
-                                                        📦 Session Packages
+                                                        Session Packages
                                                     </MudText>
                                                     <MudText Typo="Typo.body2" Color="Color.Secondary">
                                                         Offer multiple sessions at a discounted rate
@@ -580,7 +580,7 @@
                                                     Disabled="@(packPrices[sessionType].Count >= MAX_PACKS)"
                                                     StartIcon="@Icons.Material.Filled.Add"
                                                     Size="Size.Small">
-                                                ➕ Add Package
+                                                Add Package
                                             </MudButton>
                                         </CardHeaderActions>
                                     </MudCardHeader>
@@ -684,7 +684,7 @@
                                                                 OnClick="@(() => ConfirmDeleteSessionPack(sessionType, pack.Id))"
                                                                 StartIcon="@Icons.Material.Filled.Delete"
                                                                 Size="Size.Small">
-                                                            🗑️ Remove
+                                                            Remove
                                                         </MudButton>
                                                     </MudStack>
                                                 </MudPaper>
@@ -704,7 +704,7 @@
                                                         OnClick="@(() => SaveSessionPacks(sessionType))"
                                                         StartIcon="@Icons.Material.Filled.Save"
                                                         Size="Size.Large">
-                                                    💾 Save All Packages
+                                                    Save All Packages
                                                 </MudButton>
                                             </MudStack>
                                         }
@@ -721,7 +721,7 @@
                                                 <MudIcon Icon="@Icons.Material.Filled.Subscriptions" Color="Color.Secondary" />
                                                 <div>
                                                     <MudText Typo="Typo.h6" Color="Color.Secondary">
-                                                        🔄 Monthly Subscriptions
+                                                        Monthly Subscriptions
                                                     </MudText>
                                                     <MudText Typo="Typo.body2" Color="Color.Secondary">
                                                         Recurring monthly plans with session limits
@@ -736,7 +736,7 @@
                                                     Disabled="@(subscriptionPrices[sessionType].Count >= MAX_SUBSCRIPTIONS)"
                                                     StartIcon="@Icons.Material.Filled.Add"
                                                     Size="Size.Small">
-                                                ➕ Add Subscription
+                                                Add Subscription
                                             </MudButton>
                                         </CardHeaderActions>
                                     </MudCardHeader>
@@ -847,7 +847,7 @@
                                                                 OnClick="@(() => ConfirmDeleteSubscription(sessionType, subscription.Id))"
                                                                 StartIcon="@Icons.Material.Filled.Delete"
                                                                 Size="Size.Small">
-                                                            🗑️ Remove
+                                                            Remove
                                                         </MudButton>
                                                     </MudStack>
                                                 </MudPaper>
@@ -867,7 +867,7 @@
                                                         OnClick="@(() => SaveSubscriptions(sessionType))"
                                                         StartIcon="@Icons.Material.Filled.Save"
                                                         Size="Size.Large">
-                                                    💾 Save All Subscriptions
+                                                    Save All Subscriptions
                                                 </MudButton>
                                             </MudStack>
                                         }
