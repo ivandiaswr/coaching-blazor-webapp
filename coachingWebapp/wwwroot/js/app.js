@@ -342,7 +342,7 @@ window.initializeReviewsSlider = function () {
     };
 
     // Start the animation
-    console.log('Starting infinite slider animation...');
+    // console.log('Starting infinite slider animation...');
     autoScrollLoop();
 }; window.disposeReviewsSlider = function () {
     // Clean up event listeners if needed
