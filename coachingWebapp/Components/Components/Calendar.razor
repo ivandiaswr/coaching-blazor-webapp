@@ -33,6 +33,7 @@
                         
                         <div class="date-picker-container">
                             <MudDatePicker 
+                                @ref="datePickerRef"
                                 Date="selectedDate"
                                 DateChanged="OnDateSelected"
                                 Label="Select a date"
@@ -43,13 +44,15 @@
                                 Variant="Variant.Outlined"
                                 Color="Color.Primary"
                                 HelperText="Dates without available slots are disabled"
-                                ReadOnly="@(WindowWidth <= 480)"
-                                Editable="@(WindowWidth > 480)" />
+                                OpenTo="OpenTo.Date"
+                                ReadOnly="false"
+                                Editable="true"
+                                InputIcon="@Icons.Material.Filled.CalendarToday" />
                             @if (WindowWidth <= 480)
                             {
-                                <small style="color: #666; margin-top: 8px; display: block;">
-                                    <i class="fas fa-info-circle"></i> Tap the calendar icon to select a date
-                                </small>
+                                <button type="button" class="mobile-calendar-btn" style="margin-top:8px;" @onclick="OpenMobileDatePicker" @ontouchstart="OpenMobileDatePicker">
+                                    <i class="fas fa-calendar-alt"></i> Tap to select a date
+                                </button>
                             }
                         </div>
                     </div>
@@ -265,6 +268,11 @@
 
     private DateTime InitialDateTime => DateTime.UtcNow.AddDays(2).Date; // Always start 2 days from now
     private int WindowWidth { get; set; } = 1920;
+    private MudDatePicker datePickerRef;
+    private async void OpenMobileDatePicker()
+    {
+        await JSRuntime.InvokeVoidAsync("eval", "document.querySelector('.booking-date-picker input')?.click();");
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -488,33 +496,34 @@
     private RenderFragment RenderTimeSlot(TimeSlotInfo slot) => builder =>
     {
         var isSelected = SelectedSlot.HasValue && SelectedSlot.Value == slot.DateTime;
-        
+
         builder.OpenElement(0, "button");
         builder.AddAttribute(1, "type", "button");
         builder.AddAttribute(2, "class", $"time-slot-btn {slot.Status.ToLower()} {(isSelected ? "selected" : "")}");
         builder.AddAttribute(3, "onclick", EventCallback.Factory.Create(this, () => SelectTimeSlot(slot)));
-        builder.AddAttribute(4, "onkeydown", EventCallback.Factory.Create<KeyboardEventArgs>(this, (e) => HandleKeyDown(e, slot)));
-        builder.AddAttribute(5, "disabled", !slot.IsClickable);
-        builder.AddAttribute(6, "title", $"{slot.DisplayTime} - {slot.Status}");
-        builder.AddAttribute(7, "aria-label", $"Time slot {slot.DisplayTime} - {slot.Status}");
-        builder.AddAttribute(8, "aria-pressed", isSelected ? "true" : "false");
-        builder.AddAttribute(9, "tabindex", slot.IsClickable ? "0" : "-1");
-        
-        builder.OpenElement(10, "div");
-        builder.AddAttribute(11, "class", "slot-time");
-        builder.AddContent(12, slot.DisplayTime);
+        builder.AddAttribute(4, "ontouchstart", EventCallback.Factory.Create(this, () => SelectTimeSlot(slot)));
+        builder.AddAttribute(5, "onkeydown", EventCallback.Factory.Create<KeyboardEventArgs>(this, (e) => HandleKeyDown(e, slot)));
+        builder.AddAttribute(6, "disabled", !slot.IsClickable);
+        builder.AddAttribute(7, "title", $"{slot.DisplayTime} - {slot.Status}");
+        builder.AddAttribute(8, "aria-label", $"Time slot {slot.DisplayTime} - {slot.Status}");
+        builder.AddAttribute(9, "aria-pressed", isSelected ? "true" : "false");
+        builder.AddAttribute(10, "tabindex", slot.IsClickable ? "0" : "-1");
+
+        builder.OpenElement(11, "div");
+        builder.AddAttribute(12, "class", "slot-time");
+        builder.AddContent(13, slot.DisplayTime);
         builder.CloseElement();
-        
-        builder.OpenElement(13, "div");
-        builder.AddAttribute(14, "class", "slot-status");
-        builder.OpenElement(15, "i");
-        builder.AddAttribute(16, "class", GetStatusIcon(slot.Status));
+
+        builder.OpenElement(14, "div");
+        builder.AddAttribute(15, "class", "slot-status");
+        builder.OpenElement(16, "i");
+        builder.AddAttribute(17, "class", GetStatusIcon(slot.Status));
         builder.CloseElement();
-        builder.OpenElement(17, "span");
-        builder.AddContent(18, GetStatusText(slot.Status));
+        builder.OpenElement(18, "span");
+        builder.AddContent(19, GetStatusText(slot.Status));
         builder.CloseElement();
         builder.CloseElement();
-        
+
         builder.CloseElement();
     };
 
