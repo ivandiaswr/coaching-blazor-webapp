@@ -28,6 +28,7 @@ namespace BusinessLayer.Services
             {
                 existing.PriceGBP = price.PriceGBP;
                 existing.LastUpdated = DateTime.UtcNow;
+                _context.SessionPrices.Update(existing);
             }
             else
             {
