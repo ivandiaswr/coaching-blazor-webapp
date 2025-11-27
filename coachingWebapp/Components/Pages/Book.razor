@@ -1,0 +1,68 @@
+@page "/resources/book"
+
+@rendermode InteractiveServer
+
+<PageTitle>@pageTitle</PageTitle>
+
+<section class="book-page-container">
+    <div class="book-content grid">
+        <div class="book-cover">
+            <img src="/Images/bookcover.jpg" alt="Awaken book cover" class="cover-img" />
+        </div>
+
+        <div class="book-details">
+            <h1 class="book-title">Awaken</h1>
+
+            <p class="lead">Written for every soul that’s ever felt lost, unseen, or too broken to begin again.</p>
+
+            <p class="excerpt">
+                When your world falls apart, where does hope hide?
+            </p>
+
+            <p>
+                What if the breaking was never meant to destroy you — but to awaken you?
+            </p>
+
+            <p>
+                In <strong>Awaken: Finding Hope Beyond Brokenness</strong>, poet and life coach, Ítala Veloso, shares a
+                testimony in verse — written for every soul that’s ever felt lost, unseen, or too broken to begin again.
+            </p>
+
+            <p>
+                These poems are not polished prayers — they are raw honesty, battle cries, tear-stained revelations and
+                encounters with grace. Ítala walks with you from the depths of despair to the freedom of faith.
+            </p>
+
+            <p>
+                Her words are prayers in motion, carrying the ache of human pain and the healing of God’s love. A
+                journey
+                through pain, surrender, and the miraculous forgiveness and rebirth that only love in Christ can bring.
+            </p>
+
+            <p>
+                <em>Awaken</em> is a call to the lost, the broken, the weary, the doubting: to remember who you are,
+                whose
+                you are, and that no valley is too deep for resurrection.
+            </p>
+
+            <p class="invitation">Come as you are. You are not forgotten. You are not alone. You are already being made
+                new.</p>
+
+            <p class="awaken-small">Awaken.</p>
+
+            <hr />
+
+            <p class="maybe-today">Maybe it is today... the day you stop asking how much more you can take...</p>
+
+            <div class="buy-actions">
+                <a class="buy-btn primary" href="https://www.amazon.co.uk/dp/B0G23C9SVQ" target="_blank"
+                    rel="noopener noreferrer">Buy "Awaken" <i class="fa-brands fa-amazon amazon-icon"></i></a>
+
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    private string pageTitle = "Books | Ítala Veloso";
+}

@@ -299,70 +299,6 @@
     </DialogActions>
 </MudDialog>
 
-@if (ShowConfirmation)
-{
-    <MudDialog @bind-IsVisible="ShowConfirmation"
-               Options="new DialogOptions { BackdropClick = false, MaxWidth = MaxWidth.Large }"
-               Class="confirmation-dialog">
-        <DialogContent>
-            <div class="d-flex align-center mb-4">
-                <MudIcon Icon="@Icons.Material.Filled.Send" Color="Color.Primary" Size="Size.Large" Class="mr-3"/>
-                <MudText Typo="Typo.h5">Ready to Send Email?</MudText>
-            </div>
-            
-            <MudAlert Severity="Severity.Warning" Class="mb-4">
-                <strong>Important:</strong> This email will be sent immediately to all selected subscribers. This action cannot be undone.
-            </MudAlert>
-            
-            <MudPaper Class="pa-4 mb-4" Elevation="2">
-                <MudText Typo="Typo.h6" Class="mb-2" Color="Color.Primary">📧 Email Summary:</MudText>
-                <div class="mb-2">
-                    <strong>Subject:</strong> @Subject
-                </div>
-                <div class="mb-2">
-                    <strong>Recipients:</strong> @TotalSubscribers subscriber@(TotalSubscribers != 1 ? "s" : "")
-                </div>
-                <div class="mb-2">
-                    <strong>Content Length:</strong> @EmailContent.Length characters
-                </div>
-                <div class="mb-2">
-                    <strong>Attachment:</strong> @(SelectedFiles.Any() ? $"Yes - {SelectedFiles.Count} file{(SelectedFiles.Count != 1 ? "s" : "")} ({string.Join(", ", SelectedFiles.Select(f => f.Name))})" : "None")
-                </div>
-                <div class="mt-3">
-                    <MudText Typo="Typo.caption" Color="Color.Secondary">
-                        Each email will be personalized with the subscriber's name and include an unsubscribe link.
-                    </MudText>
-                </div>
-            </MudPaper>
-            
-            <MudText Typo="Typo.body2" Color="Color.Secondary">
-                💡 <strong>Tip:</strong> After sending, you'll see a success message confirming delivery to all subscribers.
-            </MudText>
-        </DialogContent>
-        <DialogActions>
-            <MudButton OnClick="@(() => ShowConfirmation = false)" 
-                      StartIcon="@Icons.Material.Filled.Cancel">
-                Cancel
-            </MudButton>
-            <MudButton Color="Color.Primary" 
-                       Variant="Variant.Filled"
-                       OnClick="ConfirmSendEmail" 
-                       Disabled="@IsSending"
-                       StartIcon="@Icons.Material.Filled.Send">
-                @if (IsSending)
-                {
-                    <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
-                    <MudText Class="ms-3">Sending to @TotalSubscribers subscribers...</MudText>
-                }
-                else
-                {
-                    <MudText>Yes, Send Email Now!</MudText>
-                }
-            </MudButton>
-        </DialogActions>
-    </MudDialog>
-}
-
 @code {
 #nullable enable
     [CascadingParameter] IDialogReference MudDialog { get; set; } = default!;
@@ -375,9 +311,10 @@
     private string Subject = "";
     private string EmailContent = "";
     private List<IBrowserFile> SelectedFiles = new();
-    private bool IsFormValid = false;
     private bool IsSending = false;
-    private bool ShowConfirmation = false;
+    private bool IsFormValid => !string.IsNullOrWhiteSpace(Subject?.Trim())
+                                  && !string.IsNullOrWhiteSpace(EmailContent?.Trim())
+                                  && TotalSubscribers > 0;
     private List<string> ValidationErrors = new();
 
     protected override void OnParametersSet()
@@ -441,11 +378,10 @@
     {
         var subjectValid = !string.IsNullOrWhiteSpace(Subject?.Trim());
         var contentValid = !string.IsNullOrWhiteSpace(EmailContent?.Trim());
-        IsFormValid = subjectValid && contentValid && TotalSubscribers > 0;
-        
-        // Debug output to console to help troubleshoot
-        Console.WriteLine($"Validation: Subject='{Subject}' ({subjectValid}), Content='{EmailContent?.Substring(0, Math.Min(20, EmailContent?.Length ?? 0))}...' ({contentValid}), Recipients={TotalSubscribers}, IsFormValid={IsFormValid}");
-        
+        var computed = subjectValid && contentValid && TotalSubscribers > 0;
+
+        Console.WriteLine($"Validation: Subject='{Subject}' ({subjectValid}), Content='{EmailContent?.Substring(0, Math.Min(20, EmailContent?.Length ?? 0))}...' ({contentValid}), Recipients={TotalSubscribers}, IsFormValid={computed}");
+
         StateHasChanged();
     }
 
@@ -482,25 +418,26 @@
         StateHasChanged();
     }
 
-    private void SendEmail()
+    private async Task SendEmail()
     {
         if (!IsFormValid || IsSending || TotalSubscribers == 0)
             return;
 
-        ShowConfirmation = true;
+        await ConfirmSendEmail();
     }
 
     private async Task ConfirmSendEmail()
     {
         if (IsSending) return;
-        
+
         IsSending = true;
-        ShowConfirmation = false;
+
+        List<(string, Stream, string)>? attachments = null;
 
         try
         {
             var hasFiles = SelectedFiles.Any();
-            var attachments = hasFiles ? new List<(string, Stream, string)>() : null;
+            attachments = hasFiles ? new List<(string, Stream, string)>() : null;
 
             if (hasFiles)
             {
@@ -509,7 +446,7 @@
                     var stream = new MemoryStream();
                     await file.OpenReadStream(maxAllowedSize: 10485760).CopyToAsync(stream);
                     stream.Position = 0;
-                    
+
                     // Determine proper content type based on file extension
                     var contentType = file.ContentType ?? GetContentTypeFromExtension(file.Name);
                     attachments!.Add((file.Name, (Stream)stream, contentType));
@@ -520,27 +457,41 @@
 
             if (success)
             {
-                Snackbar.Add($"Email sent successfully to {TotalSubscribers} subscriber{(TotalSubscribers != 1 ? "s" : "")}!", 
-                            Severity.Success);
-                IsSending = false;
-                Close();
+                Snackbar?.Add($"Email sent successfully to {TotalSubscribers} subscriber{(TotalSubscribers != 1 ? "s" : "")}!", Severity.Success);
             }
             else
             {
-                Snackbar.Add("Failed to send email. Please check the logs for details.", Severity.Error);
-                IsSending = false;
+                Snackbar?.Add("Failed to send email. Please check the logs for details.", Severity.Error);
             }
         }
         catch (Exception ex)
         {
-            Snackbar.Add($"Failed to send email: {ex.Message}", Severity.Error);
+            Snackbar?.Add($"Failed to send email: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
             IsSending = false;
+
+            try
+            {
+                Subject = "";
+                EmailContent = "";
+                SelectedFiles.Clear();
+                ValidationErrors.Clear();
+
+                MudDialog?.Close(DialogResult.Ok(true));
+            }
+            catch (Exception closeEx)
+            {
+                Console.WriteLine($"Warning: dialog close/cleanup failed after send: {closeEx}");
+                Snackbar?.Add($"Email sent but UI cleanup failed: {closeEx.Message}", Severity.Warning);
+            }
         }
     }
 
     private void Cancel()
     {
-        MudDialog.Close(DialogResult.Cancel());
+        MudDialog?.Close(DialogResult.Cancel());
     }
 
     private void Close()
@@ -548,11 +499,9 @@
         Subject = "";
         EmailContent = "";
         SelectedFiles.Clear();
-        IsFormValid = false;
         IsSending = false;
-        ShowConfirmation = false;
         ValidationErrors.Clear();
 
-        MudDialog.Close(DialogResult.Ok(true));
+        MudDialog?.Close(DialogResult.Ok(true));
     }
 }
